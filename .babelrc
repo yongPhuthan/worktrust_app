@@ -1,0 +1,14 @@
+{
+  "plugins": [
+    ["module:react-native-dotenv", {
+      "allowlist": [
+        "BACK_END_SERVER_URL",
+        "BRAND_NAME"
+        
+      ],
+      "safe": true,
+      "allowUndefined": false
+
+    }]
+  ]
+}
