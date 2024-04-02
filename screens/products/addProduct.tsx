@@ -62,10 +62,10 @@ const AddProductForm = ({navigation, route}: Props) => {
   const defaultService = {
     title: null,
     description: null,
-    unitPrice: 0,
-    qty: 1,
-    discountPercent: 0,
-    total: 0,
+    unitPrice: '0',
+    qty: '1',
+    discountPercent: '0',
+    total: '0',
     unit: 'ชุด',
     serviceImage: '',
     serviceImages: [],
@@ -634,7 +634,8 @@ const styles = StyleSheet.create({
   },
 
   form: {
-    border: '1px solid #0073BA',
+    borderColor: '#0073BA',
+    borderWidth: 1,
     borderRadius: 10,
   },
   date: {

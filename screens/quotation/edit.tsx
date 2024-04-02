@@ -1,8 +1,4 @@
-import React, {
-  useContext,
-  useMemo,
-  useState
-} from 'react';
+import React, {useContext, useMemo, useState} from 'react';
 import {
   Dimensions,
   FlatList,
@@ -14,24 +10,16 @@ import {
   Switch,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
-import { Appbar, Button, ProgressBar } from 'react-native-paper';
+import {Appbar, Button, ProgressBar} from 'react-native-paper';
 
-import {
-  faBriefcase,
-  faPlus
-} from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { yupResolver } from '@hookform/resolvers/yup';
-import { RouteProp } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import {
-  FormProvider,
-  useFieldArray,
-  useForm,
-  useWatch
-} from 'react-hook-form';
+import {faBriefcase, faPlus} from '@fortawesome/free-solid-svg-icons';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {yupResolver} from '@hookform/resolvers/yup';
+import {RouteProp} from '@react-navigation/native';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {FormProvider, useFieldArray, useForm, useWatch} from 'react-hook-form';
 import Modal from 'react-native-modal';
 import AddClient from '../../components/AddClient';
 import AddServices from '../../components/AddServices';
@@ -45,14 +33,12 @@ import Divider from '../../components/styles/Divider';
 import SmallDivider from '../../components/styles/SmallDivider';
 import SignatureComponent from '../../components/utils/signature';
 import useThaiDateFormatter from '../../hooks/utils/useThaiDateFormatter';
-import { Store } from '../../redux/store';
-import { Service } from '../../types/docType';
-import { ParamListBase } from '../../types/navigationType';
+import {Store} from '../../redux/store';
+import {Service} from '../../types/docType';
+import {ParamListBase} from '../../types/navigationType';
 
 import ExistingWorkers from '../../components/workers/existing';
-import {
-  quotationsValidationSchema
-} from '../utils/validationSchema';
+import {quotationsValidationSchema} from '../utils/validationSchema';
 
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'EditQuotation'>;
@@ -98,9 +84,7 @@ const EditQuotation = ({navigation, route}: Props) => {
     dateOffer: quotation.dateOffer,
     dateEnd: quotation.dateEnd,
     docNumber: quotation.docNumber,
-    workers: quotation.workers
-      ? quotation.workers
-      : '',
+    workers: quotation.workers ? quotation.workers : '',
     sellerSignature: quotation.sellerSignature,
   };
 
@@ -144,7 +128,9 @@ const EditQuotation = ({navigation, route}: Props) => {
   }, [customer.name, customer.address]);
 
   const isDisabled = !customer.name || services.length === 0;
-  const [pickerVisible, setPickerVisible] = useState(sellerSignature !== ''? true : false);
+  const [pickerVisible, setPickerVisible] = useState(
+    sellerSignature !== '' ? true : false,
+  );
 
   const useSignature = () => {
     // Toggle the state of the picker and accordingly set the modal visibility
@@ -288,7 +274,7 @@ const EditQuotation = ({navigation, route}: Props) => {
           <ScrollView style={styles.container}>
             <View style={styles.subContainerHead}>
               <DatePickerButton
-              title='วันที่เสนอราคา'
+                title="วันที่เสนอราคา"
                 label="วันที่เสนอราคา"
                 date="today"
                 onDateSelected={handleStartDateSelected}
@@ -299,7 +285,7 @@ const EditQuotation = ({navigation, route}: Props) => {
                 value={methods.watch('docNumber')}
               />
               <DatePickerButton
-              title='ยืนราคาถึงวันที่ี'
+                title="ยืนราคาถึงวันที่ี"
                 label="ยืนราคาถึงวันที่ี"
                 date="sevenDaysFromNow"
                 onDateSelected={handleEndDateSelected}
@@ -315,12 +301,7 @@ const EditQuotation = ({navigation, route}: Props) => {
               )}
 
               <View style={styles.header}>
-              <FontAwesomeIcon
-                          icon={faBriefcase}
-                          color="#19232e"
-                          size={20}
-                          
-                        />
+                <FontAwesomeIcon icon={faBriefcase} color="#19232e" size={20} />
                 <Text style={styles.label}>บริการ-สินค้า</Text>
               </View>
               {fields.length > 0 &&
@@ -467,29 +448,29 @@ const EditQuotation = ({navigation, route}: Props) => {
                 />
               </Modal>
               <Modal
-          isVisible={singatureModal}
-          style={styles.modal}
-          onBackdropPress={onCloseSignature}>
-          <Appbar.Header
-            mode="center-aligned"
-            style={{
-              backgroundColor: 'white',
-              width: Dimensions.get('window').width,
-            }}>
-            <Appbar.Action icon={'close'} onPress={onCloseSignature} />
-            <Appbar.Content
-              title="ลายเซ็นผู้เสนอราคา"
-              titleStyle={{fontSize: 18, fontWeight: 'bold'}}
-            />
-          </Appbar.Header>
-          <SafeAreaView style={styles.containerModal}>
-            <SignatureComponent
-              onClose={() => setSignatureModal(false)}
-              setSignatureUrl={setSignature}
-              onSignatureSuccess={handleSignatureSuccess}
-            />
-          </SafeAreaView>
-        </Modal>
+                isVisible={singatureModal}
+                style={styles.modal}
+                onBackdropPress={onCloseSignature}>
+                <Appbar.Header
+                  mode="center-aligned"
+                  style={{
+                    backgroundColor: 'white',
+                    width: Dimensions.get('window').width,
+                  }}>
+                  <Appbar.Action icon={'close'} onPress={onCloseSignature} />
+                  <Appbar.Content
+                    title="ลายเซ็นผู้เสนอราคา"
+                    titleStyle={{fontSize: 18, fontWeight: 'bold'}}
+                  />
+                </Appbar.Header>
+                <SafeAreaView style={styles.containerModal}>
+                  <SignatureComponent
+                    onClose={() => setSignatureModal(false)}
+                    setSignatureUrl={setSignature}
+                    onSignatureSuccess={handleSignatureSuccess}
+                  />
+                </SafeAreaView>
+              </Modal>
             </View>
           </ScrollView>
           <Modal
@@ -554,7 +535,8 @@ const styles = StyleSheet.create({
     height: 'auto',
   },
   form: {
-    border: '1px solid #0073BA',
+    borderColor: '#0073BA',
+    borderWidth: 1,
     borderRadius: 10,
   },
   imageContainer: {
@@ -649,9 +631,10 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    marginTop: 10,
+    marginTop: 20,
     alignItems: 'flex-start',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
+    gap: 20,
     paddingVertical: 5,
   },
   selectButton: {

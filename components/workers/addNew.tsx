@@ -105,7 +105,7 @@ const AddNewWorker = ({isVisible, onClose}: ExistingModalProps) => {
     try {
       // Start the image upload and wait for it to finish
       const imageUrl = await uploadImageToServer(image);
-
+console.log('imageUrl',imageUrl)
   
       // Prepare the data with the URL of the uploaded image
       const data = {
@@ -157,11 +157,13 @@ const AddNewWorker = ({isVisible, onClose}: ExistingModalProps) => {
     }
   };
 
-  const uploadImageToServer = async (imageUri: string): Promise<void> => {
+  const uploadImageToServer = async (imageUri: string): Promise<string> => {
     setIsImageUpload(true);
     if (!user || !user.email) {
       console.error('User or user email is not available');
-      return;
+      setIsImageUpload(false);
+      // Explicitly throw an error or return a default/fallback string if necessary.
+      throw new Error('User or user email is not available');
     }
   
     const storagePath = `${code}/workers/${getValues('name')}`;
@@ -179,79 +181,14 @@ const AddNewWorker = ({isVisible, onClose}: ExistingModalProps) => {
       // Get the download URL
       const accessUrl = await reference.getDownloadURL();
       console.log('Download URL:', accessUrl);
-  
+      return accessUrl; // Return the download URL here
     } catch (error) {
       console.error('Error uploading image:', error);
+      setIsImageUpload(false);
+      // Handle the error by throwing or returning a fallback URL
+      throw error; // or return a default URL if you prefer
     } finally {
       setIsImageUpload(false);
-    }
-  };
-  
-  const uploadImageToFbStorage = async (imagePath: string): Promise<string | undefined> => {
-    if (!imagePath) {
-      console.log('No image path provided');
-      return;
-    }
-    if (!user || !user.email) {
-      throw new Error('User or user email is not available');
-    }
-
-    const name = imagePath.substring(imagePath.lastIndexOf('/') + 1);
-    const fileType = imagePath.substring(imagePath.lastIndexOf('.') + 1);
-    const filename = slugify(name);
-
-    let contentType = '';
-    switch (fileType.toLowerCase()) {
-      case 'jpg':
-      case 'jpeg':
-        contentType = 'image/jpeg';
-        break;
-      case 'png':
-        contentType = 'image/png';
-        break;
-      case 'webp':
-        contentType = 'image/webp';
-        break;
-      default:
-        console.error('Unsupported file type:', fileType);
-        return;
-    }
-    const filePath =`${code}/workers/${getValues('name')}`
-    try {
-      const reference = firebase.storage().ref(filePath);
-      const task = reference.putFile(imagePath, { contentType });
-
-    return new Promise((resolve, reject) => {
-      task.on(
-        'state_changed',
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          console.log('Upload is ' + progress.toFixed(2) + '% done');
-          switch (snapshot.state) {
-            case firebase.storage.TaskState.PAUSED: // or 'paused'
-              console.log('Upload is paused');
-              break;
-            case firebase.storage.TaskState.RUNNING: // or 'running'
-              console.log('Upload is running');
-              break;
-          }        },
-        (error) => {
-          // Handle unsuccessful uploads
-          console.error('Upload failed:', error);
-          reject(error);
-        },
-        async () => {
-          // Upload completed successfully, now we can get the download URL
-          const url = await reference.getDownloadURL();
-          console.log('Upload to Firebase Storage success', url);
-          resolve(url);
-     
-        }
-      );
-    });
-    } catch (error) {
-      return Promise.reject('There was a problem with the fetch operation'); // Ensure to return or throw an error
-
     }
   };
   const {mutate, isPending} = useMutation( {

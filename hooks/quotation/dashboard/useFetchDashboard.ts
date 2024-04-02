@@ -16,7 +16,6 @@ const useFetchDashboard = () => {
       throw new Error('Email not found');
     }
     const token = await user.getIdToken(true);
-
     const response = await fetch(
       `${BACK_END_SERVER_URL}/api/dashboard/dashboard?email=${encodeURIComponent(
         email,

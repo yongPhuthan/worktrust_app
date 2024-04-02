@@ -236,7 +236,11 @@ const imageId = uuidv4();
         .catch(error => console.error('Error prefetching image:', error));
     }
   }, [companySignature]);
-  const style = `.m-signature-pad--footer {display: none; margin: 0px;}`;
+  const style = `.m-signature-pad--footer {display: none; margin: 0px;} 
+  
+  .m-signature-pad--body {border: 1px solid #000;}
+  
+  `;
   const handleClear = () => {
     setIsSigned(false);
 
@@ -294,11 +298,12 @@ const imageId = uuidv4();
             penColor="#0000FF"
             webStyle={style}
             onBegin={handleBegin}
-            style={{ width: 300}}
+            style={{ width: 300,height: 200}}
             ref={ref}
             onOK={img => handleUploadNewSignatureAndSave(img)}
             onEmpty={() => console.log('Empty')}
             descriptionText="เซ็นเอกสารด้านบน"
+
           />
           </View>
          
@@ -334,6 +339,7 @@ const styles = StyleSheet.create({
     height: 400,
     padding: 10,
   },
+
   underline: {
     height: 1,
     flex: 1,

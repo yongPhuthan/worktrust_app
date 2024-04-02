@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState,useEffect} from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -73,6 +73,22 @@ const RegisterScreen = ({navigation}: Props) => {
   function isFirebaseAuthError(error: any): error is FirebaseAuthTypes.NativeFirebaseAuthError {
     return error && typeof error.code === 'string' && typeof error.message === 'string';
   }
+
+
+const checkConnection = async () => {
+  try {
+    const response = await fetch(`${`${BACK_END_SERVER_URL}/api/company/getCategories`}`);
+    if (!response.ok) {
+      throw new Error('Server is not reachable');
+    }
+    const data = await response.json();
+    console.log('data', data);
+  } catch (error) {
+    console.error('Server is not reachable', error);
+  }
+}
+
+
   const signUpEmail = async () => {
     setUserLoading(true);
     await AsyncStorage.setItem('userEmail', email);
@@ -205,6 +221,7 @@ const RegisterScreen = ({navigation}: Props) => {
   const togglePasswordVisibility = () => {
     setPasswordVisible(!passwordVisible);
   };
+
   return (
     <SafeAreaView style={{marginTop: 10, paddingHorizontal: 10}}>
       {/* Add your input fields... */}

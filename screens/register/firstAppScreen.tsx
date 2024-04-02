@@ -35,7 +35,7 @@ const FirstAppScreen = ({navigation}: any) => {
         flex: 1,
         alignItems: 'center',
         flexDirection: 'column',
-        marginTop: '20%',
+        marginTop: '40%',
         justifyContent:'space-between',
       }}>
       <Text style={styles.logo}>{BRAND_NAME}</Text>

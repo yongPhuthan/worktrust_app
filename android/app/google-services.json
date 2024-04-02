@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "993294654596",
+    "project_id": "worktrust-b9c02",
+    "storage_bucket": "worktrust-b9c02.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:993294654596:android:c7fd5bcbc2a7134800f6d1",
+        "android_client_info": {
+          "package_name": "com.worktrust"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC12hYu9FV7wEI9DCeGGIJ7RWzC2TbDv88"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

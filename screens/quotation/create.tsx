@@ -1,4 +1,11 @@
+import { faBriefcase, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { StackNavigationProp } from '@react-navigation/stack';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
+import { FormProvider, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import {
+  Alert,
   Dimensions,
   FlatList,
   Image,
@@ -9,25 +16,16 @@ import {
   Switch,
   Text,
   TouchableOpacity,
-  Alert,
   View,
 } from 'react-native';
+import Modal from 'react-native-modal';
 import {
+  ActivityIndicator,
   Appbar,
   Button,
   ProgressBar,
-  ActivityIndicator,
-  
 } from 'react-native-paper';
-import {faBriefcase, faPlus} from '@fortawesome/free-solid-svg-icons';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {yupResolver} from '@hookform/resolvers/yup';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {useQuery} from '@tanstack/react-query';
-import React, {useContext, useMemo, useState,useEffect} from 'react';
-import {FormProvider, useFieldArray, useForm, useWatch} from 'react-hook-form';
-import Modal from 'react-native-modal';
-import {v4 as uuidv4} from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 import AddClient from '../../components/AddClient';
 import AddServices from '../../components/AddServices';
 import CardClient from '../../components/CardClient';
@@ -40,16 +38,15 @@ import Divider from '../../components/styles/Divider';
 import SmallDivider from '../../components/styles/SmallDivider';
 import SignatureComponent from '../../components/utils/signature';
 import ExistingWorkers from '../../components/workers/existing';
-import firebase from '../../firebase';
-import useThaiDateFormatter from '../../hooks/utils/useThaiDateFormatter';
-import {useUser} from '../../providers/UserContext';
-import * as stateAction from '../../redux/actions';
-import {Store} from '../../redux/store';
-import {CompanyUser, Service} from '../../types/docType';
-import {ParamListBase} from '../../types/navigationType';
-import {quotationsValidationSchema} from '../utils/validationSchema';
 import useFetchCompanyUser from '../../hooks/quotation/create/useFetchCompanyUser'; // adjust the path as needed
-import  useSelectedDates  from '../../hooks/quotation/create/useSelectDates'
+import useSelectedDates from '../../hooks/quotation/create/useSelectDates';
+import useThaiDateFormatter from '../../hooks/utils/useThaiDateFormatter';
+import * as stateAction from '../../redux/actions';
+import { Store } from '../../redux/store';
+import { CompanyUser, Service } from '../../types/docType';
+import { ParamListBase } from '../../types/navigationType';
+import { quotationsValidationSchema } from '../utils/validationSchema';
+import { TaxType } from '../../models/Tax';
 
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'Quotation'>;
@@ -59,12 +56,13 @@ const Quotation = ({navigation}: Props) => {
   const {dispatch}: any = useContext(Store);
   // const { data, isLoading } = useQuery('data', fetchData);
   const [isLoadingMutation, setIsLoadingMutation] = useState(false);
-  const { data, isLoading, isError, error } = useFetchCompanyUser();
+  const {data, isLoading, isError, error} = useFetchCompanyUser();
 
   const [companyUser, setCompanyUser] = useState<CompanyUser>();
 
   const [addCustomerModal, setAddCustomerModal] = useState(false);
-  const { initialDocnumber, initialDateOffer, initialDateEnd } = useSelectedDates();
+  const {initialDocnumber, initialDateOffer, initialDateEnd} =
+    useSelectedDates();
 
   const thaiDateFormatter = useThaiDateFormatter();
 
@@ -122,8 +120,6 @@ const Quotation = ({navigation}: Props) => {
     name: 'services',
   });
 
-
-
   const customer = useWatch({
     control: methods.control,
     name: 'customer',
@@ -142,7 +138,6 @@ const Quotation = ({navigation}: Props) => {
   }, [customer.name, customer.address]);
 
   const isDisabled = !customer.name || services.length === 0;
-
 
   useEffect(() => {
     if (data?.user) {
@@ -200,7 +195,6 @@ const Quotation = ({navigation}: Props) => {
       // await firebase.auth().signOut();
     }
   };
-
   const handleEditService = (index: number, currentValue: Service) => {
     setShowEditServiceModal(!showEditServiceModal);
     handleModalClose();
@@ -257,8 +251,6 @@ const Quotation = ({navigation}: Props) => {
     setSignatureModal(false);
     methods.setValue('sellerSignature', '', {shouldDirty: true});
   };
-
-
   return (
     <>
       <Appbar.Header
@@ -287,7 +279,6 @@ const Quotation = ({navigation}: Props) => {
               ],
               {cancelable: false},
             );
-
           }}
         />
         <Appbar.Content
@@ -301,7 +292,7 @@ const Quotation = ({navigation}: Props) => {
         <Button
           // loading={postLoading}
           disabled={isDisabled}
-          testID='submited-button'
+          testID="submited-button"
           mode="contained"
           icon={'arrow-right'}
           contentStyle={{
@@ -314,7 +305,7 @@ const Quotation = ({navigation}: Props) => {
       </Appbar.Header>
       <ProgressBar progress={0.5} color={'#1b52a7'} />
 
-      <FormProvider {...methods} >
+      <FormProvider {...methods}>
         <View style={{flex: 1}}>
           <ScrollView style={styles.container}>
             <View style={styles.subContainerHead}>
@@ -346,12 +337,8 @@ const Quotation = ({navigation}: Props) => {
               )}
 
               <View style={styles.header}>
-              <FontAwesomeIcon
-                          icon={faBriefcase}
-                          color="#19232e"
-                          size={20}
-                        />
-     
+                <FontAwesomeIcon icon={faBriefcase} color="#19232e" size={20} />
+
                 <Text style={styles.label}>บริการ-สินค้า</Text>
               </View>
               {fields.length > 0 &&
@@ -375,14 +362,14 @@ const Quotation = ({navigation}: Props) => {
               <Summary
                 vat7Props={Number(methods.watch('vat7')) === 0 ? false : true}
                 taxProps={
-                  methods.watch('taxType') !== 'NOTAX'
-                    ? methods.watch('taxType') === 'TAX3'
+                  methods.watch('taxType') !== TaxType.NOTAX
+                    ? methods.watch('taxType') === TaxType.TAX3
                       ? 3
                       : 5
                     : 0
                 }
                 pickerTaxProps={
-                  methods.watch('taxType') !== 'NOTAX' ? true : false
+                  methods.watch('taxType') !== TaxType.NOTAX ? true : false
                 }
               />
               <SmallDivider />
@@ -516,7 +503,6 @@ const Quotation = ({navigation}: Props) => {
             isVisible={workerModal}
             onBackdropPress={() => setWorkerModal(false)}
             style={styles.modal}>
-           
             <ExistingWorkers
               onClose={() => {
                 setWorkerpicker(!workerPicker);
@@ -592,7 +578,8 @@ const styles = StyleSheet.create({
     height: 'auto',
   },
   form: {
-    border: '1px solid #0073BA',
+    borderColor: '#0073BA',
+    borderWidth: 1,
     borderRadius: 10,
   },
   imageContainer: {

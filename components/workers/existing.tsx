@@ -123,6 +123,7 @@ const ExistingWorkers = ({isVisible, onClose}: ExistingModalProps) => {
   const handleAddNewProduct = () => {
     setIsOpenModal(true);
   };
+  console.log('workers', workers);
   return (
     <>
       <Appbar.Header
@@ -137,8 +138,7 @@ const ExistingWorkers = ({isVisible, onClose}: ExistingModalProps) => {
           titleStyle={{fontSize: 18, fontWeight: 'bold'}}
         />
         {workers.length > 0 && (
-                  <Appbar.Action icon={'plus'} onPress={handleAddNewProduct} />
-
+          <Appbar.Action icon={'plus'} onPress={handleAddNewProduct} />
         )}
       </Appbar.Header>
       <View style={styles.container}>

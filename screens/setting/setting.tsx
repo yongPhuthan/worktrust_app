@@ -2,7 +2,7 @@ import {
   BACK_END_SERVER_URL
 } from '@env';
 import {
-  faChevronRight
+  faChevronRight, faRemove
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import React, { useState } from 'react';
@@ -16,7 +16,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import { Divider,ActivityIndicator } from 'react-native-paper';
+import { Divider,ActivityIndicator, } from 'react-native-paper';
 import firebase from '../../firebase';
 import { ParamListBase } from '../../types/navigationType';
 
@@ -28,6 +28,7 @@ import {
 } from 'react-native-image-picker';
 import { useUser } from '../../providers/UserContext';
 import { CompanyUser } from '../../types/docType';
+import ConfirmDeleteDialog from '../../components/ConfirmDeleteDialog';
 
 interface SettingScreenProps {
   navigation: StackNavigationProp<ParamListBase, 'TopUpScreen'>;
@@ -36,6 +37,7 @@ interface SettingScreenProps {
 const SettingsScreen = ({navigation}: SettingScreenProps) => {
   const [company, setCompany] = useState<CompanyUser>();
   const user = useUser();
+  const [visible, setVisible] = useState(false);
 
 
   const [logo, setLogo] = useState<string | null>(null);
@@ -58,6 +60,11 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
       ],
     );
   };
+
+
+  const showDialog = () => setVisible(true);
+  const hideDialog = () => setVisible(false);
+
 
   const businessDetails = [
     {id: 2, title: 'Business Address', value: company?.address || ''},
@@ -100,7 +107,7 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
       console.error('Failed to sign out: ', error);
     }
   };
-  const {data, isLoading, error} = useQuery({
+  const {data, isLoading, isError,error} = useQuery({
     queryKey: ['companySetting'],
     queryFn: fetchCompanyUser,
 
@@ -112,6 +119,16 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
       </View>
     );
   }
+
+  if (isError) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text>Error: {error?.message}</Text>
+      </View>
+    );
+
+  }
+
   // if (error instanceof Error) {
   //   // Use Alert to notify the user
   //   Alert.alert(
@@ -386,7 +403,7 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
                   justifyContent: 'space-between',
                 }}>
                 <Text style={{fontSize: 15, fontWeight: '600', color: '#333'}}>
-                  Logout
+                  ออกจากระบบ
                 </Text>
                 <FontAwesomeIcon icon={faChevronRight} size={18} color="#aaa" />
               </View>
@@ -398,6 +415,22 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
                 borderBottomWidth: 0.3,
                 borderBottomColor: '#cccccc',
               }}></View>
+                          <TouchableOpacity
+              style={{paddingVertical: 15, paddingHorizontal: 24}}
+              onPress={showDialog}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}>
+                <Text style={{fontSize: 15, fontWeight: '400', color: 'red'}}>
+                  Delete Account
+                </Text>
+                <FontAwesomeIcon icon={faRemove} size={16} color="red" />
+              </View>
+            </TouchableOpacity>
+            <ConfirmDeleteDialog visible={visible} hideDialog={hideDialog} company={company.bizName} />
           </View>
         </ScrollView>
       )}

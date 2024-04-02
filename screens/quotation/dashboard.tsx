@@ -48,7 +48,6 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   const email = user?.email;
   const {data, isLoading, isError, error} = useFetchDashboard();
   const {activeFilter, updateActiveFilter} = useActiveFilter();
-
   const {width, height} = Dimensions.get('window');
   const [isLoadingAction, setIsLoadingAction] = useState(false);
   const queryClient = useQueryClient();
@@ -59,7 +58,6 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   const [originalData, setOriginalData] = useState<Quotation[] | null>(null);
   const {dispatch}: any = useContext(Store);
   const filteredData = useFilteredData(originalData, activeFilter);
-
   const [companyData, setCompanyData] = useState<CompanyUser | null>(null);
   const [quotationData, setQuotationData] = useState<Quotation[] | null>(null);
   const handleNoResponse = () => {
@@ -172,29 +170,14 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     );
   }
 
-  if (error instanceof Error) {
-    {
-      Alert.alert('seesion หมดอายุ', 'ลงทะเบียนเข้าใช้งานใหม่อีกครั้ง', [
-        {
-          text: 'ตกลง',
-          onPress: async () => {
-            await firebase
-              .auth()
-              .signOut()
-              .then(() => {
-                navigation.reset({
-                  index: 0,
-                  routes: [{name: 'FirstAppScreen'}],
-                });
-              })
-              .catch(signOutError => {
-                console.error('Sign out error: ', signOutError);
-              });
-          },
-        },
-      ]);
-    }
-  }
+  // if (isError) {
+  //   return (
+  //     <View style={styles.loadingContainer}>
+  //       <Text>Error: {error?.message}</Text>
+  //     </View>
+  //   );
+
+  // }
   const filtersToShow: QuotationStatusKey[] = [
     QuotationStatus.ALL,
     QuotationStatus.PENDING,
@@ -345,7 +328,6 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     if (!companyData) {
       navigation.navigate('CreateCompanyScreen');
     }
-    // navigation.navigate('GalleryScreen', {code: companyData?.code});
     navigation.navigate('CreateQuotation');
   };
 

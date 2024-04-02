@@ -6,11 +6,14 @@ import { Service } from '../types/docType';
 export type StateType = {
   companyID: string;
   code: string;
+  services: any[],
+
 };
 
 type ActionType = {
   type: string;
   payload: string | number | object;
+
 };
 
 type ContextType = {
@@ -23,6 +26,8 @@ export const Store = createContext<ContextType>({
 
     companyID: '',
     code: '',
+    services: [],
+
   },
   dispatch: () => { },
 });
@@ -31,6 +36,8 @@ const initialState: StateType = {
 
   companyID: '',
   code: '',
+  services: [],
+
 };
 
 function reducer(state: StateType, action: ActionType): StateType {
@@ -40,6 +47,11 @@ function reducer(state: StateType, action: ActionType): StateType {
       return { ...state, code: action.payload as string };
     case contrains.GET_COMPANYID:
       return {...state, companyID: action.payload as string};
+    case contrains.ADD_PRODUCT:
+      return {
+        ...state,
+        services: [...state.services, action.payload],
+      };
 
     default:
       return state;

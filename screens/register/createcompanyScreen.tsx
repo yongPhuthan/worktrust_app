@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
+  
   Dimensions,
   Image,
   Platform,
@@ -10,15 +10,17 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import {
   Appbar,
   Button,
   Checkbox,
+  ActivityIndicator,
   ProgressBar,
   TextInput,
 } from 'react-native-paper';
-
+import{useQuery} from'@tanstack/react-query';
 import { faCloudUpload } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { useMutation } from '@tanstack/react-query';
@@ -38,6 +40,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { useUser } from '../../providers/UserContext';
 import { ParamListBase } from '../../types/navigationType';
 import { companyValidationSchema } from '../utils/validationSchema';
+import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'RegisterScreen'>;
 }
@@ -58,34 +61,9 @@ const checkboxStyle = {
   backgroundColor: 'white', // Background color
 };
 
-const createCompanySeller = async ({data, token} : any) => {
-  if (!token) {
-    throw new Error('Auth token is not provided.');
-  }
 
-  const API_URL = `${BACK_END_SERVER_URL}/api/company/createCompanySeller`;
 
-  try {
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(data),
-    });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Network response was not ok: ${errorText}`);
-    }
-
-    // return await response.json(); // Assuming the response is JSON
-  } catch (error) {
-    console.error('Error:', error);
-    throw new Error('There was an error processing the request');
-  }
-};
 
 const CreateCompanyScreen = ({navigation}: Props) => {
   const [page, setPage] = useState<number>(1);
@@ -96,6 +74,56 @@ const CreateCompanyScreen = ({navigation}: Props) => {
   const [userLoading, setUserLoading] = useState(false);
   const user = useUser();
 
+  const createCompanySeller = async ({data} : any) => {
+    if (!user || !user.email) {
+      throw new Error('User or user email is not available');
+    }
+
+  
+    const API_URL = `${BACK_END_SERVER_URL}/api/company/createCompanySeller`;
+  
+    try {
+      const token = await user.getIdToken(true);
+
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+  
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Network response was not ok: ${errorText}`);
+      }
+  
+      // return await response.json(); // Assuming the response is JSON
+    } catch (error) {
+      console.error('Error:', error);
+      throw new Error('There was an error processing the request');
+    }
+  };
+
+
+  const getCategories = async () => {
+    const API_URL = `${BACK_END_SERVER_URL}/api/company/getCategories`;
+  
+    try {
+      const response = await fetch(API_URL);
+  
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Network response was not ok: ${errorText}`);
+      }
+  
+      return await response.json(); 
+    } catch (error) {
+      console.error('Error:', error);
+      throw new Error('There was an error processing the request');
+    }
+  }
   const {
     handleSubmit,
     setValue,
@@ -196,6 +224,19 @@ const CreateCompanyScreen = ({navigation}: Props) => {
       )
       .catch(error => console.error('Error fetching categories:', error));
   }, []);
+  const {
+    isLoading,
+    error,
+    data,
+    refetch,
+  } = useQuery({
+    queryKey: ['category'],
+    queryFn: getCategories,
+    // enabled: !!user,
+
+  });
+
+
   const handleNextPage = () => {
     setPage(page + 1);
   };
@@ -294,6 +335,14 @@ const CreateCompanyScreen = ({navigation}: Props) => {
     };
     mutate({data, token: user?.uid});
   };
+
+  if (isLoading) {
+    return (
+      <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
 
   const renderPage = () => {
     switch (page) {

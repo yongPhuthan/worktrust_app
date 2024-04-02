@@ -63,6 +63,7 @@ const SelectStandard = ({
       throw new Error('User not authenticated');
     } else {
       const idToken = await user.getIdToken(true);
+     
       let url = `${BACK_END_SERVER_URL}/api/services/queryStandards?id=${encodeURIComponent(
         companyID,
       )}`;
@@ -78,7 +79,7 @@ const SelectStandard = ({
         throw new Error('Network response was not ok');
       }
       setStandardDatas(data);
-
+console.log('data',data)
       return data;
     }
   };

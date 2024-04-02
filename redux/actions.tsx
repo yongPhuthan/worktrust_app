@@ -11,6 +11,11 @@ export const get_companyID = (payload:string) => ({
   payload,
 });
 
+export const add_product = (payload: any) => ({
+  type: contrains.ADD_PRODUCT,
+  payload,
+});
+
 
 
 // COMPONENTS  => ACTION
@@ -24,3 +29,8 @@ export const getCompanyID = (payload: string) => {
     dispatch(get_companyID(payload));
   };
 };
+export const addProduct = (payload: any) => {
+  return (dispatch: any) => {
+    dispatch(add_product(payload));
+  };
+}

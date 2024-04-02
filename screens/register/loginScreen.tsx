@@ -7,9 +7,7 @@ import auth from '@react-native-firebase/auth';
 import {StackNavigationProp} from '@react-navigation/stack';
 import React, {useState} from 'react';
 import {Controller, useForm, useWatch} from 'react-hook-form';
-import {
-  BRAND_NAME
-} from '@env';
+import {BRAND_NAME} from '@env';
 import {
   Alert,
   SafeAreaView,
@@ -145,7 +143,6 @@ const LoginScreen = ({navigation}: Props) => {
             marginTop: 20,
             borderRadius: 4,
           }}
-          
           // style={[
           //   styles.pressable,
           //   styles.getStartedButton,
@@ -154,8 +151,7 @@ const LoginScreen = ({navigation}: Props) => {
           loading={isLoading}
           onPress={handleLogin}
           disabled={!isValid || isLoading}>
-                      <Text style={styles.pressableText}>เข้าสู่ระบบ</Text>
-
+          <Text style={styles.pressableText}>เข้าสู่ระบบ</Text>
         </Button>
       </View>
     </SafeAreaView>

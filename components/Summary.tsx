@@ -1,10 +1,6 @@
 import Decimal from 'decimal.js-light';
-import React, { useEffect, useState } from 'react';
-import {
-  Controller,
-  useFormContext,
-  useWatch
-} from 'react-hook-form';
+import React, {useEffect, useState} from 'react';
+import {Controller, useFormContext, useWatch} from 'react-hook-form';
 import {
   Dimensions,
   Platform,
@@ -12,12 +8,13 @@ import {
   Switch,
   Text,
   TextInput,
-  View
+  View,
 } from 'react-native';
-import { Text as TextPaper } from 'react-native-paper';
+import {Text as TextPaper, Checkbox} from 'react-native-paper';
 import RNPickerSelect from 'react-native-picker-select';
 import SmallDivider from './styles/SmallDivider';
-import { Service } from 'types/docType';
+import {Service} from 'types/docType';
+import {TaxType} from '../models/Tax';
 
 const windowWidth = Dimensions.get('window').width;
 
@@ -94,9 +91,9 @@ const Summary = ({vat7Props, taxProps, pickerTaxProps}: Props) => {
   const taxValue = useWatch({
     control,
     name: 'taxValue',
-  });  
+  });
   useEffect(() => {
-    const sum = services.reduce((acc:number, curr:Service) => {
+    const sum = services.reduce((acc: number, curr: Service) => {
       const total = curr.total ? new Decimal(curr.total) : new Decimal(0);
       return new Decimal(acc).plus(total);
     }, new Decimal(0));
@@ -110,7 +107,7 @@ const Summary = ({vat7Props, taxProps, pickerTaxProps}: Props) => {
 
     const calculatedSummaryAfterDiscount = sum.minus(calculatedDiscountValue);
 
-    let taxType = 'NOTAX';
+    let taxType = TaxType.NOTAX;
     let taxValue = new Decimal(0);
     const vat7Amount = vat7Picker
       ? calculatedSummaryAfterDiscount.times(0.07)
@@ -119,11 +116,11 @@ const Summary = ({vat7Props, taxProps, pickerTaxProps}: Props) => {
     if (pickerVisible && selectedValue) {
       switch (selectedValue) {
         case 3:
-          taxType = 'TAX3';
+          taxType = TaxType.TAX3;
           taxValue = calculatedSummaryAfterDiscount.times(0.03);
           break;
         case 5:
-          taxType = 'TAX5';
+          taxType = TaxType.TAX5;
           taxValue = calculatedSummaryAfterDiscount.times(0.05);
           break;
       }
@@ -146,7 +143,8 @@ const Summary = ({vat7Props, taxProps, pickerTaxProps}: Props) => {
     );
     setValue('allTotal', finalTotal.toFixed(2), {shouldDirty: true});
   }, [services, discountPercentage, vat7Picker, pickerVisible, selectedValue]);
-  
+  console.log('data', data);
+  console.log('selectedValue', selectedValue);
   return (
     <View style={styles.container}>
       <View style={styles.summary}>
@@ -158,25 +156,25 @@ const Summary = ({vat7Props, taxProps, pickerTaxProps}: Props) => {
       <View style={styles.summary}>
         <Text style={styles.summaryText}>ส่วนลดรวม</Text>
         <View style={styles.inputWrapper}>
-        <Controller
-  control={control}
-  name="discountPercentage"
-  defaultValue={0}
-  render={({ field: { onChange, onBlur, value } }) => (
-    <TextInput
-      style={styles.input}
-      placeholder="0"
-      onBlur={onBlur}
-      keyboardType="number-pad"
-      onChangeText={(newValue) => {
-        // Convert newValue to a number before passing to onChange if needed
-        const numericValue = newValue ? parseFloat(newValue) : 0;
-        onChange(numericValue);
-      }}
-      value={value.toString()} // Convert the value to a string
-    />
-  )}
-/>
+          <Controller
+            control={control}
+            name="discountPercentage"
+            defaultValue={0}
+            render={({field: {onChange, onBlur, value}}) => (
+              <TextInput
+                style={styles.input}
+                placeholder="0"
+                onBlur={onBlur}
+                keyboardType="number-pad"
+                onChangeText={newValue => {
+                  // Convert newValue to a number before passing to onChange if needed
+                  const numericValue = newValue ? parseFloat(newValue) : 0;
+                  onChange(numericValue);
+                }}
+                value={value.toString()} // Convert the value to a string
+              />
+            )}
+          />
 
           <Text style={styles.summaryText}>%</Text>
         </View>
@@ -218,6 +216,7 @@ const Summary = ({vat7Props, taxProps, pickerTaxProps}: Props) => {
         <View style={styles.pickerWrapper}>
           <View style={styles.pickerAndroidContainer}>
             <RNPickerSelect
+              placeholder={{label: 'เลือกจำนวนภาษี...'}}
               onValueChange={value => setSelectedValue(value)}
               items={data}
               value={selectedValue}
@@ -274,7 +273,7 @@ const Summary = ({vat7Props, taxProps, pickerTaxProps}: Props) => {
           </Text>
         </View>
       )}
-      
+
       <View style={styles.summaryTotal}>
         <TextPaper variant="headlineMedium">รวม</TextPaper>
         <TextPaper variant="headlineMedium">
@@ -305,7 +304,7 @@ const styles = StyleSheet.create({
   summaryTotal: {
     flexDirection: 'row',
     marginBottom: 10,
-    marginVertical:20,
+    marginVertical: 20,
     justifyContent: 'space-between',
     color: '#19232e',
   },
