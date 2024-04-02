@@ -9,6 +9,7 @@ declare module '@env' {
   export const FIREBASE_MESSAGING_SENDER_ID:string
   export const FIREBASE_PROJECT_ID:string
   export const FIREBASE_STORAGE_BUCKET:string
+  export const DEBUG_TOKEN:string
 
     // Add more environment variables if needed
   }
