@@ -66,5 +66,5 @@ yarn-error.log
 /coverage
 
 # Google Services
-/ios/worktrust/GoogleService-Info.plist
+/ios/GoogleService-Info.plist
 /android/worktrust/app/google-services.json
