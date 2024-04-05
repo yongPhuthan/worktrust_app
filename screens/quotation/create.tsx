@@ -191,7 +191,7 @@ const Quotation = ({navigation}: Props) => {
       });
       // navigation.navigate('ExistingProduct', {id: companyUser.user?.id});
     } else {
-      console.log('no user');
+      console.log('no user', data);
       // await firebase.auth().signOut();
     }
   };

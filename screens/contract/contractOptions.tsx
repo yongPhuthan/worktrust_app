@@ -606,7 +606,7 @@ const styles = StyleSheet.create({
   signatureRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddindHorizontal: 50,
+    paddingHorizontal: 50,
     marginHorizontal: 20,
   },
   signHeader: {

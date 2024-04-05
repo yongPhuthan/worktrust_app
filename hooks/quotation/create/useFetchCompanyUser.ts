@@ -17,7 +17,7 @@ const useFetchCompanyUser = () => {
     if (!email) {
       throw new Error('Email not found');
     }
-
+console.log('email', email)
     const url = `${BACK_END_SERVER_URL}/api/company/getCompanySeller?email=${encodeURIComponent(
       email,
     )}`;

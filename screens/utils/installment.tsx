@@ -1,15 +1,15 @@
-import { BACK_END_SERVER_URL } from '@env';
-import { yupResolver } from '@hookform/resolvers/yup';
-import { RouteProp, useRoute } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import {BACK_END_SERVER_URL} from '@env';
+import {yupResolver} from '@hookform/resolvers/yup';
+import {RouteProp, useRoute} from '@react-navigation/native';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {useMutation, useQueryClient} from '@tanstack/react-query';
 import Decimal from 'decimal.js-light';
-import React, { useCallback, useEffect, useState } from 'react';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { installmentValidationSchema } from '../utils/validationSchema';
+import React, {useCallback, useEffect, useState} from 'react';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {installmentValidationSchema} from '../utils/validationSchema';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 
-import { Controller, useFieldArray, useForm } from 'react-hook-form';
+import {Controller, useFieldArray, useForm} from 'react-hook-form';
 import {
   Alert,
   Dimensions,
@@ -19,27 +19,26 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  View
+  View,
 } from 'react-native';
 import {
   ActivityIndicator,
   Appbar,
   Button,
   Card,
-  TextInput
+  TextInput,
 } from 'react-native-paper';
 import RNPickerSelect from 'react-native-picker-select';
-import { useUser } from '../../providers/UserContext';
-import { ParamListBase } from '../../types/navigationType';
-import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
+import {useUser} from '../../providers/UserContext';
+import {ParamListBase} from '../../types/navigationType';
+import {faChevronDown} from '@fortawesome/free-solid-svg-icons';
 
 type Props = {
   navigation: StackNavigationProp<ParamListBase, 'Installment'>;
   route: RouteProp<ParamListBase, 'Installment'>;
 };
 
-const Installment = ({ navigation, route }: Props) => {
-
+const Installment = ({navigation, route}: Props) => {
   const dataProps: any = route.params?.data;
 
   const [singatureModal, setSignatureModal] = useState(false);
@@ -92,7 +91,6 @@ const Installment = ({ navigation, route }: Props) => {
       throw new Error(err as any);
     }
   };
-  
 
   const [installmentDetailsText, setInstallmentDetailsText] = useState<{
     [key: number]: string;
@@ -127,13 +125,12 @@ const Installment = ({ navigation, route }: Props) => {
   const {mutate, isPending, isError} = useMutation({
     mutationFn: updateQuotation,
     onSuccess: data => {
-      const newId = dataProps.quotationId.slice(0, 8);
-      queryClient.invalidateQueries(
-        {
-          queryKey: ['dashboardContract',email],
-        });
+      const newId = dataProps.contractID.slice(0, 8);
+      queryClient.invalidateQueries({
+        queryKey: ['dashboardContract', email],
+      });
       navigation.navigate('ContractViewScreen', {
-        id: newId,
+        id: dataProps.contractID,
       });
     },
     onError: (error: any) => {
@@ -145,7 +142,6 @@ const Installment = ({ navigation, route }: Props) => {
         {cancelable: false},
       );
     },
-    
   });
   useEffect(() => {
     const totalPercentage = Object.values(percentages).reduce(
@@ -181,7 +177,7 @@ const Installment = ({ navigation, route }: Props) => {
     );
     if (!dataProps.contract) {
       dataProps.contract = {};
-  }
+    }
     dataProps.periodPercent = newInstallmentDetails;
     dataProps.contract.projectName = dataProps.projectName;
     dataProps.contract.signAddress = dataProps.signAddress;
@@ -199,16 +195,15 @@ const Installment = ({ navigation, route }: Props) => {
 
   const DropdownIcon = () => (
     <FontAwesomeIcon
-    icon={faChevronDown}
-    color="gray"
-    style={{
-      position: 'absolute',
-      right: 10,
-      top: 12,
-    }}
-    size={18}
-  />
-
+      icon={faChevronDown}
+      color="gray"
+      style={{
+        position: 'absolute',
+        right: 10,
+        top: 12,
+      }}
+      size={18}
+    />
   );
   const handlePercentageChange = useCallback((value: string, index: number) => {
     setPercentages(prevState => ({
@@ -250,7 +245,6 @@ const Installment = ({ navigation, route }: Props) => {
         borderRadius: 8,
         width: '100%',
         // paddingHorizontal: 12,
-        paddingVertical: 12,
         backgroundColor: 'white',
         marginBottom: 10,
       }}
@@ -331,7 +325,7 @@ const Installment = ({ navigation, route }: Props) => {
       </Card.Content>
     </Card>
   );
-
+console.log('contractId', dataProps.contractID)
   return (
     <>
       <Appbar.Header
@@ -340,11 +334,7 @@ const Installment = ({ navigation, route }: Props) => {
         style={{
           backgroundColor: 'white',
         }}>
-        <Appbar.BackAction
-          onPress={() => {
-            navigation.goBack();
-          }}
-        />
+        <Appbar.BackAction onPress={() => navigation.goBack()} />
         <Appbar.Content
           title="การแบ่งงวดชำระ"
           titleStyle={{
@@ -355,67 +345,50 @@ const Installment = ({ navigation, route }: Props) => {
         />
         <Button
           // loading={postLoading}
-          disabled={!isPercentagesValid || !isValid}
+          // disabled={!isPercentagesValid || !isValid}
           mode="contained"
+          disabled={ !isValid}
           buttonColor={'#1b72e8'}
           onPress={handleSave}>
           {'บันทึก'}
         </Button>
       </Appbar.Header>
       <SafeAreaView style={{flex: 1}}>
-        <View style={{flex: 1, marginTop: 5}}>
-          <KeyboardAwareScrollView style={styles.container}>
-            <ScrollView
-              style={{
-                flex: 1,
-                backgroundColor: '#FFFFFF',
-                paddingHorizontal: 5,
-              }}>
-              <View style={styles.innerContainer}>
-                {installments < 1 && (
-                  <Text style={styles.header}>โครงการนี้แบ่งจ่ายกี่งวด</Text>
-                )}
-                <Text style={styles.subHeader}>
-                  ยอดรวม{' '}
-                  {Number(totalPrice)
-                    .toFixed(2)
-                    .replace(/\d(?=(\d{3})+\.)/g, '$&,')}{' '}
-                  บาท
-                </Text>
-                <RNPickerSelect
-                  onValueChange={value => setInstallments(value)}
-                  items={pickerItems}
-                  placeholder={{label: 'เลือกจำนวนงวด', value: null}}
-                  style={pickerSelectStyles}
-                  useNativeAndroidPickerStyle={false}
-                  Icon={DropdownIcon as any}
-                />
-
-                {installments > 0 && (
-                  <>
-                    <FlatList
-                      data={Array.from({length: installments})}
-                      renderItem={renderItem}
-                      keyExtractor={(_, index) => index.toString()}
-                    />
-                    {/* <View
-                    style={{
-                      width: '100%',
-                      alignSelf: 'center',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}>
-                    <SaveButton
-                      onPress={handleSave}
-                      disabled={!isPercentagesValid || !isValid}
-                    />
-                  </View> */}
-                  </>
-                )}
-              </View>
-            </ScrollView>
-          </KeyboardAwareScrollView>
-        </View>
+        <FlatList
+          data={Array.from({length: installments})}
+          renderItem={renderItem}
+          style={{
+            flex: 1,
+            padding: 20,
+            backgroundColor: '#F0F0F0',
+            paddingBottom: 50,
+          }}
+          keyExtractor={(_, index) => index.toString()}
+          ListHeaderComponent={
+            <View>
+              {/* Move your non-list content here */}
+              {installments < 1 && (
+                <Text style={styles.header}>โครงการนี้แบ่งจ่ายกี่งวด</Text>
+              )}
+              <Text style={styles.subHeader}>
+                ยอดรวม{' '}
+                {Number(totalPrice)
+                  .toFixed(2)
+                  .replace(/\d(?=(\d{3})+\.)/g, '$&,')}{' '}
+                บาท
+              </Text>
+              {/* Any other content you want to scroll with the list */}
+              <RNPickerSelect
+                onValueChange={value => setInstallments(value)}
+                items={pickerItems}
+                placeholder={{label: 'เลือกจำนวนงวด', value: null}}
+                style={pickerSelectStyles}
+                useNativeAndroidPickerStyle={false}
+                Icon={DropdownIcon as any}
+              />
+            </View>
+          }
+        />
       </SafeAreaView>
     </>
   );
@@ -613,6 +586,7 @@ const pickerSelectStyles = StyleSheet.create({
     paddingRight: 30, // ensure icon does not overlay text
     marginBottom: 16,
     verticalAlign: 'middle',
+    backgroundColor: 'white',
   },
   loadingContainer: {
     flex: 1,
@@ -629,7 +603,7 @@ const pickerSelectStyles = StyleSheet.create({
     color: 'black',
     paddingRight: 30, // ensure icon does not overlay text
     marginBottom: 16,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: 'white',
   },
 
   installmentDetailContainer: {

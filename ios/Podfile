@@ -74,8 +74,9 @@ target 'worktrust' do
   target 'worktrustTests' do
     inherit! :complete
     pod 'RNCPicker', :path => '../node_modules/@react-native-picker/picker'
+    pod 'react-native-blob-util', :path => '../node_modules/react-native-blob-util'
     pod 'Firebase/Messaging'
-    pod 'RNPDF', :path => '../node_modules/react-native-view-pdf'
+    # pod 'RNPDF', :path => '../node_modules/react-native-view-pdf'
     pod 'FirebaseAppCheck'
 
 

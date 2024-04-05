@@ -4,6 +4,7 @@ import '@react-native-firebase/firestore';
 import '@react-native-firebase/storage';
 import '@react-native-firebase/app-check';
 
+import {Platform} from 'react-native';
 import {
   FIREBASE_API_KEY,
   FIREBASE_APP_ID,
@@ -29,46 +30,37 @@ if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
 // Initialize App Check and configure based on environment
-const appCheck = firebase.appCheck();
-const rnfbProvider = appCheck.newReactNativeFirebaseAppCheckProvider();
-
+// const appCheck = firebase.appCheck();
+// const rnfbProvider = appCheck.newReactNativeFirebaseAppCheckProvider();
 
 // Configuration for App Check based on environment
-rnfbProvider.configure({
-  android: {
-    provider: __DEV__ ? 'debug' : 'playIntegrity',
-    debugToken: DEBUG_TOKEN,
-  },
-  apple: {
-    provider: __DEV__ ? 'debug' : 'appAttestWithDeviceCheckFallback',
-    debugToken: DEBUG_TOKEN,
-  },
-});
-// Enable App Check
-appCheck.initializeAppCheck({
-  provider: rnfbProvider,
-  isTokenAutoRefreshEnabled: true,
-});
+// rnfbProvider.configure({
+//   android: {
+//     provider: __DEV__ ? 'debug' : 'playIntegrity',
+//     debugToken: DEBUG_TOKEN,
+//   },
+//   apple: {
+//     provider: __DEV__ ? 'debug' : 'appAttestWithDeviceCheckFallback',
+//     debugToken: DEBUG_TOKEN,
+//   },
+// });
 
 // Log App Check token for debugging
-firebase.appCheck().onTokenChanged(async (token) => {
-  console.log('App Check Token:', token);
-}, (error) => {
-  console.error('App Check Token Error:', error);
-});
 
+// appCheck.getToken(true).then(token => {
+//   console.log('App Check token: ', token);
+// });
+if (__DEV__) {
+  let emulatorHost = '127.0.0.1';
 
-// if (__DEV__) {
-//   let emulatorHost = 'localhost';
+  if (Platform.OS === 'android') {
+    emulatorHost = '10.0.2.2';
+  }
 
-//   if (Platform.OS === 'android') {
-//     emulatorHost = '10.0.2.2';
-//   }
-
-//   firebase.auth().useEmulator(`http://${emulatorHost}:9099`);
-//   firebase.storage().useEmulator(emulatorHost, 9199);
-//   firebase.firestore().useEmulator(emulatorHost, 8080);
-// }
+  firebase.auth().useEmulator(`http://${emulatorHost}:9099`);
+  firebase.storage().useEmulator(emulatorHost, 9199);
+  firebase.firestore().useEmulator(emulatorHost, 8080);
+}
 
 console.log('Firebase App name: ', firebase.app().name);
 

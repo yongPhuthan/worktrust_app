@@ -170,14 +170,6 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     );
   }
 
-  // if (isError) {
-  //   return (
-  //     <View style={styles.loadingContainer}>
-  //       <Text>Error: {error?.message}</Text>
-  //     </View>
-  //   );
-
-  // }
   const filtersToShow: QuotationStatusKey[] = [
     QuotationStatus.ALL,
     QuotationStatus.PENDING,
@@ -226,7 +218,6 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
       services,
     });
   };
-
   const renderItem = ({item, index}: any) => (
     <>
       <View style={{marginTop: 10}}>
@@ -330,7 +321,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     }
     navigation.navigate('CreateQuotation');
   };
-
+console.log('data',data)
   return (
     <>
       <PaperProvider>
@@ -398,7 +389,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                   keyExtractor={item => item}
                 />
               </View>
-              {companyData && (
+              {data && (
                 <View
                   style={{
                     flex: 1,

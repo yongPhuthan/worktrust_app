@@ -1,46 +1,61 @@
-import { RouteProp } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import React, { useContext, useEffect, useState } from 'react';
+import React, {useContext, useState, useEffect} from 'react';
 import {
   ActivityIndicator,
-  Alert,
-  Dimensions,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
   SafeAreaView,
-  Share,
-  StyleSheet
+  StyleSheet,
+  Dimensions,
+  Platform,
+  Alert,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+  View,
 } from 'react-native';
-import { BottomNavigation, FAB } from 'react-native-paper';
-import PDFView from 'react-native-view-pdf';
-import { Store } from '../../redux/store';
-import { ParamListBase } from '../../types/navigationType';
+import Pdf from 'react-native-pdf'; // Import the react-native-pdf
+import {RouteProp} from '@react-navigation/native';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {Share} from 'react-native';
+import {AnimatedFAB, Appbar, BottomNavigation, FAB} from 'react-native-paper';
+import {WebView} from 'react-native-webview';
+import {Store} from '../../redux/store';
+import {ParamListBase} from '../../types/navigationType';
 interface Props {
-  navigation: StackNavigationProp<ParamListBase, 'ContractViewScreen'>;
-  route: RouteProp<ParamListBase, 'ContractViewScreen'>;
+  navigation: StackNavigationProp<ParamListBase, 'DocViewScreen'>;
+  route: RouteProp<ParamListBase, 'DocViewScreen'>;
 }
 
 // ... rest of your DocViewScreen component ...
 
 const ContractViewScreen = ({navigation, route}: Props) => {
-
-
-  const ContractWebView = ({url}: any) => {
+  const QuotationWebView = ({url}: any) => {
     return (
       <SafeAreaView style={{flex: 1}}>
-        <PDFView
-          resource={url}
-          resourceType={'url'}
-          onLoad={() => console.log(`PDF rendered from URL`)}
-          onError={error => console.log('Cannot render PDF', error)}
-          style={{flex: 1}}
-        />
+        <WebView source={{uri: url}} />
+      </SafeAreaView>
+    );
+  };
+
+  const ContractWebView = ({url}: any) => {
+    // เลือกคอมโพเนนต์ตามแพลตฟอร์ม
+    const source = {uri: url};
+
+    const Content = Platform.select({
+      ios: () => (
+        <View style={{flex: 1}}>
+         <WebView source={{uri: url}} style={{flex: 1}} />
+        </View>
+      ),
+      android: () => <WebView source={{uri: url}} style={{flex: 1}} />,
+    });
+
+    return (
+      <SafeAreaView style={{flex: 1}}>
+        {Content ? <Content /> : null}
       </SafeAreaView>
     );
   };
 
   const {
-    state: {isEmulator},
+    state: {isEmulator, code},
     dispatch,
   }: any = useContext(Store);
 
@@ -48,26 +63,30 @@ const ContractViewScreen = ({navigation, route}: Props) => {
   const backHome = () => {
     navigation.navigate('DashboardQuotation');
   };
-  
 
-  const ContractRoute = () => (
-    <ContractWebView url={`https://www.trusth.co/doc/${id}`} />
+  const QuotationRoute = () => (
+    <QuotationWebView url={`https://www.worktrust.co/preview/seller/${id}`} />
   );
-const HomeRoute = () => {
-  useEffect(() => {
-    navigation.reset({
-      index: 0,
-      routes: [{name: 'DashboardQuotation'}],
-    })  }, [navigation]);
+  const ContractRoute = () => (
+    <ContractWebView url={`https://www.worktrust.co/preview/seller/doc/${id}`} />
+  );
+  const HomeRoute = () => {
+    useEffect(() => {
+      navigation.reset({
+        index: 0,
+        routes: [{name: 'DashboardQuotation'}],
+      });
+    }, [navigation]);
 
-  // Return null หรือ component ว่างๆ เพื่อป้องกัน warning/error ขณะที่ navigation กำลังทำงาน
-  return null;
-};
+    // Return null หรือ component ว่างๆ เพื่อป้องกัน warning/error ขณะที่ navigation กำลังทำงาน
+    return null;
+  };
 
   const [routes] = React.useState([
+    {key: 'quotation', title: 'เว็บเพจ', focusedIcon: 'web'},
     {
       key: 'contracts',
-      title: 'สัญญา',
+      title: 'เอกสาร',
       focusedIcon: 'file-document-outline',
     },
     {
@@ -78,7 +97,7 @@ const HomeRoute = () => {
   ]);
 
   const renderScene = BottomNavigation.SceneMap({
-   
+    quotation: QuotationRoute,
     contracts: ContractRoute,
     home: HomeRoute,
   });
@@ -91,7 +110,7 @@ const HomeRoute = () => {
   const firstPart = id?.substring(0, 8);
   React.useEffect(() => {
     // กำหนด URL ตาม tab ที่เลือก
-    const baseUrl = 'https://www.trusth.co/';
+    const baseUrl = 'https://www.worktrust.co/preview/';
     const newUrl = index === 0 ? `${baseUrl}${id}` : `${baseUrl}doc/${id}`;
     setUrl(newUrl);
   }, [index, id]);
@@ -286,6 +305,11 @@ const styles = StyleSheet.create({
     right: width * 0.05,
     position: 'absolute',
     backgroundColor: '#1b52a7',
+  },
+  pdf: {
+    flex: 1,
+    width: Dimensions.get('window').width,
+    height: Dimensions.get('window').height,
   },
 });
 

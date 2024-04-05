@@ -19,7 +19,7 @@ import {
   View,
 } from 'react-native';
 import Modal from 'react-native-modal';
-import {Checkbox} from 'react-native-paper';
+import {Checkbox,} from 'react-native-paper';
 import {useUser} from '../../providers/UserContext';
 import {Store} from '../../redux/store';
 import {Workers} from '../../types/docType';
@@ -77,7 +77,7 @@ const ExistingWorkers = ({isVisible, onClose}: ExistingModalProps) => {
     }
   };
 
-  const {data, isLoading, isError} = useQuery({
+  const {data, isLoading, isError,error} = useQuery({
     queryKey: ['workers', code],
     queryFn: fetchExistingWorkers,
   });
@@ -109,11 +109,7 @@ const ExistingWorkers = ({isVisible, onClose}: ExistingModalProps) => {
     );
   }
   if (isError) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text>เกิดข้อผิดพลาด Worker</Text>
-      </View>
-    );
+console.log('error', error)
   }
   const handleDonePress = () => {
     if (currentWorkers.length > 0) {

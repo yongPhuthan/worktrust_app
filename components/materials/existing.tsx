@@ -59,6 +59,8 @@ const ExistingMaterials = ({
       throw new Error('User not authenticated');
     } else {
       const idToken = await user.getIdToken(true);
+      console.log('CompanyID')
+
       let url = `${BACK_END_SERVER_URL}/api/services/queryMaterials?code=${encodeURIComponent(
         code,
       )}`;

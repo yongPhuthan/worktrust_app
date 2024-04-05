@@ -235,7 +235,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
     // enabled: !!user,
 
   });
-
+console.log('user token', user?.email)
 
   const handleNextPage = () => {
     setPage(page + 1);

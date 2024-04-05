@@ -92,6 +92,7 @@ const DashboardContract = ({navigation}: DashboardScreenProps) => {
       console.error('User or user email is not available');
       return;
     }
+    console.log('email', email);
     try {
       const token = await user.getIdToken(true);
       const response = await fetch(
