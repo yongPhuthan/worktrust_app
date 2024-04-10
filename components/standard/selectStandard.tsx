@@ -6,7 +6,6 @@ import {
   Image,
   SafeAreaView,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import {Store} from '../../redux/store';
@@ -17,8 +16,16 @@ import {useFormContext} from 'react-hook-form';
 import {Audit, Standard} from '../../types/docType';
 
 import Modal from 'react-native-modal';
-import {Appbar, Button, List, Checkbox, Divider} from 'react-native-paper';
+import {
+  Appbar,
+  Text,
+  Button,
+  List,
+  Checkbox,
+  Snackbar,
+} from 'react-native-paper';
 import {useUser} from '../../providers/UserContext';
+import CreateStandard from './createStandard';
 
 interface AuditModalProps {
   isVisible: boolean;
@@ -26,6 +33,15 @@ interface AuditModalProps {
   title?: string;
   description?: string;
   serviceId: string;
+}
+interface StandardData {
+  id: string;
+  createdAt: string;
+  standardShowTitle: string;
+  content: string;
+  image: string;
+  badStandardImage: string;
+  badStandardEffect: string;
 }
 
 const SelectStandard = ({
@@ -37,8 +53,10 @@ const SelectStandard = ({
 }: AuditModalProps) => {
   const [showCards, setShowCards] = useState(true);
   const [headerText, setHeaderText] = useState('');
+  const [isCreateStandard, setIsCreateStandard] = useState(false);
+
   const user = useUser();
-  const [standardDatas, setStandardDatas] = useState<Audit[] | null>(null);
+  const [standardDatas, setStandardDatas] = useState<Standard[] | null>(null);
   const context = useFormContext();
   const {
     register,
@@ -50,7 +68,7 @@ const SelectStandard = ({
   } = context as any;
 
   const {
-    state: {selectedAudit , companyID,code, serviceList},
+    state: {selectedAudit, companyID, code, serviceList},
     dispatch,
   }: any = useContext(Store);
   const [yourExpanded, setYourExpanded] = React.useState(true);
@@ -73,24 +91,25 @@ const SelectStandard = ({
           Authorization: `Bearer ${idToken}`,
         },
       });
-      const data = await response.json();
+      const data: Standard[] = await response.json();
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
-      setStandardDatas(data);
-console.log('data',data)
-      return data;
+      const sortedData = data.sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+
+      setStandardDatas(sortedData);
+      console.log('sortedData', sortedData);
+      return sortedData;
     }
   };
-  const {data, isLoading, isError} = useQuery(
-    // ['queryStandards', companyID],
-    // () => fetchStandards().then(res => res),
-    {
-      queryKey: ['queryStandards', code],
-      queryFn: fetchStandards,
 
-    },
-  );
+  const {data, isLoading, isError} = useQuery({
+    queryKey: ['standards', code],
+    queryFn: fetchStandards,
+  });
 
   const handleSelectStandard = (standard: Standard) => {
     const currentStandards = getValues('standards') || [];
@@ -138,13 +157,7 @@ console.log('data',data)
       </View>
     );
   }
-  if (isError) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text>ERROR Audit</Text>
-      </View>
-    );
-  }
+
   return (
     <Modal isVisible={isVisible} style={styles.modal} onBackdropPress={onClose}>
       <Appbar.Header
@@ -154,11 +167,22 @@ console.log('data',data)
           backgroundColor: 'white',
           width: Dimensions.get('window').width,
         }}>
-        <Appbar.Action icon={'close'} onPress={() => onClose()} />
+        <Appbar.BackAction onPress={() => onClose()} />
+
         <Appbar.Content
           title={`มาตรฐานงานติดตั้ง ${title || ''}`}
-          titleStyle={{fontSize: 16}}
+          titleStyle={{
+            fontSize: 18,
+            fontWeight: 'bold',
+            fontFamily: 'Sukhumvit set',
+          }}
         />
+        {standardDatas && standardDatas?.length > 0 && (
+          <Appbar.Action
+            icon="plus-thick"
+            onPress={() => setIsCreateStandard(true)}
+          />
+        )}
       </Appbar.Header>
       <SafeAreaView style={styles.container}>
         <FlatList
@@ -267,7 +291,10 @@ console.log('data',data)
                           />
                         )}
                         style={{width: '100%'}}>
-<List.Item title={`${item.content}`} titleNumberOfLines={8}/>
+                        <List.Item
+                          title={`${item.content}`}
+                          titleNumberOfLines={8}
+                        />
                       </List.Accordion>
                     </List.Section>
                     <List.Section>
@@ -281,8 +308,10 @@ console.log('data',data)
                             color="red"
                           />
                         )}>
-                     <List.Item title={`${item.badStandardEffect}`} titleNumberOfLines={8}/>
-
+                        <List.Item
+                          title={`${item.badStandardEffect}`}
+                          titleNumberOfLines={8}
+                        />
                       </List.Accordion>
                     </List.Section>
                   </View>
@@ -296,9 +325,24 @@ console.log('data',data)
                 flex: 1,
                 justifyContent: 'center',
                 height: height * 0.5,
+                flexDirection: 'row',
+                alignContent: 'center',
 
                 alignItems: 'center',
-              }}></View>
+              }}>
+              {/* <Text style={{fontSize: 16, color: 'gray'}}>ยังไม่มีมาตรฐานการทำงาน</Text> */}
+              <Button
+                onPress={() => setIsCreateStandard(true)}
+                mode="contained"
+                icon={'plus'}
+                buttonColor={'#1b72e8'}>
+                <Text
+                  variant="titleMedium"
+                  style={{color: 'white', fontFamily: 'Sukhumvit set'}}>
+                  เพิ่มมาตรฐานการทำงาน
+                </Text>
+              </Button>
+            </View>
           }
           keyExtractor={item => item.id}
         />
@@ -319,7 +363,28 @@ console.log('data',data)
             {`บันทึก ${watch('standards')?.length} มาตรฐาน`}{' '}
           </Button>
         )}
+        <Modal
+          isVisible={isCreateStandard}
+          style={styles.modal}
+          onBackdropPress={() => setIsCreateStandard(false)}>
+          <CreateStandard
+            isVisible={isCreateStandard}
+            onClose={() => setIsCreateStandard(false)}
+            companyId={companyID}
+          />
+        </Modal>
       </SafeAreaView>
+      {isError && (
+        <Snackbar
+          visible={isError}
+          onDismiss={() => console.log('dismiss')}
+          action={{
+            label: 'Dismiss',
+            onPress: () => console.log('dismiss'),
+          }}>
+          เกิดข้อผิดพลาด
+        </Snackbar>
+      )}
     </Modal>
   );
 };

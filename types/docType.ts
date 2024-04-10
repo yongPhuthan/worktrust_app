@@ -257,6 +257,7 @@ export interface Audit {
   price: number;
   imageUri: string;
   defaultChecked: boolean;
+  createdAt : Date
 }
 
 export type Standard = {

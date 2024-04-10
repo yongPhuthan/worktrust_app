@@ -40,7 +40,6 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { useUser } from '../../providers/UserContext';
 import { ParamListBase } from '../../types/navigationType';
 import { companyValidationSchema } from '../utils/validationSchema';
-import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'RegisterScreen'>;
 }
@@ -235,7 +234,6 @@ const CreateCompanyScreen = ({navigation}: Props) => {
     // enabled: !!user,
 
   });
-console.log('user token', user?.email)
 
   const handleNextPage = () => {
     setPage(page + 1);

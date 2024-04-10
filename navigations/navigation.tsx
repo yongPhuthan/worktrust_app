@@ -1,12 +1,8 @@
-import { DefaultTheme, NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import {DefaultTheme, NavigationContainer} from '@react-navigation/native';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import React from 'react';
-import {
-  ActivityIndicator,
-  StyleSheet,
-  View
-} from 'react-native';
-import { useUser } from '../providers/UserContext';
+import {ActivityIndicator, StyleSheet, View} from 'react-native';
+import {useUser} from '../providers/UserContext';
 import DefaultContract from '../screens/contract/defaultContract';
 import AddCustomer from '../screens/customer/addCustomer';
 import AddProductForm from '../screens/products/addProduct';
@@ -14,10 +10,7 @@ import ExistingProducts from '../screens/products/existingProducts';
 import Quotation from '../screens/quotation/create';
 import DocViewScreen from '../screens/quotation/webview';
 import CreateCompanyScreen from '../screens/register/createcompanyScreen';
-import {
-  ParamListBase,
-  ScreenItem
-} from '../types/navigationType';
+import {ParamListBase, ScreenItem} from '../types/navigationType';
 
 import ContractOption from '../screens/contract/contractOptions';
 import AddExistProduct from '../screens/products/addExistProduct';
@@ -37,7 +30,8 @@ import TopUpScreen from '../screens/utils/topup';
 import DashboardDrawer from './dashboardDrawer';
 // import BootSplash from "react-native-bootsplash";
 import ContractViewScreen from '../screens/contract/webview';
-
+import SelectDoc from '../screens/invoice/selectDoc';
+import CreateByQuotation from '../screens/invoice/create/createByquotation';
 
 const Theme = {
   ...DefaultTheme,
@@ -79,7 +73,7 @@ const Navigation = ({initialRouteName}: any) => {
 
   return (
     <NavigationContainer theme={Theme}>
-     {/* <NavigationContainer  onReady={() => {
+      {/* <NavigationContainer  onReady={() => {
       BootSplash.hide();
      }} theme={Theme}> */}
       <Stack.Navigator
@@ -106,13 +100,12 @@ const Navigation = ({initialRouteName}: any) => {
             headerTintColor: 'black',
           }}
         />
-                <Stack.Screen
+        <Stack.Screen
           name="ContractViewScreen"
           component={ContractViewScreen}
           options={{
             ...commonScreenOptions,
             headerShown: false,
-           
 
             headerStyle: {
               backgroundColor: '#ffffff',
@@ -135,9 +128,9 @@ const Navigation = ({initialRouteName}: any) => {
             headerTintColor: 'black',
           }}
         />
-       
-         <Stack.Screen
-          name="SelectWorks" 
+
+        <Stack.Screen
+          name="SelectWorks"
           component={Selectworks}
           options={{
             ...commonScreenOptions,
@@ -150,8 +143,8 @@ const Navigation = ({initialRouteName}: any) => {
             headerTintColor: 'black',
           }}
         />
-         <Stack.Screen
-          name="TopUpScreen" 
+        <Stack.Screen
+          name="TopUpScreen"
           component={TopUpScreen}
           options={{
             ...commonScreenOptions,
@@ -164,8 +157,8 @@ const Navigation = ({initialRouteName}: any) => {
             headerTintColor: 'black',
           }}
         />
-         <Stack.Screen
-          name="SendWorks" 
+        <Stack.Screen
+          name="SendWorks"
           component={SendWorks}
           options={{
             ...commonScreenOptions,
@@ -192,6 +185,20 @@ const Navigation = ({initialRouteName}: any) => {
             headerTintColor: 'black',
           }}
         />
+        <Stack.Screen
+          name="SelectDoc"
+          component={SelectDoc}
+          options={{
+            ...commonScreenOptions,
+            headerShown: false,
+            title: 'เลือกเอกสาร',
+            headerBackTitleVisible: false,
+            headerStyle: {
+              backgroundColor: '#ffffff',
+            },
+            headerTintColor: 'black',
+          }}
+        />
 
         <Stack.Screen
           name="AddExistProduct"
@@ -207,7 +214,7 @@ const Navigation = ({initialRouteName}: any) => {
             headerTintColor: 'black',
           }}
         />
-        
+
         <Stack.Screen
           name="EditSetting"
           component={EditSetting}
@@ -250,10 +257,8 @@ const Navigation = ({initialRouteName}: any) => {
             headerTintColor: 'black',
           }}
         />
-        
-       
-      
-         <Stack.Screen
+
+        <Stack.Screen
           name="ExistingContract"
           component={ExistingContract}
           options={{
@@ -267,7 +272,7 @@ const Navigation = ({initialRouteName}: any) => {
             headerTintColor: 'black',
           }}
         />
-      
+
         <Stack.Screen
           name="AddCustomer"
           component={AddCustomer}
@@ -282,9 +287,7 @@ const Navigation = ({initialRouteName}: any) => {
             headerTintColor: 'black',
           }}
         />
-       
-     
-       
+
         <Stack.Screen
           name="EditQuotation"
           component={EditQuotation}
@@ -292,6 +295,21 @@ const Navigation = ({initialRouteName}: any) => {
             ...commonScreenOptions,
             headerShown: false,
             title: 'แก้ไขเอกสาร',
+            headerBackTitleVisible: false,
+
+            headerStyle: {
+              backgroundColor: '#ffffff',
+            },
+            headerTintColor: 'black',
+          }}
+        />
+        <Stack.Screen
+          name="CreateByQuotation"
+          component={CreateByQuotation}
+          options={{
+            ...commonScreenOptions,
+            headerShown: false,
+            title: 'สร้างใบวางบิลใหม่',
             headerBackTitleVisible: false,
 
             headerStyle: {
@@ -359,10 +377,6 @@ const Navigation = ({initialRouteName}: any) => {
             headerTintColor: 'black',
           }}
         />
-        
-
-
-       
       </Stack.Navigator>
     </NavigationContainer>
   );

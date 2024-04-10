@@ -34,7 +34,6 @@ export type ProductItem = {
 };
 type OnAddService = (service: Service) => void;
 
-
 export type ParamListBase = {
   Quotation: undefined;
   RegisterScreen: undefined;
@@ -43,10 +42,10 @@ export type ParamListBase = {
   AddProduct: {
     onAddService: OnAddService;
     quotationId: string;
-    currentValue:Service | null
+    currentValue: Service | null;
   };
   ExistingContract: undefined;
-  TopUpScreen: {balance:number};
+  TopUpScreen: {balance: number};
   LayoutScreen: undefined;
   CreateContractScreen: {id: string};
   HomeScreen: undefined;
@@ -55,13 +54,16 @@ export type ParamListBase = {
   ContractCard: undefined;
   SelectAudit: Audit;
   DefaultContract: {
-    data : Quotation
+    data: Quotation;
   };
   EditDefaultContract: {
-    data : Quotation
-    quotationId: string;  
+    data: Quotation;
+    quotationId: string;
   };
   DashboardQuotation: undefined;
+  SelectDoc: undefined;
+  DashboardInvoice: undefined;
+  DashboardReceipt: undefined;
   DashboardContract: undefined;
   DashboardSubmit: undefined;
   SelectContract: {id: string};
@@ -83,10 +85,10 @@ export type ParamListBase = {
   LoginScreen: undefined;
   CompanyUserFormScreen: undefined;
   ExistingSignature: {
-    company: CompanyUser
-  }
+    company: CompanyUser;
+  };
   ContactInfoScreen: undefined;
-  Installment: InstallmentParams
+  Installment: InstallmentParams;
   ExistingCategories: undefined;
   GalleryScreen: {code: string | undefined};
   SettingCompany: undefined;
@@ -104,20 +106,20 @@ export type ParamListBase = {
     companyUser: CompanyUser;
     workStatus: string;
     title: string;
-    signAddress:string;
-    contract:{
-      id:string;
-      projectName:string;
-      description:string;
-      signAddress:string;
-    }
-    customer :{
-      id:string;
-      name:string;
-      email:string;
-      phone:string;
-      address:string;
-    }
+    signAddress: string;
+    contract: {
+      id: string;
+      projectName: string;
+      description: string;
+      signAddress: string;
+    };
+    customer: {
+      id: string;
+      name: string;
+      email: string;
+      phone: string;
+      address: string;
+    };
     description: string;
     services: {
       id: string;
@@ -129,8 +131,19 @@ export type ParamListBase = {
     text: string;
     data: Quotation;
   };
-  EditQuotation: {quotation: Quotation; company: CompanyUser,services:Service[]};
+  EditQuotation: {
+    quotation: Quotation;
+    company: CompanyUser;
+    services: Service[];
+  };
+  CreateByQuotation: {
+    quotation: Quotation;
+    company: CompanyUser;
+    services: Service[];
+  };
   EditQuotationScreen: {id: string};
+  CreateByQuotationScreen: {id: string};
+
   EditContractOption: {id: string};
   QuotationScreen: undefined;
   ContractOptions: {

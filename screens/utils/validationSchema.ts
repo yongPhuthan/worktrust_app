@@ -197,4 +197,36 @@ export const sendWorkValidationSchema  = yup.object().shape({
   services: yup.array().of(servicesForSendWorkSchema).required('เลือกบริการอย่างน้อย 1 รายการ'),
 });
 
+export const createStandardSchema = yup.object().shape({
+  standardShowTitle: yup.string().required('ระบุชื่อมาตรฐานของคุณ'),
+  image : yup.string().required('เลือกรูปภาพมาตรฐานของคุณ'),
+  content : yup.string().required('ระบุรายละเอียดมาตรฐานของคุณ'),
+  badStandardImage : yup.string().required('เลือกรูปภาพตัวอย่างผลงานที่ไม่ได้มาตรฐาน'),
+  badStandardEffect : yup.string().required('ระบุผลกระทบจากผลงานที่ไม่ได้มาตรฐาน'),
+});
+
+export const invoiceValidationSchema = yup.object().shape({
+  customer: customersValidationSchema,
+  vat7: yup.number(),
+  taxType: yup.string(),
+  taxValue: yup.number(),
+  summary: yup.number(),
+  summaryAfterDiscount: yup.number(),
+  discountName: yup.string().default('thb'),
+  discountValue: yup.number(),
+  allTotal: yup.number(),
+  dateOffer: yup.string(),
+  discountPercentage: yup.number(),
+  discountType: yup.string(),
+  dateEnd: yup.string(),
+  docNumber: yup.string(),
+  quotationNumber: yup.string(),
+  FCMToken: yup.string().default('none'),
+  sellerSignature: yup.string().default('none'),
+  services: yup
+    .array()
+    .of(servicesValidationSchema)
+    .required('เพิ่มบริการอย่างน้อย 1 รายการ')
+    .min(1, 'ต้องเลือกบริการอย่างน้อย 1 รายการ'),
+});
 

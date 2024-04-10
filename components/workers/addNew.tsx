@@ -1,9 +1,9 @@
-import { BACK_END_SERVER_URL } from '@env';
-import { faCamera, faClose } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import React, { useContext, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import {BACK_END_SERVER_URL} from '@env';
+import {faCamera, faClose} from '@fortawesome/free-solid-svg-icons';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {useMutation, useQueryClient} from '@tanstack/react-query';
+import React, {useContext, useState} from 'react';
+import {Controller, useForm} from 'react-hook-form';
 import {
   ActivityIndicator,
   Alert,
@@ -11,9 +11,8 @@ import {
   Image,
   StyleSheet,
   Text,
-
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
 import {
   ImageLibraryOptions,
@@ -21,12 +20,12 @@ import {
   MediaType,
   launchImageLibrary,
 } from 'react-native-image-picker';
-import { Checkbox, TextInput } from 'react-native-paper';
+import {Checkbox, TextInput} from 'react-native-paper';
 import firebase from '../../firebase';
-import { useUriToBlob } from '../../hooks/utils/image/useUriToBlob';
-import { useSlugify } from '../../hooks/utils/useSlugify';
-import { useUser } from '../../providers/UserContext';
-import { Store } from '../../redux/store';
+import {useUriToBlob} from '../../hooks/utils/image/useUriToBlob';
+import {useSlugify} from '../../hooks/utils/useSlugify';
+import {useUser} from '../../providers/UserContext';
+import {Store} from '../../redux/store';
 import SaveButton from '../ui/Button/SaveButton';
 
 interface ExistingModalProps {
@@ -68,7 +67,7 @@ const AddNewWorker = ({isVisible, onClose}: ExistingModalProps) => {
     dispatch,
   }: any = useContext(Store);
   const slugify = useSlugify();
-  const pickImage = async (onChange:any) => {
+  const pickImage = async (onChange: any) => {
     const options: ImageLibraryOptions = {
       mediaType: 'photo' as MediaType,
     };
@@ -101,12 +100,12 @@ const AddNewWorker = ({isVisible, onClose}: ExistingModalProps) => {
       console.error('User or user email or Image is not available');
       return;
     }
-  
+
     try {
       // Start the image upload and wait for it to finish
       const imageUrl = await uploadImageToServer(image);
-console.log('imageUrl',imageUrl)
-  
+      console.log('imageUrl', imageUrl);
+
       // Prepare the data with the URL of the uploaded image
       const data = {
         name: getValues('name'),
@@ -115,7 +114,7 @@ console.log('imageUrl',imageUrl)
         code,
         image: imageUrl,
       };
-  
+
       // Proceed with creating the worker using the image URL
       const token = await user.getIdToken(true);
       const response = await fetch(
@@ -129,28 +128,26 @@ console.log('imageUrl',imageUrl)
           body: JSON.stringify({data}),
         },
       );
-  
+
       if (!response.ok) {
         const errorData = await response.json();
-        const errorMessage = errorData.message || 'An unexpected error occurred.';
+        const errorMessage =
+          errorData.message || 'An unexpected error occurred.';
         throw new Error(errorMessage);
       }
-  
+
       // Handle successful worker creation here, if necessary
       if (response.ok) {
-        queryClient.invalidateQueries(
-          {
-            queryKey:['workers', code]
-          });
-
+        queryClient.invalidateQueries({
+          queryKey: ['workers', code],
+        });
       }
-  
     } catch (err) {
       // Handle errors from image upload or worker creation
       console.error('An error occurred:', err);
       Alert.alert(
         'เกิดข้อผิดพลาด',
-        'An error occurred while creating the worker. Please try again.', 
+        'An error occurred while creating the worker. Please try again.',
         [{text: 'OK', onPress: () => console.log('OK Pressed')}],
         {cancelable: false},
       );
@@ -165,19 +162,19 @@ console.log('imageUrl',imageUrl)
       // Explicitly throw an error or return a default/fallback string if necessary.
       throw new Error('User or user email is not available');
     }
-  
+
     const storagePath = `${code}/workers/${getValues('name')}`;
-  
+
     try {
       // Create a reference to the Firebase Storage location
       const reference = firebase.storage().ref(storagePath);
-  
+
       // Upload the image file directly from the client
       console.log('Uploading image to Firebase Storage', imageUri);
       await reference.putFile(imageUri); // For React Native, use putFile with the local file URI
-  
+
       console.log('Image uploaded successfully');
-  
+
       // Get the download URL
       const accessUrl = await reference.getDownloadURL();
       console.log('Download URL:', accessUrl);
@@ -191,19 +188,16 @@ console.log('imageUrl',imageUrl)
       setIsImageUpload(false);
     }
   };
-  const {mutate, isPending} = useMutation( {
+  const {mutate, isPending} = useMutation({
     mutationFn: createWorker,
     onSuccess: () => {
-      queryClient.invalidateQueries(
-        {
-          queryKey:['workers', code]
-        }
-      );
+      queryClient.invalidateQueries({
+        queryKey: ['workers', code],
+      });
       onClose();
     },
     onError: error => {
       console.log('onError', error);
-      
     },
   });
 
@@ -225,11 +219,9 @@ console.log('imageUrl',imageUrl)
         <TouchableOpacity style={styles.closeButton} onPress={onClose}>
           <FontAwesomeIcon icon={faClose} size={32} color="gray" />
         </TouchableOpacity>
-      
       </View>
       <Controller
         control={control}
-        
         name="image"
         rules={{required: 'Image is required'}} // Add required rule here
         render={({field: {onChange, value}}) => (
@@ -245,16 +237,15 @@ console.log('imageUrl',imageUrl)
         )}
       />
 
-
       <Controller
         control={control}
         name="name"
         rules={{required: true}}
-        render={({field: {onChange, onBlur, value},fieldState:{error}}) => (
+        render={({field: {onChange, onBlur, value}, fieldState: {error}}) => (
           <TextInput
-          mode='outlined'
-          label={'ชื่อ-นามสกุลช่าง'}
-          error={!!error}
+            mode="outlined"
+            label={'ชื่อ-นามสกุลช่าง'}
+            error={!!error}
             style={{marginBottom: 20}}
             onBlur={onBlur}
             onChangeText={onChange}
@@ -264,16 +255,16 @@ console.log('imageUrl',imageUrl)
       />
 
       {/* Description Input */}
-  
+
       <Controller
         control={control}
         name="mainSkill"
         rules={{required: true}}
-        render={({field: {onChange, onBlur, value},fieldState:{error}}) => (
+        render={({field: {onChange, onBlur, value}, fieldState: {error}}) => (
           <TextInput
-          mode='outlined'
-          label={'เป็นช่างอะไร ?'}
-          error={!!error}
+            mode="outlined"
+            label={'เป็นช่างอะไร ?'}
+            error={!!error}
             placeholder="เช่น ช่างอลูมิเนียม..."
             onBlur={onBlur}
             onChangeText={onChange}
@@ -282,28 +273,32 @@ console.log('imageUrl',imageUrl)
           />
         )}
       />
-                  <Text style={{marginTop:30, fontSize:16,alignItems: 'center'}}>สถาณะ</Text>
+      <Text style={{marginTop: 30, fontSize: 16, alignItems: 'center'}}>
+        สถาณะ
+      </Text>
 
       <Controller
         control={control}
         name="workerStatus"
         render={({field: {onChange, value}}) => (
           <View style={styles.checkBoxContainer}>
-            <View style={{flexDirection:'row',alignItems: 'center'}}>
-            <Checkbox.Android
-              status={value === WorkerStatus.MAINWORKER ? 'checked' : 'unchecked'}
-              onPress={() => onChange(WorkerStatus.MAINWORKER)}
-            />
-            <Text style={{fontSize:16}}>ช่างหลักประจำทีม</Text>
+            <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              <Checkbox.Android
+                status={
+                  value === WorkerStatus.MAINWORKER ? 'checked' : 'unchecked'
+                }
+                onPress={() => onChange(WorkerStatus.MAINWORKER)}
+              />
+              <Text style={{fontSize: 16}}>ช่างหลักประจำทีม</Text>
             </View>
-            <View style={{flexDirection:'row',alignItems: 'center'}}>
-
-            <Checkbox.Android
-            
-              status={value === WorkerStatus.OUTSOURCE ? 'checked' : 'unchecked'}
-              onPress={() => onChange(WorkerStatus.OUTSOURCE)}
-            />
-            <Text style={{fontSize:16}}>ช่างทั่วไป</Text>
+            <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              <Checkbox.Android
+                status={
+                  value === WorkerStatus.OUTSOURCE ? 'checked' : 'unchecked'
+                }
+                onPress={() => onChange(WorkerStatus.OUTSOURCE)}
+              />
+              <Text style={{fontSize: 16}}>ช่างทั่วไป</Text>
             </View>
           </View>
         )}
@@ -319,7 +314,7 @@ const styles = StyleSheet.create({
   container: {
     margin: 50,
     paddingHorizontal: 20,
-marginVertical: 20,
+    marginVertical: 20,
     backgroundColor: '#ffffff',
     width: windowWidth,
     height: windowHeight,

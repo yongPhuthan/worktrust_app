@@ -1,11 +1,5 @@
-import { faBriefcase, faPlus } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { yupResolver } from '@hookform/resolvers/yup';
-import { StackNavigationProp } from '@react-navigation/stack';
-import React, { useContext, useEffect, useMemo, useState } from 'react';
-import { FormProvider, useFieldArray, useForm, useWatch } from 'react-hook-form';
+import React, {useContext, useMemo, useState} from 'react';
 import {
-  Alert,
   Dimensions,
   FlatList,
   Image,
@@ -15,105 +9,102 @@ import {
   StyleSheet,
   Switch,
   Text,
-  TouchableOpacity,
+  Alert,
   View,
 } from 'react-native';
+import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
+import {Appbar, Button, ProgressBar} from 'react-native-paper';
+import useSelectedDates from '../../../hooks/quotation/create/useSelectDates';
+import {v4 as uuidv4} from 'uuid';
+import {BACK_END_SERVER_URL} from '@env';
+import {faBriefcase, faPlus} from '@fortawesome/free-solid-svg-icons';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {yupResolver} from '@hookform/resolvers/yup';
+import {RouteProp} from '@react-navigation/native';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {FormProvider, useFieldArray, useForm, useWatch} from 'react-hook-form';
 import Modal from 'react-native-modal';
+import AddClient from '../../../components/AddClient';
+import AddServices from '../../../components/AddServices';
+import CardClient from '../../../components/CardClient';
+import CardProject from '../../../components/CardProject';
+import DocNumber from '../../../components/DocNumber';
+import Summary from '../../../components/Summary';
+import AddCustomer from '../../../components/add/AddCustomer';
+import DatePickerButton from '../../../components/styles/DatePicker';
+import Divider from '../../../components/styles/Divider';
+import SmallDivider from '../../../components/styles/SmallDivider';
+import SignatureComponent from '../../../components/utils/signature';
+import useThaiDateFormatter from '../../../hooks/utils/useThaiDateFormatter';
+import {Store} from '../../../redux/store';
+import {Service} from '../../../types/docType';
+import {ParamListBase} from '../../../types/navigationType';
+import {TaxType} from '../../../models/Tax';
+import ExistingWorkers from '../../../components/workers/existing';
 import {
-  ActivityIndicator,
-  Appbar,
-  Button,
-  ProgressBar,
-} from 'react-native-paper';
-import { v4 as uuidv4 } from 'uuid';
-import AddClient from '../../components/AddClient';
-import AddServices from '../../components/AddServices';
-import CardClient from '../../components/CardClient';
-import CardProject from '../../components/CardProject';
-import DocNumber from '../../components/DocNumber';
-import Summary from '../../components/Summary';
-import AddCustomer from '../../components/add/AddCustomer';
-import DatePickerButton from '../../components/styles/DatePicker';
-import Divider from '../../components/styles/Divider';
-import SmallDivider from '../../components/styles/SmallDivider';
-import SignatureComponent from '../../components/utils/signature';
-import ExistingWorkers from '../../components/workers/existing';
-import useFetchCompanyUser from '../../hooks/quotation/create/useFetchCompanyUser'; // adjust the path as needed
-import useSelectedDates from '../../hooks/quotation/create/useSelectDates';
-import useThaiDateFormatter from '../../hooks/utils/useThaiDateFormatter';
-import * as stateAction from '../../redux/actions';
-import { Store } from '../../redux/store';
-import { CompanyUser, Service } from '../../types/docType';
-import { ParamListBase } from '../../types/navigationType';
-import { quotationsValidationSchema } from '../utils/validationSchema';
-import { TaxType } from '../../models/Tax';
+  invoiceValidationSchema,
+  quotationsValidationSchema,
+} from '../../utils/validationSchema';
+import useCreateInvoice from '../../../hooks/invoice/useCreateInvoice';
 
 interface Props {
-  navigation: StackNavigationProp<ParamListBase, 'Quotation'>;
+  navigation: StackNavigationProp<ParamListBase, 'CreateByQuotationScreen'>;
+  route: RouteProp<ParamListBase, 'CreateByQuotation'>;
+}
+interface MyError {
+  response: object;
 }
 
-const Quotation = ({navigation}: Props) => {
+const CreateByQuotation = ({navigation, route}: Props) => {
   const {dispatch}: any = useContext(Store);
-  // const { data, isLoading } = useQuery('data', fetchData);
-  const [isLoadingMutation, setIsLoadingMutation] = useState(false);
-  const {data, isLoading, isError, error} = useFetchCompanyUser();
-
-  const [companyUser, setCompanyUser] = useState<CompanyUser>();
-
+  const companyUser = route.params.company;
+  const quotation = route.params.quotation;
+  const servicesParams = route.params.services;
   const [addCustomerModal, setAddCustomerModal] = useState(false);
-  const {initialDocnumber, initialDateOffer, initialDateEnd} =
-    useSelectedDates();
-
+  const [editCustomerModal, setEditCustomerModal] = useState(false);
   const thaiDateFormatter = useThaiDateFormatter();
-
+  const [editServicesModal, setEditServicesModal] = useState(false);
   const [workerModal, setWorkerModal] = useState(false);
-  // const [customerName, setCustomerName] = useState('');
-
-  const [pickerVisible, setPickerVisible] = useState(false);
   const [workerPicker, setWorkerpicker] = useState(false);
-
   const [singatureModal, setSignatureModal] = useState(false);
   const [signature, setSignature] = useState<string | null>(null);
-  const quotationId = uuidv4();
-  const [fcmToken, setFtmToken] = useState('');
+  const [serviceIndex, setServiceIndex] = useState(0);
+  const {initialDocnumber, initialDateOffer, initialDateEnd} =
+    useSelectedDates();
+  const invoiceId = uuidv4();
+  const backendUrl = `${BACK_END_SERVER_URL}/api/documents/createInvoice`;
+  const [createInvoice, {loading, error, data}] = useCreateInvoice(backendUrl);
+  const queryClient = useQueryClient();
+
   const [showEditServiceModal, setShowEditServiceModal] = useState(false);
   const [visibleModalIndex, setVisibleModalIndex] = useState<number | null>(
     null,
   );
-
-  const defalutCustomer = {
-    id: '',
-    name: '',
-    address: '',
-    companyId: '',
-    phone: '',
-  };
-
-  const quotationDefaultValues = {
-    services: [],
-    customer: defalutCustomer,
-    companyUser: null,
-    vat7: 0,
-    taxType: 'NOTAX',
-    taxValue: 0,
-    summary: 0,
-    summaryAfterDiscount: 0,
-    discountType: 'PERCENT',
-    discountPercentage: 0,
-    discountValue: 0,
-    allTotal: 0,
-    dateOffer: initialDateOffer,
-    dateEnd: initialDateEnd,
-    docNumber: initialDocnumber,
-    workers: [],
-    FCMToken: fcmToken,
-    sellerSignature: '',
+  const invoiceDefaultValues = {
+    services: servicesParams,
+    customer: quotation.customer,
+    companyUser,
+    vat7: quotation.vat7 ? quotation.vat7 : 0,
+    taxType: quotation.taxType ? quotation.taxType : TaxType.NOTAX,
+    taxValue: quotation.taxValue ? quotation.taxValue : 0,
+    summary: quotation.summary,
+    summaryAfterDiscount: quotation.summaryAfterDiscount,
+    discountType: quotation.discountType,
+    discountPercentage: quotation.discountPercentage,
+    discountValue: quotation.discountValue,
+    allTotal: quotation.allTotal,
+    dateOffer: quotation.dateOffer,
+    dateEnd: quotation.dateEnd,
+    docNumber:   initialDocnumber,
+    sellerSignature: quotation.sellerSignature,
+    quotationNumber: quotation.docNumber,
+    quotationRef: quotation.id,
   };
 
   const methods = useForm<any>({
     mode: 'all',
-    defaultValues: quotationDefaultValues,
-    resolver: yupResolver(quotationsValidationSchema),
+    defaultValues: invoiceDefaultValues,
+    resolver: yupResolver(invoiceValidationSchema),
   });
   const {fields, append, remove, update} = useFieldArray({
     control: methods.control,
@@ -125,28 +116,25 @@ const Quotation = ({navigation}: Props) => {
     name: 'customer',
   });
 
-  const workers = useWatch({
+  const sellerSignature = useWatch({
     control: methods.control,
-    name: 'workers',
+    name: 'sellerSignature',
   });
+
   const services = useWatch({
     control: methods.control,
     name: 'services',
   });
+
   const isCustomerDisabled = useMemo(() => {
     return customer.name === '' && customer.address === '';
   }, [customer.name, customer.address]);
 
   const isDisabled = !customer.name || services.length === 0;
+  const [pickerVisible, setPickerVisible] = useState(
+    sellerSignature !== '' ? true : false,
+  );
 
-  useEffect(() => {
-    if (data?.user) {
-      setCompanyUser(data); // แก้ไขจาก data เดิมที่คุณให้มา
-      methods.setValue('companyUser', data.user);
-      dispatch(stateAction.get_companyID(data.user.id));
-      methods.setValue('FCMToken', fcmToken); // Update FCMToken
-    }
-  }, [data]);
   const useSignature = () => {
     // Toggle the state of the picker and accordingly set the modal visibility
     setPickerVisible(prevPickerVisible => {
@@ -160,20 +148,10 @@ const Quotation = ({navigation}: Props) => {
       return newPickerVisible;
     });
   };
-
-  const useWorkers = () => {
-    if (!workerPicker) {
-      if (workers.length > 0) {
-        setWorkerModal(false);
-        setWorkerpicker(!workerPicker);
-      } else {
-        setWorkerModal(true);
-        setWorkerpicker(!workerPicker);
-      }
-    } else {
-      methods.setValue('workers', []);
-      setWorkerpicker(!workerPicker);
-    }
+  const onCloseSignature = () => {
+    setPickerVisible(false);
+    setSignatureModal(false);
+    methods.setValue('sellerSignature', '', {shouldDirty: true});
   };
   const handleSignatureSuccess = () => {
     setSignatureModal(false);
@@ -181,17 +159,16 @@ const Quotation = ({navigation}: Props) => {
   const handleModalClose = () => {
     setVisibleModalIndex(null);
   };
-
   const handleAddProductForm = async () => {
-    if (companyUser?.user) {
+    if (companyUser) {
       navigation.navigate('AddProduct', {
         onAddService: newProduct => append(newProduct),
-        quotationId: quotationId,
+        quotationId: quotation.id,
         currentValue: null,
       });
       // navigation.navigate('ExistingProduct', {id: companyUser.user?.id});
     } else {
-      console.log('no user', data);
+      console.log('companyUser', companyUser);
       // await firebase.auth().signOut();
     }
   };
@@ -201,25 +178,35 @@ const Quotation = ({navigation}: Props) => {
     navigation.navigate('AddProduct', {
       onAddService: newProduct => update(index, newProduct),
       currentValue,
-      quotationId: quotationId,
+      quotationId: invoiceId,
     });
     // navigation.navigate('EditProductForm', {index, currentValue, update});
   };
-
   const handleButtonPress = async () => {
-    setIsLoadingMutation(true);
-    try {
-      navigation.navigate('DefaultContract', {
-        data: methods.getValues(),
-      } as any);
+    const currentValues = methods.getValues();
 
-      setIsLoadingMutation(false);
-    } catch (error: Error | any) {
+    try {
+      await createInvoice(currentValues);
+      if (data) {
+        queryClient.invalidateQueries({
+          queryKey: ['dashboardQuotation', companyUser?.user?.email],
+        });
+        navigation.navigate('DocViewScreen', {id: data.invoiceId});
+      }
+      if (error) {
+        Alert.alert(
+          'เกิดข้อผิดพลาด',
+          `Server-side user creation failed:, ${error}`,
+          [{text: 'OK'}],
+
+          {cancelable: false},
+        );
+      }
+    } catch (error) {
       console.error('There was a problem calling the function:', error);
-      console.log(error.response);
+      throw new Error(error as any);
     }
   };
-
   const handleInvoiceNumberChange = (text: string) => {
     methods.setValue('docNumber', text);
   };
@@ -233,23 +220,9 @@ const Quotation = ({navigation}: Props) => {
     methods.setValue('dateEnd', formattedEndDate);
   };
 
-  if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size={'large'} />
-      </View>
-    );
-  }
-
   const handleRemoveService = (index: number) => {
     setVisibleModalIndex(null);
     remove(index);
-  };
-
-  const onCloseSignature = () => {
-    setPickerVisible(false);
-    setSignatureModal(false);
-    methods.setValue('sellerSignature', '', {shouldDirty: true});
   };
   return (
     <>
@@ -261,58 +234,30 @@ const Quotation = ({navigation}: Props) => {
         }}>
         <Appbar.BackAction
           onPress={() => {
-            Alert.alert(
-              'ปิดหน้าต่าง',
-              'ยืนยันไม่บันทึกข้อมูลและปิดหน้าต่าง',
-              [
-                // The "No" button
-                // Does nothing but dismiss the dialog when pressed
-                {
-                  text: 'อยู่ต่อ',
-                  style: 'cancel',
-                },
-                // The "Yes" button
-                {
-                  text: 'ปิดหน้าต่าง',
-                  onPress: () => navigation.goBack(),
-                },
-              ],
-              {cancelable: false},
-            );
+            navigation.goBack();
           }}
         />
         <Appbar.Content
-          title="สร้างใบเสนอราคา"
-          titleStyle={{
-            fontSize: 18,
-            fontWeight: 'bold',
-            fontFamily: 'Sukhumvit Set Bold',
-          }}
+          title="สร้างใบวางบิล"
+          titleStyle={{fontSize: 18, fontWeight: 'bold'}}
         />
         <Button
-          // loading={postLoading}
+          loading={loading}
           disabled={isDisabled}
-          testID="submited-button"
           mode="contained"
-          icon={'arrow-right'}
-          contentStyle={{
-            flexDirection: 'row-reverse',
-            
-          }}
           buttonColor={'#1b72e8'}
           onPress={handleButtonPress}>
           {'ไปต่อ'}
         </Button>
       </Appbar.Header>
       <ProgressBar progress={0.5} color={'#1b52a7'} />
-
       <FormProvider {...methods}>
         <View style={{flex: 1}}>
           <ScrollView style={styles.container}>
             <View style={styles.subContainerHead}>
               <DatePickerButton
-                label="วันที่เสนอราคา"
-                title="วันที่เสนอราคา"
+                title="วันที่วางบิล"
+                label="วันที่วางบิล"
                 date="today"
                 onDateSelected={handleStartDateSelected}
               />
@@ -322,8 +267,8 @@ const Quotation = ({navigation}: Props) => {
                 value={methods.watch('docNumber')}
               />
               <DatePickerButton
-                label="ยืนราคาถึงวันที่ี"
-                title="ยืนราคาถึงวันที่ี"
+                title="วันที่สินสุด"
+                label="วันที่สิ้นสุด"
                 date="sevenDaysFromNow"
                 onDateSelected={handleEndDateSelected}
               />
@@ -339,7 +284,6 @@ const Quotation = ({navigation}: Props) => {
 
               <View style={styles.header}>
                 <FontAwesomeIcon icon={faBriefcase} color="#19232e" size={20} />
-
                 <Text style={styles.label}>บริการ-สินค้า</Text>
               </View>
               {fields.length > 0 &&
@@ -373,106 +317,7 @@ const Quotation = ({navigation}: Props) => {
                   methods.watch('taxType') !== TaxType.NOTAX ? true : false
                 }
               />
-              <SmallDivider />
-              <View style={styles.signatureRow}>
-                <Text style={styles.signHeader}>เพิ่มทีมงานติดตั้ง</Text>
-                <Switch
-                  trackColor={{false: '#767577', true: '#81b0ff'}}
-                  thumbColor={workerPicker ? '#ffffff' : '#f4f3f4'}
-                  ios_backgroundColor="#3e3e3e"
-                  onValueChange={() => useWorkers()}
-                  value={workers.length > 0 ? true : false}
-                  style={Platform.select({
-                    ios: {
-                      transform: [{scaleX: 0.7}, {scaleY: 0.7}],
-                      marginTop: 5,
-                    },
-                    android: {},
-                  })}
-                />
-              </View>
-              {/* workers */}
-              {workers.length > 0 && (
-                <View
-                  style={{
-                    flex: 1,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    paddingVertical: 10,
-                  }}>
-                  <FlatList
-                    data={workers}
-                    horizontal={true}
-                    renderItem={({item, index}) => {
-                      return (
-                        <View style={styles.imageContainer}>
-                          <TouchableOpacity
-                            onPress={() => setWorkerModal(true)}>
-                            <Image
-                              source={{uri: item.image}}
-                              style={styles.image}
-                            />
-                            <Text>{item.name}</Text>
-                          </TouchableOpacity>
-                        </View>
-                      );
-                    }}
-                    keyExtractor={(item, index) => index.toString()}
-                    ListFooterComponent={
-                      workers.length > 0 ? (
-                        <TouchableOpacity
-                          style={styles.addButtonContainer}
-                          onPress={() => {
-                            setWorkerModal(true);
-                            // navigation.navigate('GalleryScreen', {code});
-                          }}>
-                          <FontAwesomeIcon
-                            icon={faPlus}
-                            size={32}
-                            color="#0073BA"
-                          />
-                        </TouchableOpacity>
-                      ) : null
-                    }
-                    // ListEmptyComponent={
-                    //   <View>
-                    //     <TouchableOpacity
-                    //       style={{
-                    //         justifyContent: 'center',
-                    //         alignItems: 'center',
-                    //         marginBottom: 20,
-                    //         borderColor: '#0073BA',
-                    //         borderWidth: 1,
-                    //         borderRadius: 5,
-                    //         borderStyle: 'dashed',
-                    //         // marginHorizontal: 100,
-                    //         padding: 10,
-                    //         height: 150,
-                    //         width: 200,
-                    //       }}
-                    //       onPress={() => {
-                    //         setWorkerModal(true);
-                    //       }}>
-                    //       <FontAwesomeIcon
-                    //         icon={faImages}
-                    //         style={{marginVertical: 5, marginHorizontal: 50}}
-                    //         size={32}
-                    //         color="#0073BA"
-                    //       />
-                    //       <Text
-                    //         style={{
-                    //           textAlign: 'center',
-                    //           color: '#0073BA',
-                    //           fontFamily: 'Sukhumvit set',
-                    //         }}>
-                    //         เลือกภาพตัวอย่างผลงาน
-                    //       </Text>
-                    //     </TouchableOpacity>
-                    //   </View>
-                    // }
-                  />
-                </View>
-              )}
+
               <SmallDivider />
               <View style={styles.signatureRow}>
                 <Text style={styles.signHeader}>เพิ่มลายเซ็น</Text>
@@ -480,8 +325,8 @@ const Quotation = ({navigation}: Props) => {
                   trackColor={{false: '#767577', true: '#81b0ff'}}
                   thumbColor={pickerVisible ? '#ffffff' : '#f4f3f4'}
                   ios_backgroundColor="#3e3e3e"
-                  onValueChange={useSignature}
-                  value={pickerVisible}
+                  onValueChange={() => useSignature()}
+                  value={pickerVisible ? true : false}
                   style={Platform.select({
                     ios: {
                       transform: [{scaleX: 0.7}, {scaleY: 0.7}],
@@ -491,6 +336,31 @@ const Quotation = ({navigation}: Props) => {
                   })}
                 />
               </View>
+
+              <Modal
+                isVisible={singatureModal}
+                style={styles.modal}
+                onBackdropPress={onCloseSignature}>
+                <Appbar.Header
+                  mode="center-aligned"
+                  style={{
+                    backgroundColor: 'white',
+                    width: Dimensions.get('window').width,
+                  }}>
+                  <Appbar.Action icon={'close'} onPress={onCloseSignature} />
+                  <Appbar.Content
+                    title="ลายเซ็นผู้เสนอราคา"
+                    titleStyle={{fontSize: 18, fontWeight: 'bold'}}
+                  />
+                </Appbar.Header>
+                <SafeAreaView style={styles.containerModal}>
+                  <SignatureComponent
+                    onClose={() => setSignatureModal(false)}
+                    setSignatureUrl={setSignature}
+                    onSignatureSuccess={handleSignatureSuccess}
+                  />
+                </SafeAreaView>
+              </Modal>
             </View>
           </ScrollView>
           <Modal
@@ -520,36 +390,12 @@ const Quotation = ({navigation}: Props) => {
           />
         </View> */}
         </View>
-        <Modal
-          isVisible={singatureModal}
-          style={styles.modal}
-          onBackdropPress={onCloseSignature}>
-          <Appbar.Header
-            mode="center-aligned"
-            style={{
-              backgroundColor: 'white',
-              width: Dimensions.get('window').width,
-            }}>
-            <Appbar.Action icon={'close'} onPress={onCloseSignature} />
-            <Appbar.Content
-              title="ลายเซ็นผู้เสนอราคา"
-              titleStyle={{fontSize: 18, fontWeight: 'bold'}}
-            />
-          </Appbar.Header>
-          <SafeAreaView style={styles.containerModal}>
-            <SignatureComponent
-              onClose={() => setSignatureModal(false)}
-              setSignatureUrl={setSignature}
-              onSignatureSuccess={handleSignatureSuccess}
-            />
-          </SafeAreaView>
-        </Modal>
       </FormProvider>
     </>
   );
 };
 
-export default Quotation;
+export default CreateByQuotation;
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
 const imageContainerWidth = windowWidth / 3 - 10;

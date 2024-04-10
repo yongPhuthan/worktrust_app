@@ -31,58 +31,61 @@ const CardDashBoard = (props: Props) => {
 
         {/* <FontAwesomeIcon icon={faChevronRight} size={24} color="#19232e" /> */}
       </View>
-      <View
-        style={{
-          backgroundColor:
-            props.status === QuotationStatus.PENDING &&
-            QuotationStatus.WAITING_FOR_CUSTOMER_APPROVAL
-              ? '#ccc'
-              : props.status === QuotationStatus.APPROVED &&
-                QuotationStatus.SIGNED_CONTRACT
-              ? '#43a047'
-              : props.status === QuotationStatus.CONTRACT
-              ? '#1079ae'
-              : props.status === QuotationStatus.ONPROCESS
-              ? 'orange'
-              : '#ccc',
-          borderRadius: 4,
-          paddingHorizontal: 8,
-          paddingVertical: 4,
-          marginTop: 8,
-          alignSelf: 'flex-start',
-        }}>
-        <Text
-          style={{
-            color: props.status === QuotationStatus.PENDING ? '#000' : '#fff',
-            fontSize: 12,
-            fontWeight: 'bold',
-            textTransform: 'uppercase',
-          }}>
-          {props.status === QuotationStatus.PENDING
-            ? 'รออนุมัติ'
-            : props.status === QuotationStatus.APPROVED
-            ? 'อนุมัติแล้ว'
-            : props.status === QuotationStatus.CONTRACT
-            ? 'ทำสัญญาแล้ว'
-            : props.status === QuotationStatus.SIGNED_CONTRACT
-            ? 'เซ็นเอกสารแล้ว'
-            : props.status === QuotationStatus.ONPROCESS
-            ? 'กำลังทำงาน'
-            : props.status === QuotationStatus.WAITING_FOR_CUSTOMER_APPROVAL
-            ? 'ส่งงานแล้ว-รอลูกค้าตรวจงาน'
-            : props.status === QuotationStatus.CUSTOMER_APPROVAL_SOMECOMPLETED
-            ? 'ลูกค้าอนุมัติงานบางส่วน-รอแก้ไขเพิ่มเติม'
-            : props.status === QuotationStatus.CUSTOMER_NOTAPPROVAL
-            ? 'ลูกค้าไม่อนุมัติงาน-แก้ไขงานใหม่และส่งงานอีกครั้ง'
-            : props.status === QuotationStatus.CUSTOMER_APPROVAL_ALLCOMPLETED
-            ? 'ลูกค้าอนุมัติงานทั้งหมดเรียบร้อย'
-            : ''}
-        </Text>
-      </View>
+      {props.status?.length > 0 && (
+            <View
+            style={{
+              backgroundColor:
+                props.status === QuotationStatus.PENDING &&
+                QuotationStatus.WAITING_FOR_CUSTOMER_APPROVAL
+                  ? '#ccc'
+                  : props.status === QuotationStatus.APPROVED &&
+                    QuotationStatus.SIGNED_CONTRACT
+                  ? '#43a047'
+                  : props.status === QuotationStatus.CONTRACT
+                  ? '#1079ae'
+                  : props.status === QuotationStatus.ONPROCESS
+                  ? 'orange'
+                  : '#ccc',
+              borderRadius: 4,
+              paddingHorizontal: 8,
+              paddingVertical: 4,
+              marginTop: 8,
+              alignSelf: 'flex-start',
+            }}>
+            <Text
+              style={{
+                color: props.status === QuotationStatus.PENDING ? '#000' : '#fff',
+                fontSize: 12,
+                fontWeight: 'bold',
+                textTransform: 'uppercase',
+              }}>
+              {props.status === QuotationStatus.PENDING
+                ? 'รออนุมัติ'
+                : props.status === QuotationStatus.APPROVED
+                ? 'อนุมัติแล้ว'
+                : props.status === QuotationStatus.CONTRACT
+                ? 'ทำสัญญาแล้ว'
+                : props.status === QuotationStatus.SIGNED_CONTRACT
+                ? 'เซ็นเอกสารแล้ว'
+                : props.status === QuotationStatus.ONPROCESS
+                ? 'กำลังทำงาน'
+                : props.status === QuotationStatus.WAITING_FOR_CUSTOMER_APPROVAL
+                ? 'ส่งงานแล้ว-รอลูกค้าตรวจงาน'
+                : props.status === QuotationStatus.CUSTOMER_APPROVAL_SOMECOMPLETED
+                ? 'ลูกค้าอนุมัติงานบางส่วน-รอแก้ไขเพิ่มเติม'
+                : props.status === QuotationStatus.CUSTOMER_NOTAPPROVAL
+                ? 'ลูกค้าไม่อนุมัติงาน-แก้ไขงานใหม่และส่งงานอีกครั้ง'
+                : props.status === QuotationStatus.CUSTOMER_APPROVAL_ALLCOMPLETED
+                ? 'ลูกค้าอนุมัติงานทั้งหมดเรียบร้อย'
+                : ''}
+            </Text>
+          </View>
+      )}
+  
 
       <View style={styles.telAndTax}>
-        <Text style={styles.summaryPrice}>เสนอราคา {props.date}</Text>
-        <Text style={styles.summaryPrice}>สิ้นสุด {props.end}</Text>
+        <Text style={styles.summaryPrice}>วันที่ {(props.date).replace(/-/g, '/')}</Text>
+        <Text style={styles.summaryPrice}>สิ้นสุด {(props.end).replace(/-/g, '/')}</Text>
       </View>
     </TouchableOpacity>
   );

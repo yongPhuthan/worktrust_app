@@ -12,9 +12,9 @@ import DashboardContract from '../screens/contract/dashboardContract';
 import Dashboard from '../screens/quotation/dashboard';
 import {ParamListBase} from '../types/navigationType';
 import DashboardSubmit from '../screens/submit/dashboard';
-import {
-  BRAND_NAME
-} from '@env';
+import {BRAND_NAME} from '@env';
+import InvoiceDashboard from '../screens/invoice/dashboard';
+import ReceiptDashboard from '../screens/receipt/dashboard';
 const Drawer = createDrawerNavigator<ParamListBase>();
 const commonScreenOptions = {
   headerTitleStyle: {
@@ -58,24 +58,32 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
             },
           }}
         />
-        <PaperDrawer.Item
+        {/* <PaperDrawer.Item
           label="สัญญา"
           icon="file-sign"
           active={props.state.index === 1}
           onPress={() => props.navigation.navigate('DashboardContract')}
-        />
-        {/* <PaperDrawer.Item
-          label="ส่งงาน"
+        /> */}
+        <PaperDrawer.Item
+          label="ใบวางบิล"
           icon="clipboard-file-outline"
           active={props.state.index === 2}
-          onPress={() => props.navigation.navigate('DashboardSubmit')}
-        /> */}
+          onPress={() => props.navigation.navigate('DashboardInvoice')}
+
+        />
+        <PaperDrawer.Item
+          label="ใบเสร็จรับเงิน"
+          icon="clipboard-file-outline"
+          active={props.state.index === 3}
+          onPress={() => props.navigation.navigate('DashboardReceipt')}
+
+        />
       </PaperDrawer.Section>
       <PaperDrawer.Section style={{marginTop: 'auto'}} showDivider={false}>
         <PaperDrawer.Item
           label="ตั้งค่า"
           icon="cog"
-          active={props.state.index === 3}
+          active={props.state.index === 4}
           onPress={() => props.navigation.navigate('SettingsScreen')}
         />
       </PaperDrawer.Section>
@@ -109,13 +117,49 @@ function DashboardDrawer() {
           // ... other common options ...
         }}
       />
-      <Drawer.Screen
+      {/* <Drawer.Screen
         name="DashboardContract"
         component={DashboardContract}
         options={{
           ...commonScreenOptions,
           headerShown: false,
           title: 'สัญญา',
+          headerRight: () => (
+            <TouchableOpacity
+              style={{marginRight: 10}}
+              onPress={() => {
+              }}>
+              <FontAwesomeIcon icon={faBell} color="#1f303cff" size={22} />
+            </TouchableOpacity>
+          ),
+        }}
+      /> */}
+            <Drawer.Screen
+        name="DashboardInvoice"
+        component={InvoiceDashboard}
+        options={{
+          ...commonScreenOptions,
+          headerShown: false,
+          title: 'ใบวางบิล',
+          headerRight: () => (
+            <TouchableOpacity
+              style={{marginRight: 10}}
+              onPress={() => {
+                /* handle press */
+              }}>
+              <FontAwesomeIcon icon={faBell} color="#1f303cff" size={22} />
+            </TouchableOpacity>
+          ),
+          // ... other common options ...
+        }}
+      />
+                  <Drawer.Screen
+        name="DashboardReceipt"
+        component={ReceiptDashboard}
+        options={{
+          ...commonScreenOptions,
+          headerShown: false,
+          title: 'ใบเสร็จรับเงิน',
           headerRight: () => (
             <TouchableOpacity
               style={{marginRight: 10}}
