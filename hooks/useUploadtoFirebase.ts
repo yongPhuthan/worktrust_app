@@ -20,10 +20,10 @@ export function useUploadToFirebase(storagePath: string): UploadResponse {
     setIsUploading(true);
     setImageUrl(null);
     setError(null);
-
-    if (!user || !user.email) {
-      console.error('User or user email is not available');
-      setError(new Error('User or user email is not available'));
+    if (!user || !user.uid) {
+      
+      console.error('User or user phoneNumber is not available');
+      setError(new Error('User or user phoneNumber is not available'));
       setIsUploading(false);
       return;
     }

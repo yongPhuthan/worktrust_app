@@ -15,7 +15,7 @@ const FirstAppScreen = ({navigation}: any) => {
   };
 
   const handleRegister = () => {
-    navigation.navigate('RegisterScreen');
+    navigation.navigate('SignupMobileScreen');
   };
   //   useEffect(() => {
   //     const unsubscribe = firebase.auth().onAuthStateChanged(user => {

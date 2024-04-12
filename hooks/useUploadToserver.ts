@@ -28,9 +28,9 @@ export function useCreateToServer(
   }: any = useContext(Store);
 
   const createToServer = async (data: any) => {
-    if (!user || !user.email) {
-      console.error('User or user email is not available');
-      setError(new Error('User or user email is not available'));
+    if (!user || !user.uid) {
+      console.error('User or user uid is not available');
+      setError(new Error('User or user uid is not available'));
       return;
     }
 

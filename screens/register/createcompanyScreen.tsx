@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
-  
+  Alert,
   Dimensions,
   Image,
   Platform,
@@ -8,10 +8,9 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
-
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {
   Appbar,
   Button,
@@ -20,11 +19,11 @@ import {
   ProgressBar,
   TextInput,
 } from 'react-native-paper';
-import{useQuery} from'@tanstack/react-query';
-import { faCloudUpload } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { useMutation } from '@tanstack/react-query';
-import { Controller, useForm, useWatch } from 'react-hook-form';
+import {useQuery} from '@tanstack/react-query';
+import {faCloudUpload} from '@fortawesome/free-solid-svg-icons';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {useMutation} from '@tanstack/react-query';
+import {Controller, useForm, useWatch} from 'react-hook-form';
 import {
   Asset,
   ImageLibraryOptions,
@@ -34,12 +33,14 @@ import {
 } from 'react-native-image-picker';
 import firebase from '../../firebase';
 
-import { BACK_END_SERVER_URL } from '@env';
-import { yupResolver } from '@hookform/resolvers/yup';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { useUser } from '../../providers/UserContext';
-import { ParamListBase } from '../../types/navigationType';
-import { companyValidationSchema } from '../utils/validationSchema';
+import {BACK_END_SERVER_URL} from '@env';
+import {yupResolver} from '@hookform/resolvers/yup';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {useUser} from '../../providers/UserContext';
+import {ParamListBase} from '../../types/navigationType';
+import {useUploadToFirebase} from '../../hooks/useUploadtoFirebase';
+import {usePickImage} from '../../hooks/utils/image/usePickImage';
+import {companyValidationSchema} from '../utils/validationSchema';
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'RegisterScreen'>;
 }
@@ -60,10 +61,6 @@ const checkboxStyle = {
   backgroundColor: 'white', // Background color
 };
 
-
-
-
-
 const CreateCompanyScreen = ({navigation}: Props) => {
   const [page, setPage] = useState<number>(1);
   const [isImageUpload, setIsImageUpload] = useState(false);
@@ -71,58 +68,27 @@ const CreateCompanyScreen = ({navigation}: Props) => {
   const [categories, setCategories] = useState([]);
   const [code, setCode] = useState<string | null>(null);
   const [userLoading, setUserLoading] = useState(false);
+  const url = `${BACK_END_SERVER_URL}/api/services/createStandards`;
+
   const user = useUser();
 
-  const createCompanySeller = async ({data} : any) => {
-    if (!user || !user.email) {
-      throw new Error('User or user email is not available');
-    }
+  const getCategories = async () => {
+    const API_URL = `${BACK_END_SERVER_URL}/api/company/getCategories`;
 
-  
-    const API_URL = `${BACK_END_SERVER_URL}/api/company/createCompanySeller`;
-  
     try {
-      const token = await user.getIdToken(true);
+      const response = await fetch(API_URL);
 
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-      });
-  
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Network response was not ok: ${errorText}`);
       }
-  
-      // return await response.json(); // Assuming the response is JSON
+
+      return await response.json();
     } catch (error) {
       console.error('Error:', error);
       throw new Error('There was an error processing the request');
     }
   };
-
-
-  const getCategories = async () => {
-    const API_URL = `${BACK_END_SERVER_URL}/api/company/getCategories`;
-  
-    try {
-      const response = await fetch(API_URL);
-  
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Network response was not ok: ${errorText}`);
-      }
-  
-      return await response.json(); 
-    } catch (error) {
-      console.error('Error:', error);
-      throw new Error('There was an error processing the request');
-    }
-  }
   const {
     handleSubmit,
     setValue,
@@ -145,7 +111,6 @@ const CreateCompanyScreen = ({navigation}: Props) => {
     },
     resolver: yupResolver(companyValidationSchema),
   });
-
 
   const logo = useWatch({
     control,
@@ -201,13 +166,64 @@ const CreateCompanyScreen = ({navigation}: Props) => {
 
     name: 'officeTel',
   });
+
+  const {isImageUploading, pickImage} = usePickImage((uri: string) => {
+    setValue('logo', uri);
+  });
+  const logoStoragePath = `${code}/logo/${logo}`;
+  const {
+    imageUrl,
+    isUploading: isLogoUploading,
+    error: isLogoError,
+    uploadImage: uploadLogoImage,
+  } = useUploadToFirebase(logoStoragePath);
+  const createCompanySeller = async ({data}: any) => {
+    if (!user || !user.uid) {
+      throw new Error('User or user email is not available');
+    }
+console.log('before upload', logo)
+    await uploadLogoImage(logo as string);
+
+    // Additional validation if URLs are required
+    if (isLogoError) {
+      throw new Error('There was an error uploading the images');
+    }
+    setValue('logo', imageUrl);
+
+    console.log('afterupload', logo)
+
+    const API_URL = `${BACK_END_SERVER_URL}/api/company/createCompanySeller`;
+
+    try {
+      const token = await user.getIdToken(true);
+
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Network response was not ok: ${errorText}`);
+      }
+
+      // return await response.json(); // Assuming the response is JSON
+    } catch (error) {
+      console.error('Error:', error);
+      throw new Error('There was an error processing the request');
+    }
+  };
+
   const isNextDisabledPage1 =
     !bizName || !userName || !userLastName || !userPosition || !bizType;
 
   // !bizName || !userName || !userLastName || !selectedCategories.length;
   const isNextDisabledPage2 = !address || !mobileTel;
   useEffect(() => {
-
     setCode(Math.floor(100000 + Math.random() * 900000).toString());
     const API_URL = `${BACK_END_SERVER_URL}/api/company/getCategories`;
 
@@ -215,7 +231,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
       .then(response => response.json())
       .then(data =>
         setCategories(
-          data.map((category : any) => ({
+          data.map((category: any) => ({
             key: category.id.toString(),
             value: category.name,
           })),
@@ -223,16 +239,10 @@ const CreateCompanyScreen = ({navigation}: Props) => {
       )
       .catch(error => console.error('Error fetching categories:', error));
   }, []);
-  const {
-    isLoading,
-    error,
-    data,
-    refetch,
-  } = useQuery({
+  const {isLoading, error, data, refetch} = useQuery({
     queryKey: ['category'],
     queryFn: getCategories,
     // enabled: !!user,
-
   });
 
   const handleNextPage = () => {
@@ -244,7 +254,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
     }
   };
 
-  const {mutate,  isPending, isError} = useMutation( {
+  const {mutate, isPending, isError} = useMutation({
     mutationFn: createCompanySeller,
     onSuccess: () => {
       //clear navigation stack
@@ -289,23 +299,25 @@ const CreateCompanyScreen = ({navigation}: Props) => {
       console.error('User or user email is not available');
       return;
     }
-  
-    const storagePath = `${code}/logo/${imageUri.substring(imageUri.lastIndexOf('/') + 1)}`;
-  
+
+    const storagePath = `${code}/logo/${imageUri.substring(
+      imageUri.lastIndexOf('/') + 1,
+    )}`;
+
     try {
       // Create a reference to the Firebase Storage location
       const reference = firebase.storage().ref(storagePath);
-  
+
       // Upload the image file directly from the client
       console.log('Uploading image to Firebase Storage', imageUri);
       await reference.putFile(imageUri); // For React Native, use putFile with the local file URI
-  
+
       console.log('Image uploaded successfully');
-  
+
       // Get the download URL
       const accessUrl = await reference.getDownloadURL();
       console.log('Download URL:', accessUrl);
-  
+
       setValue('logo', accessUrl);
     } catch (error) {
       console.error('Error uploading image:', error);
@@ -328,7 +340,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
       mobileTel,
       email: user?.email,
       bizType,
-      logo: logo ? logo : '',
+      logo,
       companyTax,
     };
     mutate({data, token: user?.uid});
@@ -346,393 +358,360 @@ const CreateCompanyScreen = ({navigation}: Props) => {
     switch (page) {
       case 1:
         return (
-          <ScrollView style={{marginTop: 10, paddingHorizontal: 10}}>
-            <Controller
-              control={control}
-              name="logo"
-              render={({field: {onChange, value}}) => (
-                <TouchableOpacity
-                  style={{
-                    alignItems: 'center',
-                    marginBottom: 50,
-                    borderColor: 'gray',
-                    borderWidth: 1,
-                    borderRadius: 10,
-                    borderStyle: 'dotted',
-                    marginHorizontal: 100,
-                    padding: 10,
-                  }}
-                  onPress={selectImage}
-                  >
-                  {isImageUpload ? (
-                    <ActivityIndicator size="small" color="gray" />
-                  ) : value ? (
-                    <Image
-                      source={{uri: value}}
-                      style={{
-                        width: 100,
-                        aspectRatio: 1,
-                        resizeMode: 'contain',
-                      }}
-                      onError={e =>
-                        console.log(
-                          'Failed to load image:',
-                          e.nativeEvent.error,
-                        )
-                      }
-                    />
-                  ) : (
-                    <View>
-                      <FontAwesomeIcon
-                        icon={faCloudUpload}
-                        size={32}
-                        color="gray"
-                        style={{marginVertical: 5, marginHorizontal: 50}}
-                      />
-                      <Text style={{textAlign: 'center', color: 'gray'}}>
-                        อัพโหลดโลโก้
-                      </Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              )}
-            />
-
-            <Controller
-              control={control}
-              name="bizName"
-              render={({
-                field: {onChange, value, onBlur},
-                fieldState: {error},
-              }) => (
-                <View style={{marginBottom: 20}}>
-                  <TextInput
-                    mode="outlined"
-                    onBlur={onBlur}
-                    error={!!error}
-                    label="ชื่อธุรกิจ - ชื่อบริษัท"
-                    value={value}
-                    onChangeText={onChange}
-                  />
-                  {error && (
-                    <Text style={styles.errorText}>{error.message}</Text>
-                  )}
-                </View>
-              )}
-            />
-
-            <View
+          <>
+            <Appbar.Header
+              elevated
+              mode="center-aligned"
               style={{
-                flexDirection: 'column',
-                justifyContent: 'space-between',
+                backgroundColor: 'white',
               }}>
-              <View style={{flex: 0.45}}>
-                <Controller
-                  control={control}
-                  name="userName"
-                  render={({
-                    field: {onChange, value, onBlur},
-                    fieldState: {error},
-                  }) => (
-                    <View style={{marginBottom: 20}}>
-                      <TextInput
-                        mode="outlined"
-                        onBlur={onBlur}
-                        error={!!error}
-                        label="ชื่อจริง"
-                        value={value}
-                        onChangeText={onChange}
-                      />
-                      {error && (
-                        <Text style={styles.errorText}>{error.message}</Text>
-                      )}
-                    </View>
-                  )}
-                />
-              </View>
-              <View style={{flex: 0.45}}>
-                <Controller
-                  control={control}
-                  name="userLastName"
-                  render={({
-                    field: {onChange, value, onBlur},
-                    fieldState: {error},
-                  }) => (
-                    <View style={{marginBottom: 20}}>
-                      <TextInput
-                        mode="outlined"
-                        onBlur={onBlur}
-                        error={!!error}
-                        label="นามสกุล"
-                        value={value}
-                        onChangeText={onChange}
-                      />
-                      {error && (
-                        <Text style={styles.errorText}>{error.message}</Text>
-                      )}
-                    </View>
-                  )}
-                />
-              </View>
-            </View>
-            <Controller
-              control={control}
-              name="userPosition"
-              render={({
-                field: {onChange, value, onBlur},
-                fieldState: {error},
-              }) => (
-                <View style={{marginBottom: 20}}>
-                  <TextInput
-                    mode="outlined"
-                    onBlur={onBlur}
-                    error={!!error}
-                    label="ตำแหน่ง"
-                    value={value}
-                    onChangeText={onChange}
-                  />
-                  {error && (
-                    <Text style={styles.errorText}>{error.message}</Text>
-                  )}
-                </View>
-              )}
-            />
-            <Text style={{marginBottom: 10, fontSize: 14}}>
-              เลือกประเภทธุรกิจ
-            </Text>
-
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-evenly',
-                marginBottom: 10,
-                gap: 10,
-              }}>
-              <Controller
-                control={control}
-                name="bizType"
-                render={({field: {value}}) => (
-                  <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                    <Checkbox.Android
-                      style={{...checkboxStyle, flexDirection: 'row-reverse'}}
-                      uncheckedColor="grey"
-                      status={value === 'individual' ? 'checked' : 'unchecked'}
-                      onPress={() => setValue('bizType', 'individual')}
-                    />
-                    <Text>บุคคลธรรมดา</Text>
-                  </View>
-                )}
+              <Appbar.Content
+                title="ตั้งค่าธุรกิจ"
+                titleStyle={{fontSize: 18}}
               />
-              <Controller
-                control={control}
-                name="bizType"
-                render={({field: {value}}) => (
-                  <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                    <Checkbox.Android
-                      // label="บริษัท-หจก"
-                      style={{...checkboxStyle, flexDirection: 'row-reverse'}}
-                      uncheckedColor="grey"
-                      status={value === 'business' ? 'checked' : 'unchecked'}
-                      onPress={() => setValue('bizType', 'business')}
-                    />
-                    <Text>บริษัท-หจก</Text>
-                  </View>
-                )}
-              />
-            </View>
-
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'flex-end',
-                marginTop: 30,
-              }}>
               <Button
                 mode="contained"
                 shouldRasterizeIOS
-                contentStyle={{flexDirection: 'row-reverse'}}
-                icon={'arrow-right'}
                 buttonColor="#1b72e8"
                 disabled={isNextDisabledPage1}
                 onPress={handleNextPage}>
                 <Text>ไปต่อ</Text>
               </Button>
-            </View>
-          </ScrollView>
+            </Appbar.Header>
+            <ProgressBar progress={progress} color={'#1b52a7'} />
+            <ScrollView style={{marginTop: 10, paddingHorizontal: 20}}>
+              <Controller
+                control={control}
+                name="logo"
+                render={({field: {onChange, value}}) => (
+                  <TouchableOpacity
+                    style={{
+                      alignItems: 'center',
+                      marginVertical: 20,
+                      borderColor: 'gray',
+                      borderWidth: 1,
+                      borderRadius: 10,
+                      borderStyle: 'dotted',
+                      marginHorizontal: 100,
+                      padding: 10,
+                    }}
+                    onPress={pickImage}>
+                    {isImageUpload ? (
+                      <ActivityIndicator size="small" color="gray" />
+                    ) : value ? (
+                      <Image
+                        source={{uri: value}}
+                        style={{
+                          width: 100,
+                          aspectRatio: 1,
+                          resizeMode: 'contain',
+                        }}
+                        onError={e =>
+                          console.log(
+                            'Failed to load image:',
+                            e.nativeEvent.error,
+                          )
+                        }
+                      />
+                    ) : (
+                      <View>
+                        <FontAwesomeIcon
+                          icon={faCloudUpload}
+                          size={32}
+                          color="gray"
+                          style={{marginVertical: 5, marginHorizontal: 50}}
+                        />
+                        <Text style={{textAlign: 'center', color: 'gray'}}>
+                          อัพโหลดโลโก้
+                        </Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                )}
+              />
+
+              <Controller
+                control={control}
+                name="bizName"
+                render={({
+                  field: {onChange, value, onBlur},
+                  fieldState: {error},
+                }) => (
+                  <View style={{marginBottom: 10}}>
+                    <TextInput
+                      mode="outlined"
+                      onBlur={onBlur}
+                      error={!!error}
+                      label="ชื่อธุรกิจ - ชื่อบริษัท"
+                      value={value}
+                      onChangeText={onChange}
+                    />
+                    {error && (
+                      <Text style={styles.errorText}>{error.message}</Text>
+                    )}
+                  </View>
+                )}
+              />
+
+              <View
+                style={{
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                }}>
+                <View style={{flex: 0.45}}>
+                  <Controller
+                    control={control}
+                    name="userName"
+                    render={({
+                      field: {onChange, value, onBlur},
+                      fieldState: {error},
+                    }) => (
+                      <View style={{marginBottom: 10}}>
+                        <TextInput
+                          mode="outlined"
+                          onBlur={onBlur}
+                          error={!!error}
+                          label="ชื่อจริงผู้ใช้งาน"
+                          value={value}
+                          onChangeText={onChange}
+                        />
+                        {error && (
+                          <Text style={styles.errorText}>{error.message}</Text>
+                        )}
+                      </View>
+                    )}
+                  />
+                </View>
+                <View style={{flex: 0.45}}>
+                  <Controller
+                    control={control}
+                    name="userLastName"
+                    render={({
+                      field: {onChange, value, onBlur},
+                      fieldState: {error},
+                    }) => (
+                      <View style={{marginBottom: 20}}>
+                        <TextInput
+                          mode="outlined"
+                          onBlur={onBlur}
+                          error={!!error}
+                          label="นามสกุล"
+                          value={value}
+                          onChangeText={onChange}
+                        />
+                        {error && (
+                          <Text style={styles.errorText}>{error.message}</Text>
+                        )}
+                      </View>
+                    )}
+                  />
+                </View>
+              </View>
+              <Controller
+                control={control}
+                name="userPosition"
+                render={({
+                  field: {onChange, value, onBlur},
+                  fieldState: {error},
+                }) => (
+                  <View style={{marginBottom: 20}}>
+                    <TextInput
+                      mode="outlined"
+                      onBlur={onBlur}
+                      error={!!error}
+                      label="ตำแหน่ง"
+                      value={value}
+                      onChangeText={onChange}
+                    />
+                    {error && (
+                      <Text style={styles.errorText}>{error.message}</Text>
+                    )}
+                  </View>
+                )}
+              />
+              <Text style={{marginBottom: 10, fontSize: 14}}>
+                เลือกประเภทธุรกิจ
+              </Text>
+
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-evenly',
+                  marginBottom: 10,
+                  gap: 10,
+                }}>
+                <Controller
+                  control={control}
+                  name="bizType"
+                  render={({field: {value}}) => (
+                    <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                      <Checkbox.Android
+                        style={{...checkboxStyle, flexDirection: 'row-reverse'}}
+                        uncheckedColor="grey"
+                        status={
+                          value === 'individual' ? 'checked' : 'unchecked'
+                        }
+                        onPress={() => setValue('bizType', 'individual')}
+                      />
+                      <Text>บุคคลธรรมดา</Text>
+                    </View>
+                  )}
+                />
+                <Controller
+                  control={control}
+                  name="bizType"
+                  render={({field: {value}}) => (
+                    <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                      <Checkbox.Android
+                        // label="บริษัท-หจก"
+                        style={{...checkboxStyle, flexDirection: 'row-reverse'}}
+                        uncheckedColor="grey"
+                        status={value === 'business' ? 'checked' : 'unchecked'}
+                        onPress={() => setValue('bizType', 'business')}
+                      />
+                      <Text>บริษัท-หจก</Text>
+                    </View>
+                  )}
+                />
+              </View>
+            </ScrollView>
+          </>
         );
       case 2:
         return (
-          <View style={{marginTop: 10, paddingHorizontal: 10}}>
-            <Controller
-              control={control}
-              name="address"
-              render={({
-                field: {onChange, value, onBlur},
-                fieldState: {error},
-              }) => (
-                <View style={{marginBottom: 20}}>
-                  <TextInput
-                    mode="outlined"
-                    onBlur={onBlur}
-                    error={!!error}
-                    style={
-                      Platform.OS === 'ios'
-                        ? {height: 80, textAlignVertical: 'top'}
-                        : {}
-                    }
-                    numberOfLines={3}
-                    multiline={true}
-                    textAlignVertical="top"
-                    label="ที่อยู่ร้าน"
-                    value={value}
-                    onChangeText={onChange}
-                  />
-                  {error && (
-                    <Text style={styles.errorText}>{error.message}</Text>
-                  )}
-                </View>
-              )}
-            />
-            <View
+          <>
+            <Appbar.Header
+              elevated
+              mode="center-aligned"
               style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
+                backgroundColor: 'white',
               }}>
-              <View style={{flex: 0.45}}>
-                <Controller
-                  control={control}
-                  name="officeTel"
-                  render={({
-                    field: {onChange, value, onBlur},
-                    fieldState: {error},
-                  }) => (
-                    <View style={{marginBottom: 20}}>
-                      <TextInput
-                        mode="outlined"
-                        onBlur={onBlur}
-                        error={!!error}
-                        label="เบอร์โทรบริษัท"
-                        keyboardType="number-pad"
-                        value={value}
-                        onChangeText={onChange}
-                      />
-                      {error && (
-                        <Text style={styles.errorText}>{error.message}</Text>
-                      )}
-                    </View>
-                  )}
-                />
-              </View>
-              <View style={{flex: 0.45}}>
-                <Controller
-                  control={control}
-                  name="mobileTel"
-                  render={({
-                    field: {onChange, value, onBlur},
-                    fieldState: {error},
-                  }) => (
-                    <View style={{marginBottom: 20}}>
-                      <TextInput
-                        mode="outlined"
-                        onBlur={onBlur}
-                        error={!!error}
-                        label="เบอร์มือถือ"
-                        keyboardType="number-pad"
-                        value={value}
-                        onChangeText={onChange}
-                      />
-                      {error && (
-                        <Text style={styles.errorText}>{error.message}</Text>
-                      )}
-                    </View>
-                  )}
-                />
-              </View>
-            </View>
-            <Controller
-              control={control}
-              name="companyTax"
-              render={({
-                field: {onChange, value, onBlur},
-                fieldState: {error},
-              }) => (
-                <View style={{marginBottom: 20}}>
-                  <TextInput
-                    mode="outlined"
-                    onBlur={onBlur}
-                    error={!!error}
-                    keyboardType="number-pad"
-                    label="เลขภาษี(ถ้ามี)"
-                    value={value}
-                    onChangeText={onChange}
-                  />
-                  {error && (
-                    <Text style={styles.errorText}>{error.message}</Text>
-                  )}
-                </View>
-              )}
-            />
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                marginTop: 50,
-              }}>
-              <Button onPress={handlePrevPage} icon={'arrow-left'} mode="text">
-                <Text>ย้อนกลับ</Text>
-              </Button>
-
+              <Appbar.BackAction onPress={handlePrevPage} />
+              <Appbar.Content
+                title="ตั้งค่าธุรกิจ"
+                titleStyle={{fontSize: 18}}
+              />
               <Button
-                contentStyle={{flexDirection: 'row-reverse'}}
                 onPress={handleNextPage}
                 disabled={isNextDisabledPage2}
                 buttonColor="#1b72e8"
                 mode="contained"
-                icon={'arrow-right'}
                 loading={isPending || userLoading}>
                 ไปต่อ
               </Button>
-            </View>
-          </View>
-        );
-      case 3:
-        return (
-          <View style={{paddingHorizontal: 10}}>
-            <Text style={{marginBottom: 10, fontSize: 16, fontWeight: 'bold'}}>
-              เลือกหมวดหมู่ธุรกิจของคุณ
-            </Text>
-            <View>
-              {categories.map((category: Category, index: number) => (
-                <Controller
-                  control={control}
-                  name="categoryId"
-                  key={index}
-                  render={({field: {onChange, value}}) => (
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        marginTop: 20,
-                      }}>
-                      <Checkbox.Android
-                        status={
-                          value === category.key ? 'checked' : 'unchecked'
-                        }
-                        onPress={() => {
-                          onChange(category.key);
-                          setValue('categoryId', category.key, {
-                            shouldDirty: true,
-                          });
-                        }}
-                      />
-                      <Text style={{fontSize: 16}}>{category.value}</Text>
-                    </View>
-                  )}
-                />
-              ))}
-            </View>
-
-            <View
+            </Appbar.Header>
+            <ProgressBar progress={progress} color={'#1b52a7'} />
+            <View style={{marginTop: 30, paddingHorizontal: 10}}>
+              <Controller
+                control={control}
+                name="address"
+                render={({
+                  field: {onChange, value, onBlur},
+                  fieldState: {error},
+                }) => (
+                  <View style={{marginBottom: 20}}>
+                    <TextInput
+                      mode="outlined"
+                      onBlur={onBlur}
+                      error={!!error}
+                      style={
+                        Platform.OS === 'ios'
+                          ? {height: 80, textAlignVertical: 'top'}
+                          : {}
+                      }
+                      numberOfLines={3}
+                      multiline={true}
+                      textAlignVertical="top"
+                      label="ที่อยู่ร้าน"
+                      value={value}
+                      onChangeText={onChange}
+                    />
+                    {error && (
+                      <Text style={styles.errorText}>{error.message}</Text>
+                    )}
+                  </View>
+                )}
+              />
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                }}>
+                <View style={{flex: 0.45}}>
+                  <Controller
+                    control={control}
+                    name="officeTel"
+                    render={({
+                      field: {onChange, value, onBlur},
+                      fieldState: {error},
+                    }) => (
+                      <View style={{marginBottom: 20}}>
+                        <TextInput
+                          mode="outlined"
+                          onBlur={onBlur}
+                          error={!!error}
+                          label="เบอร์โทรบริษัท"
+                          keyboardType="number-pad"
+                          value={value}
+                          onChangeText={onChange}
+                        />
+                        {error && (
+                          <Text style={styles.errorText}>{error.message}</Text>
+                        )}
+                      </View>
+                    )}
+                  />
+                </View>
+                <View style={{flex: 0.45}}>
+                  <Controller
+                    control={control}
+                    name="mobileTel"
+                    render={({
+                      field: {onChange, value, onBlur},
+                      fieldState: {error},
+                    }) => (
+                      <View style={{marginBottom: 20}}>
+                        <TextInput
+                          mode="outlined"
+                          onBlur={onBlur}
+                          error={!!error}
+                          label="เบอร์มือถือ"
+                          keyboardType="number-pad"
+                          value={value}
+                          onChangeText={onChange}
+                        />
+                        {error && (
+                          <Text style={styles.errorText}>{error.message}</Text>
+                        )}
+                      </View>
+                    )}
+                  />
+                </View>
+              </View>
+              <Controller
+                control={control}
+                name="companyTax"
+                render={({
+                  field: {onChange, value, onBlur},
+                  fieldState: {error},
+                }) => (
+                  <View style={{marginBottom: 20}}>
+                    <TextInput
+                      mode="outlined"
+                      onBlur={onBlur}
+                      error={!!error}
+                      keyboardType="number-pad"
+                      label="เลขภาษี(ถ้ามี)"
+                      value={value}
+                      onChangeText={onChange}
+                    />
+                    {error && (
+                      <Text style={styles.errorText}>{error.message}</Text>
+                    )}
+                  </View>
+                )}
+              />
+              {/* <View
               style={{
                 flexDirection: 'row',
                 justifyContent: 'space-between',
@@ -742,17 +721,70 @@ const CreateCompanyScreen = ({navigation}: Props) => {
                 <Text>ย้อนกลับ</Text>
               </Button>
 
+             
+            </View> */}
+            </View>
+          </>
+        );
+      case 3:
+        return (
+          <>
+            <Appbar.Header
+              elevated
+              mode="center-aligned"
+              style={{
+                backgroundColor: 'white',
+              }}>
+              <Appbar.BackAction onPress={handlePrevPage} />
+              <Appbar.Content
+                title="ตั้งค่าธุรกิจ"
+                titleStyle={{fontSize: 18}}
+              />
               <Button
                 onPress={handleSave}
                 disabled={!categoryId}
-                buttonColor="#1b72e8"
                 mode="contained"
-                style={{width: 120}}
                 loading={isPending || userLoading}>
                 บันทึก
               </Button>
+            </Appbar.Header>
+            <View style={{paddingHorizontal: 10, marginTop: 30}}>
+              <Text
+                style={{marginBottom: 10, fontSize: 16, fontWeight: 'bold'}}>
+                เลือกหมวดหมู่ธุรกิจของคุณ
+              </Text>
+              <View>
+                {categories.map((category: Category, index: number) => (
+                  <Controller
+                    control={control}
+                    name="categoryId"
+                    key={index}
+                    render={({field: {onChange, value}}) => (
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          marginTop: 20,
+                        }}>
+                        <Checkbox.Android
+                          status={
+                            value === category.key ? 'checked' : 'unchecked'
+                          }
+                          onPress={() => {
+                            onChange(category.key);
+                            setValue('categoryId', category.key, {
+                              shouldDirty: true,
+                            });
+                          }}
+                        />
+                        <Text style={{fontSize: 16}}>{category.value}</Text>
+                      </View>
+                    )}
+                  />
+                ))}
+              </View>
             </View>
-          </View>
+          </>
         );
 
       default:
@@ -763,25 +795,13 @@ const CreateCompanyScreen = ({navigation}: Props) => {
 
   return (
     <>
-      <Appbar.Header
-        elevated
-        mode="center-aligned"
-        style={{
-          backgroundColor: 'white',
-        }}>
-        <Appbar.Content title="ลงทะเบียนธุรกิจ" titleStyle={{fontSize: 18}} />
-      </Appbar.Header>
-      <ProgressBar progress={progress} color={'#1b52a7'} />
-
       <KeyboardAwareScrollView
         style={{flex: 1}}
         resetScrollToCoords={{x: 0, y: 0}}
         scrollEnabled={true}
         extraHeight={200} // Adjust this value as needed
         enableOnAndroid={true}>
-        <View style={{marginTop: 40, paddingHorizontal: 20}}>
-          {renderPage()}
-        </View>
+        <View>{renderPage()}</View>
       </KeyboardAwareScrollView>
     </>
   );

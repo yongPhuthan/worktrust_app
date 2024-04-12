@@ -20,32 +20,42 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string></string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>app-1-993294654596-ios-257bd934cad4289700f6d1</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>12</string>
-	<key>LSRequiresIPhoneOS</key>
-
-	<true/>
 	<key>LSApplicationQueriesSchemes</key>
-<array>
-    <string>blob</string>
-</array>
-
-<key>NSAppTransportSecurity</key>
-<dict>
-    <key>NSExceptionDomains</key>
-    <dict>
-        <key>worktrust.co</key>
-        <dict>
-            <key>NSIncludesSubdomains</key>
-            <true/>
-            <key>NSExceptionAllowsInsecureHTTPLoads</key>
-            <true/>
-            <key>NSExceptionRequiresForwardSecrecy</key>
-            <false/>
-        </dict>
-    </dict>
-</dict>
-
+	<array>
+		<string>blob</string>
+	</array>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>worktrust.co</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+				<key>NSExceptionRequiresForwardSecrecy</key>
+				<false/>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+			</dict>
+		</dict>
+	</dict>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>อนุญาติเข้าถึงอัลบัมรูปภาพเพื่ออัพโหลดผลงาน</string>
 	<key>UIAppFonts</key>

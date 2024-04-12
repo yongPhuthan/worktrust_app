@@ -3,23 +3,25 @@ import {useQuery} from '@tanstack/react-query';
 import {useUser} from '../../../providers/UserContext';
 import {CompanyUser} from '../../../types/docType';
 import {BACK_END_SERVER_URL} from '@env';
+import auth, {FirebaseAuthTypes} from '@react-native-firebase/auth';
+
 const useFetchDashboard = () => {
   const user = useUser();
 
   const fetchDashboard = async (): Promise<any> => {
     if (!user) {
-      throw new Error('User not authenticated');
+      await auth().signOut();
+      throw new Error('ไม่พบบัญชีผู้ใช้งาน กรุณาเข้าสู่ระบบอีกครั้ง');
     }
 
-    const {email} = user;
-    if (!email) {
+    const {phoneNumber} = user 
+    if (!phoneNumber) {
       throw new Error('Email not found');
     }
-    console.log('email', email);
     const token = await user.getIdToken(true);
     const response = await fetch(
       `${BACK_END_SERVER_URL}/api/dashboard/dashboard?email=${encodeURIComponent(
-        email,
+        phoneNumber,
       )}`,
       {
         method: 'GET',
@@ -29,10 +31,10 @@ const useFetchDashboard = () => {
         },
       },
     );
-
     if (!response.ok) {
-      throw new Error('Network response was not ok');
+      return Promise.reject('พบข้อผิดพลาดในการดึงข้อมูล');
     }
+
 
     const data = await response.json();
     if (data && Array.isArray(data[1])) {
@@ -46,7 +48,7 @@ const useFetchDashboard = () => {
   };
 
   const {data, isLoading, isError, error} = useQuery({
-    queryKey: ['dashboardQuotation', user?.email],
+    queryKey: ['dashboardQuotation', user?.uid],
     queryFn: fetchDashboard,
   });
 

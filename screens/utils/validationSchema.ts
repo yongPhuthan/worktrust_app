@@ -230,3 +230,8 @@ export const invoiceValidationSchema = yup.object().shape({
     .min(1, 'ต้องเลือกบริการอย่างน้อย 1 รายการ'),
 });
 
+export const signupMobilevalidationSchema = yup.object().shape({
+  phoneNumber: yup.string().required('ระบุหมายเลขโทรศัพท์').min(10, 'หมายเลขโทรศัพท์อย่างน้อย 10 หลัก').max(10, 'หมายเลขโทรศัพท์ไม่เกิน 10 หลัก'),
+
+});
+

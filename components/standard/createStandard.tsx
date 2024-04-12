@@ -1,7 +1,8 @@
 import {yupResolver} from '@hookform/resolvers/yup';
-import React from 'react';
+import React, {useContext, useState, useEffect} from 'react';
 import {useQueryClient, QueryClient} from '@tanstack/react-query';
 import {BACK_END_SERVER_URL} from '@env';
+import {Store} from '../../redux/store';
 
 import {Controller, useForm} from 'react-hook-form';
 import {
@@ -37,6 +38,10 @@ type Props = {
 
 const CreateStandard = (props: Props) => {
   const {isVisible, onClose, companyId} = props;
+  const {
+    state: {isEmulator, code},
+    dispatch,
+  }: any = useContext(Store);
   const [isError, setError] = React.useState('');
   const queryClient = useQueryClient();
   const defaultStandard = {
@@ -72,7 +77,7 @@ const CreateStandard = (props: Props) => {
     setValue('badStandardImage', uri);
   });
 
-  const standardStoragePath = `${companyId}/standards/${getValues(
+  const standardStoragePath = `${code}/standards/${getValues(
     'standardShowTitle',
   )}`;
   const {
@@ -81,7 +86,7 @@ const CreateStandard = (props: Props) => {
     error: isStandardImageError,
     uploadImage: uploadStandardImage,
   } = useUploadToFirebase(standardStoragePath);
-  const badStandardStoragePath = `${companyId}/badStandard/${getValues(
+  const badStandardStoragePath = `${code}/badStandard/${getValues(
     'standardShowTitle',
   )}/badStandard`;
   const {

@@ -121,11 +121,12 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
   }
 
   if (isError) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text>Error: {error?.message}</Text>
-      </View>
-    );
+    firebase.auth().signOut()
+    // return (
+    //   <View style={styles.loadingContainer}>
+    //     <Text>Error: {error?.message}</Text>
+    //   </View>
+    // );
 
   }
 

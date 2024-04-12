@@ -95,11 +95,9 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
       );
 
       if (response.ok) {
-        queryClient.invalidateQueries(
-          {
-            queryKey: ['dashboardQuotation', email],
-          }
-          );
+        queryClient.invalidateQueries({
+          queryKey: ['dashboardQuotation', email],
+        });
         setIsLoadingAction(false);
       } else {
         // It's good practice to handle HTTP error statuses
@@ -218,6 +216,10 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
       services,
     });
   };
+
+  if (error) {
+    navigation.navigate('CreateCompanyScreen');
+  }
   const renderItem = ({item, index}: any) => (
     <>
       <View style={{marginTop: 10}}>
@@ -321,7 +323,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     }
     navigation.navigate('CreateQuotation');
   };
-console.log('data',data)
+
   return (
     <>
       <PaperProvider>

@@ -1,4 +1,4 @@
-import React, {useState,useEffect} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -50,7 +50,6 @@ const RegisterScreen = ({navigation}: Props) => {
   const [error, setError] =
     useState<FirebaseAuthTypes.NativeFirebaseAuthError | null>(null);
 
-
   const {
     handleSubmit,
     control,
@@ -70,123 +69,119 @@ const RegisterScreen = ({navigation}: Props) => {
   const confirmPassword = useWatch({control, name: 'confirmPassword'});
   const registrationCode = useWatch({control, name: 'registrationCode'});
   const [passwordVisible, setPasswordVisible] = useState(false);
-  function isFirebaseAuthError(error: any): error is FirebaseAuthTypes.NativeFirebaseAuthError {
-    return error && typeof error.code === 'string' && typeof error.message === 'string';
+  function isFirebaseAuthError(
+    error: any,
+  ): error is FirebaseAuthTypes.NativeFirebaseAuthError {
+    return (
+      error &&
+      typeof error.code === 'string' &&
+      typeof error.message === 'string'
+    );
   }
+  const signUpEmail = async () => {
+    console.log('Starting signUpEmail function');
+    setUserLoading(true);
+    try {
+      await AsyncStorage.setItem('userEmail', email);
+      await AsyncStorage.setItem('userPassword', password);
+      console.log('Stored email and password in AsyncStorage');
 
+      if (password !== confirmPassword) {
+        console.log('Passwords do not match');
+        setError({
+          code: 'auth/passwords-not-matching',
+          message: 'รหัสผ่านไม่ตรงกัน',
+          userInfo: {authCredential: null, resolver: null},
+          name: 'FirebaseAuthError',
+          namespace: '',
+          nativeErrorCode: '',
+          nativeErrorMessage: '',
+        });
+        setUserLoading(false);
+        return;
+      }
 
-const checkConnection = async () => {
-  try {
-    const response = await fetch(`${`${BACK_END_SERVER_URL}/api/company/getCategories`}`);
-    if (!response.ok) {
-      throw new Error('Server is not reachable');
-    }
-    const data = await response.json();
-    console.log('data', data);
-  } catch (error) {
-    console.error('Server is not reachable', error);
-  }
-}
+      // const docRef = firebase.firestore().collection('registrationCodes').doc(registrationCode);
+      // const doc = await docRef.get();
+      // console.log('Fetched registration code document');
 
+      // if (!doc.exists) {
+      //   console.log('Registration code does not exist');
+      //   setError({
+      //     code: 'auth/invalid-registration-code',
+      //     message: 'รหัสลงทะเบียนไม่ถูกต้อง',
+      //     userInfo: { authCredential: null, resolver: null },
+      //     name: 'FirebaseAuthError',
+      //     namespace: '',
+      //     nativeErrorCode: '',
+      //     nativeErrorMessage: '',
+      //   });
+      //   setUserLoading(false);
+      //   return;
+      // }
 
-const signUpEmail = async () => {
-  console.log('Starting signUpEmail function');
-  setUserLoading(true);
-  try {
-    await AsyncStorage.setItem('userEmail', email);
-    await AsyncStorage.setItem('userPassword', password);
-    console.log('Stored email and password in AsyncStorage');
+      // if (doc.data()?.used) {
+      //   console.log('Registration code already used');
+      //   setError({
+      //     code: 'auth/registration-code-used',
+      //     message: 'รหัสลงทะเบียนนี้ถูกใช้แล้ว',
+      //     userInfo: { authCredential: null, resolver: null },
+      //     name: 'FirebaseAuthError',
+      //     namespace: '',
+      //     nativeErrorCode: '',
+      //     nativeErrorMessage: '',
+      //   });
+      //   setUserLoading(false);
+      //   return;
+      // }
 
-    if (password !== confirmPassword) {
-      console.log('Passwords do not match');
-      setError({
-        code: 'auth/passwords-not-matching',
-        message: 'รหัสผ่านไม่ตรงกัน',
-        userInfo: { authCredential: null, resolver: null },
-        name: 'FirebaseAuthError',
-        namespace: '',
-        nativeErrorCode: '',
-        nativeErrorMessage: '',
-      });
+      // await docRef.update({ used: true });
+      // console.log('Marked registration code as used');
+
+      const userCredential = await firebase
+        .auth()
+        .createUserWithEmailAndPassword(email, password);
+      const user = userCredential.user;
+      console.log('Created new user with email and password', user);
+
+      if (!user || !user.email) {
+        throw new Error(
+          'User creation was successful, but no user data was returned.',
+        );
+      }
+
+      const token = await user.getIdToken(true);
+      console.log('Fetched user ID token', token);
+
+      const response = await fetch(
+        `${BACK_END_SERVER_URL}/api/company/createUser`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({email: user.email, uid: user.uid}),
+        },
+      );
+      console.log('Server response for createUser', response);
+
+      if (!response.ok) {
+        throw new Error('Failed to create user on the server');
+      }
+
+      const responseData = await response.json();
+      console.log('Server response data', responseData);
+
+      navigation.navigate('CreateCompanyScreen');
       setUserLoading(false);
-      return;
+      console.log('Finished signUpEmail function successfully');
+    } catch (error) {
+      console.error('Error during signUpEmail function', error);
+      // Logic to handle different types of errors, e.g., Firebase Auth errors or other errors
+      setUserLoading(false);
     }
-
-    // const docRef = firebase.firestore().collection('registrationCodes').doc(registrationCode);
-    // const doc = await docRef.get();
-    // console.log('Fetched registration code document');
-
-    // if (!doc.exists) {
-    //   console.log('Registration code does not exist');
-    //   setError({
-    //     code: 'auth/invalid-registration-code',
-    //     message: 'รหัสลงทะเบียนไม่ถูกต้อง',
-    //     userInfo: { authCredential: null, resolver: null },
-    //     name: 'FirebaseAuthError',
-    //     namespace: '',
-    //     nativeErrorCode: '',
-    //     nativeErrorMessage: '',
-    //   });
-    //   setUserLoading(false);
-    //   return;
-    // }
-
-    // if (doc.data()?.used) {
-    //   console.log('Registration code already used');
-    //   setError({
-    //     code: 'auth/registration-code-used',
-    //     message: 'รหัสลงทะเบียนนี้ถูกใช้แล้ว',
-    //     userInfo: { authCredential: null, resolver: null },
-    //     name: 'FirebaseAuthError',
-    //     namespace: '',
-    //     nativeErrorCode: '',
-    //     nativeErrorMessage: '',
-    //   });
-    //   setUserLoading(false);
-    //   return;
-    // }
-
-    // await docRef.update({ used: true });
-    // console.log('Marked registration code as used');
-
-    const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
-    const user = userCredential.user;
-    console.log('Created new user with email and password', user);
-
-    if (!user || !user.email) {
-      throw new Error('User creation was successful, but no user data was returned.');
-    }
-
-    const token = await user.getIdToken(true);
-    console.log('Fetched user ID token', token);
-
-    const response = await fetch(`${BACK_END_SERVER_URL}/api/company/createUser`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ email: user.email, uid: user.uid }),
-    });
-    console.log('Server response for createUser', response);
-
-    if (!response.ok) {
-      throw new Error('Failed to create user on the server');
-    }
-
-    const responseData = await response.json();
-    console.log('Server response data', responseData);
-
-    navigation.navigate('CreateCompanyScreen');
-    setUserLoading(false);
-    console.log('Finished signUpEmail function successfully');
-  } catch (error) {
-    console.error('Error during signUpEmail function', error);
-    // Logic to handle different types of errors, e.g., Firebase Auth errors or other errors
-    setUserLoading(false);
-  }
-};
-
+  };
 
   const togglePasswordVisibility = () => {
     setPasswordVisible(!passwordVisible);
@@ -194,10 +189,14 @@ const signUpEmail = async () => {
 
   async function testFirestoreConnection() {
     try {
-      await firebase.firestore().collection('TestCollection').doc('TestDocument').set({
-        message: 'Hello, this is a test document!',
-        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-      });
+      await firebase
+        .firestore()
+        .collection('TestCollection')
+        .doc('TestDocument')
+        .set({
+          message: 'Hello, this is a test document!',
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        });
       console.log('Document successfully written to the Firestore emulator!');
     } catch (error) {
       console.error('Error writing document to Firestore emulator:', error);
@@ -301,7 +300,6 @@ const signUpEmail = async () => {
             width: '100%',
             borderRadius: 4,
             marginVertical: 20,
-          
           }}
           loading={userLoading}
           // onPress={testFirestoreConnection}

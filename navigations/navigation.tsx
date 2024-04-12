@@ -32,6 +32,7 @@ import DashboardDrawer from './dashboardDrawer';
 import ContractViewScreen from '../screens/contract/webview';
 import SelectDoc from '../screens/invoice/selectDoc';
 import CreateByQuotation from '../screens/invoice/create/createByquotation';
+import SignupMobileScreen from '../screens/register/phoneAuth/signupMobile';
 
 const Theme = {
   ...DefaultTheme,
@@ -47,7 +48,9 @@ const Navigation = ({initialRouteName}: any) => {
 
   const screens: ScreenItem[] = [
     {name: 'CreateCompanyScreen', component: CreateCompanyScreen},
-    {name: 'RegisterScreen', component: RegisterScreen}, // {name: 'HomeScreen',  component: HomeScreen},
+    {name: 'RegisterScreen', component: RegisterScreen},
+    {name: 'SignupMobileScreen', component: SignupMobileScreen},
+
     {name: 'DocViewScreen', component: DocViewScreen},
     {name: 'FirstAppScreen', component: FirstAppScreen},
     {name: 'LoginScreen', component: LoginScreen},
