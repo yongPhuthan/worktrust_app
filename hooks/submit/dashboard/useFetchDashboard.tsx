@@ -1,7 +1,7 @@
 // /hooks/useFetchCompanyUser.js
 import {useQuery} from '@tanstack/react-query';
 import {useUser} from '../../../providers/UserContext';
-import {CompanyUser} from '../../../types/docType';
+import {CompanySeller} from '../../../types/docType';
 import {BACK_END_SERVER_URL} from '@env';
 const useFetchDashboard = () => {
   const user = useUser();

@@ -4,7 +4,7 @@ import {RouteProp, useRoute} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {useMutation, useQueryClient} from '@tanstack/react-query';
 import Decimal from 'decimal.js-light';
-import React, {useCallback, useEffect, useState} from 'react';
+import React, { useCallback,useContext, useEffect, useMemo, useState } from 'react';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {installmentValidationSchema} from '../utils/validationSchema';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
@@ -32,6 +32,7 @@ import RNPickerSelect from 'react-native-picker-select';
 import {useUser} from '../../providers/UserContext';
 import {ParamListBase} from '../../types/navigationType';
 import {faChevronDown} from '@fortawesome/free-solid-svg-icons';
+import { Store } from '../../redux/store';
 
 type Props = {
   navigation: StackNavigationProp<ParamListBase, 'Installment'>;
@@ -40,7 +41,10 @@ type Props = {
 
 const Installment = ({navigation, route}: Props) => {
   const dataProps: any = route.params?.data;
-
+  const {
+    state: { code},
+    dispatch,
+  }: any = useContext(Store);  
   const [singatureModal, setSignatureModal] = useState(false);
   const totalPrice = dataProps.total;
   const [installments, setInstallments] = useState<number>(0);
@@ -63,15 +67,13 @@ const Installment = ({navigation, route}: Props) => {
     setSignatureModal(false);
   };
   const updateQuotation = async (data: any) => {
-    if (!user || !user.email) {
+    if (!user || !user.uid) {
       throw new Error('User or user email is not available');
     }
     try {
       const token = await user.getIdToken(true);
       const response = await fetch(
-        `${BACK_END_SERVER_URL}/api/documents/updateQuotationPeriod?email=${encodeURIComponent(
-          user.email,
-        )}`,
+        `${BACK_END_SERVER_URL}/api/documents/updateQuotationPeriod`,
         {
           method: 'PUT',
           headers: {
@@ -127,7 +129,7 @@ const Installment = ({navigation, route}: Props) => {
     onSuccess: data => {
       const newId = dataProps.contractID.slice(0, 8);
       queryClient.invalidateQueries({
-        queryKey: ['dashboardContract', email],
+        queryKey: ['dashboardContract', code],
       });
       navigation.navigate('ContractViewScreen', {
         id: dataProps.contractID,
@@ -226,18 +228,6 @@ const Installment = ({navigation, route}: Props) => {
     label: `แบ่งชำระ ${value} งวด`,
     value,
   }));
-  if (isPending) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
-        <ActivityIndicator size={'large'} />
-      </View>
-    );
-  }
   const renderItem = ({item, index}: {item: any; index: number}) => (
     <Card
       mode="outlined"
@@ -325,7 +315,6 @@ const Installment = ({navigation, route}: Props) => {
       </Card.Content>
     </Card>
   );
-console.log('contractId', dataProps.contractID)
   return (
     <>
       <Appbar.Header
@@ -344,11 +333,10 @@ console.log('contractId', dataProps.contractID)
           }}
         />
         <Button
-          // loading={postLoading}
+          loading={isPending} 
           // disabled={!isPercentagesValid || !isValid}
           mode="contained"
-          disabled={ !isValid}
-          buttonColor={'#1b72e8'}
+          disabled={ !isValid || isPending}
           onPress={handleSave}>
           {'บันทึก'}
         </Button>

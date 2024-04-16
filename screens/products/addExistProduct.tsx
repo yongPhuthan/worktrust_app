@@ -43,7 +43,7 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import {RouteProp} from '@react-navigation/native';
 import {v4 as uuidv4} from 'uuid';
 import SmallDivider from '../../components/styles/SmallDivider';
-import {FormData, ServiceList, CompanyUser, Audit, Service} from '../../types/docType';
+import {FormData, ServiceList, CompanySeller, Audit, Service} from '../../types/docType';
 import {ParamListBase} from '../../types/navigationType';
 import SelectStandard from '../../components/standard/selectStandard';
 import ExistingMaterials from '../../components/materials/existing';

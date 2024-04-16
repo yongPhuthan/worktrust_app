@@ -43,7 +43,7 @@ import useSelectedDates from '../../hooks/quotation/create/useSelectDates';
 import useThaiDateFormatter from '../../hooks/utils/useThaiDateFormatter';
 import * as stateAction from '../../redux/actions';
 import { Store } from '../../redux/store';
-import { CompanyUser, Service } from '../../types/docType';
+import { CompanySeller, Service } from '../../types/docType';
 import { ParamListBase } from '../../types/navigationType';
 import { quotationsValidationSchema } from '../utils/validationSchema';
 import { TaxType } from '../../models/Tax';
@@ -53,12 +53,14 @@ interface Props {
 }
 
 const Quotation = ({navigation}: Props) => {
-  const {dispatch}: any = useContext(Store);
-  // const { data, isLoading } = useQuery('data', fetchData);
+  const {
+    state: { companySellerState},
+    dispatch,
+  }: any = useContext(Store);  
   const [isLoadingMutation, setIsLoadingMutation] = useState(false);
-  const {data, isLoading, isError, error} = useFetchCompanyUser();
+  // const {data, isLoading, isError, error} = useFetchCompanyUser();
 
-  const [companyUser, setCompanyUser] = useState<CompanyUser>();
+  const [companySeller, setCompanySeller] = useState<CompanySeller>(companySellerState);
 
   const [addCustomerModal, setAddCustomerModal] = useState(false);
   const {initialDocnumber, initialDateOffer, initialDateEnd} =
@@ -82,17 +84,16 @@ const Quotation = ({navigation}: Props) => {
   );
 
   const defalutCustomer = {
-    id: '',
     name: '',
     address: '',
-    companyId: '',
+    customerTax: '',
     phone: '',
   };
 
   const quotationDefaultValues = {
     services: [],
     customer: defalutCustomer,
-    companyUser: null,
+    companySeller: companySellerState,
     vat7: 0,
     taxType: 'NOTAX',
     taxValue: 0,
@@ -140,13 +141,18 @@ const Quotation = ({navigation}: Props) => {
   const isDisabled = !customer.name || services.length === 0;
 
   useEffect(() => {
-    if (data?.user) {
-      setCompanyUser(data); // แก้ไขจาก data เดิมที่คุณให้มา
-      methods.setValue('companyUser', data.user);
-      dispatch(stateAction.get_companyID(data.user.id));
-      methods.setValue('FCMToken', fcmToken); // Update FCMToken
-    }
-  }, [data]);
+    methods.setValue('FCMToken', fcmToken); // Update FCMToken
+  }, []);
+
+
+  // useEffect(() => {
+  //   if (data?.user) {
+  //     setCompanyUser(data); // แก้ไขจาก data เดิมที่คุณให้มา
+  //     methods.setValue('companyUser', data.user);
+  //     dispatch(stateAction.get_companyID(data.user.id));
+  //     methods.setValue('FCMToken', fcmToken); // Update FCMToken
+  //   }
+  // }, [data]);
   const useSignature = () => {
     // Toggle the state of the picker and accordingly set the modal visibility
     setPickerVisible(prevPickerVisible => {
@@ -183,7 +189,7 @@ const Quotation = ({navigation}: Props) => {
   };
 
   const handleAddProductForm = async () => {
-    if (companyUser?.user) {
+    if (companySeller) {
       navigation.navigate('AddProduct', {
         onAddService: newProduct => append(newProduct),
         quotationId: quotationId,
@@ -191,7 +197,7 @@ const Quotation = ({navigation}: Props) => {
       });
       // navigation.navigate('ExistingProduct', {id: companyUser.user?.id});
     } else {
-      console.log('no user', data);
+      console.log('no companySeller', companySeller);
       // await firebase.auth().signOut();
     }
   };
@@ -233,13 +239,7 @@ const Quotation = ({navigation}: Props) => {
     methods.setValue('dateEnd', formattedEndDate);
   };
 
-  if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size={'large'} />
-      </View>
-    );
-  }
+ 
 
   const handleRemoveService = (index: number) => {
     setVisibleModalIndex(null);
@@ -299,12 +299,11 @@ const Quotation = ({navigation}: Props) => {
             flexDirection: 'row-reverse',
             
           }}
-          buttonColor={'#1b72e8'}
           onPress={handleButtonPress}>
           {'ไปต่อ'}
         </Button>
       </Appbar.Header>
-      <ProgressBar progress={0.5} color={'#1b52a7'} />
+      <ProgressBar progress={0.5}  />
 
       <FormProvider {...methods}>
         <View style={{flex: 1}}>
@@ -556,12 +555,15 @@ const imageContainerWidth = windowWidth / 3 - 10;
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#e9f7ff',
+    backgroundColor:'#f3f8f3',
+
+    // backgroundColor: '#e9f7ff',
   },
   subContainerHead: {
     padding: 30,
     marginBottom: 10,
-    backgroundColor: '#e9f7ff',
+    backgroundColor:'#f3f8f3',
+    // backgroundColor: '#e9f7ff',
     height: 'auto',
   },
   modalFull: {

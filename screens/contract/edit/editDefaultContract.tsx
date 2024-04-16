@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useState,useEffect,useContext} from 'react';
 import {yupResolver} from '@hookform/resolvers/yup';
 import {defaultContractSchema} from '../../utils/validationSchema';
 
@@ -11,6 +11,8 @@ import {
   Text,
   View,
 } from 'react-native';
+import {Store} from '../../../redux/store';
+
 import {Divider, TextInput} from 'react-native-paper';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import {
@@ -50,6 +52,8 @@ const EditDefaultContract = ({navigation, route}: Props) => {
     useState<DefaultContractType>();
   const id: any = route?.params;
   const user = useUser();
+  const {dispatch,    state: {isEmulator, code},
+}: any = useContext(Store);
   const [isLoadingMutation, setIsLoadingMutation] = useState(false);
   const [step, setStep] = useState(1);
   const [contract, setContract] = useState<DefaultContractType>();
@@ -59,7 +63,7 @@ const EditDefaultContract = ({navigation, route}: Props) => {
   const quotationId = route?.params?.quotationId;
   const queryClient = useQueryClient();
   async function fetchContractByQuotation() {
-    if (!user || !user.email) {
+    if (!user || !user.uid) {
       console.error('User or user email is not available');
       return;
     }
@@ -121,7 +125,7 @@ const EditDefaultContract = ({navigation, route}: Props) => {
   }
 
   const updateContractAndQuotation = async (data: any) => {
-    if (!user || !user.email) {
+    if (!user || !user.uid) {
       console.error('User or user email is not available');
       return;
     }
@@ -202,7 +206,8 @@ const EditDefaultContract = ({navigation, route}: Props) => {
       mutationFn: updateContractAndQuotation,
       onSuccess: data => {
         queryClient.invalidateQueries({
-          queryKey:['dashboardData']
+          queryKey:['dashboardQuotation',code]
+
         });
         const newId = quotationId.slice(0, 8);
         navigation.navigate('DocViewScreen', {id: newId});
@@ -522,13 +527,12 @@ const EditDefaultContract = ({navigation, route}: Props) => {
           disabled={!isValid || isPending}
           mode="contained"
           loading={isPending}
-          buttonColor={'#1b72e8'}
           onPress={handleDonePress}
           style={{marginRight: 5}}>
           {'บันทึก'}
         </Button>
       </Appbar.Header>
-      <ProgressBar progress={1} color={'#1b52a7'} />
+      <ProgressBar progress={1}  />
 
       <KeyboardAwareScrollView contentContainerStyle={{ paddingBottom: 50 }}>
         {contract ? (

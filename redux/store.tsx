@@ -1,19 +1,18 @@
-import React, { createContext, useReducer } from 'react';
+import React, {createContext, useReducer} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { SelectedAuditData, Standard } from '../types/docType';
+import {CompanySeller, SelectedAuditData, Standard} from '../types/docType';
 import * as contrains from './constrains';
-import { Service } from '../types/docType';
+import {Service} from '../types/docType';
 export type StateType = {
   companyID: string;
   code: string;
-  services: any[],
-
+  services: any[];
+  companySellerState: CompanySeller | null;
 };
 
 type ActionType = {
   type: string;
   payload: string | number | object;
-
 };
 
 type ContextType = {
@@ -23,30 +22,29 @@ type ContextType = {
 
 export const Store = createContext<ContextType>({
   state: {
-
     companyID: '',
     code: '',
     services: [],
-
+    companySellerState: null,
   },
-  dispatch: () => { },
+  dispatch: () => {},
 });
 
 const initialState: StateType = {
-
   companyID: '',
   code: '',
   services: [],
-
+  companySellerState: null,
 };
 
 function reducer(state: StateType, action: ActionType): StateType {
   switch (action.type) {
-
     case contrains.CODE:
-      return { ...state, code: action.payload as string };
+      return {...state, code: action.payload as string};
     case contrains.GET_COMPANYID:
       return {...state, companyID: action.payload as string};
+    case contrains.GET_COMPANY_SELLER:
+      return {...state, companySellerState: action.payload as CompanySeller};
     case contrains.ADD_PRODUCT:
       return {
         ...state,
@@ -91,6 +89,6 @@ export function StoreProvider(props: any) {
     loadState();
   }, []);
 
-  const value: ContextType = { state, dispatch };
+  const value: ContextType = {state, dispatch};
   return <Store.Provider value={value}>{props.children}</Store.Provider>;
 }

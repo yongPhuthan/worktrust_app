@@ -21,7 +21,7 @@ export type Contract = {
   skillWarantyYear: number;
   offerCheck: string[];
   projectName: string;
-  companyUser: CompanyUser | null;
+  companyUser: CompanySeller | null;
   sellerId: string;
 };
 export type ServiceList = {
@@ -54,19 +54,17 @@ export type Quotation = {
   sellerSignature: string;
   taxType: string;
   sellerId: string;
-  discountType : string;
-  discountPercentage : number;
-  workers : Workers[];
+  discountType: string;
+  discountPercentage: number;
+  workers: Workers[];
 };
-
 
 export type CustomerForm = {
   name: string;
   address: string;
   companyId: string;
-  phone: string,
-  taxId:string
-
+  phone: string;
+  taxId: string;
 };
 
 export type Workers = {
@@ -75,7 +73,6 @@ export type Workers = {
   mainSkill: string;
   workerStatus: string;
   image: string;
-
 };
 export type Service = {
   id: string;
@@ -83,26 +80,26 @@ export type Service = {
   description: string;
   unitPrice: number;
   qty: number;
-  discountPercent: number; 
-  total: number; 
+  discountPercent: number;
+  total: number;
   unit: string;
   serviceImage: string;
   serviceImages: string[];
   quotations: Quotation | null;
   quotationId: string | undefined;
-  standards: Standard[]; 
-  materials: SelectedMaterialData[]; 
+  standards: Standard[];
+  materials: SelectedMaterialData[];
 };
 export type Material = {
   id: string;
   title: string;
   description: string;
-  name: string
-image:string
+  name: string;
+  image: string;
 };
 
 export type SelectedAuditData = {
-  AuditData : {
+  AuditData: {
     id: number;
     number: number;
     image: string;
@@ -116,12 +113,11 @@ export type SelectedAuditData = {
     createdAt: string;
     defaultChecked: boolean;
     serviceID: string;
-  }
-
-} ;
+  };
+};
 
 export type SelectedMaterialData = {
-  materialData : {
+  materialData: {
     id: number;
     name: string;
     description: string;
@@ -129,10 +125,8 @@ export type SelectedMaterialData = {
     companyId: string;
     created: string;
     updated: string;
-  }
-
+  };
 };
-
 
 export type SelectedContractData = {
   contract: Contract | null;
@@ -141,24 +135,20 @@ export type SelectedContractData = {
   ContractDataId: number;
 };
 
-
-
-export type CompanyUser = {
+export type CompanySeller = {
   id: string;
   bizName: string;
   code: string;
-  userName: string;
-  userLastName: string;
   address: string;
+  companyTax: string;
   officeTel: string;
   mobileTel: string;
   userPosition: string;
   bizType: string;
   logo: string;
   signature: string;
-  companyNumber: string;
   user: User | null;
-  userEmail: string | null;
+  userIds: string[] | null;
   rules: string[];
   quotation: Quotation[];
   customers: Customer[];
@@ -172,7 +162,6 @@ export type Customer = {
   address: string;
   phone: string;
   quotation: Quotation[];
-
 };
 
 export type WalletTransaction = {
@@ -188,7 +177,12 @@ export type User = {
   email: string | null;
   name: string;
   image: string;
+  lastName: string;
+  jobPosition: string;
 } | null;
+
+
+
 
 export type Wallet = {
   id: string;
@@ -219,22 +213,23 @@ export type PeriodPercentType = {
   percentage: number;
 };
 export type EditProductList = {
-  EditProductForm: { item: {
-    title: string
-    id:string
-    description:string
-    qty:number;
-    unit:string;
-    total: number;
-    unitPrice:number
-    discountPercent: number;
-    audits: {
-      id:string;
-      title:string
-    }[]
-  } };
-  SelectAudit: {title: string, description: string};
-
+  EditProductForm: {
+    item: {
+      title: string;
+      id: string;
+      description: string;
+      qty: number;
+      unit: string;
+      total: number;
+      unitPrice: number;
+      discountPercent: number;
+      audits: {
+        id: string;
+        title: string;
+      }[];
+    };
+  };
+  SelectAudit: {title: string; description: string};
 };
 
 export type DefaultContractType = {
@@ -257,7 +252,7 @@ export interface Audit {
   price: number;
   imageUri: string;
   defaultChecked: boolean;
-  createdAt : Date
+  createdAt: Date;
 }
 
 export type Standard = {
@@ -277,7 +272,7 @@ export type Standard = {
 };
 
 export type MaterialData = {
-  id: number;
+  id: string;
   name: string;
   description: string;
   image: string;
@@ -299,5 +294,3 @@ export type FormData = {
   materials?: MaterialData[];
   unit: string;
 };
-
-

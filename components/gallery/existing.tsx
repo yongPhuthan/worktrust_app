@@ -12,7 +12,8 @@ import {
 } from 'react-native';
 import {
   ActivityIndicator,
-  Appbar
+  Appbar,
+  Button
 } from 'react-native-paper';
 import firebase from '../../firebase';
 import { useUser } from '../../providers/UserContext';
@@ -294,7 +295,7 @@ const GalleryScreen = ({
       </View>
     );
   }
-
+console.log('code', code)
   return (
     <Modal isVisible={isVisible} style={styles.modal} onBackdropPress={onClose}>
       {isImageUpload ? (
@@ -373,7 +374,18 @@ const GalleryScreen = ({
             />
             {data && data.length > 0 && (
               <View style={styles.buttonContainer}>
-                <TouchableOpacity
+                <Button  mode='contained'   style={{
+                  width: '80%',
+                
+                }} onPress={() => {
+                    if (serviceImages) onClose();
+                  }} disabled={
+                    !watch('serviceImages') ||
+                    watch('serviceImages').length === 0
+                  }>
+                บันทึก {watch('serviceImages').length} รูป
+                </Button>
+                {/* <TouchableOpacity
                   style={[
                     styles.uploadButton,
                     styles.saveButton,
@@ -390,7 +402,7 @@ const GalleryScreen = ({
                     watch('serviceImages').length === 0
                   }>
                   <Text style={styles.uploadButtonText}>บันทึก {watch('serviceImages').length} รูป</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
               </View>
             )}
             <Modal

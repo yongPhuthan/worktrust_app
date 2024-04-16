@@ -1,26 +1,23 @@
 // /hooks/useFetchCompanyUser.js
 import {useQuery} from '@tanstack/react-query';
 import {useUser} from '../../../providers/UserContext';
-import {CompanyUser} from '../../../types/docType';
+import {CompanySeller} from '../../../types/docType';
 import {BACK_END_SERVER_URL} from '@env';
 
 const useFetchCompanyUser = () => {
   const user = useUser();
 
-  const fetchCompanyUser = async (): Promise<CompanyUser> => {
+  const fetchCompanyUser = async (): Promise<CompanySeller> => {
     if (!user) {
       throw new Error('User not authenticated');
     }
-
+console.log('user:', user);
     const idToken = await user.getIdToken(true);
-    const {email} = user;
-    if (!email) {
-      throw new Error('Email not found');
+    const { uid} = user;
+    if (!uid) {
+      throw new Error('uid not found');
     }
-console.log('email', email)
-    const url = `${BACK_END_SERVER_URL}/api/company/getCompanySeller?email=${encodeURIComponent(
-      email,
-    )}`;
+    const url = `${BACK_END_SERVER_URL}/api/company/getCompanySeller`;
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -41,7 +38,7 @@ console.log('email', email)
   };
 
   const {data, isLoading, isError, error} = useQuery({
-    queryKey: ['companyUser', user?.email],
+    queryKey: ['companyUser', user?.uid],
     queryFn: fetchCompanyUser,
   });
 

@@ -1,25 +1,24 @@
-import React, { useContext, useState } from 'react';
+import React, {useContext, useState} from 'react';
 import {
   ActivityIndicator,
   Dimensions,
   FlatList,
   Image,
   StyleSheet,
-  Text,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
 
-import { BACK_END_SERVER_URL } from '@env';
-import { useQuery } from '@tanstack/react-query';
-import {
-  useFormContext
-} from 'react-hook-form';
+import {BACK_END_SERVER_URL} from '@env';
+import {useQuery} from '@tanstack/react-query';
+import {useFormContext} from 'react-hook-form';
 import Modal from 'react-native-modal';
-import { Appbar, Button, Checkbox } from 'react-native-paper';
-import { useUser } from '../../providers/UserContext';
-import { Store } from '../../redux/store';
-import { Material } from '../../types/docType';
+import {Appbar, Button, Checkbox, Text} from 'react-native-paper';
+import {useUser} from '../../providers/UserContext';
+import {Store} from '../../redux/store';
+import {Material, MaterialData} from '../../types/docType';
+import CreateStandard from '../../components/standard/createStandard';
+import CreateMaterial from './createMaterial';
 
 interface ExistingModalProps {
   isVisible: boolean;
@@ -35,9 +34,11 @@ const ExistingMaterials = ({
   onClose,
   serviceId,
 }: ExistingModalProps) => {
-  const [materials, setMaterials] = useState<Material[]>([]);
+  const [materials, setMaterials] = useState<MaterialData[]>([]);
   const [isOpenModal, setIsOpenModal] = useState(false);
   const context = useFormContext();
+  const [isCreateMaterial, setIsCreateMaterial] = useState(false);
+
   const {
     register,
     control,
@@ -49,17 +50,16 @@ const ExistingMaterials = ({
   const user = useUser();
 
   const {
-    state: { code, },
+    state: {code},
     dispatch,
   }: any = useContext(Store);
-
 
   const fetchExistingMaterials = async () => {
     if (!user) {
       throw new Error('User not authenticated');
     } else {
       const idToken = await user.getIdToken(true);
-      console.log('CompanyID')
+      console.log('CompanyID');
 
       let url = `${BACK_END_SERVER_URL}/api/services/queryMaterials?code=${encodeURIComponent(
         code,
@@ -71,13 +71,17 @@ const ExistingMaterials = ({
           Authorization: `Bearer ${idToken}`,
         },
       });
-      const data = await response.json();
+      const data :MaterialData[] = await response.json();
 
       if (!response.ok) {
         // console.log('error', data)
         throw new Error('Network response was not ok');
       }
-      setMaterials(data);
+      const sortedData = data.sort(
+        (a, b) =>
+          new Date(b.created).getTime() - new Date(a.created).getTime(),
+      );
+      setMaterials(sortedData);
 
       return data;
     }
@@ -89,23 +93,25 @@ const ExistingMaterials = ({
     {
       queryKey: ['existingMaterials', code],
       queryFn: fetchExistingMaterials,
-  
     },
   );
-  const handleSelectMaterial = (material: Material) => {
+  const handleSelectMaterial = (material: MaterialData) => {
     const currentMaterials = getValues('materials') || [];
     const materialIndex = currentMaterials.findIndex(
-      (materialData:Material) => materialData.id === material.id,
+      (materialData: MaterialData) => materialData.id === material.id,
     );
     if (materialIndex !== -1) {
       const updatedMaterials = [...currentMaterials];
       updatedMaterials.splice(materialIndex, 1);
       setValue('materials', updatedMaterials, {shouldDirty: true});
     } else {
-      const updatedMaterials = [...currentMaterials, {
-        id: material.id,
-        name: material.name,
-      }];
+      const updatedMaterials = [
+        ...currentMaterials,
+        {
+          id: material.id,
+          name: material.name,
+        },
+      ];
       setValue('materials', updatedMaterials, {shouldDirty: true});
     }
   };
@@ -135,7 +141,7 @@ const ExistingMaterials = ({
 
   return (
     <Modal isVisible={isVisible} style={styles.modal} onBackdropPress={onClose}>
-       <Appbar.Header
+      <Appbar.Header
         mode="center-aligned"
         style={{
           backgroundColor: 'white',
@@ -146,11 +152,14 @@ const ExistingMaterials = ({
           title="วัสดุอุปกรณ์ที่ต้องการนำเสนอ"
           titleStyle={{fontSize: 16, fontWeight: 'bold'}}
         />
-        
+        {materials && materials?.length > 0 && (
+          <Appbar.Action
+            icon="plus-thick"
+            onPress={() => setIsCreateMaterial(true)}
+          />
+        )}
       </Appbar.Header>
       <View style={styles.container}>
-      
-
         <FlatList
           data={materials}
           renderItem={({item, index}) => (
@@ -158,20 +167,22 @@ const ExistingMaterials = ({
               <TouchableOpacity
                 style={[
                   styles.card,
-                  (watch('materials') || []).some((material:Material) => material.id === item.id)
+                  (watch('materials') || []).some(
+                    (material: MaterialData) => material.id === item.id,
+                  )
                     ? styles.cardChecked
                     : null,
                 ]}
                 onPress={() => handleSelectMaterial(item)}>
                 <Checkbox.Android
-                
-             status={(watch('materials') || []).some(
-              (material:Material) => material.id === item.id,
-            ) ? 'checked' : 'unchecked'}
-
-                  
+                  status={
+                    (watch('materials') || []).some(
+                      (material: MaterialData) => material.id === item.id,
+                    )
+                      ? 'checked'
+                      : 'unchecked'
+                  }
                   onPress={() => handleSelectMaterial(item)}
-              
                   color="#012b20"
                 />
                 <View style={styles.textContainer}>
@@ -191,29 +202,44 @@ const ExistingMaterials = ({
 
                 alignItems: 'center',
               }}>
-              <TouchableOpacity
-                onPress={handleAddNewProduct}
-                style={styles.emptyListButton}>
-                <Text style={styles.emptyListText}>+ เพิ่มรายการใหม่</Text>
-              </TouchableOpacity>
+              <Button
+                onPress={() => setIsCreateMaterial(true)}
+                mode="contained"
+                icon={'plus'}>
+                <Text
+                  variant="titleMedium"
+                  style={{color: 'white', fontFamily: 'Sukhumvit set'}}>
+                  เพิ่มวัสดุอุปกรณ์
+                </Text>
+              </Button>
             </View>
           }
           keyExtractor={item => item.id}
         />
 
         {watch('materials')?.length > 0 && (
-          <Button style={{
-            height:40
-          }} buttonColor='#1b52a7'  mode="contained" onPress={handleDonePress} >
-             {`บันทึก ${watch('materials')?.length} รายการ`}{' '}
+          <Button
+            style={{
+              width: '80%',
+              alignSelf: 'center',
+            }}
+            // buttonColor="#1b52a7"
+            mode="contained"
+            onPress={handleDonePress}>
+            {`บันทึก ${watch('materials')?.length} รายการ`}{' '}
           </Button>
         )}
+         <Modal
+          isVisible={isCreateMaterial}
+          style={styles.modal}
+          onBackdropPress={() => setIsCreateMaterial(false)}>
+          <CreateMaterial
+            isVisible={isCreateMaterial}
+            onClose={() => setIsCreateMaterial(false)}
+            companyId={'22324'}
+          />
+        </Modal>
       </View>
-
-      {/* <AddNewMaterial
-        isVisible={isOpenModal}
-        onClose={() => setIsOpenModal(false)}
-      /> */}
     </Modal>
   );
 };
@@ -244,6 +270,10 @@ const styles = StyleSheet.create({
     elevation: 3,
     marginTop: 20,
   },
+  modalCreate: {
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+  },
   saveButton: {
     padding: 14,
     borderRadius: 8,
@@ -256,6 +286,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 3,
+  },
+  modal: {
+    margin: 0,
+    justifyContent: 'flex-start',
+    alignItems: 'center',
   },
   emptyListText: {
     fontSize: 18,
@@ -320,10 +355,7 @@ const styles = StyleSheet.create({
 
     borderRadius: 5,
   },
-  modal: {
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-  },
+
   closeButton: {
     paddingVertical: 10,
   },

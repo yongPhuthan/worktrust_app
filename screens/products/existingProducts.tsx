@@ -20,7 +20,7 @@ import {
 import { useUser } from '../../providers/UserContext';
 import * as stateAction from '../../redux/actions';
 import { Store } from '../../redux/store';
-import { CompanyUser, Service } from '../../types/docType';
+import { CompanySeller, Service } from '../../types/docType';
 import { ParamListBase } from '../../types/navigationType';
 type Props = {
   navigation: StackNavigationProp<ParamListBase, 'ExistingProduct'>;
@@ -38,7 +38,7 @@ const ExistingProducts = ({navigation}: Props) => {
     state: {serviceList, selectedAudit, code, serviceImages},
     dispatch,
   }: any = useContext(Store);
-  const fetchExistingServices = async (company: CompanyUser) => {
+  const fetchExistingServices = async (company: CompanySeller) => {
     if (!user) {
       throw new Error('User not authenticated');
     } else {
@@ -66,7 +66,7 @@ const ExistingProducts = ({navigation}: Props) => {
   };
   const {data, isLoading, isError} = useQuery(
     ['existingProduct', companyID],
-    () => fetchExistingServices(companyID as CompanyUser).then(res => res),
+    () => fetchExistingServices(companyID as CompanySeller).then(res => res),
     {
       onSuccess: data => {
         setProducts(data);

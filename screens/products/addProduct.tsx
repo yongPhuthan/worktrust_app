@@ -69,7 +69,6 @@ const AddProductForm = ({navigation, route}: Props) => {
     unit: 'ชุด',
     serviceImage: '',
     serviceImages: [],
-    // quotationId,
     standards: [],
     materials: [],
   };
@@ -176,7 +175,7 @@ const AddProductForm = ({navigation, route}: Props) => {
             currentValue ? !methods.formState.isDirty : !isButtonDisbled
           }
           mode="contained"
-          buttonColor={'#1b52a7'}
+          // buttonColor={'#1b52a7'}
           onPress={handleDone}>
           {'บันทึก'}
         </Button>

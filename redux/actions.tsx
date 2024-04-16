@@ -16,6 +16,11 @@ export const add_product = (payload: any) => ({
   payload,
 });
 
+export const get_company_seller = (payload: any) => ({
+  type: contrains.GET_COMPANY_SELLER,
+  payload,
+});
+
 
 
 // COMPONENTS  => ACTION
@@ -34,3 +39,9 @@ export const addProduct = (payload: any) => {
     dispatch(add_product(payload));
   };
 }
+
+export const getCompanySeller = (payload: any) => {
+  return (dispatch: any) => {
+    dispatch(get_company_seller(payload));
+  };
+};

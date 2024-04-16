@@ -22,6 +22,7 @@ import {
   Button,
   List,
   Checkbox,
+  Banner,
   Snackbar,
 } from 'react-native-paper';
 import {useUser} from '../../providers/UserContext';
@@ -170,9 +171,9 @@ const SelectStandard = ({
         <Appbar.BackAction onPress={() => onClose()} />
 
         <Appbar.Content
-          title={`มาตรฐานงานติดตั้ง ${title || ''}`}
+          title={`มาตรฐานที่ต้องการนำเสนอ`}
           titleStyle={{
-            fontSize: 18,
+            fontSize: 16,
             fontWeight: 'bold',
             fontFamily: 'Sukhumvit set',
           }}
@@ -184,7 +185,18 @@ const SelectStandard = ({
           />
         )}
       </Appbar.Header>
+
       <SafeAreaView style={styles.container}>
+        <Banner
+          visible={true}
+          contentStyle={{
+            alignItems: 'center',
+            justifyContent: 'center',
+            alignContent: 'center',
+            alignSelf: 'center',
+          }}>
+          {`งานติดตั้ง ${title || ''}`}
+        </Banner>
         <FlatList
           style={{padding: 10}}
           data={standardDatas}
@@ -335,7 +347,7 @@ const SelectStandard = ({
                 onPress={() => setIsCreateStandard(true)}
                 mode="contained"
                 icon={'plus'}
-                buttonColor={'#1b72e8'}>
+                >
                 <Text
                   variant="titleMedium"
                   style={{color: 'white', fontFamily: 'Sukhumvit set'}}>
@@ -351,13 +363,10 @@ const SelectStandard = ({
           <Button
             style={{
               width: '90%',
-              height: 40,
-              justifyContent: 'center',
-              alignItems: 'center',
               alignSelf: 'center',
               marginBottom: 20,
             }}
-            buttonColor="#1b52a7"
+           
             mode="contained"
             onPress={handleDonePress}>
             {`บันทึก ${watch('standards')?.length} มาตรฐาน`}{' '}
@@ -370,7 +379,6 @@ const SelectStandard = ({
           <CreateStandard
             isVisible={isCreateStandard}
             onClose={() => setIsCreateStandard(false)}
-            companyId={companyID}
           />
         </Modal>
       </SafeAreaView>

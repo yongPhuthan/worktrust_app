@@ -2,6 +2,7 @@ import {BACK_END_SERVER_URL} from '@env';
 import messaging from '@react-native-firebase/messaging';
 import {DrawerActions} from '@react-navigation/native';
 import {useQueryClient} from '@tanstack/react-query';
+
 import React, {useContext, useEffect, useMemo, useState} from 'react';
 import {
   Alert,
@@ -22,7 +23,7 @@ import CardDashBoard from '../../components/CardDashBoard';
 import {useUser} from '../../providers/UserContext';
 import * as stateAction from '../../redux/actions';
 import {Store} from '../../redux/store';
-import {CompanyUser, Customer, Quotation, Service} from '../../types/docType';
+import {CompanySeller, Customer, Quotation, Service} from '../../types/docType';
 import {DashboardScreenProps} from '../../types/navigationType';
 
 import {
@@ -33,6 +34,7 @@ import {
   FAB,
   List,
   PaperProvider,
+  Icon,
   Portal,
 } from 'react-native-paper';
 import {requestNotifications} from 'react-native-permissions';
@@ -45,7 +47,8 @@ import {
 const Dashboard = ({navigation}: DashboardScreenProps) => {
   const [showModal, setShowModal] = useState(true);
   const user = useUser();
-  const email = user?.email;
+  const {dispatch,    state: {isEmulator, code},
+}: any = useContext(Store);
   const {data, isLoading, isError, error} = useFetchDashboard();
   const {activeFilter, updateActiveFilter} = useActiveFilter();
   const {width, height} = Dimensions.get('window');
@@ -56,9 +59,8 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   const [selectedItem, setSelectedItem] = useState(null) as any;
   const [selectedIndex, setSelectedIndex] = useState(null) as any;
   const [originalData, setOriginalData] = useState<Quotation[] | null>(null);
-  const {dispatch}: any = useContext(Store);
   const filteredData = useFilteredData(originalData, activeFilter);
-  const [companyData, setCompanyData] = useState<CompanyUser | null>(null);
+  const [companyData, setCompanyData] = useState<CompanySeller | null>(null);
   const [quotationData, setQuotationData] = useState<Quotation[] | null>(null);
   const handleNoResponse = () => {
     setIsModalSignContract(false);
@@ -75,7 +77,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   const removeQuotation = async (id: string) => {
     handleModalClose();
     setIsLoadingAction(true);
-    if (!user || !email) {
+    if (!user || !user.uid) {
       console.error('User or user email is not available');
       return;
     }
@@ -84,7 +86,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
       const response = await fetch(
         `${BACK_END_SERVER_URL}/api/documents/removeQuotation?id=${encodeURIComponent(
           id,
-        )}&email=${encodeURIComponent(email)}`,
+        )}`,
         {
           method: 'DELETE',
           headers: {
@@ -96,7 +98,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
 
       if (response.ok) {
         queryClient.invalidateQueries({
-          queryKey: ['dashboardQuotation', email],
+          queryKey: ['dashboardQuotation', code],
         });
         setIsLoadingAction(false);
       } else {
@@ -144,6 +146,8 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
       }
     }
   }, [data]);
+
+
 
   useEffect(() => {
     requestNotificationPermission();
@@ -217,8 +221,14 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     });
   };
 
-  if (error) {
+  if (isError && error?.message ==='Company not found') {
     navigation.navigate('CreateCompanyScreen');
+    // firebase
+    //   .auth()
+    //   .signOut()
+    //   .then(() => {
+    //     navigation.navigate('LoginMobileScreen');
+    //   });
   }
   const renderItem = ({item, index}: any) => (
     <>
@@ -407,12 +417,17 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                       <View
                         style={{
                           flex: 1,
-                          justifyContent: 'center',
-                          height: height * 0.5,
+                          justifyContent: 'flex-start',
+                          height: height,
 
                           alignItems: 'center',
+                          marginTop: height * 0.2,
                         }}>
-                        <Text style={{marginTop: 10}}>
+                        <Icon source="inbox" color={'gray'} size={80} />
+                        <Text style={{marginTop: 10, color: 'gray'}}>
+                          ยังไม่มีเอกสาร
+                        </Text>
+                        <Text style={{marginTop: 10, color: 'gray'}}>
                           กดปุ่ม + ด้านล่างเพื่อสร้างใบเสนอราคา
                         </Text>
                       </View>
@@ -424,6 +439,8 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                 </View>
               )}
               <FAB
+                variant="primary"
+                mode="elevated"
                 style={styles.fabStyle}
                 icon="plus"
                 // onPress={()=>testConnection()}
@@ -520,14 +537,17 @@ const styles = StyleSheet.create({
     bottom: height * 0.1,
     right: width * 0.05,
     position: 'absolute',
-    backgroundColor: '#1b52a7',
+    // backgroundColor: '#1b52a7',
+    backgroundColor: '#00532a',
+    // backgroundColor: '#009995',
   },
   fab: {
     position: 'absolute',
     margin: 16,
     right: 0,
     bottom: 10,
-    backgroundColor: '#1b52a7',
+    backgroundColor:'#00674a',
+    // backgroundColor: '#1b52a7',
     borderRadius: 28,
     height: 56,
     width: 56,

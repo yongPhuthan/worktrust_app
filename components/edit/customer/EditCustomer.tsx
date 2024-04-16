@@ -22,7 +22,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import {Store} from '../../../redux/store';
 import * as stateAction from '../../../redux/actions';
-import {CustomerForm, ServiceList, CompanyUser} from '../../../types/docType';
+import {CustomerForm, ServiceList, CompanySeller} from '../../../types/docType';
 import SaveButton from '../../ui/Button/SaveButton';
 
 interface Props {

@@ -22,7 +22,7 @@ import CardDashBoard from '../../components/CardDashBoard';
 import {useUser} from '../../providers/UserContext';
 import * as stateAction from '../../redux/actions';
 import {Store} from '../../redux/store';
-import {CompanyUser, Customer, Quotation, Service} from '../../types/docType';
+import {CompanySeller, Customer, Quotation, Service} from '../../types/docType';
 import {DashboardScreenProps} from '../../types/navigationType';
 
 import {
@@ -33,6 +33,7 @@ import {
   FAB,
   List,
   PaperProvider,
+  Icon,
   Portal,
 } from 'react-native-paper';
 import {requestNotifications} from 'react-native-permissions';
@@ -59,7 +60,7 @@ const InvoiceDashboard = ({navigation}: DashboardScreenProps) => {
   const [originalData, setOriginalData] = useState<Quotation[] | null>(null);
   const {dispatch}: any = useContext(Store);
   const filteredData = useFilteredData(originalData, activeFilter);
-  const [companyData, setCompanyData] = useState<CompanyUser | null>(null);
+  const [companyData, setCompanyData] = useState<CompanySeller | null>(null);
   const [invoiceData, setInvoiceData] = useState<Quotation[] | null>(null);
   const handleNoResponse = () => {
     setIsModalSignContract(false);
@@ -403,13 +404,18 @@ const InvoiceDashboard = ({navigation}: DashboardScreenProps) => {
                       <View
                         style={{
                           flex: 1,
-                          justifyContent: 'center',
-                          height: height * 0.5,
+                          justifyContent: 'flex-start',
+                          height: height,
 
                           alignItems: 'center',
+                          marginTop: height * 0.2,
                         }}>
-                        <Text style={{marginTop: 10}}>
-                          กดปุ่ม + ด้านล่างเพื่อสร้างใบวางบิล
+                        <Icon source="inbox" color={'gray'} size={80} />
+                        <Text style={{marginTop: 10, color: 'gray'}}>
+                          ยังไม่มีเอกสาร
+                        </Text>
+                        <Text style={{marginTop: 10, color: 'gray'}}>
+                          กดปุ่ม + ด้านล่างเพื่อสร้างใบวาางบิล
                         </Text>
                       </View>
                     }

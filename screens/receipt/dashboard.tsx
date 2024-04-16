@@ -22,7 +22,7 @@ import CardDashBoard from '../../components/CardDashBoard';
 import {useUser} from '../../providers/UserContext';
 import * as stateAction from '../../redux/actions';
 import {Store} from '../../redux/store';
-import {CompanyUser, Customer, Quotation, Service} from '../../types/docType';
+import {CompanySeller, Customer, Quotation, Service} from '../../types/docType';
 import {DashboardScreenProps} from '../../types/navigationType';
 
 import {
@@ -58,7 +58,7 @@ const ReceiptDashboard = ({navigation}: DashboardScreenProps) => {
   const [originalData, setOriginalData] = useState<Quotation[] | null>(null);
   const {dispatch}: any = useContext(Store);
   const filteredData = useFilteredData(originalData, activeFilter);
-  const [companyData, setCompanyData] = useState<CompanyUser | null>(null);
+  const [companyData, setCompanyData] = useState<CompanySeller | null>(null);
   const [invoiceData, setInvoiceData] = useState<Quotation[] | null>(null);
   const handleNoResponse = () => {
     setIsModalSignContract(false);

@@ -18,6 +18,8 @@ export const companyValidationSchema = yup.object().shape({
   mobileTel: yup.string().required('ระบุเบอร์มือถือ'),
   userPosition: yup.string().required('ระบุตำแหน่ง'),
   companyTax: yup.string(),
+  platform: yup.string(),
+  code: yup.string(),
   bizType: yup.string().required('ระบุประเภทธุรกิจ'),
 });
 
@@ -156,7 +158,7 @@ export const defaultContractSchema = yup.object().shape({
 export const signContractValidationSchema = yup.object().shape({
   projectName: yup.string().required('ระบุชื่อโครงการ'),
   sellerSignature: yup.string(),
-  companyUser: yup.object().shape({
+  companySeller: yup.object().shape({
   signature: yup.string(),
   }),
   signAddress: yup.string().required('ระบุที่อยู่'),
@@ -233,5 +235,11 @@ export const invoiceValidationSchema = yup.object().shape({
 export const signupMobilevalidationSchema = yup.object().shape({
   phoneNumber: yup.string().required('ระบุหมายเลขโทรศัพท์').min(10, 'หมายเลขโทรศัพท์อย่างน้อย 10 หลัก').max(10, 'หมายเลขโทรศัพท์ไม่เกิน 10 หลัก'),
 
+});
+
+export const createMaterialValidationSchema  = yup.object().shape({
+  name: yup.string().required("ระบุชื่อวัสดุอุปกรณ์"),
+  description: yup.string().required("ระบุรายละเอียดวัสดุอุปกรณ์"),
+  image : yup.string().required("เลือกรูปภาพวัสดุอุปกรณ์"),
 });
 

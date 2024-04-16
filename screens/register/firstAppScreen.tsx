@@ -1,17 +1,15 @@
 // screens/FirstAppScreen.tsx
-import { FirebaseAuthTypes } from '@react-native-firebase/auth';
-import React, { useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import {FirebaseAuthTypes} from '@react-native-firebase/auth';
+import React, {useState} from 'react';
+import {Image, Pressable, StyleSheet, Text, View} from 'react-native';
 import {Button, TextInput, ActivityIndicator} from 'react-native-paper';
-import {
-  BRAND_NAME
-} from '@env';
+import {BRAND_NAME} from '@env';
 const FirstAppScreen = ({navigation}: any) => {
   const [loadingUser, setLoadingUser] = useState(true);
   const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
 
   const handleLogin = () => {
-    navigation.navigate('LoginScreen');
+    navigation.navigate('LoginMobileScreen');
   };
 
   const handleRegister = () => {
@@ -35,8 +33,8 @@ const FirstAppScreen = ({navigation}: any) => {
         flex: 1,
         alignItems: 'center',
         flexDirection: 'column',
-        marginTop: '40%',
-        justifyContent:'space-between',
+        marginTop: '20%',
+        justifyContent: 'space-between',
       }}>
       <Text style={styles.logo}>{BRAND_NAME}</Text>
       <Image
@@ -53,25 +51,42 @@ const FirstAppScreen = ({navigation}: any) => {
           justifyContent: 'center',
           flex: 1,
           marginBottom: 10,
-          gap: 10,
+          gap: 15,
         }}>
         <Button
           mode="contained"
-          style={{
-            width: '90%',
-            borderRadius: 4,
+          maxFontSizeMultiplier={1}
+          labelStyle={{
+            fontSize: 16,
+            fontWeight: 'bold',
+            fontFamily: 'SukhumvitSet-Bold',
+            lineHeight: 24,
           }}
-          onPress={handleRegister}>
-          <Text style={styles.pressableText}>ลงทะเบียนใช้งาน</Text>
-        </Button>
+          children="ลงทะเบียนใช้งาน"
+          style={{
+            justifyContent: 'center',
+            alignItems: 'center',
+            alignContent: 'center',
+            alignSelf: 'center',
+            width: '80%',
+          }}
+          onPress={handleRegister}></Button>
         <Button
           mode="outlined"
+          labelStyle={{
+            fontSize: 16,
+            fontWeight: 'bold',
+            fontFamily: 'SukhumvitSet-Bold',
+          }}
           style={{
-            width: '90%',
-            borderRadius: 4,
+            width: '80%',
+            justifyContent: 'center',
+            alignItems: 'center',
+            alignContent: 'center',
+            alignSelf: 'center',
           }}
           onPress={handleLogin}>
-          <Text style={styles.pressableTextLogin}>เข้าสู่ระบบ</Text>
+          เข้าสู่ระบบ{' '}
         </Button>
       </View>
     </View>
@@ -87,9 +102,11 @@ const styles = StyleSheet.create({
   },
   heading: {
     fontSize: 18,
-    color: 'black',
     // fontWeight: 'bold',
     textAlign: 'center',
+    color: '#5C5F62',
+
+    fontFamily: 'SukhumvitSet-Bold',
   },
   bulletPointContainer: {
     flexDirection: 'column',
@@ -137,11 +154,14 @@ const styles = StyleSheet.create({
   pressableText: {
     color: 'white',
     fontSize: 16,
+    fontFamily: 'SukhumvitSet-Bold',
+
     textAlign: 'center', // Ensure text is centered within the full width buttons
   },
   pressableTextLogin: {
     color: '#5C5F62',
     fontSize: 16,
+    fontFamily: 'SukhumvitSet-Bold',
     textAlign: 'center', // Ensure text is centered within the full width buttons
   },
 });

@@ -7,6 +7,7 @@ import {
   Button,
   ProgressBar,
   ActivityIndicator,
+  Text,
 } from 'react-native-paper';
 import {useFormContext, useWatch} from 'react-hook-form';
 import {
@@ -14,12 +15,11 @@ import {
   FlatList,
   Image,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
 import Modal from 'react-native-modal';
-import {Checkbox,} from 'react-native-paper';
+import {Checkbox} from 'react-native-paper';
 import {useUser} from '../../providers/UserContext';
 import {Store} from '../../redux/store';
 import {Workers} from '../../types/docType';
@@ -77,7 +77,7 @@ const ExistingWorkers = ({isVisible, onClose}: ExistingModalProps) => {
     }
   };
 
-  const {data, isLoading, isError,error} = useQuery({
+  const {data, isLoading, isError, error} = useQuery({
     queryKey: ['workers', code],
     queryFn: fetchExistingWorkers,
   });
@@ -101,15 +101,16 @@ const ExistingWorkers = ({isVisible, onClose}: ExistingModalProps) => {
     }
   };
 
-  if (isLoading) {
+  if(isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator />
+        <ActivityIndicator color='white' />
       </View>
     );
   }
+
   if (isError) {
-console.log('error', error)
+    console.log('error', error);
   }
   const handleDonePress = () => {
     if (currentWorkers.length > 0) {
@@ -119,7 +120,6 @@ console.log('error', error)
   const handleAddNewProduct = () => {
     setIsOpenModal(true);
   };
-  console.log('workers', workers);
   return (
     <>
       <Appbar.Header
@@ -176,22 +176,40 @@ console.log('error', error)
 
                 alignItems: 'center',
               }}>
-              <TouchableOpacity
-                onPress={handleAddNewProduct}
-                style={styles.emptyListButton}>
-                <Text style={styles.emptyListText}>+ เพิ่มทีมงานใหม่</Text>
-              </TouchableOpacity>
+              <Button
+                onPress={() => handleAddNewProduct()}
+                mode="contained"
+                icon={'plus'}>
+                <Text
+                  variant="titleMedium"
+                  style={{color: 'white', fontFamily: 'Sukhumvit set'}}>
+                  เพิ่มทีมงานใหม่
+                </Text>
+              </Button>
             </View>
           }
           keyExtractor={item => item.id}
         />
 
         {currentWorkers?.length > 0 && (
-          <TouchableOpacity onPress={handleDonePress} style={styles.saveButton}>
-            <Text style={styles.saveText}>
-              {`บันทึก ${currentWorkers.length} รายการ`}{' '}
-            </Text>
-          </TouchableOpacity>
+          <Button
+            style={{
+              width: '90%',
+              alignSelf: 'center',
+              marginBottom: 20,
+              marginTop: 20,
+            }}
+            mode="contained"
+            onPress={() => {
+              handleDonePress();
+            }}>
+            บันทึก {currentWorkers.length} รายการ
+          </Button>
+          // <TouchableOpacity onPress={handleDonePress} style={styles.saveButton}>
+          //   <Text style={styles.saveText}>
+          //     {`บันทึก ${currentWorkers.length} รายการ`}{' '}
+          //   </Text>
+          // </TouchableOpacity>
         )}
       </View>
       <Modal

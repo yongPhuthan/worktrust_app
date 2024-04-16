@@ -51,7 +51,7 @@ interface MyError {
 const EditQuotation = ({navigation, route}: Props) => {
   const {dispatch}: any = useContext(Store);
   const [isLoadingMutation, setIsLoadingMutation] = useState(false);
-  const companyUser = route.params.company;
+  const companySeller = route.params.company;
   const quotation = route.params.quotation;
   const servicesParams = route.params.services;
   const [addCustomerModal, setAddCustomerModal] = useState(false);
@@ -71,7 +71,7 @@ const EditQuotation = ({navigation, route}: Props) => {
     id: quotation.id,
     services: servicesParams,
     customer: quotation.customer,
-    companyUser,
+    companySeller,
     vat7: quotation.vat7 ? quotation.vat7 : 0,
     taxType: quotation.taxType ? quotation.taxType : 'NOTAX',
     taxValue: quotation.taxValue ? quotation.taxValue : 0,
@@ -108,7 +108,6 @@ const EditQuotation = ({navigation, route}: Props) => {
     name: 'sellerSignature',
   });
 
-  console.log('customer', customer);
 
   const workers = useWatch({
     control: methods.control,
@@ -173,7 +172,7 @@ const EditQuotation = ({navigation, route}: Props) => {
   };
 
   const handleAddProductForm = async () => {
-    if (companyUser) {
+    if (companySeller) {
       navigation.navigate('AddProduct', {
         onAddService: newProduct => append(newProduct),
         quotationId: quotationId,
@@ -181,7 +180,7 @@ const EditQuotation = ({navigation, route}: Props) => {
       });
       // navigation.navigate('ExistingProduct', {id: companyUser.user?.id});
     } else {
-      console.log('companyUser', companyUser);
+      console.log('companyUser', companySeller);
       // await firebase.auth().signOut();
     }
   };
@@ -263,12 +262,11 @@ const EditQuotation = ({navigation, route}: Props) => {
           // loading={postLoading}
           disabled={isDisabled}
           mode="contained"
-          buttonColor={'#1b72e8'}
           onPress={handleButtonPress}>
           {'ไปต่อ'}
         </Button>
       </Appbar.Header>
-      <ProgressBar progress={0.5} color={'#1b52a7'} />
+      <ProgressBar progress={0.5}  />
       <FormProvider {...methods}>
         <View style={{flex: 1}}>
           <ScrollView style={styles.container}>

@@ -1,28 +1,32 @@
 // /hooks/useFetchCompanyUser.js
-import {useQuery} from '@tanstack/react-query';
-import {useUser} from '../../../providers/UserContext';
-import {CompanyUser} from '../../../types/docType';
 import {BACK_END_SERVER_URL} from '@env';
-import auth, {FirebaseAuthTypes} from '@react-native-firebase/auth';
+import auth from '@react-native-firebase/auth';
+import {useQuery} from '@tanstack/react-query';
+import {useContext} from 'react';
+import {useUser} from '../../../providers/UserContext';
+import {Store} from '../../../redux/store';
+import * as stateAction from '../../../redux/actions';
 
 const useFetchDashboard = () => {
   const user = useUser();
+  const {dispatch,    state: {isEmulator, code},
+}: any = useContext(Store);
 
   const fetchDashboard = async (): Promise<any> => {
     if (!user) {
       await auth().signOut();
       throw new Error('ไม่พบบัญชีผู้ใช้งาน กรุณาเข้าสู่ระบบอีกครั้ง');
     }
-
-    const {phoneNumber} = user 
-    if (!phoneNumber) {
-      throw new Error('Email not found');
+    const {uid} = user;
+    if (!uid) {
+      throw new Error('uid not found');
     }
-    const token = await user.getIdToken(true);
+    console.log('user:', user);
+    const token = await user.getIdToken()
+
+
     const response = await fetch(
-      `${BACK_END_SERVER_URL}/api/dashboard/dashboard?email=${encodeURIComponent(
-        phoneNumber,
-      )}`,
+      `${BACK_END_SERVER_URL}/api/dashboard/dashboard`,
       {
         method: 'GET',
         headers: {
@@ -32,9 +36,9 @@ const useFetchDashboard = () => {
       },
     );
     if (!response.ok) {
-      return Promise.reject('พบข้อผิดพลาดในการดึงข้อมูล');
+      const errorData = await response.json();
+      throw new Error(errorData || 'An unknown error occurred');
     }
-
 
     const data = await response.json();
     if (data && Array.isArray(data[1])) {
@@ -43,13 +47,18 @@ const useFetchDashboard = () => {
         const dateB = new Date(b.dateOffer);
         return dateB.getTime() - dateA.getTime();
       });
+  
+      dispatch(stateAction.get_company_seller(data[0]));
+      dispatch(stateAction.get_companyID(data[0].id));
+
     }
     return data;
   };
 
   const {data, isLoading, isError, error} = useQuery({
-    queryKey: ['dashboardQuotation', user?.uid],
+    queryKey: ['dashboardQuotation', code],
     queryFn: fetchDashboard,
+    
   });
 
   return {data, isLoading, isError, error};

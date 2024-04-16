@@ -66,7 +66,7 @@ const ContractOption = ({navigation}: Props) => {
     mode: 'onChange',
     defaultValues: {
       projectName: '',
-      companyUser: undefined,
+      companySeller: undefined,
       sellerSignature: '',
       signDate: '',
       sellerId: '',
@@ -97,8 +97,8 @@ const ContractOption = ({navigation}: Props) => {
     setSignatureModal(false);
   };
   async function queryContractByQuotation() {
-    if (!user || !user.email) {
-      console.error('User or user email is not available');
+    if (!user || !user.uid) {
+      console.error('User or user uid is not available');
       return;
     }
 
@@ -136,12 +136,12 @@ const ContractOption = ({navigation}: Props) => {
         console.log(data);
         methods.reset({
           projectName: data.projectName,
-          companyUser: data.companyUser,
+          companySeller: data.companySeller,
           signDate: data.signDate,
           servayDate: data.servayDate,
           customer: data.customer,
           allTotal: data.allTotal,
-          sellerId: data.companyUser.id,
+          sellerId: data.companySeller.id,
           contractId: data.contract?.id,
           sellerSignature,
         });
@@ -170,12 +170,8 @@ const ContractOption = ({navigation}: Props) => {
       return newPickerVisible;
     });
   };
-  const handleDateChange = (event: any, date?: Date) => {
-    setShowPicker(false);
-    if (date) {
-    }
-  };
-  const {data, isLoading, isError} = useQuery(
+
+  const {data, isLoading, isError,error} = useQuery(
     // ['ContractID', id],
     // () => queryContractByQuotation(),
     {
@@ -220,7 +216,7 @@ const ContractOption = ({navigation}: Props) => {
     });
   };
 
-  if (isError) return <Text>{'errors'}</Text>;
+  if (isError) return <Text>{ error.message}</Text>;
   return (
     <>
       <Appbar.Header
@@ -250,12 +246,11 @@ const ContractOption = ({navigation}: Props) => {
           contentStyle={{
             flexDirection: 'row-reverse',
           }}
-          buttonColor={'#1b72e8'}
           onPress={handleNextPress}>
           {'ไปต่อ'}
         </Button>
       </Appbar.Header>
-      <ProgressBar progress={0.5} color={'#1b52a7'} />
+      <ProgressBar progress={0.5}  />
       {data && (
         <>
               <FormProvider {...methods}>

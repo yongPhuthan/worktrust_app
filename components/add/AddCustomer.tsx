@@ -1,14 +1,9 @@
 import React from 'react';
-import { Controller, useFormContext } from 'react-hook-form';
-import {
-  Dimensions,
-  StyleSheet,
-  View,
-  Platform
-} from 'react-native';
-import { v4 as uuidv4 } from 'uuid';
+import {Controller, useFormContext} from 'react-hook-form';
+import {Dimensions, StyleSheet, View, Platform} from 'react-native';
+import {v4 as uuidv4} from 'uuid';
 
-import { Appbar, Button, TextInput } from 'react-native-paper';
+import {Appbar, Button, TextInput} from 'react-native-paper';
 
 interface Props {
   onClose: Function;
@@ -44,7 +39,6 @@ const AddCustomer = ({onClose}: Props) => {
           title="เพิ่มลูกค้า"
           titleStyle={{fontSize: 20, fontWeight: 'bold'}}
         />
-        
       </Appbar.Header>
       <View style={styles.subContainer}>
         <View>
@@ -57,7 +51,7 @@ const AddCustomer = ({onClose}: Props) => {
               fieldState: {error},
             }) => (
               <TextInput
-              testID='customer-name-input'
+                testID="customer-name-input"
                 label={'ชื่อลูกค้า'}
                 style={{
                   marginTop: 10,
@@ -89,13 +83,12 @@ const AddCustomer = ({onClose}: Props) => {
               <TextInput
                 keyboardType="name-phone-pad"
                 multiline
-                
                 label={'ที่อยู่'}
                 textAlignVertical="top"
                 style={
                   Platform.OS === 'ios'
-                    ? {height: 80, textAlignVertical: 'top',marginTop:10}
-                    : {marginTop:10}
+                    ? {height: 80, textAlignVertical: 'top', marginTop: 10}
+                    : {marginTop: 10}
                 }
                 error={!!error}
                 numberOfLines={4}
@@ -154,7 +147,7 @@ const AddCustomer = ({onClose}: Props) => {
                 value={value}
               />
             )}
-            name="customer.companyId"
+            name="customer.customerTax"
           />
           {/* <TouchableOpacity
           disabled={!watch('customer.name') || !watch('customer.address')}
@@ -166,20 +159,18 @@ const AddCustomer = ({onClose}: Props) => {
           ]}>
           <Text style={styles.buttonText}>{`บันทึก`}</Text>
         </TouchableOpacity> */}
-        <Button
-        testID="submit-button"
-          // loading={postLoading}
-          disabled={!watch('customer.name') || !watch('customer.address')}
-          mode="contained"
-          style={{
-            marginTop: 50,
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-          buttonColor={'#1b52a7'}
-          onPress={onSubmit}>
-          {'บันทึก'}
-        </Button>
+          <Button
+            testID="submit-button"
+            // loading={postLoading}
+            disabled={!watch('customer.name') || !watch('customer.address')}
+            mode="contained"
+            style={{
+              marginTop: 40,
+            }}
+     
+            onPress={onSubmit}>
+            {'บันทึก'}
+          </Button>
         </View>
       </View>
     </>
@@ -196,10 +187,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     height: '100%',
     width: '100%',
-  },
-  form: {
-    border: '1px solid #0073BA',
-    borderRadius: 10,
   },
   date: {
     textAlign: 'right',

@@ -1,50 +1,37 @@
-import React, {useRef, useState} from 'react';
+import { yupResolver } from '@hookform/resolvers/yup';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useRef, useState } from 'react';
 import {
+  Dimensions,
   SafeAreaView,
   StyleSheet,
-  View,
-  Dimensions,
-  TouchableOpacity,
-  Alert,
+  View
 } from 'react-native';
-import {TextInput, Button, Text, Appbar, Snackbar} from 'react-native-paper';
+import { Appbar, Button, Text, TextInput } from 'react-native-paper';
 import firebase from '../../../firebase';
-import {yupResolver} from '@hookform/resolvers/yup';
-import * as yup from 'yup';
-import {BACK_END_SERVER_URL} from '@env';
 
-import {Controller, set, useForm, useWatch} from 'react-hook-form';
-import {signupMobilevalidationSchema} from '../../utils/validationSchema';
-import {FirebaseAuthTypes} from '@react-native-firebase/auth';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {ParamListBase} from '../../../types/navigationType';
+import { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { Controller, useForm } from 'react-hook-form';
+import { ParamListBase } from '../../../types/navigationType';
+import { signupMobilevalidationSchema } from '../../utils/validationSchema';
 interface Props {
-  navigation: StackNavigationProp<ParamListBase, 'RegisterScreen'>;
+  navigation: StackNavigationProp<ParamListBase, 'LoginMobileScreen'>;
 }
-const SignupMobileScreen = ({navigation}: Props) => {
+const LoginMobileScreen = ({navigation}: Props) => {
   // If null, no SMS has been sent
   const [confirm, setConfirm] =
     useState<FirebaseAuthTypes.ConfirmationResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // verification code (OTP - One-Time-Passcode)
-  const [code, setCode] = useState('');
+
   // State for each input field
   const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
   // Timer state
   const [timer, setTimer] = useState<number>(60);
   const inputRefs = useRef<Array<any | null>>([]);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const [visible, setVisible] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
 
-  const onToggleSnackBar = () => setVisible(!visible);
-  const onDismissSnackBar = () => setVisible(false);
-  const handleChange = (text: string, index: number) => {
-    const newOtp = [...otp];
-    newOtp[index] = text;
-    setOtp(newOtp);
-  };
   const {
     handleSubmit,
     register,
@@ -70,21 +57,7 @@ const SignupMobileScreen = ({navigation}: Props) => {
       setIsLoading(true);
       const {phoneNumber} = data; // destructuring phoneNumber from the form data
       const formattedPhoneNumber = formatPhoneNumber(phoneNumber); // Format the phone number
-      // First, check if the phone number is already registered
-      const usersRef = firebase.firestore().collection('users'); // Assuming 'users' is your collection
-      const snapshot = await usersRef
-        .where('phoneNumber', '==', formattedPhoneNumber)
-        .get();
 
-      if (!snapshot.empty) {
-        console.log('Phone number is already registered');
-        // Phone number is registered, show Snackbar
-        setSnackbarMessage(
-          'หมายเลขนี้สมัครสมาชิกแล้ว โปรดไปที่หน้าเข้าสู่ระบบ',
-        );
-        onToggleSnackBar();
-        return;
-      }
       const confirmation = await firebase
         .auth()
         .signInWithPhoneNumber(formattedPhoneNumber);
@@ -126,50 +99,26 @@ const SignupMobileScreen = ({navigation}: Props) => {
       const code = otp.join('');
 
       if (confirm) {
-        await confirm.confirm(code); // Use the confirm method with the code
+        await confirm.confirm(code);
 
-        // After confirmation, add the user to Firestore
-        const formattedPhoneNumber = formatPhoneNumber(phoneNumber); // Format as needed
-
-        // Add the user to the 'users' collection with phoneNumber
-        await firebase.firestore().collection('users').add({
-          phoneNumber: formattedPhoneNumber,
-          // Add other user details as needed
-        });
         const user = firebase.auth().currentUser;
         if (!user || !user.uid) {
           throw new Error(
             'User creation was successful, but no user data was returned.',
           );
         }
-        const token = await user.getIdToken(true);
-        const response = await fetch(
-          `${BACK_END_SERVER_URL}/api/company/createUserPhoneNumber`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              phoneNumber: user.phoneNumber,
-              uid: user.uid,
-            }),
-          },
-        );
-        console.log('Server response for createUser', response);
-
-        if (!response.ok) {
-          throw new Error('Failed to create user on the server');
+        const token = await user.getIdToken(true)
+        if (token) {
+          await AsyncStorage.setItem('userToken', token);
+          setIsLoading(false);
+          navigation.reset({
+            index: 0,
+            routes: [{name: 'DashboardQuotation'}],
+          });
+        } else {
+          console.error('Token is undefined after login');
+          setIsLoading(false);
         }
-
-        const responseData = await response.json();
-        console.log('Server response data', responseData);
-        // If successful, navigate to the next screen
-        navigation.reset({
-          index: 0,
-          routes: [{name: 'CreateCompanyScreen'}],
-        });
       }
     } catch (error) {
       console.error(
@@ -239,7 +188,7 @@ const SignupMobileScreen = ({navigation}: Props) => {
                 fontWeight: 'bold',
                 fontFamily: 'Sukhumvit Set Bold',
               }}>
-              ยินดีต้อนรับ
+              เข้าสู่ระบบ
             </Text>
             <Text style={{fontSize: 16, marginBottom: 10}}>
               ใส่หมายเลขโทรศัพท์ของคุณเพื่อเริ่มต้นใช้งาน
@@ -272,7 +221,7 @@ const SignupMobileScreen = ({navigation}: Props) => {
 
             <Button
               loading={isLoading}
-              disabled={!isValid || isLoading}
+              disabled={!isValid}
               labelStyle={{
                 fontWeight: 'bold',
                 fontFamily: 'Sukhumvit Set Bold',
@@ -285,17 +234,7 @@ const SignupMobileScreen = ({navigation}: Props) => {
               ต่อไป
             </Button>
           </View>
-          <Snackbar
-            visible={visible}
-            onDismiss={onDismissSnackBar}
-            action={{
-              label: 'เข้าสู่ระบบ',
-              onPress: () => {
-                navigation.navigate('LoginMobileScreen');
-              },
-            }}>
-            {snackbarMessage}
-          </Snackbar>
+ 
         </SafeAreaView>
       </>
     );
@@ -357,7 +296,7 @@ const SignupMobileScreen = ({navigation}: Props) => {
         </View>
         <Button
           loading={isLoading}
-          disabled={!isOtpComplete || isLoading}
+          disabled={!isOtpComplete}
           mode="contained"
           contentStyle={{
             width: '100%',
@@ -367,6 +306,7 @@ const SignupMobileScreen = ({navigation}: Props) => {
             fontWeight: 'bold',
             lineHeight: 24,
             fontSize: 16,
+
           }}
           onPress={confirmCode}>
           ต่อไป{' '}
@@ -386,7 +326,7 @@ const SignupMobileScreen = ({navigation}: Props) => {
     </>
   );
 };
-export default SignupMobileScreen;
+export default LoginMobileScreen;
 
 const height = Dimensions.get('window').height;
 

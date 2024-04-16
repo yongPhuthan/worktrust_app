@@ -32,7 +32,6 @@ import {
   launchImageLibrary,
 } from 'react-native-image-picker';
 import firebase from '../../firebase';
-
 import {BACK_END_SERVER_URL} from '@env';
 import {yupResolver} from '@hookform/resolvers/yup';
 import {StackNavigationProp} from '@react-navigation/stack';
@@ -41,6 +40,7 @@ import {ParamListBase} from '../../types/navigationType';
 import {useUploadToFirebase} from '../../hooks/useUploadtoFirebase';
 import {usePickImage} from '../../hooks/utils/image/usePickImage';
 import {companyValidationSchema} from '../utils/validationSchema';
+import {useCreateToServer} from '../../hooks/useUploadToserver';
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'RegisterScreen'>;
 }
@@ -66,9 +66,8 @@ const CreateCompanyScreen = ({navigation}: Props) => {
   const [isImageUpload, setIsImageUpload] = useState(false);
 
   const [categories, setCategories] = useState([]);
-  const [code, setCode] = useState<string | null>(null);
   const [userLoading, setUserLoading] = useState(false);
-  const url = `${BACK_END_SERVER_URL}/api/services/createStandards`;
+  const API_URL = `${BACK_END_SERVER_URL}/api/company/createCompanySeller`;
 
   const user = useUser();
 
@@ -93,6 +92,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
     handleSubmit,
     setValue,
     control,
+    getValues,
     formState: {isValid, isDirty, errors},
   } = useForm({
     mode: 'onChange',
@@ -108,6 +108,8 @@ const CreateCompanyScreen = ({navigation}: Props) => {
       bizType: '',
       logo: '',
       companyTax: '',
+      platform: Platform.OS,
+      code: '',
     },
     resolver: yupResolver(companyValidationSchema),
   });
@@ -115,6 +117,10 @@ const CreateCompanyScreen = ({navigation}: Props) => {
   const logo = useWatch({
     control,
     name: 'logo',
+  });
+  const code = useWatch({
+    control,
+    name: 'code',
   });
   const bizName = useWatch({
     control,
@@ -167,49 +173,45 @@ const CreateCompanyScreen = ({navigation}: Props) => {
     name: 'officeTel',
   });
 
-  const {isImageUploading, pickImage} = usePickImage((uri: string) => {
-    setValue('logo', uri);
-  });
-  const logoStoragePath = `${code}/logo/${logo}`;
+  const {isImagePicking: isImagePicking, pickImage} = usePickImage(
+    (uri: string) => {
+      setValue('logo', uri);
+    },
+  );
+  const logoStoragePath = `${code}/logo/${bizName}`;
   const {
-    imageUrl,
-    isUploading: isLogoUploading,
+    isUploading,
     error: isLogoError,
-    uploadImage: uploadLogoImage,
+    uploadImage,
   } = useUploadToFirebase(logoStoragePath);
+  const {
+    isLoading: isLodingServer,
+    error: errorServer,
+    createToServer,
+  } = useCreateToServer(API_URL, 'dashboardQuotation');
   const createCompanySeller = async ({data}: any) => {
     if (!user || !user.uid) {
       throw new Error('User or user email is not available');
     }
-console.log('before upload', logo)
-    await uploadLogoImage(logo as string);
+
+    const downloadUrl = await uploadImage(logo as string);
 
     // Additional validation if URLs are required
     if (isLogoError) {
       throw new Error('There was an error uploading the images');
     }
-    setValue('logo', imageUrl);
-
-    console.log('afterupload', logo)
-
-    const API_URL = `${BACK_END_SERVER_URL}/api/company/createCompanySeller`;
+    if (!downloadUrl) {
+      throw new Error('ไม่สามาถอัพโหลดรูปภาพได้');
+    }
+    console.log('downloadUrl:', downloadUrl);
 
     try {
-      const token = await user.getIdToken(true);
+      setValue('logo', downloadUrl);
 
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Network response was not ok: ${errorText}`);
-      }
+      const formData = {
+        ...getValues(),
+      };
+      await createToServer(formData);
 
       // return await response.json(); // Assuming the response is JSON
     } catch (error) {
@@ -224,7 +226,7 @@ console.log('before upload', logo)
   // !bizName || !userName || !userLastName || !selectedCategories.length;
   const isNextDisabledPage2 = !address || !mobileTel;
   useEffect(() => {
-    setCode(Math.floor(100000 + Math.random() * 900000).toString());
+    setValue('code', Math.floor(100000 + Math.random() * 900000).toString());
     const API_URL = `${BACK_END_SERVER_URL}/api/company/getCategories`;
 
     fetch(API_URL)
@@ -239,6 +241,7 @@ console.log('before upload', logo)
       )
       .catch(error => console.error('Error fetching categories:', error));
   }, []);
+
   const {isLoading, error, data, refetch} = useQuery({
     queryKey: ['category'],
     queryFn: getCategories,
@@ -270,62 +273,6 @@ console.log('before upload', logo)
     },
   });
 
-  const selectImage = (): void => {
-    const options: ImageLibraryOptions = {
-      mediaType: 'photo' as MediaType,
-      quality: 1,
-    };
-
-    launchImageLibrary(options, (response: ImageResponse) => {
-      if (response.didCancel) {
-        console.log('User cancelled image picker');
-      } else if (response.errorCode) {
-        console.log('ImagePicker Error: ', response.errorMessage);
-      } else if (response.assets && response.assets.length > 0) {
-        const source = response.assets[0].uri;
-        if (source) {
-          uploadImageToServer(source);
-          setValue('logo', source);
-        }
-      } else {
-        // Handle the case where assets are undefined
-        console.log('No image selected');
-      }
-    });
-  };
-  const uploadImageToServer = async (imageUri: string): Promise<void> => {
-    setIsImageUpload(true);
-    if (!user || !user.email) {
-      console.error('User or user email is not available');
-      return;
-    }
-
-    const storagePath = `${code}/logo/${imageUri.substring(
-      imageUri.lastIndexOf('/') + 1,
-    )}`;
-
-    try {
-      // Create a reference to the Firebase Storage location
-      const reference = firebase.storage().ref(storagePath);
-
-      // Upload the image file directly from the client
-      console.log('Uploading image to Firebase Storage', imageUri);
-      await reference.putFile(imageUri); // For React Native, use putFile with the local file URI
-
-      console.log('Image uploaded successfully');
-
-      // Get the download URL
-      const accessUrl = await reference.getDownloadURL();
-      console.log('Download URL:', accessUrl);
-
-      setValue('logo', accessUrl);
-    } catch (error) {
-      console.error('Error uploading image:', error);
-    } finally {
-      setIsImageUpload(false);
-    }
-  };
-
   const handleSave = async () => {
     const data = {
       bizName,
@@ -346,7 +293,7 @@ console.log('before upload', logo)
     mutate({data, token: user?.uid});
   };
 
-  if (isLoading) {
+  if (isLodingServer) {
     return (
       <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
         <ActivityIndicator size="large" />
@@ -372,13 +319,12 @@ console.log('before upload', logo)
               <Button
                 mode="contained"
                 shouldRasterizeIOS
-                buttonColor="#1b72e8"
                 disabled={isNextDisabledPage1}
                 onPress={handleNextPage}>
                 <Text>ไปต่อ</Text>
               </Button>
             </Appbar.Header>
-            <ProgressBar progress={progress} color={'#1b52a7'} />
+            <ProgressBar progress={progress} />
             <ScrollView style={{marginTop: 10, paddingHorizontal: 20}}>
               <Controller
                 control={control}
@@ -396,7 +342,7 @@ console.log('before upload', logo)
                       padding: 10,
                     }}
                     onPress={pickImage}>
-                    {isImageUpload ? (
+                    {isImagePicking ? (
                       <ActivityIndicator size="small" color="gray" />
                     ) : value ? (
                       <Image
@@ -455,8 +401,9 @@ console.log('before upload', logo)
 
               <View
                 style={{
-                  flexDirection: 'column',
+                  flexDirection: 'row',
                   justifyContent: 'space-between',
+                  gap: 5,
                 }}>
                 <View style={{flex: 0.45}}>
                   <Controller
@@ -594,13 +541,12 @@ console.log('before upload', logo)
               <Button
                 onPress={handleNextPage}
                 disabled={isNextDisabledPage2}
-                buttonColor="#1b72e8"
                 mode="contained"
                 loading={isPending || userLoading}>
                 ไปต่อ
               </Button>
             </Appbar.Header>
-            <ProgressBar progress={progress} color={'#1b52a7'} />
+            <ProgressBar progress={progress} />
             <View style={{marginTop: 30, paddingHorizontal: 10}}>
               <Controller
                 control={control}
@@ -742,9 +688,9 @@ console.log('before upload', logo)
               />
               <Button
                 onPress={handleSave}
-                disabled={!categoryId}
+                disabled={!categoryId || isUploading || isPending}
                 mode="contained"
-                loading={isPending || userLoading}>
+                loading={isPending || userLoading || isUploading}>
                 บันทึก
               </Button>
             </Appbar.Header>

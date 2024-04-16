@@ -1,6 +1,6 @@
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {StackNavigationProp} from '@react-navigation/stack';
-import {CompanyUser, Service, Quotation, Standard} from './docType';
+import {CompanySeller, Service, Quotation, Standard, User} from './docType';
 type InstallmentParams = {
   data: {
     projectName: string;
@@ -38,6 +38,7 @@ export type ParamListBase = {
   Quotation: undefined;
   RegisterScreen: undefined;
   SignupMobileScreen  : undefined;
+  LoginMobileScreen: undefined;
   OtpScreen: undefined;
   AddCustomer: undefined;
   AuditCategory: Audit;
@@ -82,12 +83,12 @@ export type ParamListBase = {
   DocViewScreen: {id: any};
   ContractViewScreen: {id: string};
 
-  EditSetting: {company: CompanyUser};
+  EditSetting: {company: CompanySeller,seller:User};
   SignUpScreen: undefined;
   LoginScreen: undefined;
   CompanyUserFormScreen: undefined;
   ExistingSignature: {
-    company: CompanyUser;
+    company: CompanySeller;
   };
   ContactInfoScreen: undefined;
   Installment: InstallmentParams;
@@ -105,7 +106,7 @@ export type ParamListBase = {
   SelectWorks: {quotationId: string};
   SendWorks: {
     id: string;
-    companyUser: CompanyUser;
+    companyUser: CompanySeller;
     workStatus: string;
     title: string;
     signAddress: string;
@@ -135,12 +136,12 @@ export type ParamListBase = {
   };
   EditQuotation: {
     quotation: Quotation;
-    company: CompanyUser;
+    company: CompanySeller;
     services: Service[];
   };
   CreateByQuotation: {
     quotation: Quotation;
-    company: CompanyUser;
+    company: CompanySeller;
     services: Service[];
   };
   EditQuotationScreen: {id: string};

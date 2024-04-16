@@ -25,7 +25,7 @@ import CardDashBoard from '../../components/CardDashBoard';
 import {useUser} from '../../providers/UserContext';
 import * as stateAction from '../../redux/actions';
 import {Store} from '../../redux/store';
-import {CompanyUser, Quotation} from '../../types/docType';
+import {CompanySeller, Quotation} from '../../types/docType';
 import {DashboardScreenProps} from '../../types/navigationType';
 
 import {
@@ -92,7 +92,7 @@ const DashboardSubmit = ({navigation}: DashboardScreenProps) => {
     QuotationStatus.CUSTOMER_APPROVAL_ALLCOMPLETED,
 
   ];
-  const [companyData, setCompanyData] = useState<CompanyUser | null>(null);
+  const [companyData, setCompanyData] = useState<CompanySeller | null>(null);
   const [quotationData, setQuotationData] = useState<Quotation[] | null>(null);
 
   const approvedQuotation = useMemo(() => {

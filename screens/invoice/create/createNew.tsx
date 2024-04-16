@@ -43,7 +43,7 @@ import useSelectedDates from '../../../hooks/quotation/create/useSelectDates';
 import useThaiDateFormatter from '../../../hooks/utils/useThaiDateFormatter';
 import * as stateAction from '../../../redux/actions';
 import { Store } from '../../../redux/store';
-import { CompanyUser, Service } from '../../../types/docType';
+import { CompanySeller, Service } from '../../../types/docType';
 import { ParamListBase } from '../../../types/navigationType';
 import { quotationsValidationSchema } from '../../utils/validationSchema';
 import { TaxType } from '../../../models/Tax';
@@ -58,7 +58,7 @@ const Quotation = ({navigation}: Props) => {
   const [isLoadingMutation, setIsLoadingMutation] = useState(false);
   const {data, isLoading, isError, error} = useFetchCompanyUser();
 
-  const [companyUser, setCompanyUser] = useState<CompanyUser>();
+  const [companyUser, setCompanyUser] = useState<CompanySeller>();
 
   const [addCustomerModal, setAddCustomerModal] = useState(false);
   const {initialDocnumber, initialDateOffer, initialDateEnd} =

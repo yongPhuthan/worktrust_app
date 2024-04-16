@@ -12,10 +12,10 @@ type User = {
 type CreateWorkerResponse = {
   isLoading: boolean;
   error: Error | null;
-  createToServer: (data: any) => Promise<void>;
+  putToServer: (data: any) => Promise<void>;
 };
 
-export function useCreateToServer(
+export function usePutServer(
   url: string,
   queryKey: string,
 ): CreateWorkerResponse {
@@ -27,7 +27,7 @@ export function useCreateToServer(
     state: {code},
   }: any = useContext(Store);
 
-  const createToServer = async (data: any) => {
+  const putToServer = async (data: any) => {
     if (!user || !user.uid) {
       console.error('User or user uid is not available');
       setError(new Error('User or user uid is not available'));
@@ -39,7 +39,7 @@ export function useCreateToServer(
     try {
       const token = await user.getIdToken();
       const response = await fetch(`${url}`, {
-        method: 'POST',
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
@@ -74,5 +74,5 @@ export function useCreateToServer(
     }
   };
 
-  return {isLoading, error, createToServer};
+  return {isLoading, error,  putToServer};
 }

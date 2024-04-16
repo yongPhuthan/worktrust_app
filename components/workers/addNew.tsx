@@ -2,10 +2,9 @@ import {BACK_END_SERVER_URL} from '@env';
 import {faCamera, faClose} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {useMutation, useQueryClient} from '@tanstack/react-query';
-import React, {useContext, useState} from 'react';
-import {Controller, useForm} from 'react-hook-form';
+import React, {useCallback, useContext, useState} from 'react';
+import {Controller, useForm, useWatch} from 'react-hook-form';
 import {
-  ActivityIndicator,
   Alert,
   Dimensions,
   Image,
@@ -20,13 +19,20 @@ import {
   MediaType,
   launchImageLibrary,
 } from 'react-native-image-picker';
-import {Checkbox, TextInput} from 'react-native-paper';
+import {
+  Checkbox,
+  TextInput,
+  Button,
+  ActivityIndicator,
+} from 'react-native-paper';
 import firebase from '../../firebase';
 import {useUriToBlob} from '../../hooks/utils/image/useUriToBlob';
 import {useSlugify} from '../../hooks/utils/useSlugify';
 import {useUser} from '../../providers/UserContext';
 import {Store} from '../../redux/store';
 import SaveButton from '../ui/Button/SaveButton';
+import {useUploadToFirebase} from '../../hooks/useUploadtoFirebase';
+import {useCreateToServer} from '../../hooks/useUploadToserver';
 
 interface ExistingModalProps {
   isVisible: boolean;
@@ -45,6 +51,10 @@ const AddNewWorker = ({isVisible, onClose}: ExistingModalProps) => {
   const [isImageUpload, setIsImageUpload] = useState(false);
   const user = useUser();
   const {
+    state: {code},
+    dispatch,
+  }: any = useContext(Store);
+  const {
     register,
     handleSubmit,
     control,
@@ -58,14 +68,15 @@ const AddNewWorker = ({isVisible, onClose}: ExistingModalProps) => {
       name: '',
       mainSkill: '',
       image: '',
-      workerStatus: WorkerStatus.OUTSOURCE,
+      workerStatus: WorkerStatus.MAINWORKER,
+      code
     },
   });
-  const image = watch('image');
-  const {
-    state: {code},
-    dispatch,
-  }: any = useContext(Store);
+  const image = useWatch({
+    control,
+    name: 'image',
+  });
+
   const slugify = useSlugify();
   const pickImage = async (onChange: any) => {
     const options: ImageLibraryOptions = {
@@ -95,53 +106,35 @@ const AddNewWorker = ({isVisible, onClose}: ExistingModalProps) => {
     });
   };
 
-  const createWorker = async () => {
-    if (!user || !user.email || !isValid) {
+  const storagePath = `${code}/workers/${getValues('name')}`;
+
+  const {
+    isUploading,
+    error: uploadError,
+    uploadImage,
+  } = useUploadToFirebase(storagePath);
+  const url = `${BACK_END_SERVER_URL}/api/company/createWorker`;
+  const {isLoading, error, createToServer} = useCreateToServer(url, 'workers');
+  const createWorker = useCallback(async () => {
+    if (!user || !user.uid || !isValid) {
       console.error('User or user email or Image is not available');
       return;
     }
-
+    const uploadPromises = [uploadImage(image)];
+    const downloadUrl = await Promise.all(uploadPromises);
+    if (uploadError) {
+      throw new Error('There was an error uploading the images');
+    }
+    if (!downloadUrl) {
+      throw new Error('ไม่สามาถอัพโหลดรูปภาพได้');
+    }
     try {
-      // Start the image upload and wait for it to finish
-      const imageUrl = await uploadImageToServer(image);
-      console.log('imageUrl', imageUrl);
-
-      // Prepare the data with the URL of the uploaded image
-      const data = {
-        name: getValues('name'),
-        mainSkill: getValues('mainSkill'),
-        workerStatus: getValues('workerStatus'),
-        code,
-        image: imageUrl,
+      setValue('image', downloadUrl[0] as string);
+      const formData = {
+        ...getValues(),
       };
 
-      // Proceed with creating the worker using the image URL
-      const token = await user.getIdToken(true);
-      const response = await fetch(
-        `${BACK_END_SERVER_URL}/api/company/createWorker`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({data}),
-        },
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        const errorMessage =
-          errorData.message || 'An unexpected error occurred.';
-        throw new Error(errorMessage);
-      }
-
-      // Handle successful worker creation here, if necessary
-      if (response.ok) {
-        queryClient.invalidateQueries({
-          queryKey: ['workers', code],
-        });
-      }
+      await createToServer(formData);
     } catch (err) {
       // Handle errors from image upload or worker creation
       console.error('An error occurred:', err);
@@ -152,42 +145,18 @@ const AddNewWorker = ({isVisible, onClose}: ExistingModalProps) => {
         {cancelable: false},
       );
     }
-  };
+  }, [
+    user,
+    isValid,
+    image,
+    code,
+    uploadImage,
+    createToServer,
+    queryClient,
+    BACK_END_SERVER_URL,
+    getValues,
+  ]);
 
-  const uploadImageToServer = async (imageUri: string): Promise<string> => {
-    setIsImageUpload(true);
-    if (!user || !user.email) {
-      console.error('User or user email is not available');
-      setIsImageUpload(false);
-      // Explicitly throw an error or return a default/fallback string if necessary.
-      throw new Error('User or user email is not available');
-    }
-
-    const storagePath = `${code}/workers/${getValues('name')}`;
-
-    try {
-      // Create a reference to the Firebase Storage location
-      const reference = firebase.storage().ref(storagePath);
-
-      // Upload the image file directly from the client
-      console.log('Uploading image to Firebase Storage', imageUri);
-      await reference.putFile(imageUri); // For React Native, use putFile with the local file URI
-
-      console.log('Image uploaded successfully');
-
-      // Get the download URL
-      const accessUrl = await reference.getDownloadURL();
-      console.log('Download URL:', accessUrl);
-      return accessUrl; // Return the download URL here
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      setIsImageUpload(false);
-      // Handle the error by throwing or returning a fallback URL
-      throw error; // or return a default URL if you prefer
-    } finally {
-      setIsImageUpload(false);
-    }
-  };
   const {mutate, isPending} = useMutation({
     mutationFn: createWorker,
     onSuccess: () => {
@@ -201,18 +170,6 @@ const AddNewWorker = ({isVisible, onClose}: ExistingModalProps) => {
     },
   });
 
-  if (isPending || isImageUpload) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}>
-        <ActivityIndicator size="large" />
-      </View>
-    );
-  }
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -303,8 +260,21 @@ const AddNewWorker = ({isVisible, onClose}: ExistingModalProps) => {
           </View>
         )}
       />
-
-      <SaveButton disabled={!isValid} onPress={() => mutate()} />
+      <Button
+        loading={isPending || isImageUpload || isUploading || isLoading }
+        disabled={!isValid}
+        style={{
+          width: '90%',
+          alignSelf: 'center',
+          marginBottom: 20,
+          marginTop: 20,
+        }}
+        mode="contained"
+        onPress={() => {
+          mutate();
+        }}>
+        {'บันทึก'}
+      </Button>
     </View>
   );
 };

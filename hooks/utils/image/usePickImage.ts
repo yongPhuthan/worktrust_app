@@ -4,7 +4,7 @@ import {launchImageLibrary} from 'react-native-image-picker';
 import {ImageLibraryOptions, MediaType, ImagePickerResponse} from 'react-native-image-picker';
 
 type UsePickImageReturn = {
-  isImageUploading: boolean;
+  isImagePicking: boolean;
   pickImage: () => Promise<void>;
 };
 
@@ -35,5 +35,5 @@ export const usePickImage = (onChange: (uri: string) => void): UsePickImageRetur
     });
   }, [onChange]);
 
-  return { isImageUploading, pickImage };
+  return { isImagePicking: isImageUploading, pickImage };
 };

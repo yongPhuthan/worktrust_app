@@ -1,33 +1,26 @@
+import {BACK_END_SERVER_URL} from '@env';
+import {faChevronRight, faRemove} from '@fortawesome/free-solid-svg-icons';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import React, {useContext, useState} from 'react';
+
 import {
-  BACK_END_SERVER_URL
-} from '@env';
-import {
-  faChevronRight, faRemove
-} from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import React, { useState } from 'react';
-import {
-  
   Alert,
   Image,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
-import { Divider,ActivityIndicator, } from 'react-native-paper';
+import {Divider, ActivityIndicator} from 'react-native-paper';
 import firebase from '../../firebase';
-import { ParamListBase } from '../../types/navigationType';
-
-import { StackNavigationProp } from '@react-navigation/stack';
-import { useQuery } from '@tanstack/react-query';
-import {
-  launchImageLibrary,
-  MediaType
-} from 'react-native-image-picker';
-import { useUser } from '../../providers/UserContext';
-import { CompanyUser } from '../../types/docType';
+import {ParamListBase} from '../../types/navigationType';
+import {Store} from '../../redux/store';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {useQuery} from '@tanstack/react-query';
+import {launchImageLibrary, MediaType} from 'react-native-image-picker';
+import {useUser} from '../../providers/UserContext';
+import {CompanySeller, User} from '../../types/docType';
 import ConfirmDeleteDialog from '../../components/ConfirmDeleteDialog';
 
 interface SettingScreenProps {
@@ -35,11 +28,14 @@ interface SettingScreenProps {
 }
 
 const SettingsScreen = ({navigation}: SettingScreenProps) => {
-  const [company, setCompany] = useState<CompanyUser>();
+  const [company, setCompany] = useState<CompanySeller>();
   const user = useUser();
   const [visible, setVisible] = useState(false);
-
-
+  const [seller, setSeller] = useState<User>();
+  const {
+    state: {code},
+    dispatch,
+  }: any = useContext(Store);
   const [logo, setLogo] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(true);
 
@@ -61,10 +57,8 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
     );
   };
 
-
   const showDialog = () => setVisible(true);
   const hideDialog = () => setVisible(false);
-
 
   const businessDetails = [
     {id: 2, title: 'Business Address', value: company?.address || ''},
@@ -74,13 +68,11 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
       throw new Error('User not authenticated');
     } else {
       const idToken = await user.getIdToken(true);
-      const {email} = user;
-      if (!email) {
-        throw new Error('Email not found');
+      const {uid} = user;
+      if (!uid) {
+        throw new Error('User not found');
       }
-      let url = `${BACK_END_SERVER_URL}/api/company/getCompanySeller?email=${encodeURIComponent(
-        email,
-      )}`;
+      let url = `${BACK_END_SERVER_URL}/api/company/getCompanySeller`;
       const response = await fetch(url, {
         method: 'GET',
         headers: {
@@ -89,8 +81,9 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
         },
       });
       const data = await response.json();
-      setCompany(data.user);
-      setLogo(data.user.logo);
+      setCompany(data.company);
+      setLogo(data.company.logo);
+      setSeller(data.user);
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
@@ -107,10 +100,9 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
       console.error('Failed to sign out: ', error);
     }
   };
-  const {data, isLoading, isError,error} = useQuery({
-    queryKey: ['companySetting'],
+  const {data, isLoading, isError, error} = useQuery({
+    queryKey: ['companySetting',code],
     queryFn: fetchCompanyUser,
-
   });
   if (isLoading) {
     return (
@@ -121,13 +113,12 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
   }
 
   if (isError) {
-    firebase.auth().signOut()
-    // return (
-    //   <View style={styles.loadingContainer}>
-    //     <Text>Error: {error?.message}</Text>
-    //   </View>
-    // );
-
+    // firebase.auth().signOut()
+    return (
+      <View style={styles.loadingContainer}>
+        <Text>Error: {error?.message}</Text>
+      </View>
+    );
   }
 
   // if (error instanceof Error) {
@@ -136,7 +127,7 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
   //     "seesion หมดอายุ",
   //     "ลงทะเบียนเข้าใช้งานใหม่อีกครั้ง",
   //     [
-       
+
   //       {
   //         text: "ตกลง",
   //         onPress: () => {
@@ -181,7 +172,7 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
   }
   return (
     <>
-      {company && (
+      {company && seller && (
         <ScrollView style={{flex: 1, backgroundColor: '#f5f5f5'}}>
           {/* Business Details */}
           <View style={{backgroundColor: '#fff', paddingVertical: 24}}>
@@ -222,11 +213,20 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
               <Text
                 style={{
                   fontSize: 14,
+                  marginBottom: 5,
+                  fontWeight: '600',
+                  color: '#333',
+                }}>
+                {seller?.name} {seller?.lastName}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 14,
                   marginBottom: 10,
                   fontWeight: '600',
                   color: '#333',
                 }}>
-                {company?.userName} {company?.userLastName}
+                {seller?.jobPosition}
               </Text>
               {businessDetails.map(item => (
                 <View
@@ -249,26 +249,21 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
                   fontWeight: '600',
                   color: '#333',
                 }}>
-                {company?.officeTel} {company?.mobileTel}
+                เบอร์ติดต่อ {company?.officeTel} มือถือ {company?.mobileTel}
               </Text>
-              <Text
-                style={{
-                  fontSize: 14,
-                  marginBottom: 10,
-                  fontWeight: '600',
-                  color: '#333',
-                }}>
-                {company?.userEmail}
-              </Text>
-              <Text
-                style={{
-                  fontSize: 14,
-                  marginBottom: 10,
-                  fontWeight: '600',
-                  color: '#333',
-                }}>
-                {company?.companyNumber}
-              </Text>
+
+              {company.companyTax && (
+                <Text
+                  style={{
+                    fontSize: 14,
+                    marginBottom: 10,
+                    fontWeight: '600',
+                    color: '#333',
+                  }}>
+                  {company?.companyTax}
+                </Text>
+              )}
+
               <Text
                 style={{
                   fontSize: 14,
@@ -332,7 +327,7 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
             <Divider />
             <TouchableOpacity
               style={{paddingVertical: 15, paddingHorizontal: 24}}
-              onPress={() => navigation.navigate('EditSetting', {company})}>
+              onPress={() => navigation.navigate('EditSetting', {company,seller})}>
               <View
                 style={{
                   flexDirection: 'row',
@@ -416,7 +411,7 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
                 borderBottomWidth: 0.3,
                 borderBottomColor: '#cccccc',
               }}></View>
-                          <TouchableOpacity
+            <TouchableOpacity
               style={{paddingVertical: 15, paddingHorizontal: 24}}
               onPress={showDialog}>
               <View
@@ -431,7 +426,11 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
                 <FontAwesomeIcon icon={faRemove} size={16} color="red" />
               </View>
             </TouchableOpacity>
-            <ConfirmDeleteDialog visible={visible} hideDialog={hideDialog} company={company.bizName} />
+            <ConfirmDeleteDialog
+              visible={visible}
+              hideDialog={hideDialog}
+              company={company.bizName}
+            />
           </View>
         </ScrollView>
       )}

@@ -28,7 +28,7 @@ import {useRoute} from '@react-navigation/native';
 import {HOST_URL, PROJECT_FIREBASE, BACK_END_SERVER_URL} from '@env';
 import auth, {FirebaseAuthTypes} from '@react-native-firebase/auth';
 import {useQuery, useQueryClient} from '@tanstack/react-query';
-import {CompanyUser, Service, Material} from '../../../../types/docType';
+import {CompanySeller, Service, Material} from '../../../../types/docType';
 
 import Modal from 'react-native-modal';
 import {useUser} from '../../../../providers/UserContext';

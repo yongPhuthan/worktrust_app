@@ -68,7 +68,7 @@ const imageId = uuidv4();
   }: any = useContext(Store);
 
   const updateCompanySignature = async (data: any) => {
-    if (!user || !user.email) {
+    if (!user || !user.uid) {
       throw new Error('User or user email is not available');
     }
     try {
@@ -134,7 +134,7 @@ const imageId = uuidv4();
     name: 'sellerSignature',
   });
 
-  const uploadFileToFirebase = async (imageUri: string): Promise<string | null> => {
+  const uploadFileToFirebase = useCallback(async (imageUri: string): Promise<string | null> => {
     setIsSignatureUpload(true);
   
     if (!user) {
@@ -143,14 +143,14 @@ const imageId = uuidv4();
       return null;
     }
   
-    if (!user.email) {
-      console.error('User email is not available');
+    if (!user.uid) {
+      console.error('User UID is not available');
       setIsSignatureUpload(false);
       return null; 
     }
   
     const filename = `signature${code}.png`;
-    const storagePath = `${code}/signature/${filename}${imageId}`
+    const storagePath = `${code}/signature/${filename}${imageId}`;
   
     try {
       const storageRef = firebase.storage().ref(storagePath);
@@ -179,8 +179,7 @@ const imageId = uuidv4();
     } finally {
       setIsSignatureUpload(false);
     }
-  };
-  
+  }, [user, code, imageId]);
 
   const handleUploadNewSignatureAndSave = useCallback(
     async (signature:string) => {

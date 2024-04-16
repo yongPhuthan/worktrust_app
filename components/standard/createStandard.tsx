@@ -33,13 +33,12 @@ import {useCreateToServer} from '../../hooks/useUploadToserver';
 type Props = {
   isVisible: boolean;
   onClose: () => void;
-  companyId: string;
 };
 
 const CreateStandard = (props: Props) => {
-  const {isVisible, onClose, companyId} = props;
+  const {isVisible, onClose} = props;
   const {
-    state: {isEmulator, code},
+    state: {isEmulator, code, companySellerState},
     dispatch,
   }: any = useContext(Store);
   const [isError, setError] = React.useState('');
@@ -50,7 +49,7 @@ const CreateStandard = (props: Props) => {
     content: null,
     badStandardImage: null,
     badStandardEffect: null,
-    sellerId: companyId,
+    sellerId: companySellerState.id,
   };
   const {
     register,
@@ -64,14 +63,14 @@ const CreateStandard = (props: Props) => {
     resolver: yupResolver(createStandardSchema),
   });
   const {
-    isImageUploading: isStandardImageUploading,
+    isImagePicking: isStandardImageUploading,
     pickImage: pickStandardImage,
   } = usePickImage((uri: string) => {
     setValue('image', uri);
   });
 
   const {
-    isImageUploading: isBadStandardImageUploading,
+    isImagePicking: isBadStandardImageUploading,
     pickImage: pickBadStandardImage,
   } = usePickImage((uri: string) => {
     setValue('badStandardImage', uri);
@@ -81,7 +80,6 @@ const CreateStandard = (props: Props) => {
     'standardShowTitle',
   )}`;
   const {
-    imageUrl: standardImageUrl,
     isUploading: isStandardUploading,
     error: isStandardImageError,
     uploadImage: uploadStandardImage,
@@ -90,7 +88,6 @@ const CreateStandard = (props: Props) => {
     'standardShowTitle',
   )}/badStandard`;
   const {
-    imageUrl: badStandardImageUrl,
     isUploading: isBadStandardUploading,
     error: isBadStandardImageError,
     uploadImage: uploadBadStandardImage,
@@ -109,19 +106,20 @@ const CreateStandard = (props: Props) => {
     setError('');
 
     // Step 1: Start uploading both images
+    const uploadPromises = [
+      uploadStandardImage(getValues('image')), // Assuming these methods don't need extra args
+      uploadBadStandardImage(getValues('badStandardImage')),
+    ];
+
+    const uploadedImages = await Promise.all(uploadPromises);
+    // Additional validation if URLs are required
+    if (!uploadedImages) {
+      setError('Failed to upload images');
+      return;
+    }
     try {
-      const uploadPromises = [
-        uploadStandardImage(getValues('image')), // Assuming these methods don't need extra args
-        uploadBadStandardImage(getValues('badStandardImage')),
-      ];
-
-      const uploadedImages = await Promise.all(uploadPromises);
-
-      // Additional validation if URLs are required
-      if (!uploadedImages) {
-        setError('Failed to upload images');
-        return;
-      }
+      setValue('image', uploadedImages[0]);
+      setValue('badStandardImage', uploadedImages[1]);
 
       // Step 3: Proceed with creating the standard
       const formData = {
@@ -162,7 +160,6 @@ const CreateStandard = (props: Props) => {
           disabled={!isValid}
           testID="submited-button"
           mode="contained"
-          buttonColor={'#1b72e8'}
           onPress={() => {
             handleSubmit();
           }}>
@@ -227,8 +224,7 @@ const CreateStandard = (props: Props) => {
                     style={{
                       width: 200,
                       aspectRatio: 1,
-                      resizeMode: 'contain',
-
+                      marginVertical: 20,
                     }}
                     onError={e =>
                       console.log('Failed to load image:', e.nativeEvent.error)
@@ -347,8 +343,8 @@ const CreateStandard = (props: Props) => {
                     style={{
                       width: 200,
                       aspectRatio: 1,
-                      resizeMode: 'contain',
-                      marginBottom: 20,
+                      marginVertical: 20,
+
                     }}
                     onError={e =>
                       console.log('Failed to load image:', e.nativeEvent.error)

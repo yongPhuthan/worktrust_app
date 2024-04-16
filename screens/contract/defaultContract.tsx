@@ -1,5 +1,5 @@
 import {yupResolver} from '@hookform/resolvers/yup';
-import React, {useState,useEffect} from 'react';
+import React, {useState, useEffect, useContext} from 'react';
 import {
   Alert,
   Dimensions,
@@ -9,6 +9,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import {Store} from '../../redux/store';
 import {Divider, TextInput} from 'react-native-paper';
 import {defaultContractSchema} from '../utils/validationSchema';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
@@ -41,23 +42,24 @@ const DefaultContract = ({navigation}: Props) => {
   const [defaultContractValues, setDefaultContractValues] =
     useState<DefaultContractType>();
   const user = useUser();
-  const email = user?.email;
   const [contract, setContract] = useState<DefaultContractType>();
   const {data: dataProps}: any = route?.params;
   const quotation = dataProps;
   const queryClient = useQueryClient();
-  async function fetchContractByEmail() {
-    if (!user || !user.email) {
-      console.error('User or user email is not available');
+  const {
+    dispatch,
+    state: {isEmulator, code},
+  }: any = useContext(Store);
+  async function fetchContractByUid() {
+    if (!user || !user.uid) {
+      console.error('User is not available');
       return;
     }
 
     try {
       const token = await user.getIdToken(true);
       const response = await fetch(
-        `${BACK_END_SERVER_URL}/api/documents/queryDefaultContracts?email=${encodeURIComponent(
-          user.email,
-        )}`,
+        `${BACK_END_SERVER_URL}/api/documents/queryContractByUid`,
         {
           method: 'GET',
           headers: {
@@ -95,15 +97,13 @@ const DefaultContract = ({navigation}: Props) => {
     }
   }
   const createQuotation = async (data: any) => {
-    if (!user || !user.email) {
-      throw new Error('User or user email is not available');
+    if (!user || !user.uid) {
+      throw new Error('User is not available');
     }
     try {
       const token = await user.getIdToken(true);
       const response = await fetch(
-        `${BACK_END_SERVER_URL}/api/documents/createQuotation?email=${encodeURIComponent(
-          user.email,
-        )}`,
+        `${BACK_END_SERVER_URL}/api/documents/createQuotation`,
         {
           method: 'POST',
           headers: {
@@ -126,23 +126,20 @@ const DefaultContract = ({navigation}: Props) => {
         throw new Error('Network response was not ok.');
       }
       return await response.json(); // Return the JSON response if everything is ok
-
     } catch (err) {
       throw new Error(err as any);
     }
   };
 
   const createContractAndQuotation = async (data: any) => {
-    if (!user || !user.email) {
-      console.error('User or user email is not available');
+    if (!user || !user.uid) {
+      console.error('User  is not available');
       return;
     }
     try {
       const token = await user.getIdToken(true);
       const response = await fetch(
-        `${BACK_END_SERVER_URL}/api/documents/createContractAndQuotation?email=${encodeURIComponent(
-          user.email,
-        )}`,
+        `${BACK_END_SERVER_URL}/api/documents/createContractAndQuotation`,
         {
           method: 'POST',
           headers: {
@@ -164,23 +161,21 @@ const DefaultContract = ({navigation}: Props) => {
         }
         throw new Error('Network response was not ok.');
       }
-      return await response.json(); 
+      return await response.json();
     } catch (err) {
       throw new Error(err as any);
     }
   };
 
   const updateDefaultContractAndCreateQuotation = async (data: any) => {
-    if (!user || !user.email) {
+    if (!user || !user.uid) {
       console.error('User or user email is not available');
       return;
     }
     try {
       const token = await user.getIdToken(true);
       const response = await fetch(
-        `${BACK_END_SERVER_URL}/api/documents/updateDefaultContractAndCreateQuotation?email=${encodeURIComponent(
-          user.email,
-        )}`,
+        `${BACK_END_SERVER_URL}/api/documents/updateDefaultContractAndCreateQuotation`,
         {
           method: 'POST',
           headers: {
@@ -202,9 +197,8 @@ const DefaultContract = ({navigation}: Props) => {
         }
         throw new Error('Network response was not ok.');
       }
-      return await response.json(); 
-
-    } catch (err ) {
+      return await response.json();
+    } catch (err) {
       throw new Error(err as any);
     }
   };
@@ -226,17 +220,16 @@ const DefaultContract = ({navigation}: Props) => {
     watch,
     setValue,
     reset,
-    formState: {errors, isDirty, dirtyFields, isValid,defaultValues},
+    formState: {errors, isDirty, dirtyFields, isValid, defaultValues},
   } = useForm({
     mode: 'onChange',
     defaultValues: initialValues,
     resolver: yupResolver(defaultContractSchema),
   });
   const {data, isLoading, isError} = useQuery({
-    queryKey: ['ContractByEmail',email],
-    queryFn: fetchContractByEmail,
+    queryKey: ['ContractByUid', user?.uid],
+    queryFn: fetchContractByUid,
     // enabled: !!user,
-
   });
   useEffect(() => {
     if (data) {
@@ -255,10 +248,10 @@ const DefaultContract = ({navigation}: Props) => {
       setDefaultContractValues(values);
     }
   }, [data, reset]);
-  
+
   const adjustPerDay = useWatch({control, name: 'adjustPerDay'});
 
-  const mutationFunction = async (apiData :any) => {
+  const mutationFunction = async (apiData: any) => {
     if (!defaultContractValues) {
       return createContractAndQuotation(apiData);
     } else if (isDirty) {
@@ -267,27 +260,24 @@ const DefaultContract = ({navigation}: Props) => {
       return createQuotation(apiData);
     }
   };
-  const {mutate: dynamicMutation, isPending} = useMutation(
-    
-    {
-      mutationFn: mutationFunction,
-      onSuccess: data => {
-        queryClient.invalidateQueries({
-          queryKey:['dashboardQuotation',email]
-        });
-        navigation.navigate('DocViewScreen', {id: data.quotationId});
-      },
-      onError: (error: MyError) => {
-        Alert.alert(
-          'เกิดข้อผิดพลาด',
-          `Server-side user creation failed:, ${error}`,
-          [{text: 'OK'}],
-
-          {cancelable: false},
-        );
-      },
+  const {mutate: dynamicMutation, isPending} = useMutation({
+    mutationFn: mutationFunction,
+    onSuccess: data => {
+      queryClient.invalidateQueries({
+        queryKey: ['dashboardQuotation', code],
+      });
+      navigation.navigate('DocViewScreen', {id: data.quotationId});
     },
-  );
+    onError: (error: MyError) => {
+      Alert.alert(
+        'เกิดข้อผิดพลาด',
+        `Server-side user creation failed:, ${error}`,
+        [{text: 'OK'}],
+
+        {cancelable: false},
+      );
+    },
+  });
 
   const watchedValues: any = watch();
   const dirtyValues = Object.keys(dirtyFields).reduce((acc, key) => {
@@ -298,11 +288,14 @@ const DefaultContract = ({navigation}: Props) => {
   }, {} as DefaultContractType);
 
   const handleDonePress = async () => {
-
     try {
       const apiData = {
         data: quotation,
-        contract: defaultContractValues?  isDirty ? dirtyValues : defaultContractValues : watchedValues,
+        contract: defaultContractValues
+          ? isDirty
+            ? dirtyValues
+            : defaultContractValues
+          : watchedValues,
       };
       dynamicMutation(apiData);
     } catch (error: Error | MyError | any) {
@@ -316,14 +309,14 @@ const DefaultContract = ({navigation}: Props) => {
     }
   };
 
-  function safeToString(value:string | number | null | undefined) {
+  function safeToString(value: string | number | null | undefined) {
     return value !== undefined && value !== null ? value.toString() : '';
   }
 
-  if (isLoading || isPending) {
+  if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size='large' />
+        <ActivityIndicator size="large" />
       </View>
     );
   }
@@ -334,7 +327,6 @@ const DefaultContract = ({navigation}: Props) => {
       </View>
     );
   }
-console.log('quotation',quotation);
 
   const renderWanranty = (
     name: any,
@@ -354,10 +346,11 @@ console.log('quotation',quotation);
           control={control}
           rules={{required: 'This field is required'}}
           render={({field: {onChange, onBlur, value}, fieldState: {error}}) => (
-            <View style={{
-              flexDirection:'column'
-            }}>
-                          {error && <Text style={styles.errorText}>{error.message}</Text>}
+            <View
+              style={{
+                flexDirection: 'column',
+              }}>
+              {error && <Text style={styles.errorText}>{error.message}</Text>}
 
               <TextInput
                 keyboardType="number-pad"
@@ -404,10 +397,11 @@ console.log('quotation',quotation);
           control={control}
           rules={{required: 'This field is required'}}
           render={({field: {onChange, onBlur, value}, fieldState: {error}}) => (
-            <View style={{
-              flexDirection:'column'
-            }}>
-                            {error && <Text style={styles.errorText}>{error.message}</Text>}
+            <View
+              style={{
+                flexDirection: 'column',
+              }}>
+              {error && <Text style={styles.errorText}>{error.message}</Text>}
 
               <TextInput
                 keyboardType="number-pad"
@@ -459,7 +453,7 @@ console.log('quotation',quotation);
             marginTop: 10,
             justifyContent: 'flex-start',
             alignContent: 'stretch',
-            gap:10
+            gap: 10,
           }}>
           <Controller
             control={control}
@@ -468,10 +462,11 @@ console.log('quotation',quotation);
               field: {onChange, onBlur, value},
               fieldState: {error},
             }) => (
-              <View style={{
-                flexDirection:'column'
-              }}>
-                            {error && <Text style={styles.errorText}>{error.message}</Text>}
+              <View
+                style={{
+                  flexDirection: 'column',
+                }}>
+                {error && <Text style={styles.errorText}>{error.message}</Text>}
 
                 <TextInput
                   keyboardType="number-pad"
@@ -499,14 +494,14 @@ console.log('quotation',quotation);
           />
           {adjustPerDay > 0 && (
             <Text style={{marginTop: 30}}>
-              เป็นเงิน 
+              เป็นเงิน
               {Number(
                 quotation.allTotal -
                   Number(quotation.allTotal * (1 - adjustPerDay / 100)),
               )
                 .toFixed(2)
                 .replace(/\d(?=(\d{3})+\.)/g, '$&,')}
-               บาท/วัน
+              บาท/วัน
             </Text>
           )}
         </View>
@@ -530,18 +525,21 @@ console.log('quotation',quotation);
 
         <Controller
           control={control}
-          rules={{required:true}}
+          rules={{required: true}}
           render={({field: {onChange, onBlur, value}, fieldState: {error}}) => (
             <>
-                          {error && <Text style={styles.errorText}>{error.message}</Text>}
+              {error && <Text style={styles.errorText}>{error.message}</Text>}
               <TextInput
                 keyboardType="number-pad"
                 textAlign="center"
-                style={{width: Dimensions.get('window').width * 0.3,          marginTop: 10,}}
+                style={{
+                  width: Dimensions.get('window').width * 0.3,
+                  marginTop: 10,
+                }}
                 error={!!error}
                 mode="outlined"
                 textAlignVertical="center"
-                defaultValue={(defaultValue)}
+                defaultValue={defaultValue}
                 onBlur={onBlur}
                 right={<TextInput.Affix text="วัน" />}
                 value={value ? String(value) : '0'}
@@ -553,7 +551,6 @@ console.log('quotation',quotation);
                     onChange(0);
                   }
                 }}
-                
               />
             </>
           )}
@@ -585,15 +582,18 @@ console.log('quotation',quotation);
         <Button
           disabled={!isValid || isPending}
           mode="contained"
-          buttonColor={'#1b72e8'}
+          loading={isPending}
           onPress={handleDonePress}
           style={{marginRight: 5}}>
           {'บันทึก'}
         </Button>
       </Appbar.Header>
-      <ProgressBar progress={1} color={'#1b52a7'} />
+      <ProgressBar
+        progress={1}
+        // color={'#1b52a7'}
+      />
 
-      <KeyboardAwareScrollView contentContainerStyle={{ paddingBottom: 50 }}>
+      <KeyboardAwareScrollView contentContainerStyle={{paddingBottom: 50}}>
         {contract ? (
           <SafeAreaView style={{flex: 1}}>
             <View style={styles.containerForm}>
@@ -630,10 +630,10 @@ console.log('quotation',quotation);
                   safeToString(contract.workAfterGetDeposit),
                 )}
                 {renderPrepare(
-                    'prepareDay',
-                    'ใช้เวลาเตรียมงานกี่วันก่อนติดตั้ง',
-                    safeToString(contract.prepareDay),
-                  )}
+                  'prepareDay',
+                  'ใช้เวลาเตรียมงานกี่วันก่อนติดตั้ง',
+                  safeToString(contract.prepareDay),
+                )}
                 {renderPrepare(
                   'finishedDay',
                   'รวมใช้เวลาทำงานทั้งหมดกี่วัน',
@@ -682,7 +682,6 @@ console.log('quotation',quotation);
                 {renderWanranty(
                   'productWarantyYear',
                   'รับประกันวัสดุอุปกรณ์กี่เดือน',
-
                 )}
                 {renderWanranty(
                   'skillWarantyYear',
@@ -704,10 +703,10 @@ console.log('quotation',quotation);
                   'workAfterGetDeposit',
                   'เริ่มทำงานภายในกี่วันหลังได้รับมัดจำ',
                 )}
-                        {renderPrepare(
-                    'prepareDay',
-                    'ใช้เวลาเตรียมงานกี่วันก่อนติดตั้ง',
-                  )}
+                {renderPrepare(
+                  'prepareDay',
+                  'ใช้เวลาเตรียมงานกี่วันก่อนติดตั้ง',
+                )}
                 {renderPrepare('finishedDay', 'รวมใช้เวลาทำงานทั้งหมดกี่วัน')}
               </View>
             </View>
@@ -735,7 +734,6 @@ console.log('quotation',quotation);
                   'adjustPerDay',
                   'หากส่งงานล่าช้าให้ผู้ว่าจ้างคิดค่าปรับเป็นรายวันกี่เปอร์เซ็นต์ของมูลค่างานตามสัญญาต่อวัน',
                 )}
-                
               </View>
               <View style={{marginBottom: 50}}></View>
             </View>
@@ -967,7 +965,6 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: 'red',
-
   },
 });
 

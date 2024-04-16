@@ -1,8 +1,8 @@
-import { BACK_END_SERVER_URL } from '@env';
-import { yupResolver } from '@hookform/resolvers/yup';
+import {BACK_END_SERVER_URL} from '@env';
+import {yupResolver} from '@hookform/resolvers/yup';
 import auth from '@react-native-firebase/auth';
-import React, { useContext, useState } from 'react';
-import { Controller, useForm, useWatch } from 'react-hook-form';
+import React, {useContext, useState} from 'react';
+import {Controller, set, useForm, useWatch} from 'react-hook-form';
 import {
   ActivityIndicator,
   Alert,
@@ -14,26 +14,30 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Appbar, TextInput } from 'react-native-paper';
-import { companyValidationSchema } from '../utils/validationSchema';
+import {Appbar, TextInput} from 'react-native-paper';
+import {companyValidationSchema} from '../utils/validationSchema';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import {useMutation, useQueryClient} from '@tanstack/react-query';
 
-import { faCloudUpload } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import {faCloudUpload} from '@fortawesome/free-solid-svg-icons';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import storage from '@react-native-firebase/storage';
 
-import type { RouteProp } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
+import type {RouteProp} from '@react-navigation/native';
+import {StackNavigationProp} from '@react-navigation/stack';
 import {
   ImageLibraryOptions,
   launchImageLibrary,
 } from 'react-native-image-picker';
-import { Button } from 'react-native-paper';
-import { useUser } from '../../providers/UserContext';
-import { Store } from '../../redux/store';
-import { CompanyUser } from '../../types/docType';
-import { ParamListBase } from '../../types/navigationType';
+import {Button} from 'react-native-paper';
+import {useUser} from '../../providers/UserContext';
+import {Store} from '../../redux/store';
+import {CompanySeller} from '../../types/docType';
+import {ParamListBase} from '../../types/navigationType';
+import {useUploadToFirebase} from '../../hooks/useUploadtoFirebase';
+import {usePickImage} from '../../hooks/utils/image/usePickImage';
+import {useCreateToServer} from '../../hooks/useUploadToserver';
+import {usePutServer} from '../../hooks/putServer';
 
 interface MyError {
   response: object;
@@ -45,35 +49,37 @@ interface Props {
 }
 
 const EditSetting = ({navigation, route}: Props) => {
-  const userEmail = auth().currentUser?.email ?? '';
-  const user = useUser();
-  const [isLoading, setIsLoading] = useState(false);
-  const queryClient = useQueryClient();
-  const {company}: any = route.params || {};
+  const {company, seller}: any = route.params || {};
   const [isImageUpload, setIsImageUpload] = useState(false);
   const errorText = 'กรุณากรอกข้อมูล';
-  const [logo, setLogo] = useState<string | undefined>(company.logo);
+  const API_URL = `${BACK_END_SERVER_URL}/api/company/updateCompanySeller?id=${encodeURIComponent(
+    company.id,
+  )}`;
+
   //   const [company, setCompany] = useState(dataProps.company);
   const {
-    state: {client_name, isEmulator, client_tel, client_tax},
+    state: {code},
     dispatch,
   }: any = useContext(Store);
   const defaultValues = {
     bizName: company.bizName,
-    userName: company.userName,
-    userLastName: company.userLastName,
+    name: seller.name,
+    logo: company.logo,
+    lastName: seller.lastName,
     officeTel: company.officeTel,
     address: company.address,
     mobileTel: company.mobileTel,
-    companyNumber: company.TaxId,
-    userPosition: company.userPosition,
+    companyTax: company.companyTax,
+    jobPosition: seller.jobPosition,
     id: company.id,
   };
+
   const {
     control,
     handleSubmit,
     reset,
     watch,
+    getValues,
     setValue,
     formState: {errors, isDirty, dirtyFields, isValid},
   } = useForm<any>({
@@ -85,97 +91,62 @@ const EditSetting = ({navigation, route}: Props) => {
     defaultValue: defaultValues,
     control,
   });
+
+  const logo = useWatch({
+    control,
+    name: 'logo',
+  });
+  const bizName = useWatch({
+    control,
+    name: 'bizName',
+  });
   const dirtyValues = Object.keys(dirtyFields).reduce((acc, key) => {
     if (key in watchedValues) {
-      acc[key] = watchedValues[key as keyof CompanyUser];
+      acc[key] = watchedValues[key as keyof CompanySeller];
     }
     return acc;
   }, {} as any);
 
-  const updateCompany = async (data: any) => {
-    if (!user || !user.email) {
-      throw new Error('User or user email is not available');
+  const {isImagePicking, pickImage} = usePickImage((uri: string) => {
+    setValue('logo', uri, {shouldDirty: true});
+  });
+  const logoPath = `${code}/logo/${bizName}}`;
+
+  const {
+    isUploading,
+    error: uploadError,
+    uploadImage,
+  } = useUploadToFirebase(logoPath);
+  const {isLoading, error, putToServer} = usePutServer(
+    API_URL,
+    'companySetting',
+  );
+  const updateCompany = async () => {
+    if (dirtyFields.logo) {
+      const downloadUrl = await uploadImage(logo as string);
+      if (uploadError) {
+        throw new Error('There was an error uploading the images');
+      }
+      if (!downloadUrl) {
+        throw new Error('ไม่สามาถอัพโหลดรูปภาพได้');
+      }
+      setValue('logo', downloadUrl);
     }
+
     try {
-      const token = await user.getIdToken(true);
-      const response = await fetch(
-        `${BACK_END_SERVER_URL}/api/company/updateCompanySeller?id=${encodeURIComponent(
-          company.id,
-        )}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({data}),
-        },
-      );
-
-      if (!response.ok) {
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.indexOf('application/json') !== -1) {
-          const errorData = await response.json(); // Parse the error response only if it's JSON
-          throw new Error(errorData.message || 'Network response was not ok.');
-        } else {
-          throw new Error('Network response was not ok and not JSON.');
-        }
-      }
-
-      if (response.status === 200) {
-        return response.json();
-      } else {
-        const errorData = await response.json();
-        console.error('Response:', await response.text());
-        throw new Error(errorData.message || 'Network response was not ok.');
-      }
+      const formData = {
+        ...getValues(),
+      };
+      await putToServer(formData);
     } catch (err) {
       console.error('Error in updateContractAndQuotation:', err);
       throw new Error(err as any);
     }
   };
 
-  const handleLogoUpload = async () => {
-    const options: ImageLibraryOptions = {
-      mediaType: 'photo',
-      maxWidth: 300,
-      maxHeight: 300,
-      quality: 0.7,
-    };
-
-    try {
-      const response = await launchImageLibrary(options);
-
-      if (response.didCancel) {
-        console.log('User cancelled image picker');
-      } else if (response.errorMessage) {
-        console.log('ImagePicker Error: ', response.errorMessage);
-      } else if (response.assets && response.assets.length > 0) {
-        const source = {uri: response.assets[0].uri ?? null};
-        console.log('Image source:', source);
-
-        if (source.uri) {
-          try {
-            const firebaseUrl = await uploadImageToFirebase(source.uri);
-            setLogo(firebaseUrl);
-            setValue('logo', firebaseUrl as string);
-          } catch (error) {
-            console.error('Error uploading image to Firebase:', error);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error selecting image:', error);
-    }
-  };
-
   const {mutate, isPending} = useMutation({
     mutationFn: updateCompany,
     onSuccess: data => {
-      queryClient.invalidateQueries({
-        queryKey: ['companySetting'],
-      });
-
       Alert.alert(
         'บันทึกข้อมูลสำเร็จ',
         ``,
@@ -198,70 +169,51 @@ const EditSetting = ({navigation, route}: Props) => {
     },
   });
 
-  const uploadImageToFirebase = async (imagePath: string) => {
-    setIsImageUpload(true);
-    if (!imagePath) {
-      console.log('No image path provided');
-      return;
-    }
-
-    const filename = imagePath.substring(imagePath.lastIndexOf('/') + 1);
-    const storageRef = storage().ref(`images/${filename}`);
-    await storageRef.putFile(imagePath);
-
-    const downloadUrl = await storageRef.getDownloadURL();
-    setIsImageUpload(false);
-    return downloadUrl;
-  };
-
-  const handleDonePress = async () => {
-    try {
-      mutate(dirtyValues);
-    } catch (error: Error | MyError | any) {
-      console.error('There was a problem calling the function:', error);
-      console.log(error.response);
-    }
-  };
-
   const renderPage = () => {
     return (
       <>
         <View>
-          <TouchableOpacity
-            style={{
-              alignItems: 'center',
-              marginBottom: 10,
+          <Controller
+            control={control}
+            name="logo"
+            render={({field: {onChange, value}}) => (
+              <TouchableOpacity
+                style={{
+                  alignItems: 'center',
+                  marginBottom: 10,
 
-              borderColor: 'gray',
-              borderWidth: 1,
-              borderRadius: 5,
-              borderStyle: 'dotted',
-              padding: 10,
-            }}
-            onPress={handleLogoUpload}>
-            {isImageUpload ? (
-              <ActivityIndicator size="small" color="gray" />
-            ) : logo && logo !== 'NONE' ? (
-              <Image
-                source={{
-                  uri: logo,
+                  borderColor: 'gray',
+                  borderWidth: 1,
+                  borderRadius: 5,
+                  borderStyle: 'dotted',
+                  padding: 10,
                 }}
-                style={{width: 100, aspectRatio: 2, resizeMode: 'contain'}}
-              />
-            ) : (
-              <View>
-                <FontAwesomeIcon
-                  icon={faCloudUpload}
-                  style={{marginVertical: 5, marginHorizontal: 50}}
-                  size={32}
-                  color="gray"
-                />
-                <Text style={{textAlign: 'center', color: 'gray'}}>
-                  อัพโหลดโลโก้
-                </Text>
-              </View>
+                onPress={pickImage}>
+                {isImagePicking ? (
+                  <ActivityIndicator size="small" color="gray" />
+                ) : value && value !== 'NONE' ? (
+                  <Image
+                    source={{
+                      uri: value,
+                    }}
+                    style={{width: 100, aspectRatio: 2, resizeMode: 'contain'}}
+                  />
+                ) : (
+                  <View>
+                    <FontAwesomeIcon
+                      icon={faCloudUpload}
+                      style={{marginVertical: 5, marginHorizontal: 50}}
+                      size={32}
+                      color="gray"
+                    />
+                    <Text style={{textAlign: 'center', color: 'gray'}}>
+                      อัพโหลดโลโก้
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
             )}
-          </TouchableOpacity>
+          />
           <Controller
             control={control}
             name="bizName"
@@ -289,7 +241,7 @@ const EditSetting = ({navigation, route}: Props) => {
             <View style={{flex: 0.45, marginVertical: 5}}>
               <Controller
                 control={control}
-                name="userName"
+                name="name"
                 rules={{required: true}}
                 render={({
                   field: {onChange, onBlur, value},
@@ -313,7 +265,7 @@ const EditSetting = ({navigation, route}: Props) => {
             <View style={{flex: 0.45, marginVertical: 5}}>
               <Controller
                 control={control}
-                name="userLastName"
+                name="lastName"
                 rules={{required: true}}
                 render={({
                   field: {onChange, onBlur, value},
@@ -337,14 +289,14 @@ const EditSetting = ({navigation, route}: Props) => {
           </View>
           <Controller
             control={control}
-            name="userPosition"
+            name="jobPosition"
             rules={{required: true}}
             render={({
               field: {onChange, onBlur, value},
               fieldState: {error},
             }) => (
               <TextInput
-                label="คำแหน่ง"
+                label="ตำแหน่ง"
                 error={!!error}
                 style={styles.input}
                 // placeholder="คำแหน่งในบริษัท"
@@ -450,7 +402,7 @@ style={styles.input}
           </View>
           <Controller
             control={control}
-            name="companyNumber"
+            name="companyTax"
             render={({field: {onChange, onBlur, value}}) => (
               <TextInput
                 style={styles.input}
@@ -469,8 +421,6 @@ style={styles.input}
       </>
     );
   };
-  const isButtonDisabled = !{isValid} || !{isDirty};
-
   return (
     <>
       <Appbar.Header
@@ -489,30 +439,15 @@ style={styles.input}
           }}
         />
         <Button
-          disabled={!isDirty}
+          disabled={!isDirty || isPending || isUploading || isLoading}
           mode="contained"
-          loading={isPending}
-          buttonColor={'#1b52a7'}
-          onPress={handleDonePress}>
+          loading={isPending || isUploading || isLoading}
+          onPress={() => mutate()}>
           {'บันทึก'}
         </Button>
       </Appbar.Header>
       <SafeAreaView style={{flex: 1}}>
         <ScrollView style={styles.container}>{renderPage()}</ScrollView>
-        {/* <TouchableOpacity
-         disabled={!isDirty}
-         style={[
-           styles.submitedButton,
-           !isDirty ? styles.disabledButton : styles.enabledButton,
-           {justifyContent: 'center', alignItems: 'center'},
-         ]}
-         onPress={handleSubmit(onSubmit)}>
-         {isLoading ? (
-           <ActivityIndicator size="small" color="#ffffff" />
-         ) : (
-           <Text style={styles.buttonText}>บันทึก</Text>
-         )}
-       </TouchableOpacity> */}
       </SafeAreaView>
     </>
   );

@@ -1,23 +1,22 @@
-import React, {useContext, useState, useEffect} from 'react';
+import { RouteProp } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import React, { useContext, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  SafeAreaView,
-  StyleSheet,
-  Dimensions,
-  Platform,
   Alert,
-  NativeSyntheticEvent,
+  Dimensions,
   NativeScrollEvent,
+  NativeSyntheticEvent,
+  Platform,
+  SafeAreaView,
+  Share,
+  StyleSheet,
   View,
 } from 'react-native';
-import Pdf from 'react-native-pdf'; // Import the react-native-pdf
-import {RouteProp} from '@react-navigation/native';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {Share} from 'react-native';
-import {AnimatedFAB, Appbar, BottomNavigation, FAB} from 'react-native-paper';
-import {WebView} from 'react-native-webview';
-import {Store} from '../../redux/store';
-import {ParamListBase} from '../../types/navigationType';
+import { BottomNavigation, FAB } from 'react-native-paper';
+import { WebView } from 'react-native-webview';
+import { Store } from '../../redux/store';
+import { ParamListBase } from '../../types/navigationType';
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'DocViewScreen'>;
   route: RouteProp<ParamListBase, 'DocViewScreen'>;
