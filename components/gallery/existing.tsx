@@ -100,38 +100,6 @@ const GalleryScreen = ({
     // setServiceImages(urls);
     setValue('serviceImages', urls);
   };
-  // const getGallery = async () => {
-  //   if (!user) {
-  //     throw new Error('User not authenticated');
-  //   } else {
-  //     const idToken = await user.getIdToken(true);
-  //     const email = user?.email as string;
-  //     const filePath =  `${code}/gallery`;
-  //     try {
-  //       let url = `${BACK_END_SERVER_URL}/api/services/getGallery?filePath=${encodeURIComponent(
-  //         filePath,
-  //       )}&email=${encodeURIComponent(email)}`;
-
-  //       const response = await fetch(url, {
-  //         method: 'GET',
-  //         headers: {
-  //           'Content-Type': 'application/json',
-  //           Authorization: `Bearer ${idToken}`,
-  //         },
-  //       });
-
-  //       if (!response.ok) {
-  //         throw new Error('Server responded with status: ' + response.status);
-  //       }
-
-  //       const imageUrls = await response.json();
-  //       return imageUrls;
-  //     } catch (error) {
-  //       console.error('Error fetching images:', error);
-  //       return [];
-  //     }
-  //   }
-  // };
   const getGallery = async () => {
     const storageRef = firebase.storage().ref(`${code}/gallery`);
     const result = [];
@@ -176,8 +144,6 @@ const GalleryScreen = ({
     queryFn: () => getGallery(),
 
   });
-
-  // const filePath = `${code}/gallery/${filename}`
 
   const handleUploadMoreImages = useCallback(() => {
     setIsImageUpload(true);
@@ -264,30 +230,7 @@ const GalleryScreen = ({
     });
   }, [setIsImageUpload, queryClient, code]);
 
-  // if (error) {
-  //   return (
-  //     <View
-  //       style={{
-  //         flex: 1,
-  //         justifyContent: 'center',
-  //         height: height * 0.5,
-
-  //         alignItems: 'center',
-  //       }}>
-  //       <TouchableOpacity
-  //         style={styles.uploadGalleryButton}
-  //         onPress={handleUploadMoreImages}>
-  //         {isImageUpload ? (
-  //           <ActivityIndicator size="small" color="white" />
-  //         ) : (
-  //           <Text style={styles.uploadButtonTextGalleryButton}>
-  //             อัพโหลดภาพตัวอย่างผลงาน
-  //           </Text>
-  //         )}
-  //       </TouchableOpacity>
-  //     </View>
-  //   );
-  // }
+  
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -295,7 +238,6 @@ const GalleryScreen = ({
       </View>
     );
   }
-console.log('code', code)
   return (
     <Modal isVisible={isVisible} style={styles.modal} onBackdropPress={onClose}>
       {isImageUpload ? (

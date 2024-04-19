@@ -1,9 +1,11 @@
 // screens/FirstAppScreen.tsx
 import {FirebaseAuthTypes} from '@react-native-firebase/auth';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Image, Pressable, StyleSheet, Text, View} from 'react-native';
 import {Button, TextInput, ActivityIndicator} from 'react-native-paper';
 import {BRAND_NAME} from '@env';
+import firebase from '../../firebase';
+
 const FirstAppScreen = ({navigation}: any) => {
   const [loadingUser, setLoadingUser] = useState(true);
   const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
@@ -26,6 +28,22 @@ const FirstAppScreen = ({navigation}: any) => {
 
   //     return unsubscribe;
   // }, []);
+const appCheck = async () => {
+  try {
+    const { token } = await firebase.appCheck().getToken(true);
+  
+    if (token.length > 0) {
+      console.log('AppCheck verification passed');
+    }
+  } catch (error) {
+    console.log('AppCheck verification failed');
+  }
+}
+
+useEffect(() => {
+  appCheck();
+}
+, []);
 
   return (
     <View

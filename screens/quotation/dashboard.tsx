@@ -333,8 +333,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     }
     navigation.navigate('CreateQuotation');
   };
-  console.log('data', data);
-  console.log('BacK_END_SERVER_URL', BACK_END_SERVER_URL);
+
 
   return (
     <>

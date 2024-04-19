@@ -16,6 +16,7 @@ import {BottomNavigation, ActivityIndicator, FAB} from 'react-native-paper';
 import {WebView} from 'react-native-webview';
 import {Store} from '../../redux/store';
 import {ParamListBase} from '../../types/navigationType';
+
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'DocViewScreen'>;
   route: RouteProp<ParamListBase, 'DocViewScreen'>;
@@ -71,9 +72,9 @@ const DocViewScreen = ({navigation, route}: Props) => {
           icon="download"
           onPress={handleDownloadPDF}
           color="white"
-        /> */}
-        {/* <FAB
-          style={styles.fabStyle}
+        />
+        <FAB
+          style={styles.fabPrint}
           icon="printer"
           onPress={handlePrintPDF}
           color="white"
@@ -89,12 +90,21 @@ const DocViewScreen = ({navigation, route}: Props) => {
     const Content = Platform.select({
       ios: () => (
         <View style={{flex: 1}}>
-          <WebView
-            onLoadStart={() => setIsLoading(true)}
-            source={source}
-            style={{flex: 1}}
-          />
-        </View>
+        <WebView
+          onLoadStart={() => setIsLoading(true)}
+          source={source}
+          style={{flex: 1}}
+        />
+      </View>
+      ),
+      android: () => (
+        <View style={{flex: 1}}>
+        <WebView
+          onLoadStart={() => setIsLoading(true)}
+          source={source}
+          style={{flex: 1}}
+        />
+      </View>
       ),
     });
 
@@ -121,7 +131,7 @@ const DocViewScreen = ({navigation, route}: Props) => {
     <QuotationWebView url={`https://www.worktrust.co/preview/${id}`} />
   );
   const ContractRoute = () => (
-    <ContractWebView url={`https://www.worktrust.co/preview/pdf/${id}`} />
+    <ContractWebView url={`https://www.worktrust.co/preview/doc/${id}`} />
   );
   const HomeRoute = () => {
     useEffect(() => {
@@ -180,12 +190,6 @@ const DocViewScreen = ({navigation, route}: Props) => {
       console.error(error);
       Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถแชร์ได้');
     }
-  };
-
-  const onScroll = ({nativeEvent}: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const currentScrollPosition = Math.floor(nativeEvent.contentOffset.y) ?? 0;
-
-    setIsExtended(currentScrollPosition <= 0);
   };
 
   return (
@@ -340,6 +344,12 @@ const styles = StyleSheet.create({
   },
   fabStyle: {
     bottom: height * 0.2,
+    right: width * 0.05,
+    position: 'absolute',
+    backgroundColor: '#1b52a7',
+  },
+  fabPrint: {
+    bottom: height * 0.4,
     right: width * 0.05,
     position: 'absolute',
     backgroundColor: '#1b52a7',

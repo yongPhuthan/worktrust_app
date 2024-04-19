@@ -29,27 +29,9 @@ const firebaseConfig = {
 if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
-// Initialize App Check and configure based on environment
-// const appCheck = firebase.appCheck();
-// const rnfbProvider = appCheck.newReactNativeFirebaseAppCheckProvider();
 
-// Configuration for App Check based on environment
-// rnfbProvider.configure({
-//   android: {
-//     provider: __DEV__ ? 'debug' : 'playIntegrity',
-//     debugToken: DEBUG_TOKEN,
-//   },
-//   apple: {
-//     provider: __DEV__ ? 'debug' : 'appAttestWithDeviceCheckFallback',
-//     debugToken: DEBUG_TOKEN,
-//   },
-// });
 
-// Log App Check token for debugging
 
-// appCheck.getToken(true).then(token => {
-//   console.log('App Check token: ', token);
-// });
 // if (__DEV__) {
 //   let emulatorHost = '127.0.0.1';
 

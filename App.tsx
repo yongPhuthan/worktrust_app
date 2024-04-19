@@ -29,6 +29,7 @@ const theme = {
     primary : '#0b65c2',
   },
 };
+
 const App = () => {
   return (
     <PaperProvider theme={theme}>

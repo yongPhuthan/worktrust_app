@@ -188,7 +188,6 @@ const RegisterScreen = ({navigation}: Props) => {
       console.error('Error writing document to Firestore emulator:', error);
     }
   }
-console.log('BACK_END_SERVER_URL', BACK_END_SERVER_URL)
   return (
     <>
       <Appbar.Header
