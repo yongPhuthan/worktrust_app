@@ -5,11 +5,17 @@ import {
   Dimensions,
   SafeAreaView,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import {TextInput, Button} from 'react-native-paper';
+import {
+  TextInput,
+  Button,
+  Text,
+  Appbar,
+  Snackbar,
+
+} from 'react-native-paper';
 
 import {Controller, useForm, useWatch} from 'react-hook-form';
 
@@ -30,6 +36,18 @@ const screenWidth = Dimensions.get('window').width;
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'RegisterScreen'>;
 }
+interface SignUpError {
+  code: string;
+  message: string;
+  userInfo?: {
+    authCredential: null;
+    resolver: null;
+  };
+  name?: string;
+  namespace?: string;
+  nativeErrorCode?: string;
+  nativeErrorMessage?: string;
+}
 
 const schema = yup.object().shape({
   email: yup
@@ -41,12 +59,14 @@ const schema = yup.object().shape({
     .string()
     .oneOf([yup.ref('password'), ''], 'รหัสผ่านไม่ตรงกัน')
     .required('ยืนยันรหัสผ่าน'),
-  registrationCode: yup.string().required('กรอกรหัสลงทะเบียน'),
+  // registrationCode: yup.string().required('กรอกรหัสลงทะเบียน'),
 });
 const RegisterScreen = ({navigation}: Props) => {
   const [userLoading, setUserLoading] = useState(false);
   const user = useUser();
-
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  
   const [error, setError] =
     useState<FirebaseAuthTypes.NativeFirebaseAuthError | null>(null);
 
@@ -59,7 +79,7 @@ const RegisterScreen = ({navigation}: Props) => {
     defaultValues: {
       email: '',
       password: '',
-      registrationCode: '',
+      // registrationCode: '',
       confirmPassword: '',
     },
     resolver: yupResolver(schema),
@@ -67,7 +87,7 @@ const RegisterScreen = ({navigation}: Props) => {
   const email = useWatch({control, name: 'email'});
   const password = useWatch({control, name: 'password'});
   const confirmPassword = useWatch({control, name: 'confirmPassword'});
-  const registrationCode = useWatch({control, name: 'registrationCode'});
+  // const registrationCode = useWatch({control, name: 'registrationCode'});
   const [passwordVisible, setPasswordVisible] = useState(false);
   function isFirebaseAuthError(
     error: any,
@@ -101,50 +121,13 @@ const RegisterScreen = ({navigation}: Props) => {
         return;
       }
 
-      // const docRef = firebase.firestore().collection('registrationCodes').doc(registrationCode);
-      // const doc = await docRef.get();
-      // console.log('Fetched registration code document');
-
-      // if (!doc.exists) {
-      //   console.log('Registration code does not exist');
-      //   setError({
-      //     code: 'auth/invalid-registration-code',
-      //     message: 'รหัสลงทะเบียนไม่ถูกต้อง',
-      //     userInfo: { authCredential: null, resolver: null },
-      //     name: 'FirebaseAuthError',
-      //     namespace: '',
-      //     nativeErrorCode: '',
-      //     nativeErrorMessage: '',
-      //   });
-      //   setUserLoading(false);
-      //   return;
-      // }
-
-      // if (doc.data()?.used) {
-      //   console.log('Registration code already used');
-      //   setError({
-      //     code: 'auth/registration-code-used',
-      //     message: 'รหัสลงทะเบียนนี้ถูกใช้แล้ว',
-      //     userInfo: { authCredential: null, resolver: null },
-      //     name: 'FirebaseAuthError',
-      //     namespace: '',
-      //     nativeErrorCode: '',
-      //     nativeErrorMessage: '',
-      //   });
-      //   setUserLoading(false);
-      //   return;
-      // }
-
-      // await docRef.update({ used: true });
-      // console.log('Marked registration code as used');
-
       const userCredential = await firebase
         .auth()
         .createUserWithEmailAndPassword(email, password);
       const user = userCredential.user;
       console.log('Created new user with email and password', user);
 
-      if (!user || !user.email) {
+      if (!user || !user.uid || !user.email) {
         throw new Error(
           'User creation was successful, but no user data was returned.',
         );
@@ -154,7 +137,7 @@ const RegisterScreen = ({navigation}: Props) => {
       console.log('Fetched user ID token', token);
 
       const response = await fetch(
-        `${BACK_END_SERVER_URL}/api/company/createUser`,
+        `${BACK_END_SERVER_URL}/api/company/createUserEmail`,
         {
           method: 'POST',
           headers: {
@@ -178,7 +161,10 @@ const RegisterScreen = ({navigation}: Props) => {
       console.log('Finished signUpEmail function successfully');
     } catch (error) {
       console.error('Error during signUpEmail function', error);
-      // Logic to handle different types of errors, e.g., Firebase Auth errors or other errors
+      if ((error as SignUpError).code === 'auth/email-already-in-use') {
+        setSnackbarMessage('อีเมลนี้ถูกใช้งานแล้ว');
+        setSnackbarVisible(true);
+      }
       setUserLoading(false);
     }
   };
@@ -202,81 +188,98 @@ const RegisterScreen = ({navigation}: Props) => {
       console.error('Error writing document to Firestore emulator:', error);
     }
   }
-
+console.log('BACK_END_SERVER_URL', BACK_END_SERVER_URL)
   return (
-    <SafeAreaView style={{marginTop: 10, paddingHorizontal: 10}}>
-      {/* Add your input fields... */}
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => navigation.goBack()}>
-        <FontAwesomeIcon icon={faArrowLeft} size={26} color="#5C5F62" />
-      </TouchableOpacity>
-      <View style={{marginTop: 40, paddingHorizontal: 20}}>
-        <Text style={styles.title}>สมัครสมาชิก</Text>
-        <Controller
-          name="email"
-          control={control}
-          render={({field: {onBlur, onChange, value}, fieldState: {error}}) => (
-            <View style={{marginBottom: 20}}>
-              <TextInput
-                onChangeText={onChange}
-                onBlur={onBlur}
-                keyboardType="email-address"
-                value={value}
-                error={!!error}
-                label={'อีเมล'}
-                mode="outlined"
-              />
-              {/* {error && <Text style={styles.errorText}>{error.message}</Text>} */}
-            </View>
-          )}
+    <>
+      <Appbar.Header
+        mode="center-aligned"
+        style={{
+          backgroundColor: 'white',
+        }}>
+        <Appbar.BackAction
+          onPress={() => {
+            navigation.goBack();
+          }}
         />
-        <Controller
-          name="password"
-          control={control}
-          render={({field: {onBlur, onChange, value}, fieldState: {error}}) => (
-            <View style={{marginBottom: 20}}>
-              <TextInput
-                onChangeText={onChange}
-                onBlur={onBlur}
-                value={value}
-                label="รหัสผ่าน"
-                keyboardType="visible-password"
-                secureTextEntry={!passwordVisible}
-                right={
-                  <TextInput.Icon
-                    icon={passwordVisible ? 'eye-off' : 'eye'}
-                    onPress={togglePasswordVisibility}
-                  />
-                }
-                mode="outlined"
-                error={!!error}
-              />
-              {error && <Text style={styles.errorText}>{error.message}</Text>}
-            </View>
-          )}
-        />
-        <Controller
-          name="confirmPassword"
-          control={control}
-          render={({field: {onBlur, onChange, value}, fieldState: {error}}) => (
-            <View style={{marginBottom: 20}}>
-              <TextInput
-                onChangeText={onChange}
-                onBlur={onBlur}
-                value={value}
-                error={!!error}
-                label={'ยืนยันรหัสผ่าน'}
-                right={<TextInput.Icon icon="eye" />}
-                secureTextEntry
-                keyboardType="visible-password"
-                mode="outlined"
-              />
-              {error && <Text style={styles.errorText}>{error.message}</Text>}
-            </View>
-          )}
-        />
-        <Controller
+      </Appbar.Header>
+      <SafeAreaView>
+        {/* Add your input fields... */}
+
+        <View style={{marginTop: 40, paddingHorizontal: 20}}>
+          <Text style={styles.title}>ลงทะเบียนด้วยอีเมล</Text>
+          <Controller
+            name="email"
+            control={control}
+            render={({
+              field: {onBlur, onChange, value},
+              fieldState: {error},
+            }) => (
+              <View style={{marginBottom: 20}}>
+                <TextInput
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  keyboardType="email-address"
+                  value={value}
+                  error={!!error}
+                  label={'อีเมล'}
+                  mode="outlined"
+                />
+                {/* {error && <Text style={styles.errorText}>{error.message}</Text>} */}
+              </View>
+            )}
+          />
+          <Controller
+            name="password"
+            control={control}
+            render={({
+              field: {onBlur, onChange, value},
+              fieldState: {error},
+            }) => (
+              <View style={{marginBottom: 20}}>
+                <TextInput
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  value={value}
+                  label="รหัสผ่าน"
+                  keyboardType="visible-password"
+                  secureTextEntry={!passwordVisible}
+                  right={
+                    <TextInput.Icon
+                      icon={passwordVisible ? 'eye-off' : 'eye'}
+                      onPress={togglePasswordVisibility}
+                    />
+                  }
+                  mode="outlined"
+                  error={!!error}
+                />
+                {error && <Text style={styles.errorText}>{error.message}</Text>}
+              </View>
+            )}
+          />
+          <Controller
+            name="confirmPassword"
+            control={control}
+            render={({
+              field: {onBlur, onChange, value},
+              fieldState: {error},
+            }) => (
+              <View style={{marginBottom: 20}}>
+                <TextInput
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  value={value}
+                  error={!!error}
+                  label={'ยืนยันรหัสผ่าน'}
+                  right={<TextInput.Icon icon="eye" />}
+                  secureTextEntry
+                  keyboardType="visible-password"
+                  mode="outlined"
+                />
+                {error && <Text style={styles.errorText}>{error.message}</Text>}
+              </View>
+            )}
+          />
+          {/* <Controller
           name="registrationCode"
           control={control}
           render={({field: {onBlur, onChange, value}, fieldState: {error}}) => (
@@ -293,22 +296,37 @@ const RegisterScreen = ({navigation}: Props) => {
               {error && <Text style={styles.errorText}>{error.message}</Text>}
             </View>
           )}
-        />
-        <Button
-          mode="contained"
-          style={{
-            width: '100%',
-            borderRadius: 4,
-            marginVertical: 20,
-          }}
-          loading={userLoading}
-          // onPress={testFirestoreConnection}
-          onPress={signUpEmail}
-          disabled={!isValid}>
-          <Text style={styles.pressableText}>ลงทะเบียน</Text>
-        </Button>
-      </View>
-    </SafeAreaView>
+        /> */}
+          <Button
+            mode="contained"
+            style={{
+              width: '100%',
+
+              marginVertical: 20,
+            }}
+            loading={userLoading}
+            // onPress={testFirestoreConnection}
+            onPress={signUpEmail}
+            disabled={!isValid}>
+            <Text style={styles.pressableText}>ลงทะเบียน</Text>
+          </Button>
+
+        </View>
+
+      </SafeAreaView>
+      <Snackbar
+      visible={snackbarVisible}
+      onDismiss={() => setSnackbarVisible(false)}
+      action={{
+        label: 'OK',
+        onPress: () => {
+          // Possibly clear input or focus email input for correction
+        },
+      }}
+    >
+      {snackbarMessage}
+    </Snackbar>
+    </>
   );
 };
 const styles = StyleSheet.create({
@@ -317,6 +335,7 @@ const styles = StyleSheet.create({
     color: '#333',
     fontSize: 20,
     fontWeight: 'bold',
+    fontFamily: 'SukhumvitSet-Bold',
     marginBottom: 30,
   },
   button: {

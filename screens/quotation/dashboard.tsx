@@ -333,6 +333,8 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     }
     navigation.navigate('CreateQuotation');
   };
+  console.log('data', data);
+  console.log('BacK_END_SERVER_URL', BACK_END_SERVER_URL);
 
   return (
     <>
@@ -537,8 +539,8 @@ const styles = StyleSheet.create({
     bottom: height * 0.1,
     right: width * 0.05,
     position: 'absolute',
-    // backgroundColor: '#1b52a7',
-    backgroundColor: '#00532a',
+    backgroundColor: '#1b52a7',
+    // backgroundColor: '#00532a',
     // backgroundColor: '#009995',
   },
   fab: {

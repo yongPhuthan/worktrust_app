@@ -233,6 +233,20 @@ const LoginMobileScreen = ({navigation}: Props) => {
               style={styles.button}>
               ต่อไป
             </Button>
+            <Button
+              contentStyle={{}}
+              style={{
+                marginTop: 10,
+              }}
+              onPress={() => navigation.navigate('LoginScreen')}>
+              {' '}
+              <Text
+                children="หรือ เข้าสู่ระบบด้วยอีเมล"
+                style={{
+                  fontFamily: 'Sukhumvit Set Bold',
+                  color: 'primary',
+                }}></Text>
+            </Button>
           </View>
  
         </SafeAreaView>

@@ -1,8 +1,7 @@
-import { RouteProp } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import React, { useContext, useEffect, useState } from 'react';
+import {RouteProp} from '@react-navigation/native';
+import {StackNavigationProp} from '@react-navigation/stack';
+import React, {useContext, useEffect, useState} from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Dimensions,
   NativeScrollEvent,
@@ -13,10 +12,10 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { BottomNavigation, FAB } from 'react-native-paper';
-import { WebView } from 'react-native-webview';
-import { Store } from '../../redux/store';
-import { ParamListBase } from '../../types/navigationType';
+import {BottomNavigation, ActivityIndicator, FAB} from 'react-native-paper';
+import {WebView} from 'react-native-webview';
+import {Store} from '../../redux/store';
+import {ParamListBase} from '../../types/navigationType';
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'DocViewScreen'>;
   route: RouteProp<ParamListBase, 'DocViewScreen'>;
@@ -25,10 +24,60 @@ interface Props {
 // ... rest of your DocViewScreen component ...
 
 const DocViewScreen = ({navigation, route}: Props) => {
+  const webViewRef = React.useRef<WebView>(null);
+
+  const handleDownloadPDF = () => {
+    console.log('Attempting to download PDF');
+    webViewRef.current?.injectJavaScript(`
+      downloadPDF();
+      true;  
+    `);
+  };
+
+  const handlePrintPDF = () => {
+    webViewRef.current?.injectJavaScript(`
+      printPDF();
+      true;  
+    `);
+  };
+
+  const testDebug = () => {
+    webViewRef.current?.injectJavaScript(`
+  console.log('Simple test from WebView');
+  true;
+`);
+  };
+
   const QuotationWebView = ({url}: any) => {
     return (
       <SafeAreaView style={{flex: 1}}>
-        <WebView source={{uri: url}} />
+        <WebView
+          ref={webViewRef}
+          onLoadStart={() => console.log('WebView loading started')}
+          onLoadEnd={() => console.log('WebView loading finished')}
+          onError={syntheticEvent => {
+            const {nativeEvent} = syntheticEvent;
+            console.error('WebView error: ', nativeEvent);
+          }}
+          onHttpError={syntheticEvent => {
+            const {nativeEvent} = syntheticEvent;
+            console.error('HTTP error status code: ', nativeEvent.statusCode);
+          }}
+          source={{uri: url}}
+        />
+
+        {/* <FAB
+          style={styles.fabStyle}
+          icon="download"
+          onPress={handleDownloadPDF}
+          color="white"
+        /> */}
+        {/* <FAB
+          style={styles.fabStyle}
+          icon="printer"
+          onPress={handlePrintPDF}
+          color="white"
+        /> */}
       </SafeAreaView>
     );
   };
@@ -40,16 +89,21 @@ const DocViewScreen = ({navigation, route}: Props) => {
     const Content = Platform.select({
       ios: () => (
         <View style={{flex: 1}}>
-         <WebView source={{uri: url}} style={{flex: 1}} />
+          <WebView
+            onLoadStart={() => setIsLoading(true)}
+            source={source}
+            style={{flex: 1}}
+          />
         </View>
       ),
-      android: () => <WebView source={{uri: url}} style={{flex: 1}} />,
     });
 
     return (
-      <SafeAreaView style={{flex: 1}}>
-        {Content ? <Content /> : null}
-      </SafeAreaView>
+      <>
+        <SafeAreaView style={{flex: 1}}>
+          {Content ? <Content /> : null}
+        </SafeAreaView>
+      </>
     );
   };
 
@@ -64,10 +118,10 @@ const DocViewScreen = ({navigation, route}: Props) => {
   };
 
   const QuotationRoute = () => (
-    <QuotationWebView url={`https://www.worktrust.co/preview/seller/${id}`} />
+    <QuotationWebView url={`https://www.worktrust.co/preview/${id}`} />
   );
   const ContractRoute = () => (
-    <ContractWebView url={`https://www.worktrust.co/preview/seller/doc/${id}`} />
+    <ContractWebView url={`https://www.worktrust.co/preview/pdf/${id}`} />
   );
   const HomeRoute = () => {
     useEffect(() => {
@@ -110,7 +164,9 @@ const DocViewScreen = ({navigation, route}: Props) => {
   React.useEffect(() => {
     // กำหนด URL ตาม tab ที่เลือก
     const baseUrl = 'https://www.worktrust.co/preview/';
-    const newUrl = index === 0 ? `${baseUrl}${id}` : `${baseUrl}doc/${id}`;
+    // const newUrl = index === 0 ? `${baseUrl}${id}` : `${baseUrl}doc/${id}`;
+    const newUrl = index === 0 ? `${baseUrl}${id}` : `${baseUrl}${id}`;
+
     setUrl(newUrl);
   }, [index, id]);
 
@@ -134,34 +190,17 @@ const DocViewScreen = ({navigation, route}: Props) => {
 
   return (
     <>
-      {isLoading ? (
-        <ActivityIndicator />
-      ) : (
-        <>
-          {/* <Appbar.Header elevated style={{
-            backgroundColor:'white'
-          }} mode='center-aligned' >
-            <Appbar.BackAction onPress={backHome}  />
-
-            <Appbar.Content  mode='center-aligned' titleStyle={{
-              fontSize:18
-            }} title={
-              routes[index].title
-            } />
-          </Appbar.Header> */}
-          <BottomNavigation
-            navigationState={{index, routes}}
-            onIndexChange={setIndex} // Function to handle changing tabs
-            renderScene={renderScene} // Function to render tab content
-          />
-          <FAB
-            style={styles.fabStyle}
-            icon="share-variant"
-            onPress={handleShare}
-            color="white"
-          />
-        </>
-      )}
+      <BottomNavigation
+        navigationState={{index, routes}}
+        onIndexChange={setIndex} // Function to handle changing tabs
+        renderScene={renderScene} // Function to render tab content
+      />
+      <FAB
+        style={styles.fabStyle}
+        icon="share-variant"
+        onPress={handleShare}
+        color="white"
+      />
     </>
   );
 };

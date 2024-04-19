@@ -113,7 +113,7 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
   }
 
   if (isError) {
-    // firebase.auth().signOut()
+    firebase.auth().signOut()
     return (
       <View style={styles.loadingContainer}>
         <Text>Error: {error?.message}</Text>

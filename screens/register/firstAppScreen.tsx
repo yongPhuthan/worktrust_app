@@ -55,35 +55,45 @@ const FirstAppScreen = ({navigation}: any) => {
         }}>
         <Button
           mode="contained"
-          maxFontSizeMultiplier={1}
           labelStyle={{
             fontSize: 16,
             fontWeight: 'bold',
             fontFamily: 'SukhumvitSet-Bold',
             lineHeight: 24,
           }}
-          children="ลงทะเบียนใช้งาน"
-          style={{
+          contentStyle={{
+            width: '100%',
             justifyContent: 'center',
             alignItems: 'center',
             alignContent: 'center',
             alignSelf: 'center',
+          
+          }}
+          children="ลงทะเบียนใช้งาน"
+          style={{
+       
             width: '80%',
           }}
           onPress={handleRegister}></Button>
         <Button
           mode="outlined"
+          
           labelStyle={{
             fontSize: 16,
             fontWeight: 'bold',
             fontFamily: 'SukhumvitSet-Bold',
           }}
-          style={{
-            width: '80%',
+          contentStyle={{
+            width: '100%',
             justifyContent: 'center',
             alignItems: 'center',
             alignContent: 'center',
             alignSelf: 'center',
+          
+          }}
+          style={{
+            width: '80%',
+   
           }}
           onPress={handleLogin}>
           เข้าสู่ระบบ{' '}

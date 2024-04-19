@@ -555,15 +555,15 @@ const imageContainerWidth = windowWidth / 3 - 10;
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor:'#f3f8f3',
+    // backgroundColor:'#f3f8f3',
 
-    // backgroundColor: '#e9f7ff',
+    backgroundColor: '#e9f7ff',
   },
   subContainerHead: {
     padding: 30,
     marginBottom: 10,
-    backgroundColor:'#f3f8f3',
-    // backgroundColor: '#e9f7ff',
+    // backgroundColor:'#f3f8f3',
+    backgroundColor: '#e9f7ff',
     height: 'auto',
   },
   modalFull: {

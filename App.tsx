@@ -1,5 +1,8 @@
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
-import {Provider, PaperProvider,  MD3LightTheme as DefaultTheme,
+import {
+  Provider,
+  PaperProvider,
+  MD3LightTheme as DefaultTheme,
 } from 'react-native-paper';
 import Navigation from './navigations/navigation';
 import withAuthCheck from './providers/withAuthCheck';
@@ -15,14 +18,15 @@ const theme = {
   // Specify custom property in nested object
   colors: {
     ...DefaultTheme.colors,
-    primary: '#00674a',
-    secondaryContainer: '#cff7e5', // This is a lighter shade of the primary color
+    // primary: '#1b72e8',
 
-    
+    // primary: '#00674a',
+    // secondaryContainer: '#cff7e5', // This is a lighter shade of the primary color
+
     // primary:'#f79020'
     // primary :'#173799'
     // primary : '#009995'
-    // primary : '#0b65c2',
+    primary : '#0b65c2',
   },
 };
 const App = () => {

@@ -7,7 +7,14 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import {TextInput, Button, Text, Appbar, Snackbar} from 'react-native-paper';
+import {
+  TextInput,
+  Button,
+  Text,
+  Appbar,
+  Snackbar,
+  Divider,
+} from 'react-native-paper';
 import firebase from '../../../firebase';
 import {yupResolver} from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -283,6 +290,20 @@ const SignupMobileScreen = ({navigation}: Props) => {
               onPress={signInWithPhoneNumber}
               style={styles.button}>
               ต่อไป
+            </Button>
+            <Button
+              contentStyle={{}}
+              style={{
+                marginTop: 10,
+              }}
+              onPress={() => navigation.navigate('RegisterScreen')}>
+              {' '}
+              <Text
+                children="หรือ ลงทะเบียนด้วยอีเมล"
+                style={{
+                  fontFamily: 'Sukhumvit Set Bold',
+                  color: 'primary',
+                }}></Text>
             </Button>
           </View>
           <Snackbar

@@ -29,7 +29,7 @@ import {yupResolver} from '@hookform/resolvers/yup';
 import {RouteProp} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import CurrencyInput from 'react-native-currency-input';
-import {Appbar, Button, TextInput, Text as TextPaper} from 'react-native-paper';
+import {Appbar, Button, TextInput, Text as TextPaper,Chip} from 'react-native-paper';
 import GalleryScreen from '../../components/gallery/existing';
 import ExistingMaterials from '../../components/materials/existing';
 import SelectStandard from '../../components/standard/selectStandard';
@@ -480,19 +480,21 @@ const AddProductForm = ({navigation, route}: Props) => {
                         มาตรฐานของบริการนี้:
                       </Text>
                       {methods.watch('standards')?.map((item: any) => (
-                        <TouchableOpacity
+
+                        <Button
+                        children={item.standardShowTitle}
+                        // icon={'chevron-right'}
+                        style={{
+                          margin:3,
+                          width: 'auto',
+                        }}
+                        contentStyle={{flexDirection: 'row-reverse'}}
+                        mode='outlined'
                           key={item.id}
-                          style={styles.card}
                           onPress={() => setModalVisible(true)}>
-                          <Text style={styles.cardTitle}>
-                            {item.standardShowTitle}
-                          </Text>
-                          <FontAwesomeIcon
-                            icon={faChevronRight}
-                            color="gray"
-                            size={14}
-                          />
-                        </TouchableOpacity>
+                        
+                       
+                        </Button>
                       ))}
                     </View>
                   ) : (
@@ -526,32 +528,53 @@ const AddProductForm = ({navigation, route}: Props) => {
                 <SmallDivider />
                 <View>
                   {methods.watch('materials')?.length > 0 ? (
-                    <View style={styles.cardContainer}>
+                    <>
                       <Text
-                        style={{
-                          marginBottom: 5,
-                          marginTop: 20,
-                          fontSize: 16,
-                          fontFamily: 'Sukhumvit Set Bold',
-                          fontWeight: 'bold',
-                          color: '#333',
-                        }}>
-                        วัสดุอุปกรณ์ที่ใช้
-                      </Text>
+                      style={{
+                        marginBottom: 5,
+                        marginTop: 20,
+                        fontSize: 16,
+                        fontFamily: 'Sukhumvit Set Bold',
+                        fontWeight: 'bold',
+                        color: '#333',
+                      }}>
+                      วัสดุอุปกรณ์ที่ใช้ : 
+                    </Text>
+                    <View style={styles.cardContainer}>
+                    
                       {methods.watch('materials')?.map((item: any, index:number) => (
-                        <TouchableOpacity
-                          key={index}
-                          style={styles.card}
-                          onPress={() => setIsModalMaterialsVisible(true)}>
-                          <Text style={styles.cardTitle}>{item.name}</Text>
-                          <FontAwesomeIcon
-                            icon={faChevronRight}
-                            color="gray"
-                            size={14}
-                          />
-                        </TouchableOpacity>
+                         <Button
+                         children={item.name}
+                         // icon={'chevron-right'}
+                         style={{
+                           margin:2,
+                           width: 'auto',
+                           flexDirection: 'row',
+                           justifyContent: 'space-between',
+                           alignItems: 'center',
+
+                         }}
+                         contentStyle={{flexDirection: 'row-reverse'}}
+                         mode='outlined'
+                           key={index}
+                           onPress={() => setIsModalMaterialsVisible(true)}>
+                         
+                        
+                         </Button>
+                        // <TouchableOpacity
+                        //   key={index}
+                        //   style={styles.card}
+                        //   onPress={() => setIsModalMaterialsVisible(true)}>
+                        //   <Text style={styles.cardTitle}>{item.name}</Text>
+                        //   <FontAwesomeIcon
+                        //     icon={faChevronRight}
+                        //     color="gray"
+                        //     size={14}
+                        //   />
+                        // </TouchableOpacity>
                       ))}
                     </View>
+                    </>
                   ) : (
                     <View>
                       <TouchableOpacity
@@ -864,13 +887,14 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: 'yellow',
     borderRadius: 5,
     padding: 10,
     marginTop: 10,
     flexDirection: 'row',
     width: '100%',
     justifyContent: 'space-between',
+    alignItems: 'center',
   },
   cardTitle: {
     fontSize: 16,
