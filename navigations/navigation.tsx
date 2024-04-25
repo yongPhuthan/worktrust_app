@@ -34,6 +34,8 @@ import SelectDoc from '../screens/invoice/selectDoc';
 import CreateByQuotation from '../screens/invoice/create/createByquotation';
 import SignupMobileScreen from '../screens/register/phoneAuth/signupMobile';
 import LoginMobileScreen from '../screens/register/phoneAuth/loginMobileScreen';
+import ProjectViewScreen from '../screens/preview/project';
+import PDFViewScreen from '../screens/preview/pdf';
 
 const Theme = {
   ...DefaultTheme,
@@ -116,6 +118,16 @@ const Navigation = ({initialRouteName}: any) => {
             },
             headerTintColor: 'black',
           }}
+        />
+              <Stack.Screen
+          name="ProjectViewScreen"
+          component={ProjectViewScreen}
+         
+        />
+                    <Stack.Screen
+          name="PDFViewScreen"
+          component={PDFViewScreen}
+         
         />
 
         <Stack.Screen

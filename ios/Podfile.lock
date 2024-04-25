@@ -1953,7 +1953,7 @@ PODS:
   - React-Mapbuffer (0.73.6):
     - glog
     - React-debug
-  - react-native-blob-util (0.19.8):
+  - react-native-blob-util (0.19.9):
     - React-Core
   - react-native-get-random-values (1.11.0):
     - React-Core
@@ -1962,6 +1962,8 @@ PODS:
     - RCT-Folly (= 2022.05.16.00)
     - React-Core
   - react-native-pdf (6.7.3):
+    - React-Core
+  - react-native-print (0.11.0):
     - React-Core
   - react-native-safe-area-context (4.9.0):
     - React-Core
@@ -2250,6 +2252,7 @@ DEPENDENCIES:
   - react-native-get-random-values (from `../node_modules/react-native-get-random-values`)
   - react-native-image-picker (from `../node_modules/react-native-image-picker`)
   - react-native-pdf (from `../node_modules/react-native-pdf`)
+  - react-native-print (from `../node_modules/react-native-print`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - react-native-webview (from `../node_modules/react-native-webview`)
   - React-nativeconfig (from `../node_modules/react-native/ReactCommon`)
@@ -2398,6 +2401,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-image-picker"
   react-native-pdf:
     :path: "../node_modules/react-native-pdf"
+  react-native-print:
+    :path: "../node_modules/react-native-print"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
   react-native-webview:
@@ -2545,10 +2550,11 @@ SPEC CHECKSUMS:
   React-jsinspector: 85583ef014ce53d731a98c66a0e24496f7a83066
   React-logger: 3eb80a977f0d9669468ef641a5e1fabbc50a09ec
   React-Mapbuffer: d81d930c1b7f4db284e1d721fe7fdc99230ca108
-  react-native-blob-util: 26f1fb0c91f2b437380d4f3875769a7c3e06080e
+  react-native-blob-util: 18b510205c080a453574a7d2344d64673d0ad9af
   react-native-get-random-values: 21325b2244dfa6b58878f51f9aa42821e7ba3d06
   react-native-image-picker: 69557f178c1026142e202b8c3b8a3c130f75348d
   react-native-pdf: b4ca3d37a9a86d9165287741c8b2ef4d8940c00e
+  react-native-print: f704aef52d931bfce6d1d84351dbb5232d7ecb89
   react-native-safe-area-context: b97eb6f9e3b7f437806c2ce5983f479f8eb5de4b
   react-native-webview: 64c51a60460f8473be97b1959da347893fc9a1fd
   React-nativeconfig: e700ac3ec3d66329076bd2c2787a204411815d43

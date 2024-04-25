@@ -270,8 +270,10 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                 <Divider />
                 <List.Item
                   onPress={() => {
+                    console.log('item', item);
                     handleModalClose();
-                    navigation.navigate('DocViewScreen', {id: item.id});
+                    navigation.navigate('ProjectViewScreen', {id: item.id, pdfUrl: item.pdfUrl, fileName: `ใบเสนอราคา ${item.customer.name}.pdf`});
+                    // navigation.navigate('DocViewScreen', {id: item.id});
                   }}
                   centered={true}
                   title="พรีวิวเอกสาร"
@@ -333,7 +335,6 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     }
     navigation.navigate('CreateQuotation');
   };
-
 
   return (
     <>

@@ -213,6 +213,7 @@ const DefaultContract = ({navigation}: Props) => {
     finishedDay: 0,
     productWarantyYear: 0,
     skillWarantyYear: 0,
+    fixDays: 0,
   };
   const {
     handleSubmit,
@@ -243,6 +244,7 @@ const DefaultContract = ({navigation}: Props) => {
         finishedDay: data.finishedDay,
         productWarantyYear: data.productWarantyYear,
         skillWarantyYear: data.skillWarantyYear,
+        fixDays: data.fixDays,
       };
       reset(values);
       setDefaultContractValues(values);
@@ -266,7 +268,8 @@ const DefaultContract = ({navigation}: Props) => {
       queryClient.invalidateQueries({
         queryKey: ['dashboardQuotation', code],
       });
-      navigation.navigate('DocViewScreen', {id: data.quotationId});
+      navigation.navigate('ProjectViewScreen', {id: data.quotationId, pdfUrl: data.pdfUrl});
+
     },
     onError: (error: MyError) => {
       Alert.alert(
@@ -332,6 +335,7 @@ const DefaultContract = ({navigation}: Props) => {
     name: any,
     label: string,
     defaultValue: string = '',
+    textAffix: string ,
   ) => (
     <>
       <View
@@ -361,7 +365,7 @@ const DefaultContract = ({navigation}: Props) => {
                 textAlignVertical="center"
                 defaultValue={defaultValue}
                 onBlur={onBlur}
-                right={<TextInput.Affix text="เดือน" />}
+                right={<TextInput.Affix text={textAffix} />}
                 value={value ? String(value) : '0'}
                 onChangeText={val => {
                   const numericValue = parseInt(val, 10);
@@ -605,12 +609,21 @@ const DefaultContract = ({navigation}: Props) => {
                   'productWarantyYear',
                   'รับประกันวัสดุอุปกรณ์กี่เดือน',
                   safeToString(contract.productWarantyYear),
+                  'เดือน'
                 )}
                 {renderWanranty(
                   'skillWarantyYear',
                   'รับประกันงานติดตั้งกี่เดือน',
                   safeToString(contract.skillWarantyYear),
+                  'เดือน'
                 )}
+                     {renderWanranty(
+                  'fixDays',
+                  'เมื่อมีปัญหาจะแก้ไขงานให้แล้วเสร็จภายในกี่วัน',
+                  safeToString(contract.fixDays),
+                  'วัน'
+                )}
+                
               </View>
             </View>
 
@@ -682,10 +695,21 @@ const DefaultContract = ({navigation}: Props) => {
                 {renderWanranty(
                   'productWarantyYear',
                   'รับประกันวัสดุอุปกรณ์กี่เดือน',
+                  '',
+                  'เดือน'
+                 
                 )}
                 {renderWanranty(
                   'skillWarantyYear',
                   'รับประกันงานติดตั้งกี่เดือน',
+                  '',
+                  'เดือน'
+                )}
+                     {renderWanranty(
+                  'fixDays',
+                  'เมื่อมีปัญหาจะแก้ไขงานให้แล้วเสร็จภายในกี่วัน',
+                  '',
+                  'วัน'
                 )}
               </View>
             </View>

@@ -34,7 +34,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>16</string>
+	<string>18</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>blob</string>
@@ -97,6 +97,16 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>LSApplicationQueriesSchemes</key>
+<array>
+  <string>fb</string>
+  <string>fb-messenger-share-api</string> <!-- For Facebook Messenger -->
+  <string>line</string> <!-- For LINE -->
+  <string>fb-messenger</string>
+  <string>fb-messenger-public</string>
+  <string>fb-messenger-share-api</string>
+</array>
+
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
 </dict>

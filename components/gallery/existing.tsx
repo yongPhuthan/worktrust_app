@@ -1,5 +1,5 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import React, { useCallback, useContext, useState } from 'react';
+import {useQuery, useQueryClient} from '@tanstack/react-query';
+import React, {useCallback, useContext, useState} from 'react';
 import {
   Dimensions,
   FlatList,
@@ -13,14 +13,16 @@ import {
 import {
   ActivityIndicator,
   Appbar,
-  Button
+  Button,
+  Banner,
+  Checkbox,
 } from 'react-native-paper';
 import firebase from '../../firebase';
-import { useUser } from '../../providers/UserContext';
+import {useUser} from '../../providers/UserContext';
 
-import { faCamera, faExpand } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { useFormContext } from 'react-hook-form';
+import {faCamera, faExpand} from '@fortawesome/free-solid-svg-icons';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {useFormContext} from 'react-hook-form';
 import {
   ImageLibraryOptions,
   ImagePickerResponse,
@@ -29,20 +31,33 @@ import {
 } from 'react-native-image-picker';
 import Modal from 'react-native-modal';
 import CustomCheckbox from '../../components/CustomCheckbox';
-import { useUriToBlob } from '../../hooks/utils/image/useUriToBlob';
-import { useSlugify } from '../../hooks/utils/useSlugify';
-import { Store } from '../../redux/store';
-type ImageData = {
-  id: number;
-  url: string;
-  defaultChecked: boolean;
-};
+import {useUriToBlob} from '../../hooks/utils/image/useUriToBlob';
+import {useSlugify} from '../../hooks/utils/useSlugify';
+import {Store} from '../../redux/store';
+import AddNewImage from './addNew';
 
 interface ImageModalProps {
   isVisible: boolean;
   onClose: () => void;
   serviceImages: string[];
   setServiceImages: any;
+}
+
+interface Tag {
+  id: string;
+  name: string;
+}
+
+interface ImageData {
+  id: string;
+  url: string;
+  tags: string[]; 
+  defaultChecked: boolean;
+}
+
+interface ModalProps {
+  isVisible: boolean;
+  onClose: () => void;
 }
 
 const {width, height} = Dimensions.get('window');
@@ -58,16 +73,19 @@ const GalleryScreen = ({
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const user = useUser();
   const [loading, setLoading] = useState(true);
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [isOpenModal, setIsOpenModal] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  // const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  // const [galleryImages, setGalleryImages] = useState<ImageData[]>([]);
+  // const [initialGalleryImages, setInitialGalleryImages] = useState<ImageData[]>([]);
   const [selectedImage, setSelectedImage] = useState<string>('');
   const [responseLog, setResponseLog] = useState<string | null>(null);
-  const initialGalleryImages = serviceImages?.map((url, index) => ({
-    id: index + 1, // Assuming IDs should be unique and start from 1
-    url: url,
-    defaultChecked: true, // Set to true as initial value
-  }));
-  const [galleryImages, setGalleryImages] =
-    useState<ImageData[]>(initialGalleryImages);
+  const [initialGalleryImages, setInitialGalleryImages] = useState<ImageData[]>(
+    [],
+  );
+  const [galleryImages, setGalleryImages] = useState<ImageData[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const context = useFormContext();
   const {
     register,
@@ -85,7 +103,7 @@ const GalleryScreen = ({
   const uriToBlobFunction = useUriToBlob();
   const queryClient = useQueryClient();
 
-  const handleCheckbox = (id: number) => {
+  const handleCheckbox = (id: string) => {
     const updatedData = galleryImages.map(img => {
       if (img.id === id) {
         return {...img, defaultChecked: !img.defaultChecked};
@@ -101,136 +119,44 @@ const GalleryScreen = ({
     setValue('serviceImages', urls);
   };
   const getGallery = async () => {
-    const storageRef = firebase.storage().ref(`${code}/gallery`);
-    const result = [];
+    const imagesCollectionPath = `${code}/gallery/Images`;
+    const imagesRef = firebase.firestore().collection(imagesCollectionPath);
 
     try {
-      // List all items (files) and prefixes (folders) under this directory.
-      const listResult = await storageRef.listAll();
-      for (const itemRef of listResult.items) {
-        // For each item (file), get its download URL and add it to the result array.
-        const url = await itemRef.getDownloadURL();
-        result.push(url);
-        if (Array.isArray(result)) {
-          if (watch('serviceImages').length > 0) {
-            const imageData = result.map((url, index) => ({
-              id: index + 1, // Assigning an ID
-              url: url,
-              defaultChecked: watch('serviceImages').includes(url), // Check if the URL is in serviceImages
-            }));
-            setGalleryImages(imageData);
-          } else {
-            const imageData = result.map((url, index) => ({
-              id: index + 1, // Assigning an ID
-              url: url,
-              defaultChecked: false,
-            }));
-            setGalleryImages(imageData);
-          }
-        } else {
-          console.warn('Data is undefined or not in expected format');
-        }
-      }
+      const imageSnapshot = await imagesRef.get();
+      const images = imageSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          url: data.url,
+          tags: data.tags || [],
+          defaultChecked: false, // Initial state of checkbox
+        };
+      });
+      const tagsCollectionPath = `${code}/gallery/Tags`;
+      const tagsRef = firebase.firestore().collection(tagsCollectionPath);
+      const tagSnapshot = await tagsRef.get();
+      const fetchedTags = tagSnapshot.docs.map(doc => ({
+        id: doc.id,
+        name: doc.data().name,
+      }));
+      setGalleryImages(images);
+      setInitialGalleryImages(images);
 
-      return result;
+      setTags(fetchedTags); // Assuming setTags updates the state containing all tags
+
+      return images; // Return images array, even if it's empty
     } catch (error) {
       console.error('Error fetching gallery images:', error);
-      throw new Error('Could not fetch gallery images');
+      return []; 
     }
   };
 
   const {data, isLoading, error} = useQuery({
     queryKey: ['gallery', code],
-    queryFn: () => getGallery(),
-
+    queryFn: getGallery,
   });
 
-  const handleUploadMoreImages = useCallback(() => {
-    setIsImageUpload(true);
-    const options: ImageLibraryOptions = {
-      mediaType: 'photo' as MediaType,
-    };
-
-    const uploadImageToFbStorage = async (
-      imagePath: string,
-    ): Promise<string | undefined> => {
-      if (!imagePath) {
-        console.log('No image path provided');
-        return;
-      }
-      if (!user) {
-        console.error('User not authenticated');
-        return; // Explicitly return undefined for consistency
-      }
-
-      const name = imagePath.substring(imagePath.lastIndexOf('/') + 1);
-      const fileType = imagePath.substring(imagePath.lastIndexOf('.') + 1);
-      const filename = slugify(name) + '.' + fileType;
-
-      let contentType = '';
-      switch (fileType.toLowerCase()) {
-        case 'jpg':
-        case 'jpeg':
-          contentType = 'image/jpeg';
-          break;
-        case 'png':
-          contentType = 'image/png';
-          break;
-        case 'webp':
-          contentType = 'image/webp';
-          break;
-        default:
-          console.error('Unsupported file type:', fileType);
-          return; // Explicitly return undefined for consistency
-      }
-
-      const filePath = `${code}/gallery/${filename}`;
-      try {
-        const reference = firebase.storage().ref(filePath);
-        await reference.putFile(imagePath, {contentType}); // putFile is used for direct file paths
-        const publicUrl = await reference.getDownloadURL();
-        console.log('Upload to Firebase Storage success', publicUrl);
-        return publicUrl;
-      } catch (error) {
-        console.error(
-          'There was a problem with the Firebase Storage operation:',
-          error,
-        );
-        return; // Explicitly return undefined in case of error
-      }
-    };
-
-    launchImageLibrary(options, async (response: ImagePickerResponse) => {
-      if (response.didCancel) {
-        console.log('User cancelled image picker');
-        setIsImageUpload(false);
-      } else if (response.errorMessage) {
-        console.log('ImagePicker Error: ', response.errorMessage);
-        setIsImageUpload(false);
-      } else if (response.assets && response.assets.length > 0) {
-        const source = {uri: response.assets[0].uri ?? null};
-        console.log('Image source:', source);
-        if (source.uri) {
-          try {
-            const uploadedImageUrl = await uploadImageToFbStorage(source.uri);
-            if (uploadedImageUrl) {
-              console.log('Image uploaded successfully:', uploadedImageUrl);
-              // Here you can invalidate queries or update your state with the new image URL
-              queryClient.invalidateQueries({
-                queryKey: ['gallery', code],
-              });
-            }
-            setIsImageUpload(false);
-          } catch (error) {
-            console.error('Error uploading image:', error);
-            setIsImageUpload(false);
-          }
-        }
-      }
-    });
-  }, [setIsImageUpload, queryClient, code]);
-
-  
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -238,134 +164,161 @@ const GalleryScreen = ({
       </View>
     );
   }
-  return (
-    <Modal isVisible={isVisible} style={styles.modal} onBackdropPress={onClose}>
-      {isImageUpload ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator color="white" />
-        </View>
-      ) : (
-        <>
-          <Appbar.Header
-            mode="center-aligned"
-            elevated
-            style={{
-              backgroundColor: 'white',
-              width: Dimensions.get('window').width,
-            }}>
-            <Appbar.Action icon={'close'} onPress={() => onClose()} />
-            <Appbar.Content
-              title={`เลือกภาพผลงานที่เคยทำ`}
-              titleStyle={{fontSize: 16}}
-            />
-            {galleryImages && galleryImages.length > 0 && (
-              <Appbar.Action icon={'plus'} onPress={handleUploadMoreImages} />
-            )}
-          </Appbar.Header>
-          <SafeAreaView style={styles.container}>
-            <FlatList
-              data={galleryImages}
-              numColumns={3}
-              ListEmptyComponent={
-                <View style={styles.buttonContainer}>
-                  <TouchableOpacity
-                    onPress={handleUploadMoreImages}
-                    style={styles.selectButton}>
-                    <View style={styles.containerButton}>
-                      <FontAwesomeIcon
-                        icon={faCamera}
-                        color="#0073BA"
-                        size={14}
-                      />
+  const handleSelectTag = (id: string): void => {
+    const newSelectedTags = selectedTags.includes(id)
+      ? selectedTags.filter(tagId => tagId !== id) // Toggle off if already selected
+      : [...selectedTags, id]; // Add to selection if not currently selected
+    setSelectedTags(newSelectedTags);
 
-                      <Text style={styles.selectButtonText}>
-                        เลือกจากอัลบั้ม
-                      </Text>
+    // Filter gallery images or reset to show all if no tags are selected
+    if (newSelectedTags.length > 0) {
+      const filteredImages = initialGalleryImages.filter(image =>
+        image.tags.some(tagId => newSelectedTags.includes(tagId)),
+      );
+      setGalleryImages(filteredImages);
+    } else {
+      // No tags are selected, show all images
+      setGalleryImages(initialGalleryImages);
+    }
+  };
+
+  return (
+    <>
+      <Modal
+        isVisible={isVisible}
+        style={styles.modal}
+        onBackdropPress={onClose}>
+        {isImageUpload ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator color="white" />
+          </View>
+        ) : (
+          <>
+            <Appbar.Header
+              mode="center-aligned"
+              elevated
+              style={{
+                backgroundColor: 'white',
+                width: Dimensions.get('window').width,
+              }}>
+              <Appbar.Action icon={'close'} onPress={() => onClose()} />
+              <Appbar.Content
+                title={`เลือกภาพผลงานที่เคยทำ`}
+                titleStyle={{fontSize: 16, fontFamily: 'Sukhumvit Set Bold'}}
+              />
+              <Appbar.Action
+                icon={'plus'}
+                onPress={() => setIsOpenModal(true)}
+              />
+            </Appbar.Header>
+
+            <SafeAreaView style={styles.container}>
+              <View style={{
+                flexDirection: 'column',
+                gap: 20,
+              }}>
+              
+                <FlatList
+                  data={tags}
+                  keyExtractor={item => item.id.toString()}
+                  renderItem={({item}) => (
+                    <View style={styles.tagItem}>
+                      <Checkbox.Android
+                        status={
+                          selectedTags.includes(item.id)
+                            ? 'checked'
+                            : 'unchecked'
+                        }
+                        onPress={() => handleSelectTag(item.id)}
+                      />
+                      <Text style={styles.tagText}>{item.name}</Text>
                     </View>
-                  </TouchableOpacity>
-                </View>
-              }
-              renderItem={({item}) => (
-                <View
-                  style={[
-                    styles.imageContainer,
-                    item.defaultChecked && styles.selected,
-                  ]}>
-                  <Image source={{uri: item.url}} style={styles.image} />
-                  <View style={styles.checkboxContainer}>
-                    <CustomCheckbox
-                      checked={item.defaultChecked}
-                      onPress={() => handleCheckbox(item.id)}
-                    />
-                  </View>
-                  <TouchableOpacity
-                    style={styles.expandButton}
+                  )}
+                  numColumns={2}
+                />
+
+                <FlatList
+                  data={galleryImages}
+                  numColumns={3}
+                  ListEmptyComponent={<Text>No images available.</Text>}
+                  renderItem={({item}) => (
+                    <View
+                      style={[
+                        styles.imageContainer,
+                        item.defaultChecked && styles.selected,
+                      ]}>
+                      <Image source={{uri: item.url}} style={styles.image} />
+                      <View style={styles.checkboxContainer}>
+                        <CustomCheckbox
+                          checked={item.defaultChecked}
+                          onPress={() => handleCheckbox(item.id)}
+                        />
+                      </View>
+                      <TouchableOpacity
+                        style={styles.expandButton}
+                        onPress={() => {
+                          setSelectedImage(item.url);
+                          setModalVisible(true);
+                        }}>
+                        <FontAwesomeIcon
+                          icon={faExpand}
+                          style={{marginVertical: 5}}
+                          color="white"
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                  keyExtractor={item => item.id.toString()}
+                />
+              </View>
+
+              {galleryImages.length > 0 && (
+                <View style={styles.buttonContainer}>
+                  <Button
+                    mode="contained"
+                    style={{
+                      width: '80%',
+                    }}
                     onPress={() => {
-                      setSelectedImage(item.url);
-                      setModalVisible(true);
-                    }}>
-                    <FontAwesomeIcon
-                      icon={faExpand}
-                      style={{marginVertical: 5}}
-                      color="white"
-                    />
-                  </TouchableOpacity>
+                      if (serviceImages) onClose();
+                    }}
+                    disabled={
+                      !watch('serviceImages') ||
+                      watch('serviceImages').length === 0
+                    }>
+                    บันทึก {watch('serviceImages').length} รูป
+                  </Button>
                 </View>
               )}
-              keyExtractor={item => item?.id?.toString()}
-            />
-            {data && data.length > 0 && (
-              <View style={styles.buttonContainer}>
-                <Button  mode='contained'   style={{
-                  width: '80%',
-                
-                }} onPress={() => {
-                    if (serviceImages) onClose();
-                  }} disabled={
-                    !watch('serviceImages') ||
-                    watch('serviceImages').length === 0
-                  }>
-                บันทึก {watch('serviceImages').length} รูป
-                </Button>
-                {/* <TouchableOpacity
-                  style={[
-                    styles.uploadButton,
-                    styles.saveButton,
-                    !watch('serviceImages') ||
-                    watch('serviceImages').length === 0
-                      ? styles.disabledButton
-                      : null,
-                  ]}
-                  onPress={() => {
-                    if (serviceImages) onClose();
-                  }}
-                  disabled={
-                    !watch('serviceImages') ||
-                    watch('serviceImages').length === 0
-                  }>
-                  <Text style={styles.uploadButtonText}>บันทึก {watch('serviceImages').length} รูป</Text>
-                </TouchableOpacity> */}
-              </View>
-            )}
-            <Modal
-              isVisible={modalVisible}
-              onBackdropPress={() => setModalVisible(false)}>
-              <View style={styles.modalContainer}>
-                <Image
-                  source={{uri: selectedImage}}
-                  style={styles.modalImage}
-                />
-                <TouchableOpacity
-                  style={styles.closeButton}
-                  onPress={() => setModalVisible(false)}>
-                  <Text>Close</Text>
-                </TouchableOpacity>
-              </View>
-            </Modal>
-          </SafeAreaView>
-        </>
-      )}
-    </Modal>
+              <Modal
+                isVisible={modalVisible}
+                onBackdropPress={() => setModalVisible(false)}>
+                <View style={styles.modalContainer}>
+                  <Image
+                    source={{uri: selectedImage}}
+                    style={styles.modalImage}
+                  />
+                  <TouchableOpacity
+                    style={styles.closeButton}
+                    onPress={() => setModalVisible(false)}>
+                    <Text>Close</Text>
+                  </TouchableOpacity>
+                </View>
+              </Modal>
+            </SafeAreaView>
+          </>
+        )}
+        <Modal
+          isVisible={isOpenModal}
+          style={styles.modal}
+          onBackdropPress={() => setIsOpenModal(false)}>
+          <AddNewImage
+            isVisible={isOpenModal}
+            onClose={() => setIsOpenModal(false)}
+          />
+        </Modal>
+      </Modal>
+    </>
   );
 };
 
@@ -375,9 +328,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
     paddingVertical: 10,
     backgroundColor: '#fff',
+    justifyContent: 'flex-start',
     width,
   },
   imageContainer: {
@@ -386,7 +340,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'gray',
     margin: 5,
-    position: 'relative',
   },
 
   image: {
@@ -500,7 +453,16 @@ const styles = StyleSheet.create({
     height: 50,
     backgroundColor: '#1f303cff',
   },
-
+  tagItem: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    height: 'auto',
+  },
+  tagText: {
+    marginLeft: 8, // Space between checkbox and text
+  },
   uploadButtonText: {
     marginLeft: 10,
     fontSize: 16,

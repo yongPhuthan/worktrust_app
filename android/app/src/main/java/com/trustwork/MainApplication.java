@@ -10,7 +10,9 @@ import com.facebook.react.defaults.DefaultReactNativeHost;
 import com.facebook.soloader.SoLoader;
 import java.util.List;
 import com.oblador.vectoricons.VectorIconsPackage;
-import com.rumax.reactnative.pdfviewer.PDFViewPackage;
+import com.christopherdro.RNPrint.RNPrintPackage;
+import cl.json.RNSharePackage;
+import cl.json.ShareApplication;
 public class MainApplication extends Application implements ReactApplication {
 
   private final ReactNativeHost mReactNativeHost =
@@ -24,10 +26,12 @@ public class MainApplication extends Application implements ReactApplication {
         protected List<ReactPackage> getPackages() {
           @SuppressWarnings("UnnecessaryLocalVariable")
           List<ReactPackage> packages = new PackageList(this).getPackages();
-        packages.add(new PDFViewPackage()); 
         // Add this line with a semicolon at the end
           // Packages that cannot be autolinked yet can be added manually here, for example:
           // packages.add(new MyReactNativePackage());
+          packages.add(new MainReactPackage()),
+          packages.add(new RNPrintPackage()),
+          packages.add(new RNSharePackage()); 
           return packages;
         }
 

@@ -30,19 +30,17 @@ if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
 
+if (__DEV__) {
+  let emulatorHost = '127.0.0.1';
 
+  if (Platform.OS === 'android') {
+    emulatorHost = '10.0.2.2';
+  }
 
-// if (__DEV__) {
-//   let emulatorHost = '127.0.0.1';
-
-//   if (Platform.OS === 'android') {
-//     emulatorHost = '10.0.2.2';
-//   }
-
-//   firebase.auth().useEmulator(`http://${emulatorHost}:9099`);
-//   firebase.storage().useEmulator(emulatorHost, 9199);
-//   firebase.firestore().useEmulator(emulatorHost, 8080);
-// }
+  firebase.auth().useEmulator(`http://${emulatorHost}:9099`);
+  firebase.storage().useEmulator(emulatorHost, 9199);
+  firebase.firestore().useEmulator(emulatorHost, 8080);
+}
 
 console.log('Firebase App name: ', firebase.app().name);
 

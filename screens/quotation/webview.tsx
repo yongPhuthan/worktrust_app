@@ -16,6 +16,7 @@ import {BottomNavigation, ActivityIndicator, FAB} from 'react-native-paper';
 import {WebView} from 'react-native-webview';
 import {Store} from '../../redux/store';
 import {ParamListBase} from '../../types/navigationType';
+import Pdf from 'react-native-pdf';
 
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'DocViewScreen'>;
@@ -85,7 +86,10 @@ const DocViewScreen = ({navigation, route}: Props) => {
 
   const ContractWebView = ({url}: any) => {
     // เลือกคอมโพเนนต์ตามแพลตฟอร์ม
-    const source = {uri: url};
+    console.log('URL', url);
+    // const source = {uri: url , cache:true};
+    const source = { uri: 'http://samples.leanpub.com/thereactnativebook-sample.pdf', cache: true };
+
 
     const Content = Platform.select({
       ios: () => (
@@ -99,11 +103,27 @@ const DocViewScreen = ({navigation, route}: Props) => {
       ),
       android: () => (
         <View style={{flex: 1}}>
-        <WebView
+          <Pdf
+                    source={source}
+                    onLoadComplete={(numberOfPages,filePath) => {
+                        console.log(`Number of pages: ${numberOfPages}`);
+                    }}
+                    trustAllCerts={false}
+                    onPageChanged={(page,numberOfPages) => {
+                        console.log(`Current page: ${page}`);
+                    }}
+                    onError={(error) => {
+                        console.log(error);
+                    }}
+                    onPressLink={(uri) => {
+                        console.log(`Link pressed: ${uri}`);
+                    }}
+                    style={styles.pdf}/>
+        {/* <WebView
           onLoadStart={() => setIsLoading(true)}
           source={source}
           style={{flex: 1}}
-        />
+        /> */}
       </View>
       ),
     });
@@ -131,7 +151,7 @@ const DocViewScreen = ({navigation, route}: Props) => {
     <QuotationWebView url={`https://www.worktrust.co/preview/${id}`} />
   );
   const ContractRoute = () => (
-    <ContractWebView url={`https://www.worktrust.co/preview/doc/${id}`} />
+    <ContractWebView url={`https://www.worktrust.co/preview/pdf/${id}`} />
   );
   const HomeRoute = () => {
     useEffect(() => {

@@ -47,6 +47,8 @@ export type ParamListBase = {
     quotationId: string;
     currentValue: Service | null;
   };
+  ProjectViewScreen : {id: string, pdfUrl: string, fileName:string};
+  PDFViewScreen: {pdfUrl: string,fileName:string};
   ExistingContract: undefined;
   TopUpScreen: {balance: number};
   LayoutScreen: undefined;

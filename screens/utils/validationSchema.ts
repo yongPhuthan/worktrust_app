@@ -154,6 +154,12 @@ export const defaultContractSchema = yup.object().shape({
     .required('*')
     .positive('ต้องมากกว่า0')
     .integer(),
+  fixDays: yup
+    .number()
+    .required('*')
+    .positive('ต้องมากกว่า0')
+    .integer(),
+
 });
 export const signContractValidationSchema = yup.object().shape({
   projectName: yup.string().required('ระบุชื่อโครงการ'),
@@ -207,6 +213,11 @@ export const createStandardSchema = yup.object().shape({
   badStandardEffect : yup.string().required('ระบุผลกระทบจากผลงานที่ไม่ได้มาตรฐาน'),
 });
 
+export const imageTogallery = yup.object().shape({
+  selectedTags: yup.array().of(yup.string().required()).required('เลือกแท็กอย่างน้อย 1 รายการ'),
+  image : yup.string().required('เลือกรูปภาพผลงานของคุณ'),
+
+});
 export const invoiceValidationSchema = yup.object().shape({
   customer: customersValidationSchema,
   vat7: yup.number(),

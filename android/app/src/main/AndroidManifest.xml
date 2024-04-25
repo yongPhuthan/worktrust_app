@@ -14,7 +14,18 @@
 
   <!-- ให้สิทธิ์สำหรับการเข้าถึงอินเทอร์เน็ต ถ้าไม่จำเป็นสามารถลบออกได้
   <uses-permission android:name="android.permission.INTERNET" /> -->
+<queries>
+        <!-- Facebook Messenger -->
+        <package android:name="com.facebook.orca" />
+        
+        <!-- LINE -->
+        <package android:name="jp.naver.line.android" />
+        
+        <!-- LINE Official Account -->
+        <package android:name="jp.naver.linebiz.conduct" />
 
+        <!-- Additional packages if required -->
+    </queries>
     <application
       android:name=".MainApplication"
       android:label="@string/app_name"
@@ -36,6 +47,7 @@
         <intent-filter>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
+             <action android:name="android.intent.action.DOWNLOAD_COMPLETE"/>
         </intent-filter>
       </activity>
     </application>

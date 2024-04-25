@@ -6282,10 +6282,10 @@ react-native-animatable@1.3.3:
   dependencies:
     prop-types "^15.7.2"
 
-react-native-blob-util@^0.19.8:
-  version "0.19.8"
-  resolved "https://registry.npmjs.org/react-native-blob-util/-/react-native-blob-util-0.19.8.tgz"
-  integrity sha512-u2x8nRcOUwuLkrReRrXIBrJmLcTJz6W4YQREAcrJ3hXtNvItFDxzt/OzRjwBtiLN0JYVfjQyalpoQ/1BhiaLgA==
+react-native-blob-util@^0.19.9:
+  version "0.19.9"
+  resolved "https://registry.npmjs.org/react-native-blob-util/-/react-native-blob-util-0.19.9.tgz"
+  integrity sha512-gIuErPqGbBIAPWf+K07x/8mRZ80Waz9DWgwMdQ8zWgms8kYfAji0GNk2gvZZ0y9MKe61jme7oOdZ7InWLRy2GA==
   dependencies:
     base-64 "0.1.0"
     glob "^10.3.10"
@@ -6380,6 +6380,11 @@ react-native-picker-select@^9.1.3:
   dependencies:
     lodash.isequal "^4.5.0"
     lodash.isobject "^3.0.2"
+
+react-native-print@^0.11.0:
+  version "0.11.0"
+  resolved "https://registry.npmjs.org/react-native-print/-/react-native-print-0.11.0.tgz"
+  integrity sha512-hFDzb9dVJVT8c3VHNNWgkPfLF3Jfyw0WVJ3o7wUmSMmi5hJx6b++veNJ3J95d3lW3Y0sZUpGbn9+yzXrLANnJQ==
 
 react-native-reanimated@^3.8.1:
   version "3.8.1"

@@ -157,6 +157,7 @@ const ExistingContract = ({navigation}: Props) => {
     finishedDay: 0,
     productWarantyYear: 0,
     skillWarantyYear: 0,
+    fixDays: 0,
   };
 
   const {
@@ -262,6 +263,7 @@ const ExistingContract = ({navigation}: Props) => {
     name: any,
     label: string,
     defaultValue: string = '',
+    textAffix: string,
   ) => (
     <>
       <View
@@ -286,7 +288,7 @@ const ExistingContract = ({navigation}: Props) => {
                 textAlignVertical="center"
                 defaultValue={defaultValue}
                 onBlur={onBlur}
-                right={<TextInput.Affix text="เดือน" />}
+                right={<TextInput.Affix text={textAffix} />}
                 value={value}
                 onChangeText={val => {
                   const numericValue = Number(val);
@@ -454,11 +456,19 @@ const ExistingContract = ({navigation}: Props) => {
                   'productWarantyYear',
                   'รับประกันวัสดุอุปกรณ์กี่เดือน',
                   safeToString(contract.productWarantyYear),
+                  'เดือน',
                 )}
                 {renderWanranty(
                   'skillWarantyYear',
                   'รับประกันงานติดตั้งกี่เดือน',
                   safeToString(contract.skillWarantyYear),
+                  'เดือน',
+                )}
+                {renderWanranty(
+                  'fixDays',
+                  'เมื่อมีปัญหาจะแก้ไขงานให้แล้วเสร็จภายในกี่วัน',
+                  safeToString(contract.fixDays),
+                  'วัน',
                 )}
               </View>
             </View>
@@ -541,10 +551,20 @@ const ExistingContract = ({navigation}: Props) => {
                 {renderWanranty(
                   'productWarantyYear',
                   'รับประกันวัสดุอุปกรณ์กี่เดือน',
+                  '',
+                  'เดือน',
                 )}
                 {renderWanranty(
                   'skillWarantyYear',
                   'รับประกันงานติดตั้งกี่เดือน',
+                  '',
+                  'เดือน',
+                )}
+                {renderWanranty(
+                  'fixDays',
+                  'เมื่อมีปัญหาจะแก้ไขงานให้แล้วเสร็จภายในกี่วัน',
+                  '',
+                  'วัน',
                 )}
               </View>
             </View>
