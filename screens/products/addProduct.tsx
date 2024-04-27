@@ -29,7 +29,13 @@ import {yupResolver} from '@hookform/resolvers/yup';
 import {RouteProp} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import CurrencyInput from 'react-native-currency-input';
-import {Appbar, Button, TextInput, Text as TextPaper,Chip} from 'react-native-paper';
+import {
+  Appbar,
+  Button,
+  TextInput,
+  Text as TextPaper,
+  Chip,
+} from 'react-native-paper';
 import GalleryScreen from '../../components/gallery/existing';
 import ExistingMaterials from '../../components/materials/existing';
 import SelectStandard from '../../components/standard/selectStandard';
@@ -67,7 +73,6 @@ const AddProductForm = ({navigation, route}: Props) => {
     discountPercent: '0',
     total: '0',
     unit: 'ชุด',
-    serviceImage: '',
     serviceImages: [],
     standards: [],
     materials: [],
@@ -125,11 +130,10 @@ const AddProductForm = ({navigation, route}: Props) => {
   ]);
   const isButtonDisbled = useMemo(() => {
     return (
-      (materials.length > 0 && standards?.length > 0 ) ||
-      ('' && unitPrice !== null) ||
-      '' ||  title !== null || title !== ''
+      (materials.length > 0 && standards?.length > 0 && title && unitPrice > 0 && qty > 0 ) 
     );
-  }, [standards, materials, title, unitPrice]);
+      
+  }, [standards, materials, title, unitPrice, qty]);
 
   return (
     <>
@@ -170,10 +174,11 @@ const AddProductForm = ({navigation, route}: Props) => {
           }}
         />
         <Button
+          disabled={!isButtonDisbled}
           // loading={postLoading}
-          disabled={
-            currentValue ? !methods.formState.isDirty : !isButtonDisbled
-          }
+          // disabled={
+          //   currentValue ? !methods.formState.isDirty : !isButtonDisbled
+          // }
           mode="contained"
           // buttonColor={'#1b52a7'}
           onPress={handleDone}>
@@ -197,75 +202,72 @@ const AddProductForm = ({navigation, route}: Props) => {
                     alignItems: 'center',
                   }}>
                   <FlatList
-                      data={methods.watch('serviceImages')}
-                      horizontal={true}
-                      renderItem={({item, index}) => {
-                        return (
-                          <View style={styles.imageContainer}>
-                            <TouchableOpacity
-                              onPress={() => setModalImagesVisible(true)}>
-                              <Image
-                                source={{uri: item}}
-                                style={styles.image}
-                              />
-                            </TouchableOpacity>
-                          </View>
-                        );
-                      }}
-                      keyExtractor={(item, index) => index.toString()}
-                      ListFooterComponent={
-                        serviceImages.length > 0 ? (
+                    data={methods.watch('serviceImages')}
+                    horizontal={true}
+                    renderItem={({item, index}) => {
+                      return (
+                        <View style={styles.imageContainer}>
                           <TouchableOpacity
-                            style={styles.addButtonContainer}
-                            onPress={() => {
-                              setModalImagesVisible(true);
-                              // navigation.navigate('GalleryScreen', {code});
-                            }}>
-                            <FontAwesomeIcon
-                              icon={faPlus}
-                              size={32}
-                              color="#0073BA"
-                            />
-                          </TouchableOpacity>
-                        ) : null
-                      }
-                      ListEmptyComponent={
-                        <View>
-                          <TouchableOpacity
-                            style={{
-                              justifyContent: 'center',
-                              alignItems: 'center',
-                              marginBottom: 20,
-                              borderColor: '#0073BA',
-                              borderWidth: 1,
-                              borderRadius: 5,
-                              borderStyle: 'dashed',
-                              // marginHorizontal: 100,
-                              padding: 10,
-                              height:  150,
-                              width: 200,
-                            }}
-                            onPress={() => {
-                              setModalImagesVisible(true);
-                            }}>
-                            <FontAwesomeIcon
-                              icon={faImages}
-                              style={{marginVertical: 5, marginHorizontal: 50}}
-                              size={32}
-                              color="#0073BA"
-                            />
-                            <Text
-                              style={{
-                                textAlign: 'center',
-                                color: '#0073BA',
-                                fontFamily: 'Sukhumvit set',
-                              }}>
-                              เลือกภาพตัวอย่างผลงาน
-                            </Text>
+                            onPress={() => setModalImagesVisible(true)}>
+                            <Image source={{uri: item}} style={styles.image} />
                           </TouchableOpacity>
                         </View>
-                      }
-                    />
+                      );
+                    }}
+                    keyExtractor={(item, index) => index.toString()}
+                    ListFooterComponent={
+                      serviceImages.length > 0 ? (
+                        <TouchableOpacity
+                          style={styles.addButtonContainer}
+                          onPress={() => {
+                            setModalImagesVisible(true);
+                            // navigation.navigate('GalleryScreen', {code});
+                          }}>
+                          <FontAwesomeIcon
+                            icon={faPlus}
+                            size={32}
+                            color="#0073BA"
+                          />
+                        </TouchableOpacity>
+                      ) : null
+                    }
+                    ListEmptyComponent={
+                      <View>
+                        <TouchableOpacity
+                          style={{
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            marginBottom: 20,
+                            borderColor: '#0073BA',
+                            borderWidth: 1,
+                            borderRadius: 5,
+                            borderStyle: 'dashed',
+                            // marginHorizontal: 100,
+                            padding: 10,
+                            height: 150,
+                            width: 200,
+                          }}
+                          onPress={() => {
+                            setModalImagesVisible(true);
+                          }}>
+                          <FontAwesomeIcon
+                            icon={faImages}
+                            style={{marginVertical: 5, marginHorizontal: 50}}
+                            size={32}
+                            color="#0073BA"
+                          />
+                          <Text
+                            style={{
+                              textAlign: 'center',
+                              color: '#0073BA',
+                              fontFamily: 'Sukhumvit set',
+                            }}>
+                            เลือกภาพตัวอย่างผลงาน
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    }
+                  />
                 </View>
                 <Controller
                   control={methods.control}
@@ -480,21 +482,17 @@ const AddProductForm = ({navigation, route}: Props) => {
                         มาตรฐานของบริการนี้:
                       </Text>
                       {methods.watch('standards')?.map((item: any) => (
-
                         <Button
-                        children={item.standardShowTitle}
-                        // icon={'chevron-right'}
-                        style={{
-                          margin:3,
-                          maxWidth: '100%',
-                        }}
-                        contentStyle={{flexDirection: 'row-reverse'}}
-                        mode='outlined'
+                          children={item.standardShowTitle}
+                          // icon={'chevron-right'}
+                          style={{
+                            margin: 3,
+                            maxWidth: '100%',
+                          }}
+                          contentStyle={{flexDirection: 'row-reverse'}}
+                          mode="outlined"
                           key={item.id}
-                          onPress={() => setModalVisible(true)}>
-                        
-                       
-                        </Button>
+                          onPress={() => setModalVisible(true)}></Button>
                       ))}
                     </View>
                   ) : (
@@ -530,50 +528,49 @@ const AddProductForm = ({navigation, route}: Props) => {
                   {methods.watch('materials')?.length > 0 ? (
                     <>
                       <Text
-                      style={{
-                        marginBottom: 5,
-                        marginTop: 20,
-                        fontSize: 16,
-                        fontFamily: 'Sukhumvit Set Bold',
-                        fontWeight: 'bold',
-                        color: '#333',
-                      }}>
-                      วัสดุอุปกรณ์ที่ใช้ : 
-                    </Text>
-                    <View style={styles.cardContainer}>
-                    
-                      {methods.watch('materials')?.map((item: any, index:number) => (
-                         <Button
-                         children={item.name}
-                         // icon={'chevron-right'}
-                         style={{
-                           margin:2,
-                           width: 'auto',
-                           flexDirection: 'row',
-                           justifyContent: 'space-between',
-                           alignItems: 'center',
-
-                         }}
-                         contentStyle={{flexDirection: 'row-reverse'}}
-                         mode='outlined'
-                           key={index}
-                           onPress={() => setIsModalMaterialsVisible(true)}>
-                         
-                        
-                         </Button>
-                        // <TouchableOpacity
-                        //   key={index}
-                        //   style={styles.card}
-                        //   onPress={() => setIsModalMaterialsVisible(true)}>
-                        //   <Text style={styles.cardTitle}>{item.name}</Text>
-                        //   <FontAwesomeIcon
-                        //     icon={faChevronRight}
-                        //     color="gray"
-                        //     size={14}
-                        //   />
-                        // </TouchableOpacity>
-                      ))}
-                    </View>
+                        style={{
+                          marginBottom: 5,
+                          marginTop: 20,
+                          fontSize: 16,
+                          fontFamily: 'Sukhumvit Set Bold',
+                          fontWeight: 'bold',
+                          color: '#333',
+                        }}>
+                        วัสดุอุปกรณ์ที่ใช้ :
+                      </Text>
+                      <View style={styles.cardContainer}>
+                        {methods
+                          .watch('materials')
+                          ?.map((item: any, index: number) => (
+                            <Button
+                              children={item.name}
+                              // icon={'chevron-right'}
+                              style={{
+                                margin: 2,
+                                width: 'auto',
+                                flexDirection: 'row',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                              }}
+                              contentStyle={{flexDirection: 'row-reverse'}}
+                              mode="outlined"
+                              key={index}
+                              onPress={() =>
+                                setIsModalMaterialsVisible(true)
+                              }></Button>
+                            // <TouchableOpacity
+                            //   key={index}
+                            //   style={styles.card}
+                            //   onPress={() => setIsModalMaterialsVisible(true)}>
+                            //   <Text style={styles.cardTitle}>{item.name}</Text>
+                            //   <FontAwesomeIcon
+                            //     icon={faChevronRight}
+                            //     color="gray"
+                            //     size={14}
+                            //   />
+                            // </TouchableOpacity>
+                          ))}
+                      </View>
                     </>
                   ) : (
                     <View>

@@ -23,32 +23,20 @@ export const companyValidationSchema = yup.object().shape({
   bizType: yup.string().required('ระบุประเภทธุรกิจ'),
 });
 
-const selectedAuditDataSchema = yup.object().shape({
-  AuditData: yup.object().shape({
-    id: yup.number().required(),
-    number: yup.number().required(),
-    image: yup.string().required(),
-    title: yup.string().required(),
-    content: yup.string().required(),
-    auditEffectDescription: yup.string().required(),
-    auditEffectImage: yup.string().required(),
-    auditShowTitle: yup.string().required(),
-    category: yup.string().required(),
-    subCategory: yup.string().required(),
-    defaultChecked: yup.boolean().required(),
-  }),
+const standardSchema = yup.object().shape({
+  image: yup.string().required(),
+  standardShowTitle: yup.string().required(),
+  content: yup.string().required(),
+  badStandardEffect: yup.string().required(),
+  badStandardImage: yup.string().required(),
 });
-const selectedMaterialDataSchema = yup.object().shape({
-  materialData: yup.object().shape({
-    id: yup.number().required(),
-    name: yup.string().required(),
-    description: yup.string().required(),
-    image: yup.string().required(),
-  }),
+
+const materialSchema = yup.object().shape({
+  id: yup.number().required(),
+  name: yup.string().required(),
 });
 
 export const servicesValidationSchema = yup.object().shape({
-  id: yup.string().required(),
   title: yup.string().required(),
   description: yup.string().required(),
   unitPrice: yup.number().required(),
@@ -56,19 +44,19 @@ export const servicesValidationSchema = yup.object().shape({
   discountPercent: yup.number(),
   total: yup.number().required(),
   unit: yup.string().required(),
-  serviceImage: yup.string().required(),
   serviceImages: yup.array().of(yup.string()).required('เลือกภาพตัวอย่างผลงาน'),
   quotations: yup.mixed(),
   quotationId: yup.string(),
-  audits: yup
+  standards: yup
     .array()
-    .of(selectedAuditDataSchema)
+    .of(standardSchema)
     .required('ต้องเลือกมาตรฐานอย่างน้อย 1 รายการ'),
   materials: yup
     .array()
-    .of(selectedMaterialDataSchema)
+    .of(materialSchema)
     .required('ต้องเลือกวัสดุอุปกรณ์อย่างน้อย 1 รายการ'),
 });
+
 export const quotationsValidationSchema = yup.object().shape({
   id: yup.string().required('ID is required'),
   customer: customersValidationSchema,
@@ -104,8 +92,8 @@ export const serviceValidationSchema = yup.object().shape({
   unit: yup.string().required(),
   serviceImage: yup.string().required(),
   serviceImages: yup.array().of(yup.string()),
-  audits: yup.array().of(selectedAuditDataSchema),
-  materials: yup.array().of(selectedMaterialDataSchema),
+  standards: yup.array().of(standardSchema),
+  materials: yup.array().of(materialSchema),
 });
 
 export const defaultContractSchema = yup.object().shape({
