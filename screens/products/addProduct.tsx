@@ -125,9 +125,9 @@ const AddProductForm = ({navigation, route}: Props) => {
   ]);
   const isButtonDisbled = useMemo(() => {
     return (
-      (materials.length > 0 && standards?.length > 0 && title !== null) ||
+      (materials.length > 0 && standards?.length > 0 ) ||
       ('' && unitPrice !== null) ||
-      ''
+      '' ||  title !== null || title !== ''
     );
   }, [standards, materials, title, unitPrice]);
 
@@ -486,7 +486,7 @@ const AddProductForm = ({navigation, route}: Props) => {
                         // icon={'chevron-right'}
                         style={{
                           margin:3,
-                          width: 'auto',
+                          maxWidth: '100%',
                         }}
                         contentStyle={{flexDirection: 'row-reverse'}}
                         mode='outlined'
@@ -879,9 +879,8 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   cardContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    flexWrap: 'wrap',
+    flexDirection: 'column',
+    gap: 10,
   },
 
   card: {

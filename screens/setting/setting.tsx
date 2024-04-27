@@ -101,7 +101,7 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
     }
   };
   const {data, isLoading, isError, error} = useQuery({
-    queryKey: ['companySetting',code],
+    queryKey: ['companySetting', code],
     queryFn: fetchCompanyUser,
   });
   if (isLoading) {
@@ -113,12 +113,13 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
   }
 
   if (isError) {
-    firebase.auth().signOut()
-    return (
-      <View style={styles.loadingContainer}>
-        <Text>Error: {error?.message}</Text>
-      </View>
-    );
+    handleLogout();
+    // firebase.auth().signOut()
+    // return (
+    //   <View style={styles.loadingContainer}>
+    //     <Text>Error: {error?.message}</Text>
+    //   </View>
+    // );
   }
 
   // if (error instanceof Error) {
@@ -327,7 +328,9 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
             <Divider />
             <TouchableOpacity
               style={{paddingVertical: 15, paddingHorizontal: 24}}
-              onPress={() => navigation.navigate('EditSetting', {company,seller})}>
+              onPress={() =>
+                navigation.navigate('EditSetting', {company, seller})
+              }>
               <View
                 style={{
                   flexDirection: 'row',

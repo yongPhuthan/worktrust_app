@@ -3,7 +3,7 @@ import {FirebaseAuthTypes} from '@react-native-firebase/auth';
 import React, {useEffect, useState} from 'react';
 import {Image, Pressable, StyleSheet, Text, View} from 'react-native';
 import {Button, TextInput, ActivityIndicator} from 'react-native-paper';
-import {BRAND_NAME} from '@env';
+import {BRAND_NAME,BACK_END_SERVER_URL} from '@env';
 import firebase from '../../firebase';
 
 const FirstAppScreen = ({navigation}: any) => {
@@ -17,6 +17,7 @@ const FirstAppScreen = ({navigation}: any) => {
   const handleRegister = () => {
     navigation.navigate('SignupMobileScreen');
   };
+  console.log('BACK_END_SERVER_URL', BACK_END_SERVER_URL);
   //   useEffect(() => {
   //     const unsubscribe = firebase.auth().onAuthStateChanged(user => {
   //       if (user) {

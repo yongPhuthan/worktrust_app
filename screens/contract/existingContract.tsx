@@ -46,7 +46,7 @@ const ExistingContract = ({navigation}: Props) => {
   const textRequired = '* จำเป็น';
   const queryClient = useQueryClient();
   async function fetchContractByEmail() {
-    if (!user || !user.email) {
+    if (!user || !user.uid) {
       console.error('User or user email is not available');
       return;
     }
@@ -54,9 +54,7 @@ const ExistingContract = ({navigation}: Props) => {
     try {
       const token = await user.getIdToken(true);
       const response = await fetch(
-        `${BACK_END_SERVER_URL}/api/documents/queryContractByEmail?email=${encodeURIComponent(
-          user.email,
-        )}`,
+        `${BACK_END_SERVER_URL}/api/documents/queryContractByUid`,
         {
           method: 'GET',
           headers: {
@@ -94,6 +92,7 @@ const ExistingContract = ({navigation}: Props) => {
           finishedDay: data.finishedDay,
           productWarantyYear: data.productWarantyYear,
           skillWarantyYear: data.skillWarantyYear,
+          fixDays: data.fixDays,
         };
         reset(defaultValues);
       }

@@ -230,6 +230,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     //     navigation.navigate('LoginMobileScreen');
     //   });
   }
+  console.log('BACK_END_SERVER_URL', BACK_END_SERVER_URL);
   const renderItem = ({item, index}: any) => (
     <>
       <View style={{marginTop: 10}}>

@@ -10,9 +10,9 @@ import com.facebook.react.defaults.DefaultReactNativeHost;
 import com.facebook.soloader.SoLoader;
 import java.util.List;
 import com.oblador.vectoricons.VectorIconsPackage;
-import com.christopherdro.RNPrint.RNPrintPackage;
 import cl.json.RNSharePackage;
 import cl.json.ShareApplication;
+import com.christopherdro.RNPrint.RNPrintPackage;
 public class MainApplication extends Application implements ReactApplication {
 
   private final ReactNativeHost mReactNativeHost =
@@ -29,9 +29,9 @@ public class MainApplication extends Application implements ReactApplication {
         // Add this line with a semicolon at the end
           // Packages that cannot be autolinked yet can be added manually here, for example:
           // packages.add(new MyReactNativePackage());
-          packages.add(new MainReactPackage()),
-          packages.add(new RNPrintPackage()),
-          packages.add(new RNSharePackage()); 
+          // packages.add(new MainReactPackage());
+          // packages.add(new RNPrintPackage());
+          // packages.add(new RNSharePackage()); 
           return packages;
         }
 

@@ -125,6 +125,7 @@ const DefaultContract = ({navigation}: Props) => {
         }
         throw new Error('Network response was not ok.');
       }
+      console.log('responseServer', response.json())
       return await response.json(); // Return the JSON response if everything is ok
     } catch (err) {
       throw new Error(err as any);
@@ -234,6 +235,7 @@ const DefaultContract = ({navigation}: Props) => {
   });
   useEffect(() => {
     if (data) {
+      console.log('data', data);
       const values = {
         workCheckEnd: data.workCheckEnd,
         workCheckDay: data.workCheckDay,
@@ -268,17 +270,18 @@ const DefaultContract = ({navigation}: Props) => {
       queryClient.invalidateQueries({
         queryKey: ['dashboardQuotation', code],
       });
-      navigation.navigate('ProjectViewScreen', {id: data.quotationId, pdfUrl: data.pdfUrl});
+      navigation.navigate('ProjectViewScreen', {id: data.quotationId, pdfUrl: data.pdfUrl, fileName:quotation.customer.name});
 
     },
     onError: (error: MyError) => {
-      Alert.alert(
-        'เกิดข้อผิดพลาด',
-        `Server-side user creation failed:, ${error}`,
-        [{text: 'OK'}],
+      console.log('error', error);
+      // Alert.alert(
+      //   'เกิดข้อผิดพลาด',
+      //   `Server-side user creation failed:, ${error}`,
+      //   [{text: 'OK'}],
 
-        {cancelable: false},
-      );
+      //   {cancelable: false},
+      // );
     },
   });
 
@@ -304,7 +307,7 @@ const DefaultContract = ({navigation}: Props) => {
     } catch (error: Error | MyError | any) {
       Alert.alert(
         'เกิดข้อผิดพลาด',
-        `Server-side user creation failed:, ${error}`,
+        `Server-side creation failed:, ${error}`,
         [{text: 'OK'}],
 
         {cancelable: false},

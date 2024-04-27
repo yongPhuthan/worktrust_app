@@ -22,9 +22,9 @@ const ProjectViewScreen = ({navigation, route}: Props) => {
   const [url, setUrl] = useState(`https://www.worktrust.co/preview/${id}`);
   const [isLoading, setIsLoading] = useState(false);
 
-console.log('pdfUrl', pdfUrl)
 
   const handleShare = async () => {
+    console.log('Share button pressed');
     let dirs = ReactNativeBlobUtil.fs.dirs;
     const type = 'application/pdf'; // MIME type
     const configOptions = {
@@ -33,14 +33,14 @@ console.log('pdfUrl', pdfUrl)
       addAndroidDownloads: {
         useDownloadManager: true,
         notification: true,
-        title: `${fileName}`,
-        description: 'File downloaded by Worktrust App.',
-        mime: 'application/pdf',
+        // title: `${fileName}`,
+        // description: 'File downloaded by Worktrust App.',
+        // mime: 'application/pdf',
       },
     };
 
     ReactNativeBlobUtil.config(configOptions)
-      .fetch('GET', pdfUrl)
+      .fetch('GET', 'https://firebasestorage.googleapis.com/v0/b/worktrust-b9c02.appspot.com/o/20240422949.pdf?alt=media&token=a69310b8-5e35-4af3-8269-8f6d70742021')
       .then(async resp => {
         let filePath = resp.path();
         let options = {
@@ -89,7 +89,7 @@ console.log('pdfUrl', pdfUrl)
           mode="outlined"
           onPress={() => {
             navigation.navigate('PDFViewScreen', {
-              pdfUrl,
+              pdfUrl:'https://firebasestorage.googleapis.com/v0/b/worktrust-b9c02.appspot.com/o/20240422949.pdf?alt=media&token=a69310b8-5e35-4af3-8269-8f6d70742021',
               fileName,
             });
           }}>

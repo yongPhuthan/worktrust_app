@@ -129,7 +129,8 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
-    compile project(':react-native-print')
+    // compile project(':react-native-print')
+    
     implementation project(':react-native-share')
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.0.0' 
     implementation project(':react-native-vector-icons')
