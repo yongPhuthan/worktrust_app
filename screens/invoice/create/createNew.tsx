@@ -434,41 +434,7 @@ const Quotation = ({navigation}: Props) => {
                         </TouchableOpacity>
                       ) : null
                     }
-                    // ListEmptyComponent={
-                    //   <View>
-                    //     <TouchableOpacity
-                    //       style={{
-                    //         justifyContent: 'center',
-                    //         alignItems: 'center',
-                    //         marginBottom: 20,
-                    //         borderColor: '#0073BA',
-                    //         borderWidth: 1,
-                    //         borderRadius: 5,
-                    //         borderStyle: 'dashed',
-                    //         // marginHorizontal: 100,
-                    //         padding: 10,
-                    //         height: 150,
-                    //         width: 200,
-                    //       }}
-                    //       onPress={() => {
-                    //         setWorkerModal(true);
-                    //       }}>
-                    //       <FontAwesomeIcon
-                    //         icon={faImages}
-                    //         style={{marginVertical: 5, marginHorizontal: 50}}
-                    //         size={32}
-                    //         color="#0073BA"
-                    //       />
-                    //       <Text
-                    //         style={{
-                    //           textAlign: 'center',
-                    //           color: '#0073BA',
-                    //           fontFamily: 'Sukhumvit set',
-                    //         }}>
-                    //         เลือกภาพตัวอย่างผลงาน
-                    //       </Text>
-                    //     </TouchableOpacity>
-                    //   </View>
+                   
                     // }
                   />
                 </View>

@@ -21,6 +21,11 @@ export const get_company_seller = (payload: any) => ({
   payload,
 });
 
+export const get_existing_services = (payload: any) => ({
+  type: contrains.GET_EXISTING_SERVICES,
+  payload,
+});
+
 
 
 // COMPONENTS  => ACTION
@@ -43,5 +48,11 @@ export const addProduct = (payload: any) => {
 export const getCompanySeller = (payload: any) => {
   return (dispatch: any) => {
     dispatch(get_company_seller(payload));
+  };
+};
+
+export const getExistingServices = (payload: any) => {
+  return (dispatch: any) => {
+    dispatch(get_existing_services(payload));
   };
 };

@@ -245,12 +245,11 @@ const CreateByQuotation = ({navigation, route}: Props) => {
           loading={loading}
           disabled={isDisabled}
           mode="contained"
-          buttonColor={'#1b72e8'}
           onPress={handleButtonPress}>
           {'ไปต่อ'}
         </Button>
       </Appbar.Header>
-      <ProgressBar progress={0.5} color={'#1b52a7'} />
+      <ProgressBar progress={0.5}  />
       <FormProvider {...methods}>
         <View style={{flex: 1}}>
           <ScrollView style={styles.container}>

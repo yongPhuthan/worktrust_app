@@ -300,9 +300,9 @@ const SignupMobileScreen = ({navigation}: Props) => {
               {' '}
               <Text
                 children="หรือ ลงทะเบียนด้วยอีเมล"
+                
                 style={{
                   fontFamily: 'Sukhumvit Set Bold',
-                  color: 'primary',
                 }}></Text>
             </Button>
           </View>

@@ -21,7 +21,7 @@ const theme = {
     // primary: '#1b72e8',
 
     primary: '#00674a',
-    // secondaryContainer: '#cff7e5', // This is a lighter shade of the primary color
+    secondaryContainer: '#e3fcf7', // This is a lighter shade of the primary color
 
     // primary:'#f79020'
     // primary :'#173799'

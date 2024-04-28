@@ -130,9 +130,12 @@ const AddProductForm = ({navigation, route}: Props) => {
   ]);
   const isButtonDisbled = useMemo(() => {
     return (
-      (materials.length > 0 && standards?.length > 0 && title && unitPrice > 0 && qty > 0 ) 
+      materials.length > 0 &&
+      standards?.length > 0 &&
+      title &&
+      unitPrice > 0 &&
+      qty > 0
     );
-      
   }, [standards, materials, title, unitPrice, qty]);
 
   return (
@@ -479,7 +482,7 @@ const AddProductForm = ({navigation, route}: Props) => {
                           fontSize: 16,
                           color: '#333',
                         }}>
-                        มาตรฐานของบริการนี้:
+                        มาตรฐานของบริการนี้
                       </Text>
                       {methods.watch('standards')?.map((item: any) => (
                         <Button
@@ -525,7 +528,7 @@ const AddProductForm = ({navigation, route}: Props) => {
                   }}></View>
                 <SmallDivider />
                 <View>
-                  {methods.watch('materials')?.length > 0 ? (
+                {methods.watch('materials')?.length > 0 ? (
                     <>
                       <Text
                         style={{
@@ -536,23 +539,22 @@ const AddProductForm = ({navigation, route}: Props) => {
                           fontWeight: 'bold',
                           color: '#333',
                         }}>
-                        วัสดุอุปกรณ์ที่ใช้ :
+                        วัสดุอุปกรณ์ที่ใช้ 
                       </Text>
                       <View style={styles.cardContainer}>
                         {methods
                           .watch('materials')
                           ?.map((item: any, index: number) => (
                             <Button
+                            
                               children={item.name}
                               // icon={'chevron-right'}
                               style={{
-                                margin: 2,
-                                width: 'auto',
-                                flexDirection: 'row',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
+                                margin: 3,
+                                maxWidth: '100%',
+                                alignContent:'flex-start'
                               }}
-                              contentStyle={{flexDirection: 'row-reverse'}}
+                              contentStyle={{flexDirection: 'row-reverse', alignItems:'flex-start'}}
                               mode="outlined"
                               key={index}
                               onPress={() =>

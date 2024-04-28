@@ -9,8 +9,10 @@ import * as stateAction from '../../../redux/actions';
 
 const useFetchDashboard = () => {
   const user = useUser();
-  const {dispatch,    state: {isEmulator, code},
-}: any = useContext(Store);
+  const {
+    dispatch,
+    state: {isEmulator, code},
+  }: any = useContext(Store);
 
   const fetchDashboard = async (): Promise<any> => {
     if (!user) {
@@ -22,8 +24,7 @@ const useFetchDashboard = () => {
       throw new Error('uid not found');
     }
     console.log('user:', user);
-    const token = await user.getIdToken()
-
+    const token = await user.getIdToken();
 
     const response = await fetch(
       `${BACK_END_SERVER_URL}/api/dashboard/dashboard`,
@@ -47,18 +48,16 @@ const useFetchDashboard = () => {
         const dateB = new Date(b.dateOffer);
         return dateB.getTime() - dateA.getTime();
       });
-  
+
       dispatch(stateAction.get_company_seller(data[0]));
       dispatch(stateAction.get_companyID(data[0].id));
-
+      dispatch(stateAction.get_existing_services(data[2]));
     }
     return data;
   };
-
   const {data, isLoading, isError, error} = useQuery({
     queryKey: ['dashboardQuotation', code],
     queryFn: fetchDashboard,
-    
   });
 
   return {data, isLoading, isError, error};

@@ -540,8 +540,8 @@ const styles = StyleSheet.create({
     bottom: height * 0.1,
     right: width * 0.05,
     position: 'absolute',
-    backgroundColor: '#1b52a7',
-    // backgroundColor: '#00532a',
+    // backgroundColor: '#1b52a7',
+    backgroundColor: '#00674a',
     // backgroundColor: '#009995',
   },
   fab: {

@@ -145,7 +145,7 @@ const CreateStandard = (props: Props) => {
           backgroundColor: 'white',
           width: Dimensions.get('window').width,
         }}>
-        <Appbar.BackAction onPress={() => onClose()} />
+        <Appbar.Action icon={'close'} onPress={onClose} />
 
         <Appbar.Content
           title={`เพิ่มมาตรฐาน`}

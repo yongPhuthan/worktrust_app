@@ -1,6 +1,6 @@
 import React, {createContext, useReducer} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {CompanySeller, SelectedAuditData, Standard} from '../types/docType';
+import {CompanySeller, ExsistingService, SelectedAuditData, Standard} from '../types/docType';
 import * as contrains from './constrains';
 import {Service} from '../types/docType';
 export type StateType = {
@@ -8,6 +8,8 @@ export type StateType = {
   code: string;
   services: any[];
   companySellerState: CompanySeller | null;
+  existingServices: ExsistingService[];
+  
 };
 
 type ActionType = {
@@ -26,6 +28,7 @@ export const Store = createContext<ContextType>({
     code: '',
     services: [],
     companySellerState: null,
+    existingServices: [],
   },
   dispatch: () => {},
 });
@@ -35,6 +38,7 @@ const initialState: StateType = {
   code: '',
   services: [],
   companySellerState: null,
+  existingServices: [],
 };
 
 function reducer(state: StateType, action: ActionType): StateType {
@@ -50,6 +54,8 @@ function reducer(state: StateType, action: ActionType): StateType {
         ...state,
         services: [...state.services, action.payload],
       };
+    case contrains.GET_EXISTING_SERVICES:
+      return {...state, existingServices: action.payload as ExsistingService[]};
 
     default:
       return state;

@@ -1,20 +1,15 @@
-import { yupResolver } from '@hookform/resolvers/yup';
+import {yupResolver} from '@hookform/resolvers/yup';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { useRef, useState } from 'react';
-import {
-  Dimensions,
-  SafeAreaView,
-  StyleSheet,
-  View
-} from 'react-native';
-import { Appbar, Button, Text, TextInput } from 'react-native-paper';
+import React, {useRef, useState} from 'react';
+import {Dimensions, SafeAreaView, StyleSheet, View} from 'react-native';
+import {Appbar, Button, Text, TextInput} from 'react-native-paper';
 import firebase from '../../../firebase';
 
-import { FirebaseAuthTypes } from '@react-native-firebase/auth';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { Controller, useForm } from 'react-hook-form';
-import { ParamListBase } from '../../../types/navigationType';
-import { signupMobilevalidationSchema } from '../../utils/validationSchema';
+import {FirebaseAuthTypes} from '@react-native-firebase/auth';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {Controller, useForm} from 'react-hook-form';
+import {ParamListBase} from '../../../types/navigationType';
+import {signupMobilevalidationSchema} from '../../utils/validationSchema';
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'LoginMobileScreen'>;
 }
@@ -23,7 +18,6 @@ const LoginMobileScreen = ({navigation}: Props) => {
   const [confirm, setConfirm] =
     useState<FirebaseAuthTypes.ConfirmationResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-
 
   // State for each input field
   const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
@@ -107,7 +101,7 @@ const LoginMobileScreen = ({navigation}: Props) => {
             'User creation was successful, but no user data was returned.',
           );
         }
-        const token = await user.getIdToken(true)
+        const token = await user.getIdToken(true);
         if (token) {
           await AsyncStorage.setItem('userToken', token);
           setIsLoading(false);
@@ -244,11 +238,9 @@ const LoginMobileScreen = ({navigation}: Props) => {
                 children="หรือ เข้าสู่ระบบด้วยอีเมล"
                 style={{
                   fontFamily: 'Sukhumvit Set Bold',
-                  color: 'primary',
                 }}></Text>
             </Button>
           </View>
- 
         </SafeAreaView>
       </>
     );
@@ -320,7 +312,6 @@ const LoginMobileScreen = ({navigation}: Props) => {
             fontWeight: 'bold',
             lineHeight: 24,
             fontSize: 16,
-
           }}
           onPress={confirmCode}>
           ต่อไป{' '}
@@ -332,9 +323,9 @@ const LoginMobileScreen = ({navigation}: Props) => {
             ส่งรหัสอีกครั้ง
           </Button>
         ) : (
-          <Text style={styles.rimindText}>
-            กรุณารอ {timer} ก่อนกดส่งอีกครั้ง
-          </Text>
+          <Text
+            children={` กรุณารอ ${timer} ก่อนกดส่งอีกครั้ง`}
+            style={styles.rimindText}></Text>
         )}
       </View>
     </>

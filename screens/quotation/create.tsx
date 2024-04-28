@@ -1,9 +1,9 @@
-import { faBriefcase, faPlus } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { yupResolver } from '@hookform/resolvers/yup';
-import { StackNavigationProp } from '@react-navigation/stack';
-import React, { useContext, useEffect, useMemo, useState } from 'react';
-import { FormProvider, useFieldArray, useForm, useWatch } from 'react-hook-form';
+import {faBriefcase, faPlus} from '@fortawesome/free-solid-svg-icons';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {yupResolver} from '@hookform/resolvers/yup';
+import {StackNavigationProp} from '@react-navigation/stack';
+import React, {useContext, useEffect, useMemo, useState} from 'react';
+import {FormProvider, useFieldArray, useForm, useWatch} from 'react-hook-form';
 import {
   Alert,
   Dimensions,
@@ -25,7 +25,7 @@ import {
   Button,
   ProgressBar,
 } from 'react-native-paper';
-import { v4 as uuidv4 } from 'uuid';
+import {v4 as uuidv4} from 'uuid';
 import AddClient from '../../components/AddClient';
 import AddServices from '../../components/AddServices';
 import CardClient from '../../components/CardClient';
@@ -42,11 +42,14 @@ import useFetchCompanyUser from '../../hooks/quotation/create/useFetchCompanyUse
 import useSelectedDates from '../../hooks/quotation/create/useSelectDates';
 import useThaiDateFormatter from '../../hooks/utils/useThaiDateFormatter';
 import * as stateAction from '../../redux/actions';
-import { Store } from '../../redux/store';
-import { CompanySeller, Service } from '../../types/docType';
-import { ParamListBase } from '../../types/navigationType';
-import { quotationsValidationSchema } from '../utils/validationSchema';
-import { TaxType } from '../../models/Tax';
+import {Store} from '../../redux/store';
+import {CompanySeller, Service} from '../../types/docType';
+import {ParamListBase} from '../../types/navigationType';
+import {quotationsValidationSchema} from '../utils/validationSchema';
+import {TaxType} from '../../models/Tax';
+import SelectProductModal from '../../components/service/select';
+import AddProductForm from 'screens/products/addExistProduct';
+import AddProductFormModal from '../../components/service/addNew';
 
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'Quotation'>;
@@ -54,13 +57,14 @@ interface Props {
 
 const Quotation = ({navigation}: Props) => {
   const {
-    state: { companySellerState},
+    state: {companySellerState},
     dispatch,
-  }: any = useContext(Store);  
+  }: any = useContext(Store);
   const [isLoadingMutation, setIsLoadingMutation] = useState(false);
   // const {data, isLoading, isError, error} = useFetchCompanyUser();
 
-  const [companySeller, setCompanySeller] = useState<CompanySeller>(companySellerState);
+  const [companySeller, setCompanySeller] =
+    useState<CompanySeller>(companySellerState);
 
   const [addCustomerModal, setAddCustomerModal] = useState(false);
   const {initialDocnumber, initialDateOffer, initialDateEnd} =
@@ -73,11 +77,15 @@ const Quotation = ({navigation}: Props) => {
 
   const [pickerVisible, setPickerVisible] = useState(false);
   const [workerPicker, setWorkerpicker] = useState(false);
+  const [titleService, setTitleService] = useState<string>(''); // [1]
+  const [descriptionService, setDescriptionService] = useState<string>(''); // [2]
 
   const [singatureModal, setSignatureModal] = useState(false);
   const [signature, setSignature] = useState<string | null>(null);
   const quotationId = uuidv4();
   const [fcmToken, setFtmToken] = useState('');
+  const [showAddExistingService, setShowAddExistingService] = useState(false);
+  const [showAddNewService, setShowAddNewService] = useState(false);
   const [showEditServiceModal, setShowEditServiceModal] = useState(false);
   const [visibleModalIndex, setVisibleModalIndex] = useState<number | null>(
     null,
@@ -144,15 +152,6 @@ const Quotation = ({navigation}: Props) => {
     methods.setValue('FCMToken', fcmToken); // Update FCMToken
   }, []);
 
-
-  // useEffect(() => {
-  //   if (data?.user) {
-  //     setCompanyUser(data); // แก้ไขจาก data เดิมที่คุณให้มา
-  //     methods.setValue('companyUser', data.user);
-  //     dispatch(stateAction.get_companyID(data.user.id));
-  //     methods.setValue('FCMToken', fcmToken); // Update FCMToken
-  //   }
-  // }, [data]);
   const useSignature = () => {
     // Toggle the state of the picker and accordingly set the modal visibility
     setPickerVisible(prevPickerVisible => {
@@ -239,8 +238,6 @@ const Quotation = ({navigation}: Props) => {
     methods.setValue('dateEnd', formattedEndDate);
   };
 
- 
-
   const handleRemoveService = (index: number) => {
     setVisibleModalIndex(null);
     remove(index);
@@ -297,13 +294,12 @@ const Quotation = ({navigation}: Props) => {
           icon={'arrow-right'}
           contentStyle={{
             flexDirection: 'row-reverse',
-            
           }}
           onPress={handleButtonPress}>
           {'ไปต่อ'}
         </Button>
       </Appbar.Header>
-      <ProgressBar progress={0.5}  />
+      <ProgressBar progress={0.5} />
 
       <FormProvider {...methods}>
         <View style={{flex: 1}}>
@@ -355,7 +351,13 @@ const Quotation = ({navigation}: Props) => {
                   />
                 ))}
 
-              <AddServices handleAddProductFrom={handleAddProductForm} />
+              <AddServices
+                handleAddProductFrom={
+                  () => setShowAddExistingService(true)
+                  // ()=>setShowAddNewService(true)
+                }
+                // handleAddProductFrom={handleAddProductForm}
+              />
               <Divider />
 
               {/* <Divider /> */}
@@ -433,42 +435,6 @@ const Quotation = ({navigation}: Props) => {
                         </TouchableOpacity>
                       ) : null
                     }
-                    // ListEmptyComponent={
-                    //   <View>
-                    //     <TouchableOpacity
-                    //       style={{
-                    //         justifyContent: 'center',
-                    //         alignItems: 'center',
-                    //         marginBottom: 20,
-                    //         borderColor: '#0073BA',
-                    //         borderWidth: 1,
-                    //         borderRadius: 5,
-                    //         borderStyle: 'dashed',
-                    //         // marginHorizontal: 100,
-                    //         padding: 10,
-                    //         height: 150,
-                    //         width: 200,
-                    //       }}
-                    //       onPress={() => {
-                    //         setWorkerModal(true);
-                    //       }}>
-                    //       <FontAwesomeIcon
-                    //         icon={faImages}
-                    //         style={{marginVertical: 5, marginHorizontal: 50}}
-                    //         size={32}
-                    //         color="#0073BA"
-                    //       />
-                    //       <Text
-                    //         style={{
-                    //           textAlign: 'center',
-                    //           color: '#0073BA',
-                    //           fontFamily: 'Sukhumvit set',
-                    //         }}>
-                    //         เลือกภาพตัวอย่างผลงาน
-                    //       </Text>
-                    //     </TouchableOpacity>
-                    //   </View>
-                    // }
                   />
                 </View>
               )}
@@ -511,13 +477,6 @@ const Quotation = ({navigation}: Props) => {
               isVisible={workerModal}
             />
           </Modal>
-          {/* <View>
-          <FooterBtn
-            btnText="ดำเนินการต่อ"
-            disabled={isDisabled}
-            onPress={handleButtonPress}
-          />
-        </View> */}
         </View>
         <Modal
           isVisible={singatureModal}
@@ -543,6 +502,14 @@ const Quotation = ({navigation}: Props) => {
             />
           </SafeAreaView>
         </Modal>
+        <SelectProductModal
+          quotationId={quotationId}
+          onAddService={newProduct => append(newProduct)}
+          currentValue={null}
+          visible={showAddExistingService}
+          onClose={() => setShowAddExistingService(false)}
+        />
+
       </FormProvider>
     </>
   );

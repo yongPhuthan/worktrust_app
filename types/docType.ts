@@ -74,6 +74,14 @@ export type Workers = {
   workerStatus: string;
   image: string;
 };
+export type ExsistingService = {
+  title: string;
+  description: string;
+  serviceImages: string[];
+  standards: Standard[];
+  materials: SelectedMaterialData[];
+};
+
 export type Service = {
   id: string;
   title: string;
