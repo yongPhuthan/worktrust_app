@@ -6,7 +6,6 @@ import {useUser} from '../providers/UserContext';
 import DefaultContract from '../screens/contract/defaultContract';
 import AddCustomer from '../screens/customer/addCustomer';
 import AddProductForm from '../screens/products/addProduct';
-import ExistingProducts from '../screens/products/existingProducts';
 import Quotation from '../screens/quotation/create';
 import DocViewScreen from '../screens/quotation/webview';
 import CreateCompanyScreen from '../screens/register/createcompanyScreen';
@@ -259,20 +258,7 @@ const Navigation = ({initialRouteName}: any) => {
             headerTintColor: 'black',
           }}
         />
-        <Stack.Screen
-          name="ExistingProduct"
-          component={ExistingProducts}
-          options={{
-            ...commonScreenOptions,
-            headerShown: true,
-            title: 'เพิ่มรายการ-สินค้า',
-            headerBackTitleVisible: false,
-            headerStyle: {
-              backgroundColor: '#ffffff',
-            },
-            headerTintColor: 'black',
-          }}
-        />
+
 
         <Stack.Screen
           name="ExistingContract"

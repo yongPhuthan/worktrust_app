@@ -21,7 +21,6 @@ import {useQuery} from '@tanstack/react-query';
 import {launchImageLibrary, MediaType} from 'react-native-image-picker';
 import {useUser} from '../../providers/UserContext';
 import {CompanySeller, User} from '../../types/docType';
-import ConfirmDeleteDialog from '../../components/ConfirmDeleteDialog';
 
 interface SettingScreenProps {
   navigation: StackNavigationProp<ParamListBase, 'TopUpScreen'>;
@@ -30,7 +29,6 @@ interface SettingScreenProps {
 const SettingsScreen = ({navigation}: SettingScreenProps) => {
   const [company, setCompany] = useState<CompanySeller>();
   const user = useUser();
-  const [visible, setVisible] = useState(false);
   const [seller, setSeller] = useState<User>();
   const {
     state: {code},
@@ -57,8 +55,7 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
     );
   };
 
-  const showDialog = () => setVisible(true);
-  const hideDialog = () => setVisible(false);
+
 
   const businessDetails = [
     {id: 2, title: 'Business Address', value: company?.address || ''},
@@ -409,33 +406,7 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
                 <FontAwesomeIcon icon={faChevronRight} size={18} color="#aaa" />
               </View>
             </TouchableOpacity>
-            <View
-              style={{
-                width: '90%',
-                alignSelf: 'center',
-                borderBottomWidth: 0.3,
-                borderBottomColor: '#cccccc',
-              }}></View>
-            <TouchableOpacity
-              style={{paddingVertical: 15, paddingHorizontal: 24}}
-              onPress={showDialog}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}>
-                <Text style={{fontSize: 15, fontWeight: '400', color: 'red'}}>
-                  Delete Account
-                </Text>
-                <FontAwesomeIcon icon={faRemove} size={16} color="red" />
-              </View>
-            </TouchableOpacity>
-            <ConfirmDeleteDialog
-              visible={visible}
-              hideDialog={hideDialog}
-              company={company.bizName}
-            />
+ 
           </View>
         </ScrollView>
       )}

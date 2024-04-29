@@ -202,8 +202,9 @@ const DocViewScreen = ({navigation, route}: Props) => {
 
   const handleShare = async () => {
     try {
-      const result = await Share.share({
+       await Share.share({
         message: `${url}`, // ใช้ URL ที่กำหนดไว้
+        
       });
       // ตรวจสอบผลลัพธ์ของการแชร์...
     } catch (error) {

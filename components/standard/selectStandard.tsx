@@ -127,6 +127,8 @@ const SelectStandard = ({
         {
           id: standard.id,
           standardShowTitle: standard.standardShowTitle,
+          image : standard.image,
+          content : standard.content,
         },
       ];
       setValue('standards', updatedStandards, {shouldDirty: true});

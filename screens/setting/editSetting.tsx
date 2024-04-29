@@ -19,7 +19,7 @@ import {companyValidationSchema} from '../utils/validationSchema';
 
 import {useMutation, useQueryClient} from '@tanstack/react-query';
 
-import {faCloudUpload} from '@fortawesome/free-solid-svg-icons';
+import {faCloudUpload, faRemove} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import storage from '@react-native-firebase/storage';
 
@@ -38,6 +38,7 @@ import {useUploadToFirebase} from '../../hooks/useUploadtoFirebase';
 import {usePickImage} from '../../hooks/utils/image/usePickImage';
 import {useCreateToServer} from '../../hooks/useUploadToserver';
 import {usePutServer} from '../../hooks/putServer';
+import ConfirmDeleteDialog from '../../components/ConfirmDeleteDialog';
 
 interface MyError {
   response: object;
@@ -110,8 +111,11 @@ const EditSetting = ({navigation, route}: Props) => {
   const {isImagePicking, pickImage} = usePickImage((uri: string) => {
     setValue('logo', uri, {shouldDirty: true});
   });
-  const logoPath = `${code}/logo/${bizName}}`;
+  const [visible, setVisible] = useState(false);
 
+  const logoPath = `${code}/logo/${bizName}}`;
+  const showDialog = () => setVisible(true);
+  const hideDialog = () => setVisible(false);
   const {
     isUploading,
     error: uploadError,
@@ -448,6 +452,33 @@ style={styles.input}
       </Appbar.Header>
       <SafeAreaView style={{flex: 1}}>
         <ScrollView style={styles.container}>{renderPage()}</ScrollView>
+        <View
+          style={{
+            width: '90%',
+            alignSelf: 'baseline',
+            borderBottomWidth: 0.3,
+            borderBottomColor: '#cccccc',
+          }}></View>
+        <TouchableOpacity
+          style={{paddingVertical: 15, paddingHorizontal: 24}}
+          onPress={showDialog}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}>
+            <Text style={{fontSize: 15, fontWeight: '400', color: 'red'}}>
+              Delete Account
+            </Text>
+            <FontAwesomeIcon icon={faRemove} size={16} color="red" />
+          </View>
+        </TouchableOpacity>
+        <ConfirmDeleteDialog
+          visible={visible}
+          hideDialog={hideDialog}
+          company={company.bizName}
+        />
       </SafeAreaView>
     </>
   );

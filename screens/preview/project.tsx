@@ -23,7 +23,7 @@ const ProjectViewScreen = ({navigation, route}: Props) => {
   const [isLoading, setIsLoading] = useState(false);
 
 
-  const handleShare = async () => {
+  const handleShareFile = async () => {
     console.log('Share button pressed');
     let dirs = ReactNativeBlobUtil.fs.dirs;
     const type = 'application/pdf'; // MIME type
@@ -40,7 +40,7 @@ const ProjectViewScreen = ({navigation, route}: Props) => {
     };
 
     ReactNativeBlobUtil.config(configOptions)
-      .fetch('GET', 'https://firebasestorage.googleapis.com/v0/b/worktrust-b9c02.appspot.com/o/20240422949.pdf?alt=media&token=a69310b8-5e35-4af3-8269-8f6d70742021')
+      .fetch('GET', pdfUrl)
       .then(async resp => {
         let filePath = resp.path();
         let options = {
@@ -59,6 +59,20 @@ const ProjectViewScreen = ({navigation, route}: Props) => {
       .catch(error => {
         console.error('Error sharing', error);
       });
+  };
+
+  const handleShare = async () => {
+    try {
+       await Share.open({
+        message: `${url}`, // ใช้ URL ที่กำหนดไว้
+        url,
+        title:  `Share Link ใบเสนอราคา Worktrust ${url}`,         
+      });
+      // ตรวจสอบผลลัพธ์ของการแชร์...
+    } catch (error) {
+      console.error(error);
+      Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถแชร์ได้');
+    }
   };
 
   return (
