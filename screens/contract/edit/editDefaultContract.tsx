@@ -1,4 +1,4 @@
-import React, {useState,useEffect,useContext} from 'react';
+import React, {useState, useEffect, useContext} from 'react';
 import {yupResolver} from '@hookform/resolvers/yup';
 import {defaultContractSchema} from '../../utils/validationSchema';
 
@@ -14,7 +14,7 @@ import {
 import {Store} from '../../../redux/store';
 
 import {Divider, TextInput} from 'react-native-paper';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {
   ActivityIndicator,
   Appbar,
@@ -22,18 +22,16 @@ import {
   ProgressBar,
   Text as TextPaper,
 } from 'react-native-paper';
-import { BACK_END_SERVER_URL } from '@env';
-import { RouteProp } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Controller, useForm,useWatch } from 'react-hook-form';
+import {BACK_END_SERVER_URL} from '@env';
+import {RouteProp} from '@react-navigation/native';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
+import {Controller, useForm, useWatch} from 'react-hook-form';
 import SmallDivider from '../../../components/styles/SmallDivider';
-import { useUser } from '../../../providers/UserContext';
-import {
-  DefaultContractType
-} from '../../../types/docType';
+import {useUser} from '../../../providers/UserContext';
+import {DefaultContractType} from '../../../types/docType';
 
-import { ParamListBase } from '../../../types/navigationType';
+import {ParamListBase} from '../../../types/navigationType';
 type Props = {
   navigation: StackNavigationProp<ParamListBase, 'EditDefaultContract'>;
   route: RouteProp<ParamListBase, 'EditDefaultContract'>;
@@ -46,14 +44,14 @@ type QuotationRouteParams = {
 };
 
 const EditDefaultContract = ({navigation, route}: Props) => {
-
-
   const [defaultContractValues, setDefaultContractValues] =
     useState<DefaultContractType>();
   const id: any = route?.params;
   const user = useUser();
-  const {dispatch,    state: {isEmulator, code},
-}: any = useContext(Store);
+  const {
+    dispatch,
+    state: {isEmulator, code},
+  }: any = useContext(Store);
   const [isLoadingMutation, setIsLoadingMutation] = useState(false);
   const [step, setStep] = useState(1);
   const [contract, setContract] = useState<DefaultContractType>();
@@ -102,7 +100,7 @@ const EditDefaultContract = ({navigation, route}: Props) => {
         setContract(data.contract as any);
 
         const defaultValues = {
-          warantyTimeWork: (data.contract.warantyTimeWork),
+          warantyTimeWork: data.contract.warantyTimeWork,
           workCheckEnd: Number(data.contract.workCheckEnd),
           workCheckDay: Number(data.contract.workCheckDay),
           installingDay: Number(data.contract.installingDay),
@@ -112,6 +110,7 @@ const EditDefaultContract = ({navigation, route}: Props) => {
           finishedDay: Number(data.contract.finishedDay),
           productWarantyYear: Number(data.contract.productWarantyYear),
           skillWarantyYear: Number(data.contract.skillWarantyYear),
+          fixDays: Number(data.contract.fixDays),
         };
         setDefaultContractValues(defaultValues);
         reset(defaultValues);
@@ -139,23 +138,23 @@ const EditDefaultContract = ({navigation, route}: Props) => {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ data }),
+          body: JSON.stringify({data}),
         },
       );
-  
+
       if (!response.ok) {
-        const contentType = response.headers.get("content-type");
-        if (contentType && contentType.indexOf("application/json") !== -1) {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.indexOf('application/json') !== -1) {
           const errorData = await response.json(); // Parse the error response only if it's JSON
           throw new Error(errorData.message || 'Network response was not ok.');
         } else {
           throw new Error('Network response was not ok and not JSON.');
         }
       }
-  
+
       // Check if the response is JSON before parsing
-      const contentType = response.headers.get("content-type");
-      if (contentType && contentType.indexOf("application/json") !== -1) {
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.indexOf('application/json') !== -1) {
         const responseData = await response.json();
         return responseData; // Return the response data for successful requests
       } else {
@@ -167,7 +166,7 @@ const EditDefaultContract = ({navigation, route}: Props) => {
       throw err; // Rethrow the error to be caught by useMutation's onError
     }
   };
-  
+
   const initialValues = {
     warantyTimeWork: 0,
     workCheckEnd: 0,
@@ -179,6 +178,7 @@ const EditDefaultContract = ({navigation, route}: Props) => {
     finishedDay: 0,
     productWarantyYear: 0,
     skillWarantyYear: 0,
+    fixDays: 0,
   };
   const {
     handleSubmit,
@@ -186,7 +186,7 @@ const EditDefaultContract = ({navigation, route}: Props) => {
     watch,
     setValue,
     reset,
-    formState: {errors, isDirty, dirtyFields, isValid,defaultValues},
+    formState: {errors, isDirty, dirtyFields, isValid, defaultValues},
   } = useForm({
     mode: 'onChange',
     defaultValues: initialValues,
@@ -198,33 +198,30 @@ const EditDefaultContract = ({navigation, route}: Props) => {
     queryKey: ['ContractByQuotationId', quotationId],
     queryFn: fetchContractByQuotation,
     // enabled: !!user,
-
   });
 
-  const {mutate, isPending} = useMutation(
-    {
-      mutationFn: updateContractAndQuotation,
-      onSuccess: data => {
-        queryClient.invalidateQueries({
-          queryKey:['dashboardQuotation',code]
-
-        });
-        const newId = quotationId.slice(0, 8);
-        navigation.navigate('DocViewScreen', {id: newId});
-      },
-      onError: (error:any) => {
-        console.error('There was a problem calling the function:', error);
-        let errorMessage = 'An unexpected error occurred';
-  
-        if (error.response && error.response.status === 401) {
-          errorMessage = 'Authentication error. Please re-login.';
-        } else if (error.response) {
-          errorMessage = error.response.data.error || errorMessage;
-        }
-  
-        Alert.alert('Error', errorMessage);
+  const {mutate, isPending} = useMutation({
+    mutationFn: updateContractAndQuotation,
+    onSuccess: data => {
+      queryClient.invalidateQueries({
+        queryKey: ['dashboardQuotation', code],
+      });
+      const newId = quotationId.slice(0, 8);
+      navigation.navigate('DocViewScreen', {id: newId});
     },
-   } );
+    onError: (error: any) => {
+      console.error('There was a problem calling the function:', error);
+      let errorMessage = 'An unexpected error occurred';
+
+      if (error.response && error.response.status === 401) {
+        errorMessage = 'Authentication error. Please re-login.';
+      } else if (error.response) {
+        errorMessage = error.response.data.error || errorMessage;
+      }
+
+      Alert.alert('Error', errorMessage);
+    },
+  });
 
   if (isLoading) {
     return (
@@ -260,7 +257,6 @@ const EditDefaultContract = ({navigation, route}: Props) => {
       console.log('dirtyQuotation', dirtyQuotation.customer);
       mutate(apiData);
 
-
       setIsLoadingMutation(false);
     } catch (error: Error | MyError | any) {
       console.error('There was a problem calling the function:', error);
@@ -269,14 +265,14 @@ const EditDefaultContract = ({navigation, route}: Props) => {
     }
   };
 
-
-  function safeToString(value:any) {
+  function safeToString(value: any) {
     return value !== undefined && value !== null ? value.toString() : '';
   }
   const renderWanranty = (
     name: any,
     label: string,
     defaultValue: string = '',
+    textAffix: string,
   ) => (
     <>
       <View
@@ -290,11 +286,12 @@ const EditDefaultContract = ({navigation, route}: Props) => {
         <Controller
           control={control}
           rules={{required: 'This field is required'}}
-          render={({field: {onChange, onBlur, value}, fieldState: {error,isDirty}}) => (
-            <View style={{
-              flexDirection:'column'
-            }}>
-                          {error && <Text style={styles.errorText}>{error.message}</Text>}
+          render={({field: {onChange, onBlur, value}, fieldState: {error}}) => (
+            <View
+              style={{
+                flexDirection: 'column',
+              }}>
+              {error && <Text style={styles.errorText}>{error.message}</Text>}
 
               <TextInput
                 keyboardType="number-pad"
@@ -303,10 +300,10 @@ const EditDefaultContract = ({navigation, route}: Props) => {
                 error={!!error}
                 mode="outlined"
                 textAlignVertical="center"
-                defaultValue={isDirty ? '' : (defaultValue) }
+                defaultValue={defaultValue}
                 onBlur={onBlur}
-                right={<TextInput.Affix text="เดือน" />}
-                value={value? String(value):Number(defaultValue) as any}
+                right={<TextInput.Affix text={textAffix} />}
+                value={value ? String(value) : '0'}
                 onChangeText={val => {
                   const numericValue = parseInt(val, 10);
                   if (!isNaN(numericValue)) {
@@ -340,11 +337,15 @@ const EditDefaultContract = ({navigation, route}: Props) => {
         <Controller
           control={control}
           rules={{required: 'This field is required'}}
-          render={({field: {onChange, onBlur, value}, fieldState: {error,isDirty }}) => (
-            <View style={{
-              flexDirection:'column'
-            }}>
-                            {error && <Text style={styles.errorText}>{error.message}</Text>}
+          render={({
+            field: {onChange, onBlur, value},
+            fieldState: {error, isDirty},
+          }) => (
+            <View
+              style={{
+                flexDirection: 'column',
+              }}>
+              {error && <Text style={styles.errorText}>{error.message}</Text>}
 
               <TextInput
                 keyboardType="number-pad"
@@ -356,10 +357,10 @@ const EditDefaultContract = ({navigation, route}: Props) => {
                 error={!!error}
                 mode="outlined"
                 textAlignVertical="center"
-                defaultValue={isDirty ? '' : (defaultValue) }
+                defaultValue={isDirty ? '' : defaultValue}
                 onBlur={onBlur}
                 right={<TextInput.Affix text="วัน" />}
-                value={value? String(value):Number(defaultValue) as any}
+                value={value ? String(value) : (Number(defaultValue) as any)}
                 onChangeText={val => {
                   const numericValue = parseInt(val, 10);
                   if (!isNaN(numericValue)) {
@@ -395,7 +396,7 @@ const EditDefaultContract = ({navigation, route}: Props) => {
             flexDirection: 'row',
             justifyContent: 'flex-start',
             alignContent: 'stretch',
-            gap:10
+            gap: 10,
           }}>
           <Controller
             control={control}
@@ -404,25 +405,24 @@ const EditDefaultContract = ({navigation, route}: Props) => {
               field: {onChange, onBlur, value},
               fieldState: {error, isDirty},
             }) => (
-              <View style={{
-                flexDirection:'column'
-              }}>
-                            {error && <Text style={styles.errorText}>{error.message}</Text>}
+              <View
+                style={{
+                  flexDirection: 'column',
+                }}>
+                {error && <Text style={styles.errorText}>{error.message}</Text>}
 
                 <TextInput
                   keyboardType="number-pad"
                   textAlign="center"
                   style={{width: Dimensions.get('window').width * 0.3}}
                   error={!!error}
-                  
                   mode="outlined"
                   textAlignVertical="center"
-                  defaultValue={isDirty ? '' : (defaultValue) }
+                  defaultValue={isDirty ? '' : defaultValue}
                   onBlur={onBlur}
                   right={<TextInput.Affix text="%" />}
-                  value={value? String(value):Number(defaultValue) as any}
+                  value={value ? String(value) : (Number(defaultValue) as any)}
                   onChangeText={val => {
-                    
                     const numericValue = parseInt(val, 10);
                     if (!isNaN(numericValue)) {
                       onChange(numericValue);
@@ -437,14 +437,14 @@ const EditDefaultContract = ({navigation, route}: Props) => {
           />
           {adjustPerDay > 0 && (
             <Text style={{marginTop: 30}}>
-              เป็นเงิน 
+              เป็นเงิน
               {Number(
                 dirtyQuotation.allTotal -
                   Number(dirtyQuotation.allTotal * (1 - adjustPerDay / 100)),
               )
                 .toFixed(2)
                 .replace(/\d(?=(\d{3})+\.)/g, '$&,')}
-               บาท/วัน
+              บาท/วัน
             </Text>
           )}
         </View>
@@ -468,10 +468,13 @@ const EditDefaultContract = ({navigation, route}: Props) => {
 
         <Controller
           control={control}
-          rules={{required:true}}
-          render={({field: {onChange, onBlur, value}, fieldState: {error,isDirty}}) => (
+          rules={{required: true}}
+          render={({
+            field: {onChange, onBlur, value},
+            fieldState: {error, isDirty},
+          }) => (
             <>
-                          {error && <Text style={styles.errorText}>{error.message}</Text>}
+              {error && <Text style={styles.errorText}>{error.message}</Text>}
               <TextInput
                 keyboardType="number-pad"
                 textAlign="center"
@@ -479,10 +482,10 @@ const EditDefaultContract = ({navigation, route}: Props) => {
                 error={!!error}
                 mode="outlined"
                 textAlignVertical="center"
-                defaultValue={isDirty ? '0' : (defaultValue) }
+                defaultValue={isDirty ? '0' : defaultValue}
                 onBlur={onBlur}
                 right={<TextInput.Affix text="วัน" />}
-                value={value? String(value):Number(defaultValue) as any}
+                value={value ? String(value) : (Number(defaultValue) as any)}
                 onChangeText={val => {
                   const numericValue = parseInt(val, 10);
                   if (!isNaN(numericValue)) {
@@ -491,7 +494,6 @@ const EditDefaultContract = ({navigation, route}: Props) => {
                     onChange(0);
                   }
                 }}
-                
               />
             </>
           )}
@@ -503,194 +505,212 @@ const EditDefaultContract = ({navigation, route}: Props) => {
 
   return (
     <>
-        {contract ? (
-          <>
+      {contract ? (
+        <>
           <Appbar.Header
-        style={{
-          backgroundColor: 'white',
-        }}
-        elevated
-        mode="center-aligned">
-        <Appbar.BackAction
-          onPress={() => {
-            navigation.goBack();
-          }}
-        />
-        <Appbar.Content
-          title="แก้ไขสัญญา"
-          titleStyle={{
-            fontSize: 18,
-            fontWeight: 'bold',
-          }}
-        />
-        <Button
-          disabled={!isValid || isPending}
-          mode="contained"
-          loading={isPending}
-          onPress={handleDonePress}
-          style={{marginRight: 5}}>
-          {'บันทึก'}
-        </Button>
-      </Appbar.Header>
-      <ProgressBar progress={1}  />
+            style={{
+              backgroundColor: 'white',
+            }}
+            elevated
+            mode="center-aligned">
+            <Appbar.BackAction
+              onPress={() => {
+                navigation.goBack();
+              }}
+            />
+            <Appbar.Content
+              title="แก้ไขสัญญา"
+              titleStyle={{
+                fontSize: 18,
+                fontWeight: 'bold',
+              }}
+            />
+            <Button
+              disabled={!isValid || isPending}
+              mode="contained"
+              loading={isPending}
+              onPress={handleDonePress}
+              style={{marginRight: 5}}>
+              {'บันทึก'}
+            </Button>
+          </Appbar.Header>
+          <ProgressBar progress={1} />
 
-      <KeyboardAwareScrollView contentContainerStyle={{ paddingBottom: 50 }}>
-        {contract ? (
-          <SafeAreaView style={{flex: 1}}>
-            <View style={styles.containerForm}>
-              <TextPaper variant="headlineSmall">การรับประกัน</TextPaper>
-              <Divider style={{marginTop: 10}} />
+          <KeyboardAwareScrollView contentContainerStyle={{paddingBottom: 50}}>
+            {contract ? (
+              <SafeAreaView style={{flex: 1}}>
+                <View style={styles.containerForm}>
+                  <TextPaper variant="headlineSmall">การรับประกัน</TextPaper>
+                  <Divider style={{marginTop: 10}} />
 
-              <View style={styles.formInput}>
-                {renderWanranty(
+                  <View style={styles.formInput}>
+                    {renderWanranty(
+                      'productWarantyYear',
+                      'รับประกันวัสดุอุปกรณ์กี่เดือน',
+                      safeToString(contract.productWarantyYear),
+                      'เดือน',
+                    )}
+                    {renderWanranty(
+                      'skillWarantyYear',
+                      'รับประกันงานติดตั้งกี่เดือน',
+                      safeToString(contract.skillWarantyYear),
+                      'เดือน',
+                    )}
+                    {renderWanranty(
+                      'fixDays',
+                      'เมื่อมีปัญหาจะแก้ไขงานให้แล้วเสร็จภายในกี่วัน',
+                      safeToString(contract.fixDays),
+                      'วัน',
+                    )}
+                  </View>
+                </View>
+
+                <View style={styles.containerForm}>
+                  <TextPaper variant="headlineSmall">การเตรียมงาน</TextPaper>
+
+                  <Divider style={{marginTop: 10}} />
+                  <View style={styles.formInput}>
+                    {renderPrepare(
+                      'installingDay',
+                      'ใช้เวลาติดตั้งที่หน้างานกี่วัน',
+                      safeToString(contract.installingDay),
+                    )}
+                    {renderPrepare(
+                      'workAfterGetDeposit',
+                      'เริ่มทำงานภายในกี่วันหลังได้รับมัดจำ',
+                      safeToString(contract.workAfterGetDeposit),
+                    )}
+                    {renderPrepare(
+                      'prepareDay',
+                      'ใช้เวลาเตรียมงานกี่วันก่อนติดตั้ง',
+                      safeToString(contract.prepareDay),
+                    )}
+                    {renderPrepare(
+                      'finishedDay',
+                      'รวมใช้เวลาทำงานทั้งหมดกี่วัน',
+                      safeToString(contract.finishedDay),
+                    )}
+                  </View>
+                </View>
+                <View style={styles.containerForm}>
+                  <TextPaper variant="headlineSmall">การตรวจงาน</TextPaper>
+
+                  <Divider style={{marginTop: 10}} />
+                  <View style={styles.formInput}>
+                    {renderAudits(
+                      'workCheckDay',
+                      'หลังแจ้งส่งมอบงานผู้ว่าจ้างต้องตรวจงานภายในกี่วัน',
+                      safeToString(contract.workCheckDay),
+                    )}
+                    {renderAudits(
+                      'workCheckEnd',
+                      'นับจากวันที่ผู้ว่าจ้างได้ตรวจรับความถูกต้องแล้วผู้ว่าจ้างจะต้องชำระเงินภายในกี่วัน',
+                      safeToString(contract.workCheckEnd),
+                    )}
+                  </View>
+                </View>
+                <View style={styles.containerLastForm}>
+                  <TextPaper variant="headlineSmall">การคิดค่าปรับ</TextPaper>
+
+                  <Divider style={{marginTop: 10}} />
+                  <View style={styles.formInput}>
+                    {renderAdjustMents(
+                      'adjustPerDay',
+                      'หากส่งงานล่าช้าให้ผู้ว่าจ้างคิดค่าปรับเป็นรายวันกี่เปอร์เซ็นต์ของมูลค่างานตามสัญญาต่อวัน',
+                      safeToString(contract.adjustPerDay),
+                    )}
+                  </View>
+                  <View style={{marginBottom: 50}}></View>
+                </View>
+              </SafeAreaView>
+            ) : (
+              <SafeAreaView style={{flex: 1}}>
+                <View style={styles.containerForm}>
+                  <TextPaper variant="headlineSmall">การรับประกันน</TextPaper>
+                  <Divider style={{marginTop: 10}} />
+
+                  <View style={styles.formInput}>
+                  {renderWanranty(
                   'productWarantyYear',
                   'รับประกันวัสดุอุปกรณ์กี่เดือน',
-                  safeToString(contract.productWarantyYear),
+                  '',
+                  'เดือน'
+                 
                 )}
                 {renderWanranty(
                   'skillWarantyYear',
                   'รับประกันงานติดตั้งกี่เดือน',
-                  safeToString(contract.skillWarantyYear),
+                  '',
+                  'เดือน'
                 )}
-              </View>
-            </View>
+                     {renderWanranty(
+                  'fixDays',
+                  'เมื่อมีปัญหาจะแก้ไขงานให้แล้วเสร็จภายในกี่วัน',
+                  '',
+                  'วัน'
+                )}
+                  </View>
+                </View>
 
-            <View style={styles.containerForm}>
-              <TextPaper variant="headlineSmall">การเตรียมงาน</TextPaper>
+                <View style={styles.containerForm}>
+                  <TextPaper variant="headlineSmall">การเตรียมงาน</TextPaper>
 
-              <Divider style={{marginTop: 10}} />
-              <View style={styles.formInput}>
-                {renderPrepare(
-                  'installingDay',
-                  'ใช้เวลาติดตั้งที่หน้างานกี่วัน',
-                  safeToString(contract.installingDay),
-                )}
-                {renderPrepare(
-                  'workAfterGetDeposit',
-                  'เริ่มทำงานภายในกี่วันหลังได้รับมัดจำ',
-                  safeToString(contract.workAfterGetDeposit),
-                )}
-                {renderPrepare(
-                    'prepareDay',
-                    'ใช้เวลาเตรียมงานกี่วันก่อนติดตั้ง',
-                    safeToString(contract.prepareDay),
-                  )}
-                {renderPrepare(
-                  'finishedDay',
-                  'รวมใช้เวลาทำงานทั้งหมดกี่วัน',
-                  safeToString(contract.finishedDay),
-                )}
-              </View>
-            </View>
-            <View style={styles.containerForm}>
-              <TextPaper variant="headlineSmall">การตรวจงาน</TextPaper>
+                  <Divider style={{marginTop: 10}} />
+                  <View style={styles.formInput}>
+                    {renderPrepare(
+                      'installingDay',
+                      'ใช้เวลาติดตั้งที่หน้างานกี่วัน',
+                    )}
+                    {renderPrepare(
+                      'workAfterGetDeposit',
+                      'เริ่มทำงานภายในกี่วันหลังได้รับมัดจำ',
+                    )}
+                    {renderPrepare(
+                      'prepareDay',
+                      'ใช้เวลาเตรียมงานกี่วันก่อนติดตั้ง',
+                    )}
+                    {renderPrepare(
+                      'finishedDay',
+                      'รวมใช้เวลาทำงานทั้งหมดกี่วัน',
+                    )}
+                  </View>
+                </View>
+                <View style={styles.containerForm}>
+                  <TextPaper variant="headlineSmall">การตรวจงาน</TextPaper>
 
-              <Divider style={{marginTop: 10}} />
-              <View style={styles.formInput}>
-                {renderAudits(
-                  'workCheckDay',
-                  'หลังแจ้งส่งมอบงานผู้ว่าจ้างต้องตรวจงานภายในกี่วัน',
-                  safeToString(contract.workCheckDay),
-                )}
-                {renderAudits(
-                  'workCheckEnd',
-                  'นับจากวันที่ผู้ว่าจ้างได้ตรวจรับความถูกต้องแล้วผู้ว่าจ้างจะต้องชำระเงินภายในกี่วัน',
-                  safeToString(contract.workCheckEnd),
-                )}
-              </View>
-            </View>
-            <View style={styles.containerLastForm}>
-              <TextPaper variant="headlineSmall">การคิดค่าปรับ</TextPaper>
+                  <Divider style={{marginTop: 10}} />
+                  <View style={styles.formInput}>
+                    {renderAudits(
+                      'workCheckDay',
+                      'หลังแจ้งส่งมอบงานผู้ว่าจ้างต้องตรวจงานภายในกี่วัน',
+                    )}
+                    {renderAudits(
+                      'workCheckEnd',
+                      'นับจากวันที่ผู้ว่าจ้างได้ตรวจรับความถูกต้องแล้วผู้ว่าจ้างจะต้องชำระเงินภายในกี่วัน',
+                    )}
+                  </View>
+                </View>
+                <View style={styles.containerLastForm}>
+                  <TextPaper variant="headlineSmall">การคิดค่าปรับ</TextPaper>
 
-              <Divider style={{marginTop: 10}} />
-              <View style={styles.formInput}>
-                {renderAdjustMents(
-                  'adjustPerDay',
-                  'หากส่งงานล่าช้าให้ผู้ว่าจ้างคิดค่าปรับเป็นรายวันกี่เปอร์เซ็นต์ของมูลค่างานตามสัญญาต่อวัน',
-                  safeToString(contract.adjustPerDay),
-                )}
-              </View>
-              <View style={{marginBottom: 50}}></View>
-            </View>
-          </SafeAreaView>
-        ) : (
-          <SafeAreaView style={{flex: 1}}>
-            <View style={styles.containerForm}>
-              <TextPaper variant="headlineSmall">การรับประกันน</TextPaper>
-              <Divider style={{marginTop: 10}} />
-
-              <View style={styles.formInput}>
-                {renderWanranty(
-                  'productWarantyYear',
-                  'รับประกันวัสดุอุปกรณ์กี่เดือน',
-
-                )}
-                {renderWanranty(
-                  'skillWarantyYear',
-                  'รับประกันงานติดตั้งกี่เดือน',
-                )}
-              </View>
-            </View>
-
-            <View style={styles.containerForm}>
-              <TextPaper variant="headlineSmall">การเตรียมงาน</TextPaper>
-
-              <Divider style={{marginTop: 10}} />
-              <View style={styles.formInput}>
-                {renderPrepare(
-                  'installingDay',
-                  'ใช้เวลาติดตั้งที่หน้างานกี่วัน',
-                )}
-                {renderPrepare(
-                  'workAfterGetDeposit',
-                  'เริ่มทำงานภายในกี่วันหลังได้รับมัดจำ',
-                )}
-                        {renderPrepare(
-                    'prepareDay',
-                    'ใช้เวลาเตรียมงานกี่วันก่อนติดตั้ง',
-                  )}
-                {renderPrepare('finishedDay', 'รวมใช้เวลาทำงานทั้งหมดกี่วัน')}
-              </View>
-            </View>
-            <View style={styles.containerForm}>
-              <TextPaper variant="headlineSmall">การตรวจงาน</TextPaper>
-
-              <Divider style={{marginTop: 10}} />
-              <View style={styles.formInput}>
-                {renderAudits(
-                  'workCheckDay',
-                  'หลังแจ้งส่งมอบงานผู้ว่าจ้างต้องตรวจงานภายในกี่วัน',
-                )}
-                {renderAudits(
-                  'workCheckEnd',
-                  'นับจากวันที่ผู้ว่าจ้างได้ตรวจรับความถูกต้องแล้วผู้ว่าจ้างจะต้องชำระเงินภายในกี่วัน',
-                )}
-              </View>
-            </View>
-            <View style={styles.containerLastForm}>
-              <TextPaper variant="headlineSmall">การคิดค่าปรับ</TextPaper>
-
-              <Divider style={{marginTop: 10}} />
-              <View style={styles.formInput}>
-                {renderAdjustMents(
-                  'adjustPerDay',
-                  'หากส่งงานล่าช้าให้ผู้ว่าจ้างคิดค่าปรับเป็นรายวันกี่เปอร์เซ็นต์ของมูลค่างานตามสัญญาต่อวัน',
-                )}
-                
-              </View>
-              <View style={{marginBottom: 50}}></View>
-            </View>
-          </SafeAreaView>
-        )}
-      </KeyboardAwareScrollView>
-          </>
-        ):(
-          <View style={styles.loadingContainer}>
-        <ActivityIndicator />
-      </View>
-        )}
-
-     
+                  <Divider style={{marginTop: 10}} />
+                  <View style={styles.formInput}>
+                    {renderAdjustMents(
+                      'adjustPerDay',
+                      'หากส่งงานล่าช้าให้ผู้ว่าจ้างคิดค่าปรับเป็นรายวันกี่เปอร์เซ็นต์ของมูลค่างานตามสัญญาต่อวัน',
+                    )}
+                  </View>
+                  <View style={{marginBottom: 50}}></View>
+                </View>
+              </SafeAreaView>
+            )}
+          </KeyboardAwareScrollView>
+        </>
+      ) : (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator />
+        </View>
+      )}
     </>
   );
 };
@@ -916,7 +936,6 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: 'red',
-
   },
 });
 

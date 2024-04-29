@@ -1,4 +1,10 @@
-import React, {useContext, useMemo, useState} from 'react';
+import { faBriefcase, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { RouteProp } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import React, { useContext, useMemo, useState } from 'react';
+import { FormProvider, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import {
   Dimensions,
   FlatList,
@@ -12,15 +18,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {Appbar, Button, ProgressBar} from 'react-native-paper';
-
-import {faBriefcase, faPlus} from '@fortawesome/free-solid-svg-icons';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {yupResolver} from '@hookform/resolvers/yup';
-import {RouteProp} from '@react-navigation/native';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {FormProvider, useFieldArray, useForm, useWatch} from 'react-hook-form';
 import Modal from 'react-native-modal';
+import { Appbar, Button, ProgressBar } from 'react-native-paper';
 import AddClient from '../../components/AddClient';
 import AddServices from '../../components/AddServices';
 import CardClient from '../../components/CardClient';
@@ -28,17 +27,18 @@ import CardProject from '../../components/CardProject';
 import DocNumber from '../../components/DocNumber';
 import Summary from '../../components/Summary';
 import AddCustomer from '../../components/add/AddCustomer';
+import SelectProductModal from '../../components/service/select';
 import DatePickerButton from '../../components/styles/DatePicker';
 import Divider from '../../components/styles/Divider';
 import SmallDivider from '../../components/styles/SmallDivider';
 import SignatureComponent from '../../components/utils/signature';
 import useThaiDateFormatter from '../../hooks/utils/useThaiDateFormatter';
-import {Store} from '../../redux/store';
-import {Service} from '../../types/docType';
-import {ParamListBase} from '../../types/navigationType';
+import { Store } from '../../redux/store';
+import { Service } from '../../types/docType';
+import { ParamListBase } from '../../types/navigationType';
 
 import ExistingWorkers from '../../components/workers/existing';
-import {quotationsValidationSchema} from '../utils/validationSchema';
+import { quotationsValidationSchema } from '../utils/validationSchema';
 
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'EditQuotation'>;
@@ -53,7 +53,11 @@ const EditQuotation = ({navigation, route}: Props) => {
   const [isLoadingMutation, setIsLoadingMutation] = useState(false);
   const companySeller = route.params.company;
   const quotation = route.params.quotation;
+  const [currentValue, setCurrentValue] = useState<any | null>(null);
+  const [currentIndex, setCurrentIndex] = useState<number | null>(null);
+  const [showAddNewService, setShowAddNewService] = useState(false);
   const servicesParams = route.params.services;
+  const [showAddExistingService, setShowAddExistingService] = useState(false);
   const [addCustomerModal, setAddCustomerModal] = useState(false);
   const [editCustomerModal, setEditCustomerModal] = useState(false);
   const thaiDateFormatter = useThaiDateFormatter();
@@ -107,7 +111,6 @@ const EditQuotation = ({navigation, route}: Props) => {
     control: methods.control,
     name: 'sellerSignature',
   });
-
 
   const workers = useWatch({
     control: methods.control,
@@ -199,15 +202,6 @@ const EditQuotation = ({navigation, route}: Props) => {
   const handleButtonPress = async () => {
     setIsLoadingMutation(true);
     const currentValues = methods.getValues();
-    // const defaultValues = methods.formState.defaultValues as Quotation;
-    // const changedValues = Object.keys(defaultValues).reduce((acc, key) => {
-    //   if (currentValues[key] !== defaultValues[key]) {
-    //     acc[key] = currentValues[key];
-    //   }
-    //   return acc;
-    // }, {}) as Quotation;
-
-    // console.log('changedValues', changedValues);
 
     try {
       navigation.navigate('EditDefaultContract', {
@@ -266,7 +260,7 @@ const EditQuotation = ({navigation, route}: Props) => {
           {'ไปต่อ'}
         </Button>
       </Appbar.Header>
-      <ProgressBar progress={0.5}  />
+      <ProgressBar progress={0.5} />
       <FormProvider {...methods}>
         <View style={{flex: 1}}>
           <ScrollView style={styles.container}>
@@ -310,6 +304,7 @@ const EditQuotation = ({navigation, route}: Props) => {
                     setVisibleModalIndex={() => setVisibleModalIndex(index)}
                     index={index}
                     handleRemoveService={() => handleRemoveService(index)}
+           
                     handleEditService={() => handleEditService(index, field)}
                     serviceList={field}
                     key={field.id}
@@ -490,14 +485,15 @@ const EditQuotation = ({navigation, route}: Props) => {
               isVisible={workerModal}
             />
           </Modal>
-          {/* <View>
-          <FooterBtn
-            btnText="ดำเนินการต่อ"
-            disabled={isDisabled}
-            onPress={handleButtonPress}
-          />
-        </View> */}
         </View>
+        <SelectProductModal
+          quotationId={quotationId}
+          onAddService={newProduct => append(newProduct)}
+          currentValue={null}
+          visible={showAddExistingService}
+          onClose={() => setShowAddExistingService(false)}
+        />
+
       </FormProvider>
     </>
   );

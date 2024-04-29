@@ -20,7 +20,6 @@ import {
 } from 'react-native';
 import Modal from 'react-native-modal';
 import {
-  ActivityIndicator,
   Appbar,
   Button,
   ProgressBar,
@@ -509,6 +508,7 @@ const Quotation = ({navigation}: Props) => {
           visible={showAddExistingService}
           onClose={() => setShowAddExistingService(false)}
         />
+
 
       </FormProvider>
     </>

@@ -57,7 +57,6 @@ const AddProductForm = ({navigation, route}: Props) => {
   const {quotationId, onAddService, currentValue} = route.params;
   const [isModalVisible, setModalVisible] = useState(false);
   const [isModalMaterialsVisible, setIsModalMaterialsVisible] = useState(false);
-  const [serviceImages, setServiceImages] = useState<string[]>([]);
   const [isModalImagesVisible, setModalImagesVisible] = useState(false);
   // const {isImageUpload, imageUrl, handleLogoUpload} = useImageUpload();
   const [serviceID, setServiceID] = useState<string>('');
@@ -82,15 +81,20 @@ const AddProductForm = ({navigation, route}: Props) => {
     defaultValues: currentValue ? currentValue : defaultService,
     resolver: yupResolver(serviceValidationSchema),
   });
+
+  const serviceImages = useWatch({
+    control: methods.control,
+    name: 'serviceImages',
+  });
   const standards = useWatch({
     control: methods.control,
     name: 'standards',
-    defaultValue: [],
+   
   });
   const title = useWatch({
     control: methods.control,
     name: 'title',
-    defaultValue: '',
+   
   });
 
   const qty = useWatch({
@@ -105,7 +109,7 @@ const AddProductForm = ({navigation, route}: Props) => {
   const materials = useWatch({
     control: methods.control,
     name: 'materials',
-    defaultValue: [],
+
   });
 
   const [unitPrice, quantity] = useWatch({
@@ -137,6 +141,7 @@ const AddProductForm = ({navigation, route}: Props) => {
       qty > 0
     );
   }, [standards, materials, title, unitPrice, qty]);
+  console.log('title', title);
 
   return (
     <>
@@ -177,7 +182,7 @@ const AddProductForm = ({navigation, route}: Props) => {
           }}
         />
         <Button
-          disabled={!isButtonDisbled}
+          disabled={! methods.formState.isDirty}
           // loading={postLoading}
           // disabled={
           //   currentValue ? !methods.formState.isDirty : !isButtonDisbled
@@ -634,7 +639,9 @@ const AddProductForm = ({navigation, route}: Props) => {
                 isVisible={isModalImagesVisible}
                 onClose={() => setModalImagesVisible(false)}
                 serviceImages={serviceImages}
-                setServiceImages={setServiceImages}
+                setServiceImages={()=>
+                 { methods.setValue('serviceImages', serviceImages, {shouldDirty: true})}
+                }
               />
             </ScrollView>
           </View>

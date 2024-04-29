@@ -61,7 +61,16 @@ const {width, height} = Dimensions.get('window');
 const imageContainerWidth = width / 3 - 10;
 const AddProductFormModal = (props: Props) => {
   // const {control, handleSubmit, watch} = useForm<FormData>();
-  const {quotationId, onAddService, currentValue, onClose, visible ,selectService, resetSelectService, resetAddNewService} = props;
+  const {
+    quotationId,
+    onAddService,
+    currentValue,
+    onClose,
+    visible,
+    selectService,
+    resetSelectService,
+    resetAddNewService,
+  } = props;
   const [isModalVisible, setModalVisible] = useState(false);
   const [isModalMaterialsVisible, setIsModalMaterialsVisible] = useState(false);
   const [serviceImages, setServiceImages] = useState<string[]>([]);
@@ -77,31 +86,33 @@ const AddProductFormModal = (props: Props) => {
   };
 
   const defaultService = {
-    title: selectService? selectService.title : null,
-    description: selectService? selectService.description : null,
+    title: null,
+    description: null,
     unitPrice: '0',
     qty: '1',
     discountPercent: '0',
     total: '0',
     unit: 'ชุด',
-    serviceImages: selectService? selectService.serviceImages : [],
-    standards: selectService? selectService.standards : [],
-    materials:selectService? selectService.materials : [],
+    serviceImages: [],
+    standards: [],
+    materials: [],
   };
   const methods = useForm<any>({
     mode: 'onChange',
-    defaultValues: currentValue ? currentValue : defaultService,
+    defaultValues: currentValue
+      ? currentValue
+      : selectService
+      ? selectService
+      : defaultService,
     resolver: yupResolver(serviceValidationSchema),
   });
   const standards = useWatch({
     control: methods.control,
     name: 'standards',
-    
   });
   const title = useWatch({
     control: methods.control,
     name: 'title',
-   
   });
 
   const qty = useWatch({
@@ -116,7 +127,6 @@ const AddProductFormModal = (props: Props) => {
   const materials = useWatch({
     control: methods.control,
     name: 'materials',
-    
   });
 
   const [unitPrice, quantity] = useWatch({
@@ -149,7 +159,6 @@ const AddProductFormModal = (props: Props) => {
     );
   }, [standards, materials, title, unitPrice, qty]);
 
-
   return (
     <Modal animationType="slide" visible={visible}>
       <Appbar.Header
@@ -158,7 +167,6 @@ const AddProductFormModal = (props: Props) => {
         style={{
           backgroundColor: 'white',
         }}>
-
         <Appbar.Action
           icon={'close'}
           onPress={() => {
@@ -166,20 +174,18 @@ const AddProductFormModal = (props: Props) => {
               'ปิดหน้าต่าง',
               'ยืนยันไม่บันทึกข้อมูลและปิดหน้าต่าง',
               [
-                // The "No" button
-                // Does nothing but dismiss the dialog when pressed
+
                 {
                   text: 'อยู่ต่อ',
                   style: 'cancel',
                 },
-                // The "Yes" button
                 {
                   text: 'ปิดหน้าต่าง',
                   onPress: () => {
                     resetSelectService(),
-                    resetAddNewService(),
-
-                    onClose(), methods.reset();
+                      resetAddNewService(),
+                      onClose(),
+                      methods.reset();
                   },
                 },
               ],
@@ -239,7 +245,6 @@ const AddProductFormModal = (props: Props) => {
                           style={styles.addButtonContainer}
                           onPress={() => {
                             setModalImagesVisible(true);
-                            // navigation.navigate('GalleryScreen', {code});
                           }}>
                           <FontAwesomeIcon
                             icon={faPlus}
@@ -385,37 +390,6 @@ const AddProductFormModal = (props: Props) => {
                 />
                 <View style={styles.summary}>
                   <Text style={styles.price}></Text>
-
-                  {/* START COUNTER BUTTON */}
-                  {/* <View style={styles.containerCounter}>
-                  <IconButton
-                    style={styles.button}
-                    icon={'minus'}
-                    onPress={() => {
-                      const newQty = Math.max(0, methods.watch('qty') - 1);
-                      methods.setValue('qty', newQty);
-                    }}>
-                  </IconButton>
-                  <Controller
-                    control={methods.control}
-                    name="qty"
-                    render={({field: {value}}) => (
-                      <Text style={{
-                        fontWeight:"bold",
-                       
-                      }} >{value}</Text>
-                    )}
-                  />
-                  <IconButton
-                    style={styles.button}
-                    icon={'plus'}
-                    onPress={() => {
-                      const newQty = methods.watch('qty') + 1;
-                      methods.setValue('qty', newQty);
-                    }}>
-                  </IconButton>
-                </View> */}
-
                   <Controller
                     control={methods.control}
                     name="qty"
@@ -446,7 +420,7 @@ const AddProductFormModal = (props: Props) => {
                       </>
                     )}
                   />
-                  {/* END COUNTER BUTTON */}
+                
                 </View>
                 <View
                   style={{
@@ -554,38 +528,30 @@ const AddProductFormModal = (props: Props) => {
                           fontWeight: 'bold',
                           color: '#333',
                         }}>
-                        วัสดุอุปกรณ์ที่ใช้ 
+                        วัสดุอุปกรณ์ที่ใช้
                       </Text>
                       <View style={styles.cardContainer}>
                         {methods
                           .watch('materials')
                           ?.map((item: any, index: number) => (
                             <Button
-                            
                               children={item.name}
                               // icon={'chevron-right'}
                               style={{
                                 margin: 3,
                                 maxWidth: '100%',
-                                alignContent:'flex-start'
+                                alignContent: 'flex-start',
                               }}
-                              contentStyle={{flexDirection: 'row-reverse', alignItems:'flex-start'}}
+                              contentStyle={{
+                                flexDirection: 'row-reverse',
+                                alignItems: 'flex-start',
+                              }}
                               mode="outlined"
                               key={index}
                               onPress={() =>
                                 setIsModalMaterialsVisible(true)
                               }></Button>
-                            // <TouchableOpacity
-                            //   key={index}
-                            //   style={styles.card}
-                            //   onPress={() => setIsModalMaterialsVisible(true)}>
-                            //   <Text style={styles.cardTitle}>{item.name}</Text>
-                            //   <FontAwesomeIcon
-                            //     icon={faChevronRight}
-                            //     color="gray"
-                            //     size={14}
-                            //   />
-                            // </TouchableOpacity>
+                   
                           ))}
                       </View>
                     </>
@@ -628,9 +594,7 @@ const AddProductFormModal = (props: Props) => {
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}>
-                  {/* <SaveButton disabled={false} onPress={handleDone} /> */}
 
-                  {/* <SaveButton disabled={!isButtonDisbled} onPress={handleDone} /> */}
                 </View>
               </View>
               <SelectStandard

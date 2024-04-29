@@ -94,8 +94,10 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
   const handleLogout = async () => {
     try {
       await firebase.auth().signOut();
-
-      navigation.navigate('FirstAppScreen');
+      navigation.reset({
+        index: 0,
+        routes: [{name: 'FirstAppScreen'}],
+      });
     } catch (error) {
       console.error('Failed to sign out: ', error);
     }

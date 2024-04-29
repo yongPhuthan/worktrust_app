@@ -115,8 +115,7 @@ const GalleryScreen = ({
     const urls = updatedData
       .filter(img => img.defaultChecked)
       .map(img => img.url);
-    // setServiceImages(urls);
-    setValue('serviceImages', urls);
+    setValue('serviceImages', urls, {shouldDirty: true});
   };
   const getGallery = async () => {
     const imagesCollectionPath = `${code}/gallery/Images`;
@@ -130,7 +129,7 @@ const GalleryScreen = ({
           id: doc.id,
           url: data.url,
           tags: data.tags || [],
-          defaultChecked: false, // Initial state of checkbox
+          defaultChecked: serviceImages.includes(data.url) ? true : false, 
         };
       });
       const tagsCollectionPath = `${code}/gallery/Tags`;
