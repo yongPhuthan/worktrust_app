@@ -7,17 +7,12 @@ import React, {
   useState,
 } from 'react';
 import FastImage from 'react-native-fast-image';
-import { v4 as uuidv4 } from 'uuid';
+import {v4 as uuidv4} from 'uuid';
 import firebase from '../../firebase';
 
-import {
-  BACK_END_SERVER_URL
-} from '@env';
-import { useMutation } from '@tanstack/react-query';
-import {
-  useFormContext,
-  useWatch
-} from 'react-hook-form';
+import {BACK_END_SERVER_URL} from '@env';
+import {useMutation} from '@tanstack/react-query';
+import {useFormContext, useWatch} from 'react-hook-form';
 import {
   Alert,
   Image,
@@ -26,13 +21,10 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {
-  ActivityIndicator,
-  Button
-} from 'react-native-paper';
+import {ActivityIndicator, Button} from 'react-native-paper';
 import Signature from 'react-native-signature-canvas';
-import { useUser } from '../../providers/UserContext';
-import { Store } from '../../redux/store';
+import {useUser} from '../../providers/UserContext';
+import {Store} from '../../redux/store';
 interface SignaturePadProps {
   setSignatureUrl: React.Dispatch<React.SetStateAction<string | null>>;
   onSignatureSuccess?: () => void;
@@ -47,10 +39,10 @@ const SignatureComponent = ({
 }: SignaturePadProps) => {
   const ref = useRef<any>();
   const [isImageUpload, setIsImageUpload] = useState(false);
-  const [isSigned, setIsSigned] = useState(false); 
+  const [isSigned, setIsSigned] = useState(false);
 
   const [createNewSignature, setCreateNewSignature] = useState<boolean>(false);
-const imageId = uuidv4();
+  const imageId = uuidv4();
   const user = useUser();
   const [isSignatureUpload, setIsSignatureUpload] = useState<boolean>(false);
   const context = useFormContext();
@@ -110,108 +102,109 @@ const imageId = uuidv4();
     }
   };
 
-  const { mutate, isPending } = useMutation( {
+  const {mutate, isPending} = useMutation({
     mutationFn: updateCompanySignature,
-    
-    onError: (error : any) => {
+
+    onError: (error: any) => {
       Alert.alert(
         'Update Error',
         `Server-side user creation failed: ${error.message}`,
-        [{ text: 'OK' }],
-        { cancelable: false }
+        [{text: 'OK'}],
+        {cancelable: false},
       );
     },
   });
   const companySignature = useWatch({
     control: control,
-    name: 'companyUser.signature',
+    name: 'companySeller.signature',
   });
-
-
 
   const sellerSignature = useWatch({
     control: control,
     name: 'sellerSignature',
   });
 
-  const uploadFileToFirebase = useCallback(async (imageUri: string): Promise<string | null> => {
-    setIsSignatureUpload(true);
-  
-    if (!user) {
-      console.error('User is not authenticated');
-      setIsSignatureUpload(false);
-      return null;
-    }
-  
-    if (!user.uid) {
-      console.error('User UID is not available');
-      setIsSignatureUpload(false);
-      return null; 
-    }
-  
-    const filename = `signature${code}.png`;
-    const storagePath = `${code}/signature/${filename}${imageId}`;
-  
-    try {
-      const storageRef = firebase.storage().ref(storagePath);
-      const base64String = imageUri.split(',')[1];
-      console.log('base64String', base64String);
-  
-      const snapshot = await storageRef.putString(base64String, 'base64', {
-        contentType: 'image/png',
-      });
-  
-      if (!snapshot.metadata) {
-        console.error('Snapshot metadata is undefined');
-        return null; 
+  const uploadFileToFirebase = useCallback(
+    async (imageUri: string): Promise<string | null> => {
+      setIsSignatureUpload(true);
+
+      if (!user) {
+        console.error('User is not authenticated');
+        setIsSignatureUpload(false);
+        return null;
       }
-  
-      console.log('Uploaded a base64 string!', snapshot);
-  
-      // Use getDownloadURL to get the URL for the uploaded file
-      const downloadUrl = await storageRef.getDownloadURL();
-      console.log('File uploaded successfully. URL:', downloadUrl);
-  
-      return downloadUrl;
-    } catch (error) {
-      console.error('Error uploading file to Firebase:', error);
-      return null; 
-    } finally {
-      setIsSignatureUpload(false);
-    }
-  }, [user, code, imageId]);
+
+      if (!user.uid) {
+        console.error('User UID is not available');
+        setIsSignatureUpload(false);
+        return null;
+      }
+
+      const filename = `signature${code}.png`;
+      const storagePath = `${code}/signature/${filename}${imageId}`;
+
+      try {
+        const storageRef = firebase.storage().ref(storagePath);
+        const base64String = imageUri.split(',')[1];
+        console.log('base64String', base64String);
+
+        const snapshot = await storageRef.putString(base64String, 'base64', {
+          contentType: 'image/png',
+        });
+
+        if (!snapshot.metadata) {
+          console.error('Snapshot metadata is undefined');
+          return null;
+        }
+
+        console.log('Uploaded a base64 string!', snapshot);
+
+        // Use getDownloadURL to get the URL for the uploaded file
+        const downloadUrl = await storageRef.getDownloadURL();
+        console.log('File uploaded successfully. URL:', downloadUrl);
+
+        return downloadUrl;
+      } catch (error) {
+        console.error('Error uploading file to Firebase:', error);
+        return null;
+      } finally {
+        setIsSignatureUpload(false);
+      }
+    },
+    [user, code, imageId],
+  );
 
   const handleUploadNewSignatureAndSave = useCallback(
-    async (signature:string) => {
+    async (signature: string) => {
       if (!signature) {
         return;
       }
-  
+
       try {
         setIsImageUpload(true);
         const imageUrl = await uploadFileToFirebase(signature);
-  
+
         if (!imageUrl) {
-          throw new Error("Image upload failed");
+          throw new Error('Image upload failed');
         }
-  
+
         await mutate(imageUrl);
-        setValue('companyUser.signature', imageUrl, { shouldDirty: true });
-        setValue('sellerSignature', imageUrl, { shouldDirty: true });
+        setValue('companyUser.signature', imageUrl, {shouldDirty: true});
+        setValue('sellerSignature', imageUrl, {shouldDirty: true});
         setCreateNewSignature(false);
-      } catch (error:any) {
+      } catch (error: any) {
         Alert.alert(
           'Upload Error',
           `An error occurred during the upload: ${error.message}`,
-          [{ text: 'OK' }],
-          { cancelable: false }
+          [{text: 'OK'}],
+          {cancelable: false},
         );
       } finally {
         setIsImageUpload(false);
         onClose();
       }
     },
-    [mutate, setValue, setCreateNewSignature, onClose]
+    [mutate, setValue, setCreateNewSignature, onClose],
   );
   const handleBegin = () => {
     setIsSigned(true);
@@ -244,7 +237,6 @@ const imageId = uuidv4();
     setIsSigned(false);
 
     ref.current.clearSignature();
-
   };
 
   const handleConfirm = () => {
@@ -260,7 +252,7 @@ const imageId = uuidv4();
             <View style={styles.textContainer}>
               <View style={styles.underline} />
 
-              {companySignature  && (
+              {companySignature && (
                 <FastImage
                   style={styles.image}
                   source={{
@@ -293,23 +285,30 @@ const imageId = uuidv4();
       ) : (
         <View style={styles.container}>
           <View>
-          <Signature
-            penColor="#0000FF"
-            webStyle={style}
-            onBegin={handleBegin}
-            style={{ width: 300,height: 200}}
-            ref={ref}
-            onOK={img => handleUploadNewSignatureAndSave(img)}
-            onEmpty={() => console.log('Empty')}
-            descriptionText="เซ็นเอกสารด้านบน"
-
-          />
+            <Signature
+              penColor="#0000FF"
+              webStyle={style}
+              onBegin={handleBegin}
+              style={{width: 300, height: 200}}
+              ref={ref}
+              onOK={img => handleUploadNewSignatureAndSave(img)}
+              onEmpty={() => console.log('Empty')}
+              descriptionText="เซ็นเอกสารด้านบน"
+            />
           </View>
-         
+
           <View style={styles.row}>
-          <Button mode='outlined' icon="autorenew" onPress={handleClear} >เซ็นใหม่</Button>
-        <Button mode='contained' disabled={!isSigned} icon="check-bold"  onPress={handleConfirm} >บันทึก</Button>
-        </View>
+            <Button mode="outlined" icon="autorenew" onPress={handleClear}>
+              เซ็นใหม่
+            </Button>
+            <Button
+              mode="contained"
+              disabled={!isSigned}
+              icon="check-bold"
+              onPress={handleConfirm}>
+              บันทึก
+            </Button>
+          </View>
         </View>
       )}
     </>
@@ -333,8 +332,8 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   container: {
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     height: 400,
     padding: 10,
   },
@@ -388,11 +387,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   row: {
-    display: "flex",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "90%",
-    alignItems: "center",
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '90%',
+    alignItems: 'center',
   },
 });
 

@@ -1,22 +1,9 @@
-import {View, Text, TouchableOpacity, Image, StyleSheet} from 'react-native';
 import React from 'react';
+import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 // import Icon from 'react-native-vector-icons/FontAwesome';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 
-import {
-  faBell,
-  faCog,
-  faCogs,
-  faPeopleCarry,
-  faPerson,
-  faPlus,
-  faPlusCircle,
-  faSheetPlastic,
-  faUser,
-  faUserCircle,
-  faUserCog,
-} from '@fortawesome/free-solid-svg-icons';
+import {faPlusCircle, faUser} from '@fortawesome/free-solid-svg-icons';
 
 type Props = {
   handleAddClient: Function;
@@ -26,7 +13,12 @@ const AddClient = (props: Props) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-      <FontAwesomeIcon icon={faUser} style={styles.icon} size={20} color="#19232e" />
+        <FontAwesomeIcon
+          icon={faUser}
+          style={styles.icon}
+          size={20}
+          color="#19232e"
+        />
 
         <Text style={styles.label}>ลูกค้า</Text>
       </View>
@@ -35,7 +27,12 @@ const AddClient = (props: Props) => {
         onPress={() => props.handleAddClient()}
         style={styles.button}>
         <View style={styles.containerButton}>
-          <FontAwesomeIcon style={styles.icon2} icon={faPlusCircle} color="#0073BA" size={18} />
+          <FontAwesomeIcon
+            style={styles.icon2}
+            icon={faPlusCircle}
+            color="#0073BA"
+            size={18}
+          />
           <Text style={styles.labelButton}>เพิ่มลูกค้า</Text>
         </View>
       </TouchableOpacity>
@@ -69,7 +66,6 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
     alignItems: 'flex-start',
     justifyContent: 'flex-start',
-
   },
   icon: {
     width: 24,

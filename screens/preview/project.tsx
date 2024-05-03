@@ -13,6 +13,7 @@ import {WebView} from 'react-native-webview';
 import {ParamListBase} from '../../types/navigationType';
 import Share from 'react-native-share';
 import ReactNativeBlobUtil from 'react-native-blob-util';
+import useShare from '../../hooks/webview/useShare';
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'ProjectViewScreen'>;
   route: RouteProp<ParamListBase, 'ProjectViewScreen'>;
@@ -21,7 +22,7 @@ const ProjectViewScreen = ({navigation, route}: Props) => {
   const {id, pdfUrl, fileName} = route.params;
   const [url, setUrl] = useState(`https://www.worktrust.co/preview/${id}`);
   const [isLoading, setIsLoading] = useState(false);
-
+  const handleShare = useShare({url, title: `ใบเสนอราคา ${fileName}`});
 
   const handleShareFile = async () => {
     console.log('Share button pressed');
@@ -46,7 +47,6 @@ const ProjectViewScreen = ({navigation, route}: Props) => {
         let options = {
           type: type,
           url: 'file://' + filePath,
-  
         };
 
         await Share.open(options);
@@ -60,21 +60,6 @@ const ProjectViewScreen = ({navigation, route}: Props) => {
         console.error('Error sharing', error);
       });
   };
-
-  const handleShare = async () => {
-    try {
-       await Share.open({
-        message: `${url}`, // ใช้ URL ที่กำหนดไว้
-        url,
-        title:  `Share Link ใบเสนอราคา Worktrust ${url}`,         
-      });
-      // ตรวจสอบผลลัพธ์ของการแชร์...
-    } catch (error) {
-      console.error(error);
-      Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถแชร์ได้');
-    }
-  };
-
   return (
     <>
       <Appbar.Header
@@ -85,10 +70,7 @@ const ProjectViewScreen = ({navigation, route}: Props) => {
         }}>
         <Appbar.BackAction
           onPress={() => {
-            navigation.reset({
-              index: 0,
-              routes: [{name: 'DashboardQuotation'}],
-            });
+            navigation.goBack();
           }}
         />
         <Appbar.Content
@@ -103,7 +85,8 @@ const ProjectViewScreen = ({navigation, route}: Props) => {
           mode="outlined"
           onPress={() => {
             navigation.navigate('PDFViewScreen', {
-              pdfUrl:'https://firebasestorage.googleapis.com/v0/b/worktrust-b9c02.appspot.com/o/20240422949.pdf?alt=media&token=a69310b8-5e35-4af3-8269-8f6d70742021',
+              pdfUrl:
+                'https://firebasestorage.googleapis.com/v0/b/worktrust-b9c02.appspot.com/o/20240422949.pdf?alt=media&token=a69310b8-5e35-4af3-8269-8f6d70742021',
               fileName,
             });
           }}>

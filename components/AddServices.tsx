@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
   labelButton: {
     fontSize: 16,
     color: '#0073BA',
-    fontFamily: 'Sukhumvit set',
+    // fontFamily: 'Sukhumvit set',
     marginLeft: 10,
   },
 });

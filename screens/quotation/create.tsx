@@ -1,4 +1,10 @@
-import {faBriefcase, faPlus} from '@fortawesome/free-solid-svg-icons';
+import {
+  faBriefcase,
+  faPlus,
+  faSign,
+  faSignature,
+  faUser,
+} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {yupResolver} from '@hookform/resolvers/yup';
 import {StackNavigationProp} from '@react-navigation/stack';
@@ -13,7 +19,6 @@ import {
   SafeAreaView,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TouchableOpacity,
   View,
@@ -23,47 +28,48 @@ import {
   Appbar,
   Button,
   ProgressBar,
+  Switch,
+  List,
+  Divider,
+  IconButton,
+  SegmentedButtons,
+  Icon,
 } from 'react-native-paper';
 import {v4 as uuidv4} from 'uuid';
-import AddClient from '../../components/AddClient';
 import AddServices from '../../components/AddServices';
 import CardClient from '../../components/CardClient';
 import CardProject from '../../components/CardProject';
 import DocNumber from '../../components/DocNumber';
 import Summary from '../../components/Summary';
 import AddCustomer from '../../components/add/AddCustomer';
+import ContractModal from '../../components/contract/create';
+import SelectProductModal from '../../components/service/select';
 import DatePickerButton from '../../components/styles/DatePicker';
-import Divider from '../../components/styles/Divider';
+// import Divider from '../../components/styles/Divider';
 import SmallDivider from '../../components/styles/SmallDivider';
+import AddCard from '../../components/ui/Button/AddCard';
 import SignatureComponent from '../../components/utils/signature';
+import ProjectModalScreen from '../../components/webview/project';
 import ExistingWorkers from '../../components/workers/existing';
-import useFetchCompanyUser from '../../hooks/quotation/create/useFetchCompanyUser'; // adjust the path as needed
+import useCreateQuotation from '../../hooks/quotation/create/useSaveQuotation';
 import useSelectedDates from '../../hooks/quotation/create/useSelectDates';
 import useThaiDateFormatter from '../../hooks/utils/useThaiDateFormatter';
-import * as stateAction from '../../redux/actions';
+import {TaxType} from '../../models/Tax';
 import {Store} from '../../redux/store';
 import {CompanySeller, Service} from '../../types/docType';
 import {ParamListBase} from '../../types/navigationType';
 import {quotationsValidationSchema} from '../utils/validationSchema';
-import {TaxType} from '../../models/Tax';
-import SelectProductModal from '../../components/service/select';
-import AddProductForm from 'screens/products/addExistProduct';
-import AddProductFormModal from '../../components/service/addNew';
-
+import PDFModalScreen from '../../components/webview/pdf';
+import useShare from '../../hooks/webview/useShare';
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'Quotation'>;
 }
 
 const Quotation = ({navigation}: Props) => {
   const {
-    state: {companySellerState},
+    state: {companySellerState, defaultContract},
     dispatch,
   }: any = useContext(Store);
-  const [isLoadingMutation, setIsLoadingMutation] = useState(false);
-  // const {data, isLoading, isError, error} = useFetchCompanyUser();
-
-  const [companySeller, setCompanySeller] =
-    useState<CompanySeller>(companySellerState);
 
   const [addCustomerModal, setAddCustomerModal] = useState(false);
   const {initialDocnumber, initialDateOffer, initialDateEnd} =
@@ -73,19 +79,28 @@ const Quotation = ({navigation}: Props) => {
 
   const [workerModal, setWorkerModal] = useState(false);
   // const [customerName, setCustomerName] = useState('');
+  const [signaturePicker, setSignaturePicker] = useState(false);
+  const [contractPicker, setContractPicker] = useState(false);
 
-  const [pickerVisible, setPickerVisible] = useState(false);
   const [workerPicker, setWorkerpicker] = useState(false);
-  const [titleService, setTitleService] = useState<string>(''); // [1]
-  const [descriptionService, setDescriptionService] = useState<string>(''); // [2]
 
+  const [quotationServerId, setQuotationServerId] = useState<string | null>(
+    null,
+  );
+  const [pdfUrl, setPdfUrl] = useState<string | null>('true');
   const [singatureModal, setSignatureModal] = useState(false);
+  const [contractModal, setContractModal] = useState(false);
+  const [value, setValue] = React.useState('');
+
   const [signature, setSignature] = useState<string | null>(null);
   const quotationId = uuidv4();
   const [fcmToken, setFtmToken] = useState('');
   const [showAddExistingService, setShowAddExistingService] = useState(false);
-  const [showAddNewService, setShowAddNewService] = useState(false);
   const [showEditServiceModal, setShowEditServiceModal] = useState(false);
+  const [showProjectModal, setShowProjectModal] = useState(false);
+  const [showPDFModal, setShowPDFModal] = useState(false);
+  const url = `https://www.worktrust.co/preview/${quotationServerId}`;
+
   const [visibleModalIndex, setVisibleModalIndex] = useState<number | null>(
     null,
   );
@@ -97,12 +112,25 @@ const Quotation = ({navigation}: Props) => {
     phone: '',
   };
 
+  const initialContract = {
+    workCheckEnd: 0,
+    workCheckDay: 0,
+    installingDay: 0,
+    adjustPerDay: 0,
+    workAfterGetDeposit: 0,
+    prepareDay: 0,
+    finishedDay: 0,
+    productWarantyYear: 0,
+    skillWarantyYear: 0,
+    fixDays: 0,
+  };
+
   const quotationDefaultValues = {
     services: [],
     customer: defalutCustomer,
     companySeller: companySellerState,
     vat7: 0,
-    taxType: 'NOTAX',
+    taxType: TaxType.NOTAX,
     taxValue: 0,
     summary: 0,
     summaryAfterDiscount: 0,
@@ -116,6 +144,7 @@ const Quotation = ({navigation}: Props) => {
     workers: [],
     FCMToken: fcmToken,
     sellerSignature: '',
+    contract: defaultContract ? defaultContract : initialContract,
   };
 
   const methods = useForm<any>({
@@ -133,6 +162,11 @@ const Quotation = ({navigation}: Props) => {
     name: 'customer',
   });
 
+  const contract = useWatch({
+    control: methods.control,
+    name: 'contract',
+  });
+
   const workers = useWatch({
     control: methods.control,
     name: 'workers',
@@ -140,6 +174,10 @@ const Quotation = ({navigation}: Props) => {
   const services = useWatch({
     control: methods.control,
     name: 'services',
+  });
+  const sellerSignature = useWatch({
+    control: methods.control,
+    name: 'sellerSignature',
   });
   const isCustomerDisabled = useMemo(() => {
     return customer.name === '' && customer.address === '';
@@ -151,15 +189,15 @@ const Quotation = ({navigation}: Props) => {
     methods.setValue('FCMToken', fcmToken); // Update FCMToken
   }, []);
 
+  const handleShare = useShare({url, title: `ใบเสนอราคา ${customer.name}`});
+
   const useSignature = () => {
     // Toggle the state of the picker and accordingly set the modal visibility
-    setPickerVisible(prevPickerVisible => {
+    setSignaturePicker(prevPickerVisible => {
       const newPickerVisible = !prevPickerVisible;
       setSignatureModal(newPickerVisible);
       if (!newPickerVisible) {
         methods.setValue('sellerSignature', '', {shouldDirty: true});
-      } else {
-        methods.setValue('sellerSignature', signature, {shouldDirty: true});
       }
       return newPickerVisible;
     });
@@ -175,7 +213,7 @@ const Quotation = ({navigation}: Props) => {
         setWorkerpicker(!workerPicker);
       }
     } else {
-      methods.setValue('workers', []);
+      methods.setValue('workers', [], {shouldDirty: true});
       setWorkerpicker(!workerPicker);
     }
   };
@@ -184,20 +222,6 @@ const Quotation = ({navigation}: Props) => {
   };
   const handleModalClose = () => {
     setVisibleModalIndex(null);
-  };
-
-  const handleAddProductForm = async () => {
-    if (companySeller) {
-      navigation.navigate('AddProduct', {
-        onAddService: newProduct => append(newProduct),
-        quotationId: quotationId,
-        currentValue: null,
-      });
-      // navigation.navigate('ExistingProduct', {id: companyUser.user?.id});
-    } else {
-      console.log('no companySeller', companySeller);
-      // await firebase.auth().signOut();
-    }
   };
   const handleEditService = (index: number, currentValue: Service) => {
     setShowEditServiceModal(!showEditServiceModal);
@@ -210,18 +234,16 @@ const Quotation = ({navigation}: Props) => {
     // navigation.navigate('EditProductForm', {index, currentValue, update});
   };
 
-  const handleButtonPress = async () => {
-    setIsLoadingMutation(true);
-    try {
-      navigation.navigate('DefaultContract', {
-        data: methods.getValues(),
-      } as any);
+  const actions: any = {
+    setQuotationServerId,
+    setPdfUrl,
+    setShowProjectModal,
+  };
 
-      setIsLoadingMutation(false);
-    } catch (error: Error | any) {
-      console.error('There was a problem calling the function:', error);
-      console.log(error.response);
-    }
+  const {mutate, isPending} = useCreateQuotation(actions);
+
+  const handleButtonPress = async () => {
+    await mutate(methods.getValues());
   };
 
   const handleInvoiceNumberChange = (text: string) => {
@@ -243,7 +265,7 @@ const Quotation = ({navigation}: Props) => {
   };
 
   const onCloseSignature = () => {
-    setPickerVisible(false);
+    setSignaturePicker(false);
     setSignatureModal(false);
     methods.setValue('sellerSignature', '', {shouldDirty: true});
   };
@@ -286,19 +308,15 @@ const Quotation = ({navigation}: Props) => {
           }}
         />
         <Button
-          // loading={postLoading}
+          loading={isPending}
           disabled={isDisabled}
           testID="submited-button"
           mode="contained"
-          icon={'arrow-right'}
-          contentStyle={{
-            flexDirection: 'row-reverse',
-          }}
           onPress={handleButtonPress}>
-          {'ไปต่อ'}
+          {'บันทึก'}
         </Button>
       </Appbar.Header>
-      <ProgressBar progress={0.5} />
+      {/* <ProgressBar progress={0.5} /> */}
 
       <FormProvider {...methods}>
         <View style={{flex: 1}}>
@@ -323,16 +341,30 @@ const Quotation = ({navigation}: Props) => {
               />
             </View>
             <View style={styles.subContainer}>
-              {!isCustomerDisabled ? (
-                <CardClient
-                  handleEditClient={() => setAddCustomerModal(true)}
-                />
-              ) : (
-                <AddClient handleAddClient={() => setAddCustomerModal(true)} />
-              )}
-
+              <View style={{marginVertical: 20}}>
+                {!isCustomerDisabled ? (
+                  <CardClient
+                    handleEditClient={() => setAddCustomerModal(true)}
+                  />
+                ) : (
+                  <>
+                    <View style={styles.header}>
+                      <FontAwesomeIcon
+                        icon={faUser}
+                        color="#19232e"
+                        size={18}
+                      />
+                      <Text style={styles.label}>ลูกค้า</Text>
+                    </View>
+                    <AddCard
+                      buttonName="เพิ่มลูกค้า"
+                      handleAdd={() => setAddCustomerModal(true)}
+                    />
+                  </>
+                )}
+              </View>
               <View style={styles.header}>
-                <FontAwesomeIcon icon={faBriefcase} color="#19232e" size={20} />
+                <FontAwesomeIcon icon={faBriefcase} color="#19232e" size={18} />
 
                 <Text style={styles.label}>บริการ-สินค้า</Text>
               </View>
@@ -351,15 +383,49 @@ const Quotation = ({navigation}: Props) => {
                 ))}
 
               <AddServices
-                handleAddProductFrom={
-                  () => setShowAddExistingService(true)
-                  // ()=>setShowAddNewService(true)
-                }
-                // handleAddProductFrom={handleAddProductForm}
+                handleAddProductFrom={() => setShowAddExistingService(true)}
               />
-              <Divider />
+              <Divider
+                style={{
+                  marginTop: 20,
+                }}
+              />
+              <View
+                style={{
+                  flexDirection: 'column',
+                  marginVertical: 20,
+                  gap: 10,
+                }}>
+                <View style={styles.headerContract}>
+                  <Icon source="file-document-multiple" size={20} />
 
-              {/* <Divider /> */}
+                  <Text style={styles.label}>สัญญา</Text>
+                </View>
+
+                {contract ? (
+                  <Button
+                    onPress={() => {
+                      setContractModal(true);
+                    }}
+                    // icon={'visible'}
+                    children="ดูสัญญา"
+                    mode="outlined"
+                  />
+                ) : (
+                  <View
+                    style={{
+                      marginBottom: 20,
+                    }}>
+                    <AddCard
+                      buttonName="เพิ่มสัญญา"
+                      handleAdd={() => {
+                        setContractModal(true);
+                      }}
+                    />
+                  </View>
+                )}
+              </View>
+              <Divider />
               <Summary
                 vat7Props={Number(methods.watch('vat7')) === 0 ? false : true}
                 taxProps={
@@ -373,6 +439,7 @@ const Quotation = ({navigation}: Props) => {
                   methods.watch('taxType') !== TaxType.NOTAX ? true : false
                 }
               />
+
               <SmallDivider />
               <View style={styles.signatureRow}>
                 <Text style={styles.signHeader}>เพิ่มทีมงานติดตั้ง</Text>
@@ -442,10 +509,10 @@ const Quotation = ({navigation}: Props) => {
                 <Text style={styles.signHeader}>เพิ่มลายเซ็น</Text>
                 <Switch
                   trackColor={{false: '#767577', true: '#81b0ff'}}
-                  thumbColor={pickerVisible ? '#ffffff' : '#f4f3f4'}
+                  thumbColor={signaturePicker ? '#ffffff' : '#f4f3f4'}
                   ios_backgroundColor="#3e3e3e"
                   onValueChange={useSignature}
-                  value={pickerVisible}
+                  value={signaturePicker}
                   style={Platform.select({
                     ios: {
                       transform: [{scaleX: 0.7}, {scaleY: 0.7}],
@@ -455,6 +522,14 @@ const Quotation = ({navigation}: Props) => {
                   })}
                 />
               </View>
+              {sellerSignature && (
+                <View>
+                  <Image
+                    source={{uri: sellerSignature}}
+                    style={styles.signatureImage}
+                  />
+                </View>
+              )}
             </View>
           </ScrollView>
           <Modal
@@ -508,8 +583,57 @@ const Quotation = ({navigation}: Props) => {
           visible={showAddExistingService}
           onClose={() => setShowAddExistingService(false)}
         />
+        <ContractModal
+          visible={contractModal}
+          onClose={() => setContractModal(false)}
+        />
 
+        {quotationServerId && pdfUrl && (
+          <>
+            <ProjectModalScreen
+              fileName={customer.name}
+              visible={showProjectModal}
+              onClose={() => setShowProjectModal(false)}
+              quotationId={quotationServerId}
+              pdfUrl={pdfUrl}
+            />
+            <PDFModalScreen
+              fileName={customer.name}
+              visible={showPDFModal}
+              onClose={() => setShowPDFModal(false)}
+              pdfUrl={pdfUrl}
+            />
 
+            <SegmentedButtons
+              style={{
+                margin: 10,
+                marginHorizontal: 20,
+              }}
+              value={value}
+              onValueChange={setValue}
+              buttons={[
+                {
+                  value: 'preview',
+                  label: 'พรีวิว',
+                  icon: 'eye',
+                  onPress: () => setShowProjectModal(true),
+                },
+                {
+                  value: 'train',
+                  label: 'สัญญา',
+                  icon: 'file-document',
+                  onPress: () => setShowPDFModal(true),
+                },
+                {
+                  value: 'train',
+                  label: 'แชร์',
+                  icon: 'share-variant',
+                  onPress: handleShare,
+                },
+              ]}
+            />
+          </>
+        )}
       </FormProvider>
     </>
   );
@@ -528,7 +652,6 @@ const styles = StyleSheet.create({
   },
   subContainerHead: {
     padding: 30,
-    marginBottom: 10,
     // backgroundColor:'#f3f8f3',
     backgroundColor: '#e9f7ff',
     height: 'auto',
@@ -543,7 +666,7 @@ const styles = StyleSheet.create({
   },
   subContainer: {
     backgroundColor: '#ffffff',
-    padding: 30,
+    paddingHorizontal: 30,
     marginBottom: 10,
     height: 'auto',
   },
@@ -644,11 +767,18 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    marginTop: 20,
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'flex-start',
+    alignContent: 'center',
+
     gap: 20,
-    paddingVertical: 5,
+  },
+  headerContract: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    alignContent: 'center',
+    gap: 20,
   },
   selectButton: {
     backgroundColor: '#0073BA',
@@ -800,6 +930,12 @@ const styles = StyleSheet.create({
     borderRadius: 0,
     resizeMode: 'cover',
   },
+  signatureImage: {
+    width: '50%',
+    aspectRatio: 1,
+    borderRadius: 1,
+    resizeMode: 'cover',
+  },
   addButtonContainer: {
     width: 100,
     margin: 5,
@@ -810,5 +946,9 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
     borderWidth: 1,
     borderRadius: 4, // Optional, for rounded edges
+  },
+  containerSegment: {
+    flex: 1,
+    alignItems: 'center',
   },
 });

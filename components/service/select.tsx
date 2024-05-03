@@ -48,7 +48,6 @@ const SelectProductModal: React.FC<Props> = ({
   const [showAddNewService, setShowAddNewService] = useState(false);
   const [selectService, setSelectService] = useState<any>(null);
   const [addNewService, setAddNewService] = useState(false);
-  console.log('existingService', existingServices);
   return (
     <>
       <Modal animationType="slide" visible={visible}>

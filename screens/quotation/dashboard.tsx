@@ -23,7 +23,13 @@ import CardDashBoard from '../../components/CardDashBoard';
 import {useUser} from '../../providers/UserContext';
 import * as stateAction from '../../redux/actions';
 import {Store} from '../../redux/store';
-import {CompanySeller, Customer, Quotation, Service} from '../../types/docType';
+import {
+  CompanySeller,
+  Contract,
+  Customer,
+  Quotation,
+  Service,
+} from '../../types/docType';
 import {DashboardScreenProps} from '../../types/navigationType';
 
 import {
@@ -43,17 +49,21 @@ import {
   QuotationStatus,
   QuotationStatusKey,
 } from '../../models/QuotationStatus';
+import ProjectModalScreen from '../../components/webview/project';
 
 const Dashboard = ({navigation}: DashboardScreenProps) => {
   const [showModal, setShowModal] = useState(true);
   const user = useUser();
-  const {dispatch,    state: {isEmulator, code},
-}: any = useContext(Store);
+  const {
+    dispatch,
+    state: {isEmulator, code},
+  }: any = useContext(Store);
   const {data, isLoading, isError, error} = useFetchDashboard();
   const {activeFilter, updateActiveFilter} = useActiveFilter();
   const {width, height} = Dimensions.get('window');
   const [isLoadingAction, setIsLoadingAction] = useState(false);
   const queryClient = useQueryClient();
+  const [showProjectModal, setShowProjectModal] = useState(false);
   const [visible, setVisible] = useState(false);
   const [isModalSignContract, setIsModalSignContract] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null) as any;
@@ -61,6 +71,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   const [originalData, setOriginalData] = useState<Quotation[] | null>(null);
   const filteredData = useFilteredData(originalData, activeFilter);
   const [companyData, setCompanyData] = useState<CompanySeller | null>(null);
+  const [defaultContract, setDefaultContract] = useState<Contract | null>(null);
   const [quotationData, setQuotationData] = useState<Quotation[] | null>(null);
   const handleNoResponse = () => {
     setIsModalSignContract(false);
@@ -142,12 +153,13 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
         setCompanyData(data[0]);
         setQuotationData(data[1]);
         setOriginalData(data[1]);
+        const {id, ...restOfData} = data[3];
+
+        dispatch(stateAction.get_default_contract(restOfData));
         dispatch(stateAction.code_company(data[0].code));
       }
     }
   }, [data]);
-
-
 
   useEffect(() => {
     requestNotificationPermission();
@@ -221,16 +233,9 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     });
   };
 
-  if (isError && error?.message ==='Company not found') {
+  if (isError && error?.message === 'Company not found') {
     navigation.navigate('CreateCompanyScreen');
-    // firebase
-    //   .auth()
-    //   .signOut()
-    //   .then(() => {
-    //     navigation.navigate('LoginMobileScreen');
-    //   });
   }
-  console.log('BACK_END_SERVER_URL', BACK_END_SERVER_URL);
   const renderItem = ({item, index}: any) => (
     <>
       <View style={{marginTop: 10}}>
@@ -271,9 +276,13 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                 <Divider />
                 <List.Item
                   onPress={() => {
-                    console.log('item', item);
+
                     handleModalClose();
-                    navigation.navigate('ProjectViewScreen', {id: item.id, pdfUrl: item.pdfUrl, fileName: `ใบเสนอราคา ${item.customer.name}.pdf`});
+                    navigation.navigate('ProjectViewScreen', {
+                      id: item.id,
+                      pdfUrl: item.pdfUrl,
+                      fileName: `ใบเสนอราคา ${item.customer.name}.pdf`,
+                    });
                     // navigation.navigate('DocViewScreen', {id: item.id});
                   }}
                   centered={true}
@@ -524,7 +533,10 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
             </Dialog.Content>
           </Dialog>
         </Portal>
+
+
       </PaperProvider>
+
     </>
   );
 };
@@ -549,7 +561,7 @@ const styles = StyleSheet.create({
     margin: 16,
     right: 0,
     bottom: 10,
-    backgroundColor:'#00674a',
+    backgroundColor: '#00674a',
     // backgroundColor: '#1b52a7',
     borderRadius: 28,
     height: 56,

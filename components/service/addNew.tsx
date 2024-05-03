@@ -45,6 +45,7 @@ import {ParamListBase} from '../../types/navigationType';
 import {serviceValidationSchema} from '../../screens/utils/validationSchema';
 
 import Decimal from 'decimal.js-light';
+import ProjectModalScreen from 'components/webview/project';
 
 type Props = {
   quotationId: string;
@@ -615,6 +616,8 @@ const AddProductFormModal = (props: Props) => {
                 serviceImages={serviceImages}
                 setServiceImages={setServiceImages}
               />
+ 
+
             </ScrollView>
           </View>
         </KeyboardAwareScrollView>

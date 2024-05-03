@@ -39,7 +39,6 @@ const CardProject = (props: Props) => {
     handleModalClose,
   } = props;  
   
-  console.log('serviceList FORM', serviceList)
 
   return (
     <View>

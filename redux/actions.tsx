@@ -26,6 +26,11 @@ export const get_existing_services = (payload: any) => ({
   payload,
 });
 
+export const get_default_contract = (payload: any) => ({
+  type: contrains.GET_DEFAULT_CONTRACT,
+  payload,
+});
+
 
 
 // COMPONENTS  => ACTION
@@ -56,3 +61,9 @@ export const getExistingServices = (payload: any) => {
     dispatch(get_existing_services(payload));
   };
 };
+
+export const getDefaultContract = (payload: any) => {
+  return (dispatch: any) => {
+    dispatch(get_default_contract(payload));
+  };
+}

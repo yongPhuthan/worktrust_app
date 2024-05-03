@@ -374,10 +374,10 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
                 <FontAwesomeIcon icon={faChevronRight} size={18} color="#aaa" />
               </View>
             </TouchableOpacity> */}
-            {/* <Divider />
+           
             <TouchableOpacity
               style={{paddingVertical: 15, paddingHorizontal: 24}}
-              onPress={() => navigation.navigate('EditSetting', {company})}>
+              >
               <View
                 style={{
                   flexDirection: 'row',
@@ -390,7 +390,7 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
                 <FontAwesomeIcon icon={faChevronRight} size={18} color="#aaa" />
               </View>
             </TouchableOpacity>
-            <Divider /> */}
+            <Divider />
             <TouchableOpacity
               style={{paddingVertical: 15, paddingHorizontal: 24}}
               onPress={() => toggleLogoutModal()}>

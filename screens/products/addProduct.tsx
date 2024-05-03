@@ -141,7 +141,6 @@ const AddProductForm = ({navigation, route}: Props) => {
       qty > 0
     );
   }, [standards, materials, title, unitPrice, qty]);
-  console.log('title', title);
 
   return (
     <>
