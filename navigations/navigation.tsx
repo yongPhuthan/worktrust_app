@@ -12,7 +12,6 @@ import CreateCompanyScreen from '../screens/register/createcompanyScreen';
 import {ParamListBase, ScreenItem} from '../types/navigationType';
 
 import ContractOption from '../screens/contract/contractOptions';
-import AddExistProduct from '../screens/products/addExistProduct';
 import EditQuotation from '../screens/quotation/edit';
 import EditSetting from '../screens/setting/editSetting';
 
@@ -105,19 +104,7 @@ const Navigation = ({initialRouteName}: any) => {
             headerTintColor: 'black',
           }}
         />
-        <Stack.Screen
-          name="ContractViewScreen"
-          component={ContractViewScreen}
-          options={{
-            ...commonScreenOptions,
-            headerShown: false,
 
-            headerStyle: {
-              backgroundColor: '#ffffff',
-            },
-            headerTintColor: 'black',
-          }}
-        />
               <Stack.Screen
           name="ProjectViewScreen"
           component={ProjectViewScreen}
@@ -207,21 +194,6 @@ const Navigation = ({initialRouteName}: any) => {
             ...commonScreenOptions,
             headerShown: false,
             title: 'เลือกเอกสาร',
-            headerBackTitleVisible: false,
-            headerStyle: {
-              backgroundColor: '#ffffff',
-            },
-            headerTintColor: 'black',
-          }}
-        />
-
-        <Stack.Screen
-          name="AddExistProduct"
-          component={AddExistProduct}
-          options={{
-            ...commonScreenOptions,
-            headerShown: true,
-            title: 'เพิ่มรายการ-สินค้า',
             headerBackTitleVisible: false,
             headerStyle: {
               backgroundColor: '#ffffff',

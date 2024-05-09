@@ -2,10 +2,15 @@ import {BACK_END_SERVER_URL} from '@env';
 import {faCamera, faClose} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {useMutation, useQueryClient} from '@tanstack/react-query';
-import React, {useCallback, useContext, useState} from 'react';
+import React, {useCallback, useContext, useState, useEffect} from 'react';
 import {Controller, set, useForm, useWatch} from 'react-hook-form';
 import {yupResolver} from '@hookform/resolvers/yup';
 import {useQuery} from '@tanstack/react-query';
+import Marker, {
+  ImageFormat,
+  Position,
+  TextBackgroundType,
+} from 'react-native-image-marker';
 
 import {
   createStandardSchema,
@@ -35,7 +40,11 @@ import {
   Chip,
   Checkbox,
   List,
+  Menu,
+  RadioButton,
+  Divider,
 } from 'react-native-paper';
+
 import firebase from '../../firebase';
 import {useUriToBlob} from '../../hooks/utils/image/useUriToBlob';
 import {useSlugify} from '../../hooks/utils/useSlugify';
@@ -59,17 +68,93 @@ interface Tag {
   id: string;
   name: string; // ระบุว่าแต่ละ tag ต้องมีฟิลด์ name
 }
+interface ImageSize {
+  width: number;
+  height: number;
+}
 
+interface WatermarkImage {
+  src: string;
+  scale: number;
+  position: {
+    position: string;
+  };
+}
+
+interface WatermarkOptions {
+  backgroundImage: {
+    src: string;
+    scale: number;
+  };
+  watermarkImages: WatermarkImage[];
+  scale: number;
+  quality: number;
+  filename: string;
+}
+const WatermarkPositions = [
+  'Top Left',
+  'Top Center',
+  'Top Right',
+  'Center',
+  'Bottom Left',
+  'Bottom Center',
+  'Bottom Right',
+];
 const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
   const queryClient = useQueryClient();
   const [isImageUpload, setIsImageUpload] = useState(false);
   const [addNewTag, setAddNewTag] = useState(false);
+  const [originalImage, setOriginalImage] = useState<string | null>(null);
   const user = useUser();
   const imageId = uuidv4();
   const [inputValue, setInputValue] = useState<string>('');
   const [inputNewTag, setInputNewTag] = useState<string>('');
   const [tags, setTags] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [applyTrigger, setApplyTrigger] = useState(false); // Trigger for applying watermark
+
+  const [checked, setChecked] = React.useState('first');
+
+  const [watermarkPosition, setWatermarkPosition] =
+    useState<string>('Bottom Right');
+
+  useEffect(() => {
+    // Call applyWatermark whenever the watermarkPosition changes
+    if (originalImage) {
+      applyWatermark();
+    }
+  }, [watermarkPosition]);
+
+  const getImageSize = (uri: string): Promise<ImageSize> => {
+    return new Promise((resolve, reject) => {
+      Image.getSize(
+        uri,
+        (width, height) => resolve({width, height}),
+        error => reject(error),
+      );
+    });
+  };
+
+  const getLogoScale = async (
+    backgroundImageUri: string,
+    logoUri: string,
+  ): Promise<number> => {
+    try {
+      const [bgImageSize, logoSize] = await Promise.all([
+        getImageSize(backgroundImageUri),
+        getImageSize(logoUri),
+      ]);
+
+      const targetLogoWidth = bgImageSize.width * 0.1; // e.g., logo is 10% of the background image width
+      const logoScale = targetLogoWidth / logoSize.width; // Calculate scale factor
+
+      return logoScale;
+    } catch (error) {
+      console.error('Error getting image sizes:', error);
+      return 0.1; // Default scale if there's an error
+    }
+  };
+
   const handleDeleteTag = (tagToDelete: string): void => {
     const newTags = getValues('selectedTags').filter(
       tag => tag !== tagToDelete,
@@ -77,7 +162,7 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
     setValue('selectedTags', newTags, {shouldDirty: true});
   };
   const {
-    state: {code},
+    state: {code, logoSrc},
     dispatch,
   }: any = useContext(Store);
   const {
@@ -132,9 +217,15 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
   });
   const {isImagePicking, pickImage} = usePickImage((uri: string) => {
     setValue('image', uri, {shouldDirty: true});
+    setOriginalImage(uri);
   });
+  const [isWatermarkMenuVisible, setWatermarkMenuVisible] =
+    useState<boolean>(true);
 
-  const storagePath = `${code}/gallery/images/${imageId}`;
+  const toggleWatermarkMenu = () =>
+    setWatermarkMenuVisible(!isWatermarkMenuVisible);
+
+  const storagePath = `/users/${code}/images/gallery/${imageId}`;
 
   const {
     isUploading,
@@ -200,7 +291,10 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
   const handleAddTag = async () => {
     setIsLoading(true);
     const tagsCollectionPath = `${code}/gallery/Tags`;
-    const tagRef = firebase.firestore().collection(tagsCollectionPath).doc(inputNewTag);
+    const tagRef = firebase
+      .firestore()
+      .collection(tagsCollectionPath)
+      .doc(inputNewTag);
 
     try {
       // Create a new tag with the current date and an empty image array
@@ -254,7 +348,7 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
       // For each tag, update or create a tag document to include the image URL
       selectedTags.forEach(async tag => {
         const tagRef = tagsCollectionRef.doc(tag);
-        const doc = await tagRef.get()
+        const doc = await tagRef.get();
 
         if (doc.exists) {
           // Update existing tag document to include this image
@@ -307,6 +401,57 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
     );
   }
 
+  const applyWatermark = async () => {
+    if (!originalImage) return;
+    const logoScale = await getLogoScale(originalImage, logoSrc);
+    const options = {
+      // background image
+      backgroundImage: {
+        src: originalImage,
+        scale: 1,
+      },
+
+      watermarkImages: [
+        {
+          src: logoSrc,
+          scale: logoScale,
+          position: {
+            position: getPositionBasedOn(watermarkPosition), 
+          },
+        },
+      ],
+      scale: 1,
+      quality: 100,
+      filename: imageId,
+    };
+
+    try {
+      const markedImage = await Marker.markImage(options);
+      setValue('image', markedImage, {shouldDirty: true});
+    } catch (error) {
+      console.error('Error applying watermark:', error);
+      Alert.alert('Error', 'Failed to add watermark.');
+    }
+  };
+  function getPositionBasedOn(watermarkPosition: string): Position {
+    switch (watermarkPosition) {
+      case 'Center':
+        return Position.center;
+      case 'Top Left':
+        return Position.topLeft;
+      case 'Top Center':
+        return Position.topCenter;
+      case 'Top Right':
+        return Position.topRight;
+      case 'Bottom Left':
+        return Position.bottomLeft;
+      case 'Bottom Center':
+        return Position.bottomCenter;
+      default:
+        return Position.bottomRight;
+    }
+  }
+  console.log('logoSrc', logoSrc);
   return (
     <>
       <Appbar.Header
@@ -332,7 +477,6 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
           mode="contained"
           onPress={() => {
             uploadImageWithTags();
-            // mutate();
           }}></Button>
       </Appbar.Header>
       <View style={styles.container}>
@@ -408,9 +552,6 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
             )}
             <FlatList
               data={tags}
-              style={{
-                marginBottom: 40,
-              }}
               keyExtractor={(item, index) => index.toString()}
               renderItem={({item}) => (
                 <View
@@ -418,7 +559,6 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
                     flex: 1,
                     flexDirection: 'row',
                     alignItems: 'center',
-                    paddingVertical: 5,
                   }}>
                   <Checkbox.Android
                     status={
@@ -442,6 +582,33 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
                 />
               }
             />
+            <Divider style={{marginVertical: 20}} />
+
+            <Button mode="outlined" icon={'plus'} children="เพิ่มลายน้ำ" />
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'flex-start',
+                marginTop: 10,
+                gap: 10,
+              }}>
+              {WatermarkPositions.map((position, index) => (
+                <View
+                  key={index}
+                  style={{flexDirection: 'row', alignItems: 'center'}}>
+                  <RadioButton
+                    value={position}
+                    status={checked === position ? 'checked' : 'unchecked'}
+                    onPress={() => {
+                      setChecked(position);
+                      setWatermarkPosition(position);
+                    }}
+                  />
+                  <Text>{position}</Text>
+                </View>
+              ))}
+            </View>
           </View>
         )}
       </View>
@@ -461,13 +628,14 @@ const styles = StyleSheet.create({
   imageUploader: {
     alignItems: 'center',
     justifyContent: 'center',
-    height: 200,
+    height: '30%',
     backgroundColor: '#f0f0f0',
     marginBottom: 16,
   },
   image: {
     width: '100%',
     height: '100%',
+    resizeMode: 'contain',
   },
   input: {
     height: 40,

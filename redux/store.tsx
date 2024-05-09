@@ -10,6 +10,7 @@ export type StateType = {
   companySellerState: CompanySeller | null;
   existingServices: ExsistingService[];
   defaultContract : Contract | null
+  logoSrc : string
   
 };
 
@@ -30,7 +31,9 @@ export const Store = createContext<ContextType>({
     services: [],
     companySellerState: null,
     existingServices: [],
-    defaultContract:null
+    defaultContract:null,
+    logoSrc : ''
+
   },
   dispatch: () => {},
 });
@@ -41,7 +44,8 @@ const initialState: StateType = {
   services: [],
   companySellerState: null,
   existingServices: [],
-  defaultContract:null
+  defaultContract:null,
+  logoSrc : ''
 };
 
 function reducer(state: StateType, action: ActionType): StateType {
@@ -61,6 +65,8 @@ function reducer(state: StateType, action: ActionType): StateType {
       return {...state, existingServices: action.payload as ExsistingService[]};
     case contrains.GET_DEFAULT_CONTRACT:
       return {...state, defaultContract: action.payload as Contract};
+    case contrains.GET_LOGO:
+      return {...state, logoSrc: action.payload as string};
 
     default:
       return state;

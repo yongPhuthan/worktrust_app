@@ -1,5 +1,5 @@
 import {useQuery, useQueryClient} from '@tanstack/react-query';
-import React, {useCallback, useContext, useState} from 'react';
+import React, {useContext, useState} from 'react';
 import {
   Dimensions,
   FlatList,
@@ -10,25 +10,13 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {
-  ActivityIndicator,
-  Appbar,
-  Button,
-  Banner,
-  Checkbox,
-} from 'react-native-paper';
+import {ActivityIndicator, Appbar, Button, Checkbox} from 'react-native-paper';
 import firebase from '../../firebase';
 import {useUser} from '../../providers/UserContext';
 
-import {faCamera, faExpand} from '@fortawesome/free-solid-svg-icons';
+import {faExpand} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {useFormContext} from 'react-hook-form';
-import {
-  ImageLibraryOptions,
-  ImagePickerResponse,
-  MediaType,
-  launchImageLibrary,
-} from 'react-native-image-picker';
 import Modal from 'react-native-modal';
 import CustomCheckbox from '../../components/CustomCheckbox';
 import {useUriToBlob} from '../../hooks/utils/image/useUriToBlob';
@@ -50,8 +38,11 @@ interface Tag {
 
 interface ImageData {
   id: string;
-  url: string;
-  tags: string[]; 
+  url: {
+    thumbnailUrl: string;
+    originalUrl: string;
+  };
+  tags: string[];
   defaultChecked: boolean;
 }
 
@@ -99,10 +90,6 @@ const GalleryScreen = ({
     state: {serviceList, code},
     dispatch,
   }: any = useContext(Store);
-  const slugify = useSlugify();
-  const uriToBlobFunction = useUriToBlob();
-  const queryClient = useQueryClient();
-
   const handleCheckbox = (id: string) => {
     const updatedData = galleryImages.map(img => {
       if (img.id === id) {
@@ -116,6 +103,7 @@ const GalleryScreen = ({
       .filter(img => img.defaultChecked)
       .map(img => img.url);
     setValue('serviceImages', urls, {shouldDirty: true});
+    console.log('serviceImages:', urls);
   };
   const getGallery = async () => {
     const imagesCollectionPath = `${code}/gallery/Images`;
@@ -129,7 +117,9 @@ const GalleryScreen = ({
           id: doc.id,
           url: data.url,
           tags: data.tags || [],
-          defaultChecked: serviceImages.includes(data.url) ? true : false, 
+          defaultChecked: serviceImages.includes(data.url.thumbnailUrl)
+            ? true
+            : false,
         };
       });
       const tagsCollectionPath = `${code}/gallery/Tags`;
@@ -147,7 +137,7 @@ const GalleryScreen = ({
       return images; // Return images array, even if it's empty
     } catch (error) {
       console.error('Error fetching gallery images:', error);
-      return []; 
+      return [];
     }
   };
 
@@ -180,7 +170,6 @@ const GalleryScreen = ({
       setGalleryImages(initialGalleryImages);
     }
   };
-
   return (
     <>
       <Modal
@@ -212,11 +201,12 @@ const GalleryScreen = ({
             </Appbar.Header>
 
             <SafeAreaView style={styles.container}>
-              <View style={{
-                flexDirection: 'column',
-                gap: 20,
-              }}>
-              
+              <View
+                style={{
+                  flexDirection: 'column',
+                  gap: 20,
+                  paddingBottom: '35%',
+                }}>
                 <FlatList
                   data={tags}
                   keyExtractor={item => item.id.toString()}
@@ -246,17 +236,22 @@ const GalleryScreen = ({
                         styles.imageContainer,
                         item.defaultChecked && styles.selected,
                       ]}>
-                      <Image source={{uri: item.url}} style={styles.image} />
+                      <Image
+                        source={{uri: item.url.thumbnailUrl}}
+                        style={styles.image}
+                      />
                       <View style={styles.checkboxContainer}>
                         <CustomCheckbox
                           checked={item.defaultChecked}
-                          onPress={() => handleCheckbox(item.id)}
+                          onPress={() => {
+                            handleCheckbox(item.id);
+                          }}
                         />
                       </View>
                       <TouchableOpacity
                         style={styles.expandButton}
                         onPress={() => {
-                          setSelectedImage(item.url);
+                          setSelectedImage(item.url.thumbnailUrl);
                           setModalVisible(true);
                         }}>
                         <FontAwesomeIcon
@@ -363,6 +358,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingBottom: 300,
 
     backgroundColor: 'rgba(0,0,0,0.9)',
   },

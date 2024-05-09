@@ -52,6 +52,8 @@ const useFetchDashboard = () => {
       dispatch(stateAction.get_company_seller(data[0]));
       dispatch(stateAction.get_companyID(data[0].id));
       dispatch(stateAction.get_existing_services(data[2]));
+      dispatch(stateAction.get_logo(data[0].logo));
+      console.log('data[0]:', data[0]); 
     }
     return data;
   };

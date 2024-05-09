@@ -1957,9 +1957,13 @@ PODS:
     - React-Core
   - react-native-get-random-values (1.11.0):
     - React-Core
+  - react-native-image-marker (1.2.6):
+    - React-Core
   - react-native-image-picker (7.1.1):
     - glog
     - RCT-Folly (= 2022.05.16.00)
+    - React-Core
+  - react-native-image-resizer (3.0.9):
     - React-Core
   - react-native-pdf (6.7.3):
     - React-Core
@@ -2138,6 +2142,9 @@ PODS:
     - React-jsi (= 0.73.6)
     - React-logger (= 0.73.6)
     - React-perflogger (= 0.73.6)
+  - ReactNativeWebPFormat (1.2.0):
+    - React-Core
+    - SDWebImageWebPCoder
   - RecaptchaInterop (100.0.0)
   - RNCAsyncStorage (1.23.0):
     - React-Core
@@ -2250,7 +2257,9 @@ DEPENDENCIES:
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - react-native-blob-util (from `../node_modules/react-native-blob-util`)
   - react-native-get-random-values (from `../node_modules/react-native-get-random-values`)
+  - react-native-image-marker (from `../node_modules/react-native-image-marker`)
   - react-native-image-picker (from `../node_modules/react-native-image-picker`)
+  - "react-native-image-resizer (from `../node_modules/@bam.tech/react-native-image-resizer`)"
   - react-native-pdf (from `../node_modules/react-native-pdf`)
   - react-native-print (from `../node_modules/react-native-print`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
@@ -2275,6 +2284,7 @@ DEPENDENCIES:
   - React-runtimescheduler (from `../node_modules/react-native/ReactCommon/react/renderer/runtimescheduler`)
   - React-utils (from `../node_modules/react-native/ReactCommon/react/utils`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
+  - ReactNativeWebPFormat (from `../node_modules/react-native-webp-format`)
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
   - "RNCPicker (from `../node_modules/@react-native-picker/picker`)"
   - "RNDateTimePicker (from `../node_modules/@react-native-community/datetimepicker`)"
@@ -2397,8 +2407,12 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-blob-util"
   react-native-get-random-values:
     :path: "../node_modules/react-native-get-random-values"
+  react-native-image-marker:
+    :path: "../node_modules/react-native-image-marker"
   react-native-image-picker:
     :path: "../node_modules/react-native-image-picker"
+  react-native-image-resizer:
+    :path: "../node_modules/@bam.tech/react-native-image-resizer"
   react-native-pdf:
     :path: "../node_modules/react-native-pdf"
   react-native-print:
@@ -2447,6 +2461,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/react/utils"
   ReactCommon:
     :path: "../node_modules/react-native/ReactCommon"
+  ReactNativeWebPFormat:
+    :path: "../node_modules/react-native-webp-format"
   RNCAsyncStorage:
     :path: "../node_modules/@react-native-async-storage/async-storage"
   RNCPicker:
@@ -2552,7 +2568,9 @@ SPEC CHECKSUMS:
   React-Mapbuffer: d81d930c1b7f4db284e1d721fe7fdc99230ca108
   react-native-blob-util: 18b510205c080a453574a7d2344d64673d0ad9af
   react-native-get-random-values: 21325b2244dfa6b58878f51f9aa42821e7ba3d06
+  react-native-image-marker: 01caff7bfa50f44277922cf84e7c29a732994ea8
   react-native-image-picker: 69557f178c1026142e202b8c3b8a3c130f75348d
+  react-native-image-resizer: 669454edae94399b11e49c840e4da14482302293
   react-native-pdf: b4ca3d37a9a86d9165287741c8b2ef4d8940c00e
   react-native-print: f704aef52d931bfce6d1d84351dbb5232d7ecb89
   react-native-safe-area-context: b97eb6f9e3b7f437806c2ce5983f479f8eb5de4b
@@ -2577,6 +2595,7 @@ SPEC CHECKSUMS:
   React-runtimescheduler: 4fa81221f3bb96df737d682fa828b574bea3827c
   React-utils: a45dd70919baff681d43a4a457e9884ef96b4581
   ReactCommon: e168ee1704806f10f47ee8c7f825b5850b18eaea
+  ReactNativeWebPFormat: f5f043cc9ded052e535c3869ec341f91ba5a67c5
   RecaptchaInterop: 7d1a4a01a6b2cb1610a47ef3f85f0c411434cb21
   RNCAsyncStorage: e31a32913b3b5d8a42621be993a8f51c34073f1f
   RNCPicker: b18aaf30df596e9b1738e7c1f9ee55402a229dca

@@ -194,7 +194,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
       throw new Error('User or user email is not available');
     }
 
-    const downloadUrl = await uploadImage(logo as string);
+    const downloadUrl =  (await uploadImage(logo as string));
 
     // Additional validation if URLs are required
     if (isLogoError) {
@@ -206,7 +206,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
     console.log('downloadUrl:', downloadUrl);
 
     try {
-      setValue('logo', downloadUrl);
+      setValue('logo', downloadUrl.originalUrl);
 
       const formData = {
         ...getValues(),

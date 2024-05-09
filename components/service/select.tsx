@@ -1,25 +1,19 @@
-import {
-  Dimensions,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-  FlatList,
-  View,
-  Modal,
-} from 'react-native';
-import { Store } from '../../redux/store';
-import * as stateAction from '../../redux/actions';
 import React, { useContext, useState } from 'react';
 import {
-  ActivityIndicator,
+  Dimensions,
+  FlatList,
+  Image,
+  Modal,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import {
   Appbar,
   Button,
-  Divider,
-  IconButton,
-  Snackbar,
-  Text,
-  TextInput,
+  Text
 } from 'react-native-paper';
+import { Store } from '../../redux/store';
 import AddProductFormModal from './addNew';
 interface Item {
   id: string;
@@ -112,7 +106,11 @@ const SelectProductModal: React.FC<Props> = ({
                 children="เพิ่มรายการใหม่"
                 testID="submited-button"
                 mode="outlined"
-                onPress={() => { }}></Button>
+                onPress={() => { 
+                  setShowAddNewService(true);
+                  setAddNewService(true);
+                  onClose();
+                }}></Button>
             }
           />
         </View>
@@ -152,11 +150,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     paddingTop: 20,
     paddingHorizontal: 16,
+    
   },
   itemContainer: {
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#ccc',
+    
   },
   subContainer: {
     backgroundColor: '#ffffff',

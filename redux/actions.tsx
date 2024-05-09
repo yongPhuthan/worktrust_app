@@ -31,6 +31,11 @@ export const get_default_contract = (payload: any) => ({
   payload,
 });
 
+export const get_logo = (payload: any) => ({
+  type: contrains.GET_LOGO,
+  payload
+});
+
 
 
 // COMPONENTS  => ACTION
@@ -65,5 +70,11 @@ export const getExistingServices = (payload: any) => {
 export const getDefaultContract = (payload: any) => {
   return (dispatch: any) => {
     dispatch(get_default_contract(payload));
+  };
+}
+
+export const getLogo = (payload: any) => {
+  return (dispatch: any) => {
+    dispatch(get_logo(payload));
   };
 }

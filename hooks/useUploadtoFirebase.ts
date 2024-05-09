@@ -1,11 +1,12 @@
-import {useState} from 'react';
+import { useState } from 'react';
 import firebase from '../firebase';
-import {useUser} from '../providers/UserContext';
+import { useUser } from '../providers/UserContext';
+import ImageResizer from '@bam.tech/react-native-image-resizer';
 
 type UploadResponse = {
   isUploading: boolean;
   error: Error | null;
-  uploadImage: (imageUri: string) => Promise<string | null>;
+  uploadImage: (imageUri: string) => Promise<{ originalUrl?: string, thumbnailUrl?: string }>;
 };
 
 export function useUploadToFirebase(storagePath: string): UploadResponse {
@@ -13,47 +14,51 @@ export function useUploadToFirebase(storagePath: string): UploadResponse {
   const [error, setError] = useState<Error | null>(null);
   const user = useUser();
 
-  const uploadImage = async (imageUri: string): Promise<string | null> => {
+  const uploadImage = async (imageUri: string): Promise<{ originalUrl?: string, thumbnailUrl?: string }> => {
     if (!user || !user.uid) {
       console.error('User or user UID is not available');
       setError(new Error('User or user UID is not available'));
-      return null;
+      return {};
     }
 
     setIsUploading(true);
     setError(null);
 
-    const reference = firebase.storage().ref(`${storagePath}/${user.uid}`);
-
     try {
-      // Assuming imageUri is a local file path
-      const task = reference.putFile(imageUri);
+      // Resize and upload original image as WebP
+      const originalResponse = await ImageResizer.createResizedImage(
+        imageUri,
+        2580,    // maxWidth for original
+        2580,    // maxHeight for original
+        'PNG',  // compressFormat
+        100,      // quality
+        0,       // rotation
+        null     // outputPath
+      );
+      
+      const originalUrl = await uploadToFirebase(storagePath, user.uid, originalResponse.uri, 'original');
 
-      // Monitor progress
-      task.on('state_changed', snapshot => {
-        console.log(`Upload is ${snapshot.bytesTransferred / snapshot.totalBytes * 100}% done`);
-        switch (snapshot.state) {
-          case firebase.storage.TaskState.PAUSED: // or 'paused'
-            console.log('Upload is paused');
-            break;
-          case firebase.storage.TaskState.RUNNING: // or 'running'
-            console.log('Upload is running');
-            break;
-        }
-      });
+      // Resize and upload thumbnail as WebP
+      const thumbnailResponse = await ImageResizer.createResizedImage(
+        imageUri,
+        300,     // maxWidth for thumbnail
+        200,     // maxHeight for thumbnail
+        'PNG',  // compressFormat
+        80,      // quality
+        0,       // rotation
+        null     // outputPath
+      );
+      
+      const thumbnailUrl = await uploadToFirebase(storagePath, user.uid, thumbnailResponse.uri, 'thumbnail');
 
-      await task;
-
-      const downloadURL = await reference.getDownloadURL();
-      console.log('Download URL:', downloadURL);
       setIsUploading(false);
-      return downloadURL;
+      return { originalUrl, thumbnailUrl };
+    } catch (err) {
+      console.error('Error during image processing or upload:', err);
 
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      setError(error instanceof Error ? error : new Error('An error occurred during the upload'));
+      
       setIsUploading(false);
-      return null;
+      return {};
     }
   };
 
@@ -62,4 +67,13 @@ export function useUploadToFirebase(storagePath: string): UploadResponse {
     error,
     uploadImage,
   };
+}
+
+async function uploadToFirebase(storagePath: string, userId: string, uri: string, type: string): Promise<string> {
+  const fullPath = `${storagePath}/${userId}/${type}/${uri.split('/').pop()}`;
+  const reference = firebase.storage().ref(fullPath);
+  await reference.putFile(uri);
+  const downloadURL = await reference.getDownloadURL();
+  console.log(`${type} uploaded successfully to Firebase with URL:`, downloadURL);
+  return downloadURL;
 }
