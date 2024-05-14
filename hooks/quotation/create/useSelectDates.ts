@@ -19,8 +19,10 @@ const useDocumentDetails = () => {
 
     return {
       initialDocnumber: docnumber,
-      initialDateOffer: dateOffer,
-      initialDateEnd: dateEnd,
+      initialDateOfferFormatted: dateOffer,
+      initialDateEndFormatted: dateEnd,
+      initialDateOffer: today,
+      initialDateEnd: endDate,
     };
   }, []);
 };

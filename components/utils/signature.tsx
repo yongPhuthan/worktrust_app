@@ -9,6 +9,7 @@ import React, {
 import FastImage from 'react-native-fast-image';
 import {v4 as uuidv4} from 'uuid';
 import firebase from '../../firebase';
+import * as stateAction from '../../redux/actions';
 
 import {BACK_END_SERVER_URL} from '@env';
 import {useMutation} from '@tanstack/react-query';
@@ -55,20 +56,18 @@ const SignatureComponent = ({
     formState: {errors},
   } = context;
   const {
-    state: {code},
+    state: {code, userSignature},
     dispatch,
   }: any = useContext(Store);
 
-  const updateCompanySignature = async (data: any) => {
+  const updateUserSignature = async (data: any) => {
     if (!user || !user.uid) {
       throw new Error('User or user email is not available');
     }
     try {
       const token = await user.getIdToken(true);
       const response = await fetch(
-        `${BACK_END_SERVER_URL}/api/company/updateCompanySignature?code=${encodeURIComponent(
-          code,
-        )}`,
+        `${BACK_END_SERVER_URL}/api/company/updateUserSignature`,
         {
           method: 'PUT',
           headers: {
@@ -103,7 +102,7 @@ const SignatureComponent = ({
   };
 
   const {mutate, isPending} = useMutation({
-    mutationFn: updateCompanySignature,
+    mutationFn: updateUserSignature,
 
     onError: (error: any) => {
       Alert.alert(
@@ -113,10 +112,6 @@ const SignatureComponent = ({
         {cancelable: false},
       );
     },
-  });
-  const companySignature = useWatch({
-    control: control,
-    name: 'companySeller.signature',
   });
 
   const sellerSignature = useWatch({
@@ -141,7 +136,7 @@ const SignatureComponent = ({
       }
 
       const filename = `signature${code}.png`;
-      const storagePath = `${code}/signature/${filename}${imageId}`;
+      const storagePath = `${code}/users/signature/${filename}${imageId}`;
 
       try {
         const storageRef = firebase.storage().ref(storagePath);
@@ -189,7 +184,7 @@ const SignatureComponent = ({
         }
 
         await mutate(imageUrl);
-        setValue('companyUser.signature', imageUrl, {shouldDirty: true});
+        dispatch(stateAction.get_user_signature(imageUrl));
         setValue('sellerSignature', imageUrl, {shouldDirty: true});
         setCreateNewSignature(false);
       } catch (error: any) {
@@ -216,18 +211,18 @@ const SignatureComponent = ({
   };
 
   useEffect(() => {
-    if (companySignature === 'none' || null || '' || !companySignature) {
+    if (userSignature === 'none' || null || '' || !userSignature) {
       setCreateNewSignature(true);
     }
-  }, [companySignature, setValue, sellerSignature]);
+  }, [userSignature, setValue, sellerSignature]);
 
   useEffect(() => {
-    if (companySignature) {
-      Image.prefetch(companySignature)
+    if (userSignature) {
+      Image.prefetch(userSignature)
         .then(() => console.log('Image prefetched!'))
         .catch(error => console.error('Error prefetching image:', error));
     }
-  }, [companySignature]);
+  }, [userSignature]);
   const style = `.m-signature-pad--footer {display: none; margin: 0px;} 
   
   .m-signature-pad--body {border: 1px solid #000;}
@@ -252,11 +247,11 @@ const SignatureComponent = ({
             <View style={styles.textContainer}>
               <View style={styles.underline} />
 
-              {companySignature && (
+              {userSignature && (
                 <FastImage
                   style={styles.image}
                   source={{
-                    uri: companySignature,
+                    uri: userSignature,
                     priority: FastImage.priority.normal,
                     cache: FastImage.cacheControl.web,
                   }}
@@ -264,7 +259,7 @@ const SignatureComponent = ({
               )}
 
               <TouchableOpacity
-                onPress={() => handleSave(companySignature)}
+                onPress={() => handleSave(userSignature)}
                 style={styles.btn}>
                 <Text style={styles.label}>ใช้ลายเซ็นเดิม</Text>
               </TouchableOpacity>

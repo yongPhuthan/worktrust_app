@@ -61,7 +61,7 @@ const Quotation = ({navigation}: Props) => {
   const [companyUser, setCompanyUser] = useState<CompanySeller>();
 
   const [addCustomerModal, setAddCustomerModal] = useState(false);
-  const {initialDocnumber, initialDateOffer, initialDateEnd} =
+  const {initialDocnumber, initialDateOfferFormatted: initialDateOffer, initialDateEndFormatted: initialDateEnd} =
     useSelectedDates();
 
   const thaiDateFormatter = useThaiDateFormatter();

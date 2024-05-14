@@ -54,9 +54,6 @@ export function useCreateToServer(
         throw new Error(errorMessage);
       }
 
-      // Optionally handle the response data here
-      console.log('queryKey:', queryKey);
-      console.log('code:', code);
 
       // Invalidate queries or refetch data as needed
       queryClient.invalidateQueries({

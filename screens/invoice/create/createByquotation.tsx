@@ -69,7 +69,7 @@ const CreateByQuotation = ({navigation, route}: Props) => {
   const [singatureModal, setSignatureModal] = useState(false);
   const [signature, setSignature] = useState<string | null>(null);
   const [serviceIndex, setServiceIndex] = useState(0);
-  const {initialDocnumber, initialDateOffer, initialDateEnd} =
+  const {initialDocnumber, initialDateOfferFormatted: initialDateOffer, initialDateEndFormatted: initialDateEnd} =
     useSelectedDates();
   const invoiceId = uuidv4();
   const backendUrl = `${BACK_END_SERVER_URL}/api/documents/createInvoice`;

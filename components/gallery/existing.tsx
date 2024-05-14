@@ -103,7 +103,6 @@ const GalleryScreen = ({
       .filter(img => img.defaultChecked)
       .map(img => img.url);
     setValue('serviceImages', urls, {shouldDirty: true});
-    console.log('serviceImages:', urls);
   };
   const getGallery = async () => {
     const imagesCollectionPath = `${code}/gallery/Images`;
@@ -229,7 +228,13 @@ const GalleryScreen = ({
                 <FlatList
                   data={galleryImages}
                   numColumns={3}
-                  ListEmptyComponent={<Text>No images available.</Text>}
+                  ListEmptyComponent={<Text style={{
+                    textAlign: 'center',
+                    color: 'gray',
+                    fontSize: 16,
+                    fontFamily: 'Sukhumvit Set',
+                  
+                  }}>ยังไม่มีรูปภาพ กด+เพิ่มรูปภาพ</Text>}
                   renderItem={({item}) => (
                     <View
                       style={[

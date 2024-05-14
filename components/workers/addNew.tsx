@@ -33,9 +33,10 @@ import {Store} from '../../redux/store';
 import SaveButton from '../ui/Button/SaveButton';
 import {useUploadToFirebase} from '../../hooks/useUploadtoFirebase';
 import {useCreateToServer} from '../../hooks/useUploadToserver';
+import { useUploadMedium } from '../../hooks/useUploadMedium';
 
 interface ExistingModalProps {
-  isVisible: boolean;
+  setRefetch: () => void
   onClose: () => void;
 }
 enum WorkerStatus {
@@ -43,7 +44,7 @@ enum WorkerStatus {
   OUTSOURCE = 'OUTSOURCE',
 }
 
-const AddNewWorker = ({isVisible, onClose}: ExistingModalProps) => {
+const AddNewWorker = ({setRefetch, onClose}: ExistingModalProps) => {
   const [title, setTitle] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const queryClient = useQueryClient();
@@ -106,22 +107,22 @@ const AddNewWorker = ({isVisible, onClose}: ExistingModalProps) => {
     });
   };
 
-  const storagePath = `${code}/workers/${getValues('name')}`;
+  const storagePath = `/users/${code}/images/workers/${getValues('name')}`;
 
   const {
     isUploading,
     error: uploadError,
     uploadImage,
-  } = useUploadToFirebase(storagePath);
+  } = useUploadMedium(storagePath);
   const url = `${BACK_END_SERVER_URL}/api/company/createWorker`;
-  const {isLoading, error, createToServer} = useCreateToServer(url, 'workers');
+  const {isLoading, error, createToServer} = useCreateToServer(url, 'dashboardData');
   const createWorker = useCallback(async () => {
     if (!user || !user.uid || !isValid) {
       console.error('User or user email or Image is not available');
       return;
     }
-    const uploadPromises = [uploadImage(image)];
-    const downloadUrl = await Promise.all(uploadPromises);
+    const uploadPromises = [await uploadImage(image)]
+    const downloadUrl = await Promise.all(uploadPromises)
     if (uploadError) {
       throw new Error('There was an error uploading the images');
     }
@@ -129,7 +130,7 @@ const AddNewWorker = ({isVisible, onClose}: ExistingModalProps) => {
       throw new Error('ไม่สามาถอัพโหลดรูปภาพได้');
     }
     try {
-      setValue('image', downloadUrl[0] as string);
+      setValue('image', downloadUrl[0].originalUrl as string);
       const formData = {
         ...getValues(),
       };
@@ -163,6 +164,7 @@ const AddNewWorker = ({isVisible, onClose}: ExistingModalProps) => {
       queryClient.invalidateQueries({
         queryKey: ['workers', code],
       });
+      setRefetch();
       onClose();
     },
     onError: error => {

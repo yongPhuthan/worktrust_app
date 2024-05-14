@@ -10,16 +10,9 @@ const useFetchDashboardInvoice = () => {
     if (!user) {
       throw new Error('User not authenticated');
     }
-
-    const {email} = user;
-    if (!email) {
-      throw new Error('Email not found');
-    }
     const token = await user.getIdToken(true);
     const response = await fetch(
-      `${BACK_END_SERVER_URL}/api/dashboard/dashboardInvoice?email=${encodeURIComponent(
-        email,
-      )}`,
+      `${BACK_END_SERVER_URL}/api/dashboard/dashboardInvoice`,
       {
         method: 'GET',
         headers: {
@@ -41,12 +34,16 @@ const useFetchDashboardInvoice = () => {
         return dateB.getTime() - dateA.getTime();
       });
     }
+    if(!data) throw new Error('No data found')
+    console.log('DATA', data)
     return data;
   };
 
   const {data, isLoading, isError, error} = useQuery({
-    queryKey: ['dashboardInvoice', user?.email],
+    queryKey: ['dashboardInvoice'],
     queryFn: fetchDashboardInvoice,
+    enabled: !!user,
+    retry: 3,
   });
 
   return {data, isLoading, isError, error};

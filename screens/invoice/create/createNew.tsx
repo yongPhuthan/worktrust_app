@@ -1,9 +1,22 @@
-import { faBriefcase, faPlus } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { yupResolver } from '@hookform/resolvers/yup';
-import { StackNavigationProp } from '@react-navigation/stack';
-import React, { useContext, useEffect, useMemo, useState } from 'react';
-import { FormProvider, useFieldArray, useForm, useWatch } from 'react-hook-form';
+import {
+  faBriefcase,
+  faPlus,
+  faSign,
+  faSignature,
+  faUser,
+} from '@fortawesome/free-solid-svg-icons';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {yupResolver} from '@hookform/resolvers/yup';
+import {StackNavigationProp} from '@react-navigation/stack';
+import React, {useContext, useEffect, useMemo, useState} from 'react';
+import {
+  FormProvider,
+  set,
+  useFieldArray,
+  useForm,
+  useWatch,
+  Controller,
+} from 'react-hook-form';
 import {
   Alert,
   Dimensions,
@@ -13,88 +26,165 @@ import {
   SafeAreaView,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TouchableOpacity,
+  Modal,
   View,
 } from 'react-native';
-import Modal from 'react-native-modal';
 import {
-  ActivityIndicator,
   Appbar,
   Button,
   ProgressBar,
+  Switch,
+  List,
+  Divider,
+  IconButton,
+  TextInput,
+  SegmentedButtons,
+  Icon,
 } from 'react-native-paper';
-import { v4 as uuidv4 } from 'uuid';
-import AddClient from '../../../components/AddClient';
+import {v4 as uuidv4} from 'uuid';
 import AddServices from '../../../components/AddServices';
 import CardClient from '../../../components/CardClient';
 import CardProject from '../../../components/CardProject';
 import DocNumber from '../../../components/DocNumber';
 import Summary from '../../../components/Summary';
 import AddCustomer from '../../../components/add/AddCustomer';
+import ContractModal from '../../../components/contract/create';
+import SelectProductModal from '../../../components/service/select';
 import DatePickerButton from '../../../components/styles/DatePicker';
-import Divider from '../../../components/styles/Divider';
+// import Divider from '../../components/styles/Divider';
 import SmallDivider from '../../../components/styles/SmallDivider';
+import AddCard from '../../../components/ui/Button/AddCard';
 import SignatureComponent from '../../../components/utils/signature';
+import ProjectModalScreen from '../../../components/webview/project';
 import ExistingWorkers from '../../../components/workers/existing';
-import useFetchCompanyUser from '../../../hooks/quotation/create/useFetchCompanyUser'; // adjust the path as needed
+import useCreateQuotation from '../../../hooks/quotation/create/useSaveQuotation';
 import useSelectedDates from '../../../hooks/quotation/create/useSelectDates';
 import useThaiDateFormatter from '../../../hooks/utils/useThaiDateFormatter';
-import * as stateAction from '../../../redux/actions';
-import { Store } from '../../../redux/store';
-import { CompanySeller, Service } from '../../../types/docType';
-import { ParamListBase } from '../../../types/navigationType';
-import { quotationsValidationSchema } from '../../utils/validationSchema';
-import { TaxType } from '../../../models/Tax';
-
+import {TaxType} from '../../../models/Tax';
+import {Store} from '../../../redux/store';
+import {CompanySeller, Service} from '../../../types/docType';
+import {ParamListBase} from '../../../types/navigationType';
+import {quotationsValidationSchema} from '../../utils/validationSchema';
+import PDFModalScreen from '../../../components/webview/pdf';
+import useShare from '../../../hooks/webview/useShare';
+import WarrantyModal from '../../../components/warranty/create';
+import AddProductFormModal from '../../../components/service/addNew';
+import {useModal} from '../../../hooks/quotation/create/useModal';
+import useCreateNewInvoice from '../../../hooks/invoice/useCreateInvoice';
 interface Props {
-  navigation: StackNavigationProp<ParamListBase, 'Quotation'>;
+  navigation: StackNavigationProp<ParamListBase, 'CreateNewInvoice'>;
 }
 
-const Quotation = ({navigation}: Props) => {
-  const {dispatch}: any = useContext(Store);
-  // const { data, isLoading } = useQuery('data', fetchData);
-  const [isLoadingMutation, setIsLoadingMutation] = useState(false);
-  const {data, isLoading, isError, error} = useFetchCompanyUser();
+const CreateNewInvoice = ({navigation}: Props) => {
+  const {
+    state: {companyState, defaultContract, defaultWarranty},
+    dispatch,
+  }: any = useContext(Store);
 
-  const [companyUser, setCompanyUser] = useState<CompanySeller>();
-
-  const [addCustomerModal, setAddCustomerModal] = useState(false);
-  const {initialDocnumber, initialDateOffer, initialDateEnd} =
-    useSelectedDates();
+  const {
+    initialDocnumber,
+    initialDateOfferFormatted,
+    initialDateEndFormatted,
+    initialDateEnd,
+    initialDateOffer,
+  } = useSelectedDates();
 
   const thaiDateFormatter = useThaiDateFormatter();
+  const [addNewService, setAddNewService] = useState(false);
 
-  const [workerModal, setWorkerModal] = useState(false);
   // const [customerName, setCustomerName] = useState('');
+  const [signaturePicker, setSignaturePicker] = useState(false);
+  const [contractPicker, setContractPicker] = useState(false);
 
-  const [pickerVisible, setPickerVisible] = useState(false);
   const [workerPicker, setWorkerpicker] = useState(false);
 
-  const [singatureModal, setSignatureModal] = useState(false);
+  const [invoiceServerId, setInvoiceServerId] = useState<string | null>(
+    null,
+  );
+  const [pdfUrl, setPdfUrl] = useState<string | null>('true');
+  const [value, setValue] = React.useState('');
+  const [openNoteToCustomer, setOpenNoteToCustomer] = useState(false);
+  const [openNoteToTeam, setOpenNoteToTeam] = useState(false);
+  const [selectService, setSelectService] = useState<Service | null>(null);
+  const [currentValue, setCurrentValue] = useState<Service | null>(null);
   const [signature, setSignature] = useState<string | null>(null);
   const quotationId = uuidv4();
+  const [dateOfferFormatted, setDateOfferFormatted] = useState<string>(
+    initialDateOfferFormatted,
+  );
+  const [dateEndFormatted, setDateEndFormatted] = useState<string>(
+    initialDateEndFormatted,
+  );
+  const [serviceIndex, setServiceIndex] = useState<number>(0);
   const [fcmToken, setFtmToken] = useState('');
-  const [showEditServiceModal, setShowEditServiceModal] = useState(false);
+
+  const url = `https://www.worktrust.co/preview/${invoiceServerId}`;
+
+  const {
+    openModal: openAddCustomerModal,
+    closeModal: closeAddCustomerModal,
+    isVisible: addCustomerModal,
+  } = useModal();
+  const {
+    openModal: openWorkerModal,
+    closeModal: closeWorkerModal,
+    isVisible: workerModal,
+  } = useModal();
+  const {
+    openModal: openSignatureModal,
+    closeModal: closeSignatureModal,
+    isVisible: signatureModal,
+  } = useModal();
+  const {
+    openModal: openContractModal,
+    closeModal: closeContractModal,
+    isVisible: contractModal,
+  } = useModal();
+  const {
+    openModal: openPDFModal,
+    closeModal: closePDFModal,
+    isVisible: showPDFModal,
+  } = useModal();
+  const {
+    openModal: openProjectModal,
+    closeModal: closeProjectModal,
+    isVisible: showProjectModal,
+  } = useModal();
+  const {
+    openModal: openAddNewServiceModal,
+    closeModal: closeAddNewServiceModal,
+    isVisible: showAddNewService,
+  } = useModal();
+  const {
+    openModal: openAddExistingServiceModal,
+    closeModal: closeAddExistingServiceModal,
+    isVisible: showAddExistingService,
+  } = useModal();
+  const {
+    openModal: openEditServiceModal,
+    closeModal: closeEditServiceModal,
+    isVisible: showEditServiceModal,
+  } = useModal();
+
   const [visibleModalIndex, setVisibleModalIndex] = useState<number | null>(
     null,
   );
 
   const defalutCustomer = {
-    id: '',
     name: '',
     address: '',
-    companyId: '',
+    customerTax: '',
     phone: '',
   };
 
   const quotationDefaultValues = {
     services: [],
     customer: defalutCustomer,
-    companyUser: null,
+    company: companyState,
     vat7: 0,
-    taxType: 'NOTAX',
+    taxType: TaxType.NOTAX,
     taxValue: 0,
     summary: 0,
     summaryAfterDiscount: 0,
@@ -103,13 +193,13 @@ const Quotation = ({navigation}: Props) => {
     discountValue: 0,
     allTotal: 0,
     dateOffer: initialDateOffer,
+    noteToCustomer: '',
+    noteToTeam: '',
     dateEnd: initialDateEnd,
     docNumber: initialDocnumber,
-    workers: [],
     FCMToken: fcmToken,
     sellerSignature: '',
   };
-
   const methods = useForm<any>({
     mode: 'all',
     defaultValues: quotationDefaultValues,
@@ -124,100 +214,59 @@ const Quotation = ({navigation}: Props) => {
     control: methods.control,
     name: 'customer',
   });
-
-  const workers = useWatch({
-    control: methods.control,
-    name: 'workers',
-  });
   const services = useWatch({
     control: methods.control,
     name: 'services',
   });
+  const sellerSignature = useWatch({
+    control: methods.control,
+    name: 'sellerSignature',
+  });
+
+
   const isCustomerDisabled = useMemo(() => {
     return customer.name === '' && customer.address === '';
   }, [customer.name, customer.address]);
 
   const isDisabled = !customer.name || services.length === 0;
-
   useEffect(() => {
-    if (data?.user) {
-      setCompanyUser(data); // แก้ไขจาก data เดิมที่คุณให้มา
-      methods.setValue('companyUser', data.user);
-      dispatch(stateAction.get_companyID(data.user.id));
-      methods.setValue('FCMToken', fcmToken); // Update FCMToken
-    }
-  }, [data]);
+    methods.setValue('FCMToken', fcmToken);
+  }, [dateEndFormatted, dateOfferFormatted, fcmToken, methods]);
+
+  const handleShare = useShare({url, title: `ใบเสนอราคา ${customer.name}`});
+
   const useSignature = () => {
-    // Toggle the state of the picker and accordingly set the modal visibility
-    setPickerVisible(prevPickerVisible => {
-      const newPickerVisible = !prevPickerVisible;
-      setSignatureModal(newPickerVisible);
-      if (!newPickerVisible) {
-        methods.setValue('sellerSignature', '', {shouldDirty: true});
-      } else {
-        methods.setValue('sellerSignature', signature, {shouldDirty: true});
-      }
-      return newPickerVisible;
-    });
+    if (sellerSignature) {
+      methods.setValue('sellerSignature', '', {shouldDirty: true});
+      onCloseSignature();
+    } else {
+      openSignatureModal();
+    }
   };
 
-  const useWorkers = () => {
-    if (!workerPicker) {
-      if (workers.length > 0) {
-        setWorkerModal(false);
-        setWorkerpicker(!workerPicker);
-      } else {
-        setWorkerModal(true);
-        setWorkerpicker(!workerPicker);
-      }
-    } else {
-      methods.setValue('workers', []);
-      setWorkerpicker(!workerPicker);
-    }
-  };
-  const handleSignatureSuccess = () => {
-    setSignatureModal(false);
-  };
+
+
   const handleModalClose = () => {
     setVisibleModalIndex(null);
   };
-
-  const handleAddProductForm = async () => {
-    if (companyUser?.user) {
-      navigation.navigate('AddProduct', {
-        onAddService: newProduct => append(newProduct),
-        quotationId: quotationId,
-        currentValue: null,
-      });
-      // navigation.navigate('ExistingProduct', {id: companyUser.user?.id});
-    } else {
-      console.log('no user', data);
-      // await firebase.auth().signOut();
-    }
-  };
   const handleEditService = (index: number, currentValue: Service) => {
-    setShowEditServiceModal(!showEditServiceModal);
+    openEditServiceModal();
     handleModalClose();
-    navigation.navigate('AddProduct', {
-      onAddService: newProduct => update(index, newProduct),
-      currentValue,
-      quotationId: quotationId,
-    });
-    // navigation.navigate('EditProductForm', {index, currentValue, update});
+    setCurrentValue(currentValue);
+    openAddNewServiceModal();
+    setServiceIndex(index);
   };
+
+  const actions: any = {
+    setInvoiceServerId,
+    setPdfUrl,
+    openPDFModal,
+  };
+
+  const {mutate, isPending} = useCreateNewInvoice(actions);
 
   const handleButtonPress = async () => {
-    setIsLoadingMutation(true);
-    try {
-      navigation.navigate('DefaultContract', {
-        data: methods.getValues(),
-      } as any);
-
-      setIsLoadingMutation(false);
-    } catch (error: Error | any) {
-      console.error('There was a problem calling the function:', error);
-      console.log(error.response);
-    }
+    await mutate(methods.getValues());
   };
 
   const handleInvoiceNumberChange = (text: string) => {
@@ -225,21 +274,13 @@ const Quotation = ({navigation}: Props) => {
   };
 
   const handleStartDateSelected = (date: Date) => {
-    const formattedDate = thaiDateFormatter(date);
-    methods.setValue('dateOffer', formattedDate);
+    setDateOfferFormatted(thaiDateFormatter(date));
+    methods.setValue('dateOffer', date);
   };
   const handleEndDateSelected = (date: Date) => {
-    const formattedEndDate = thaiDateFormatter(date);
-    methods.setValue('dateEnd', formattedEndDate);
+    setDateEndFormatted(thaiDateFormatter(date));
+    methods.setValue('dateEnd', date);
   };
-
-  if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size={'large'} />
-      </View>
-    );
-  }
 
   const handleRemoveService = (index: number) => {
     setVisibleModalIndex(null);
@@ -247,10 +288,18 @@ const Quotation = ({navigation}: Props) => {
   };
 
   const onCloseSignature = () => {
-    setPickerVisible(false);
-    setSignatureModal(false);
-    methods.setValue('sellerSignature', '', {shouldDirty: true});
+    setSignaturePicker(false);
+    closeSignatureModal();
+    // methods.setValue('sellerSignature', '', {shouldDirty: true});
   };
+  useEffect(() => {
+    if (!openNoteToCustomer || !openNoteToTeam) {
+      methods.setValue('noteToCustomer', '', {shouldDirty: true});
+      methods.setValue('noteToTeam', '', {shouldDirty: true});
+    }
+  }, [openNoteToCustomer, openNoteToTeam]);
+console.log('showPDFModal',showPDFModal)
+console.log('pdfUrl',pdfUrl)
   return (
     <>
       <Appbar.Header
@@ -282,7 +331,7 @@ const Quotation = ({navigation}: Props) => {
           }}
         />
         <Appbar.Content
-          title="สร้างใบเสนอราคา"
+          title="สร้างใบวางบิล"
           titleStyle={{
             fontSize: 18,
             fontWeight: 'bold',
@@ -290,22 +339,14 @@ const Quotation = ({navigation}: Props) => {
           }}
         />
         <Button
-          // loading={postLoading}
+          loading={isPending}
           disabled={isDisabled}
           testID="submited-button"
           mode="contained"
-          icon={'arrow-right'}
-          contentStyle={{
-            flexDirection: 'row-reverse',
-            
-          }}
-          buttonColor={'#1b72e8'}
           onPress={handleButtonPress}>
-          {'ไปต่อ'}
+          {'บันทึก'}
         </Button>
       </Appbar.Header>
-      <ProgressBar progress={0.5} color={'#1b52a7'} />
-
       <FormProvider {...methods}>
         <View style={{flex: 1}}>
           <ScrollView style={styles.container}>
@@ -329,16 +370,28 @@ const Quotation = ({navigation}: Props) => {
               />
             </View>
             <View style={styles.subContainer}>
-              {!isCustomerDisabled ? (
-                <CardClient
-                  handleEditClient={() => setAddCustomerModal(true)}
-                />
-              ) : (
-                <AddClient handleAddClient={() => setAddCustomerModal(true)} />
-              )}
-
+              <View style={{marginVertical: 20}}>
+                {!isCustomerDisabled ? (
+                  <CardClient handleEditClient={() => openAddCustomerModal()} />
+                ) : (
+                  <>
+                    <View style={styles.header}>
+                      <FontAwesomeIcon
+                        icon={faUser}
+                        color="#19232e"
+                        size={18}
+                      />
+                      <Text style={styles.label}>ลูกค้า</Text>
+                    </View>
+                    <AddCard
+                      buttonName="เพิ่มลูกค้า"
+                      handleAdd={() => openAddCustomerModal()}
+                    />
+                  </>
+                )}
+              </View>
               <View style={styles.header}>
-                <FontAwesomeIcon icon={faBriefcase} color="#19232e" size={20} />
+                <FontAwesomeIcon icon={faBriefcase} color="#19232e" size={18} />
 
                 <Text style={styles.label}>บริการ-สินค้า</Text>
               </View>
@@ -356,10 +409,13 @@ const Quotation = ({navigation}: Props) => {
                   />
                 ))}
 
-              <AddServices handleAddProductFrom={handleAddProductForm} />
-              <Divider />
+              <AddServices handleAddProductFrom={openAddExistingServiceModal} />
+              <Divider
+                style={{
+                  marginTop: 20,
+                }}
+              />
 
-              {/* <Divider /> */}
               <Summary
                 vat7Props={Number(methods.watch('vat7')) === 0 ? false : true}
                 taxProps={
@@ -373,81 +429,16 @@ const Quotation = ({navigation}: Props) => {
                   methods.watch('taxType') !== TaxType.NOTAX ? true : false
                 }
               />
-              <SmallDivider />
-              <View style={styles.signatureRow}>
-                <Text style={styles.signHeader}>เพิ่มทีมงานติดตั้ง</Text>
-                <Switch
-                  trackColor={{false: '#767577', true: '#81b0ff'}}
-                  thumbColor={workerPicker ? '#ffffff' : '#f4f3f4'}
-                  ios_backgroundColor="#3e3e3e"
-                  onValueChange={() => useWorkers()}
-                  value={workers.length > 0 ? true : false}
-                  style={Platform.select({
-                    ios: {
-                      transform: [{scaleX: 0.7}, {scaleY: 0.7}],
-                      marginTop: 5,
-                    },
-                    android: {},
-                  })}
-                />
-              </View>
-              {/* workers */}
-              {workers.length > 0 && (
-                <View
-                  style={{
-                    flex: 1,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    paddingVertical: 10,
-                  }}>
-                  <FlatList
-                    data={workers}
-                    horizontal={true}
-                    renderItem={({item, index}) => {
-                      return (
-                        <View style={styles.imageContainer}>
-                          <TouchableOpacity
-                            onPress={() => setWorkerModal(true)}>
-                            <Image
-                              source={{uri: item.image}}
-                              style={styles.image}
-                            />
-                            <Text>{item.name}</Text>
-                          </TouchableOpacity>
-                        </View>
-                      );
-                    }}
-                    keyExtractor={(item, index) => index.toString()}
-                    ListFooterComponent={
-                      workers.length > 0 ? (
-                        <TouchableOpacity
-                          style={styles.addButtonContainer}
-                          onPress={() => {
-                            setWorkerModal(true);
-                            // navigation.navigate('GalleryScreen', {code});
-                          }}>
-                          <FontAwesomeIcon
-                            icon={faPlus}
-                            size={32}
-                            color="#0073BA"
-                          />
-                        </TouchableOpacity>
-                      ) : null
-                    }
-                   
-                    // }
-                  />
-                </View>
-              )}
+
               <SmallDivider />
               <View style={styles.signatureRow}>
                 <Text style={styles.signHeader}>เพิ่มลายเซ็น</Text>
                 <Switch
                   trackColor={{false: '#767577', true: '#81b0ff'}}
-                  thumbColor={pickerVisible ? '#ffffff' : '#f4f3f4'}
+                  thumbColor={sellerSignature ? '#ffffff' : '#f4f3f4'}
                   ios_backgroundColor="#3e3e3e"
                   onValueChange={useSignature}
-                  value={pickerVisible}
+                  value={sellerSignature ? true : false}
                   style={Platform.select({
                     ios: {
                       transform: [{scaleX: 0.7}, {scaleY: 0.7}],
@@ -457,39 +448,149 @@ const Quotation = ({navigation}: Props) => {
                   })}
                 />
               </View>
+              {sellerSignature && (
+                <View>
+                  <Image
+                    source={{uri: sellerSignature}}
+                    style={styles.signatureImage}
+                  />
+                </View>
+              )}
+              <SmallDivider />
+              <View style={styles.signatureRow}>
+                <Text style={styles.signHeader}>หมายเหตุ</Text>
+                <Switch
+                  trackColor={{false: '#767577', true: '#81b0ff'}}
+                  thumbColor={openNoteToCustomer ? '#ffffff' : '#f4f3f4'}
+                  ios_backgroundColor="#3e3e3e"
+                  onValueChange={() =>
+                    setOpenNoteToCustomer(!openNoteToCustomer)
+                  }
+                  value={openNoteToCustomer ? true : false}
+                  style={Platform.select({
+                    ios: {
+                      transform: [{scaleX: 0.7}, {scaleY: 0.7}],
+                      marginTop: 5,
+                    },
+                    android: {},
+                  })}
+                />
+              </View>
+              {openNoteToCustomer && (
+                <View>
+                  <Controller
+                    control={methods.control}
+                    name="noteToCustomer"
+                    render={({
+                      field: {onChange, onBlur, value},
+                      fieldState: {error},
+                    }) => (
+                      <View>
+                        <TextInput
+                          keyboardType="name-phone-pad"
+                          style={
+                            Platform.OS === 'ios'
+                              ? {
+                                  height: 100,
+                                  textAlignVertical: 'top',
+                                  marginTop: 10,
+                                }
+                              : {marginTop: 10}
+                          }
+                          mode="outlined"
+                          numberOfLines={3}
+                          multiline={true}
+                          textAlignVertical="top"
+                          error={!!error}
+                          onChangeText={onChange}
+                          value={value}
+                        />
+                      </View>
+                    )}
+                  />
+                </View>
+              )}
+              <SmallDivider />
+              <View style={styles.signatureRow}>
+                <Text style={styles.signHeader}>โน๊ตภายในบริษัท</Text>
+                <Switch
+                  trackColor={{false: '#767577', true: '#81b0ff'}}
+                  thumbColor={openNoteToTeam ? '#ffffff' : '#f4f3f4'}
+                  ios_backgroundColor="#3e3e3e"
+                  onValueChange={() => setOpenNoteToTeam(!openNoteToTeam)}
+                  value={openNoteToTeam ? true : false}
+                  style={Platform.select({
+                    ios: {
+                      transform: [{scaleX: 0.7}, {scaleY: 0.7}],
+                      marginTop: 5,
+                    },
+                    android: {},
+                  })}
+                />
+              </View>
+              {openNoteToTeam && (
+                <View>
+                  <Controller
+                    control={methods.control}
+                    name="noteToTeam"
+                    render={({
+                      field: {onChange, onBlur, value},
+                      fieldState: {error},
+                    }) => (
+                      <View>
+                        <TextInput
+                          keyboardType="name-phone-pad"
+                          style={
+                            Platform.OS === 'ios'
+                              ? {
+                                  height: 100,
+                                  textAlignVertical: 'top',
+                                  marginTop: 10,
+                                }
+                              : {marginTop: 10}
+                          }
+                          mode="outlined"
+                          numberOfLines={3}
+                          multiline={true}
+                          textAlignVertical="top"
+                          error={!!error}
+                          onChangeText={onChange}
+                          value={value}
+                        />
+                      </View>
+                    )}
+                  />
+                </View>
+              )}
             </View>
           </ScrollView>
           <Modal
-            isVisible={addCustomerModal}
+            visible={addCustomerModal}
+            animationType="slide"
             style={styles.modalFull}
-            onBackdropPress={() => setAddCustomerModal(false)}>
-            <AddCustomer onClose={() => setAddCustomerModal(false)} />
+            onDismiss={closeAddCustomerModal}>
+            <AddCustomer onClose={() => closeAddCustomerModal()} />
           </Modal>
 
           <Modal
-            isVisible={workerModal}
-            onBackdropPress={() => setWorkerModal(false)}
+            visible={workerModal}
+            animationType="slide"
+            onDismiss={() => closeWorkerModal()}
             style={styles.modal}>
             <ExistingWorkers
               onClose={() => {
                 setWorkerpicker(!workerPicker);
-                setWorkerModal(false);
+                closeWorkerModal();
               }}
               isVisible={workerModal}
             />
           </Modal>
-          {/* <View>
-          <FooterBtn
-            btnText="ดำเนินการต่อ"
-            disabled={isDisabled}
-            onPress={handleButtonPress}
-          />
-        </View> */}
         </View>
         <Modal
-          isVisible={singatureModal}
+          visible={signatureModal}
+          animationType="slide"
           style={styles.modal}
-          onBackdropPress={onCloseSignature}>
+          onDismiss={onCloseSignature}>
           <Appbar.Header
             mode="center-aligned"
             style={{
@@ -504,29 +605,95 @@ const Quotation = ({navigation}: Props) => {
           </Appbar.Header>
           <SafeAreaView style={styles.containerModal}>
             <SignatureComponent
-              onClose={() => setSignatureModal(false)}
+              onClose={closeSignatureModal}
               setSignatureUrl={setSignature}
-              onSignatureSuccess={handleSignatureSuccess}
+              onSignatureSuccess={closeSignatureModal}
             />
           </SafeAreaView>
         </Modal>
+        <SelectProductModal
+          quotationId={quotationId}
+          onAddService={newProduct => append(newProduct)}
+          currentValue={null}
+          visible={showAddExistingService}
+          onClose={closeAddExistingServiceModal}
+        />
+        {/* <ContractModal
+          visible={contractModal}
+          onClose={() => setContractModal(false)}
+        /> */}
+
+        { pdfUrl && (
+          <>
+           
+            <PDFModalScreen
+              fileName={customer.name}
+              visible={showPDFModal}
+              onClose={closePDFModal}
+              pdfUrl={pdfUrl}
+            />
+
+            <SegmentedButtons
+              style={{
+                margin: 10,
+                marginHorizontal: 20,
+              }}
+              value={value}
+              onValueChange={setValue}
+              buttons={[
+                {
+                  value: 'preview',
+                  label: 'พรีวิว',
+                  icon: 'eye',
+                  onPress: () => openProjectModal(),
+                },
+                {
+                  value: 'train',
+                  label: 'สัญญา',
+                  icon: 'file-document',
+                  onPress: () => openPDFModal(),
+                },
+                {
+                  value: 'train',
+                  label: 'แชร์',
+                  icon: 'share-variant',
+                  onPress: handleShare,
+                },
+              ]}
+            />
+          </>
+        )}
+        {showAddNewService && (
+          <AddProductFormModal
+            resetSelectService={() => setSelectService(null)}
+            selectService={selectService}
+            resetAddNewService={() => setAddNewService(false)}
+            quotationId={quotationId}
+            onAddService={newProduct => update(serviceIndex, newProduct)}
+            currentValue={currentValue}
+            visible={showAddNewService}
+            onClose={closeAddNewServiceModal}
+          />
+        )}
       </FormProvider>
     </>
   );
 };
 
-export default Quotation;
+export default CreateNewInvoice;
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
 const imageContainerWidth = windowWidth / 3 - 10;
 
 const styles = StyleSheet.create({
   container: {
+    // backgroundColor:'#f3f8f3',
+
     backgroundColor: '#e9f7ff',
   },
   subContainerHead: {
     padding: 30,
-    marginBottom: 10,
+    // backgroundColor:'#f3f8f3',
     backgroundColor: '#e9f7ff',
     height: 'auto',
   },
@@ -540,9 +707,9 @@ const styles = StyleSheet.create({
   },
   subContainer: {
     backgroundColor: '#ffffff',
-    padding: 30,
-    marginBottom: 10,
+    paddingHorizontal: 30,
     height: 'auto',
+    paddingBottom: 200,
   },
   form: {
     borderColor: '#0073BA',
@@ -641,11 +808,18 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    marginTop: 20,
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'flex-start',
+    alignContent: 'center',
+
     gap: 20,
-    paddingVertical: 5,
+  },
+  headerContract: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    alignContent: 'center',
+    gap: 20,
   },
   selectButton: {
     backgroundColor: '#0073BA',
@@ -797,6 +971,12 @@ const styles = StyleSheet.create({
     borderRadius: 0,
     resizeMode: 'cover',
   },
+  signatureImage: {
+    width: '50%',
+    aspectRatio: 1,
+    borderRadius: 1,
+    resizeMode: 'cover',
+  },
   addButtonContainer: {
     width: 100,
     margin: 5,
@@ -807,5 +987,9 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
     borderWidth: 1,
     borderRadius: 4, // Optional, for rounded edges
+  },
+  containerSegment: {
+    flex: 1,
+    alignItems: 'center',
   },
 });

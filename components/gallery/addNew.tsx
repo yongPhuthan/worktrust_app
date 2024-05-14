@@ -225,7 +225,7 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
   const toggleWatermarkMenu = () =>
     setWatermarkMenuVisible(!isWatermarkMenuVisible);
 
-  const storagePath = `/users/${code}/images/gallery/${imageId}`;
+  const storagePath = `/users/${code}/images/gallery/`;
 
   const {
     isUploading,

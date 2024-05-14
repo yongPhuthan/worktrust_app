@@ -2,6 +2,7 @@ import {BACK_END_SERVER_URL} from '@env';
 import messaging from '@react-native-firebase/messaging';
 import {DrawerActions} from '@react-navigation/native';
 import {useQueryClient} from '@tanstack/react-query';
+
 import React, {useContext, useEffect, useMemo, useState} from 'react';
 import {
   Alert,
@@ -9,28 +10,33 @@ import {
   FlatList,
   StyleSheet,
   Text,
-
   TouchableOpacity,
   View,
 } from 'react-native';
 import Modal from 'react-native-modal';
-import {FilterButton} from '../../components/ui/Dashboard/FilterButton'; // Adjust the import path as necessary
-import firebase from '../../firebase';
-import {useActiveFilter} from '../../hooks/dashboard/useActiveFilter';
-import {useFilteredData} from '../../hooks/dashboard/useFilteredData';
-import {useRemoveQuotation} from '../../hooks/quotation/dashboard/useRemoveQuotation';
-import CardDashBoard from '../../components/CardDashBoard';
-import {useUser} from '../../providers/UserContext';
-import * as stateAction from '../../redux/actions';
-import {Store} from '../../redux/store';
-import {CompanySeller, Customer, Quotation, Service} from '../../types/docType';
-import {DashboardScreenProps} from '../../types/navigationType';
+import {FilterButton} from '../../../components/ui/Dashboard/FilterButton'; // Adjust the import path as necessary
+import firebase from '../../../firebase';
+import {useActiveFilter} from '../../../hooks/dashboard/useActiveFilter';
+import {useFilteredData} from '../../../hooks/dashboard/useFilteredData';
+import {useRemoveQuotation} from '../../../hooks/quotation/dashboard/useRemoveQuotation';
+import CardDashBoard from '../../../components/CardDashBoard';
+import {useUser} from '../../../providers/UserContext';
+import * as stateAction from '../../../redux/actions';
+import {Store} from '../../../redux/store';
+import {
+  CompanySeller,
+  Contract,
+  Customer,
+  Quotation,
+  Service,
+} from '../../../types/docType';
+import {DashboardScreenProps} from '../../../types/navigationType';
 
 import {
+  ActivityIndicator,
   Appbar,
   Dialog,
   Divider,
-  ActivityIndicator,
   FAB,
   List,
   PaperProvider,
@@ -38,30 +44,67 @@ import {
   Portal,
 } from 'react-native-paper';
 import {requestNotifications} from 'react-native-permissions';
-import useFetchDashboard from '../../hooks/quotation/dashboard/useFetchDashboard'; // adjust the path as needed
+import useFetchDashboard from '../../../hooks/quotation/dashboard/useFetchDashboard'; // adjust the path as needed
 import {
   QuotationStatus,
   QuotationStatusKey,
-} from '../../models/QuotationStatus';
-import useFetchDashboardInvoice from '../../hooks/invoice/queryInvoices';
-
-const InvoiceDashboard = ({navigation}: DashboardScreenProps) => {
+} from '../../../models/QuotationStatus';
+import ProjectModalScreen from '../../../components/webview/project';
+import useFetchDepositInvoices from 'hooks/invoice/deposit/queryDepositInvoices';
+interface ErrorResponse {
+  message: string;
+  action: 'logout' | 'redirectToCreateCompany' | 'contactSupport' | 'retry';
+}
+const Dashboard = ({navigation}: DashboardScreenProps) => {
   const [showModal, setShowModal] = useState(true);
   const user = useUser();
-  const {data, isLoading, isError, error} = useFetchDashboardInvoice();
+  const {
+    dispatch,
+    state: {isEmulator, code},
+  }: any = useContext(Store);
+  const {data, isLoading, isError, error} = useFetchDepositInvoices();
   const {activeFilter, updateActiveFilter} = useActiveFilter();
   const {width, height} = Dimensions.get('window');
   const [isLoadingAction, setIsLoadingAction] = useState(false);
   const queryClient = useQueryClient();
+  const [showProjectModal, setShowProjectModal] = useState(false);
   const [visible, setVisible] = useState(false);
   const [isModalSignContract, setIsModalSignContract] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null) as any;
   const [selectedIndex, setSelectedIndex] = useState(null) as any;
   const [originalData, setOriginalData] = useState<Quotation[] | null>(null);
-  const {dispatch}: any = useContext(Store);
   const filteredData = useFilteredData(originalData, activeFilter);
   const [companyData, setCompanyData] = useState<CompanySeller | null>(null);
-  const [invoiceData, setInvoiceData] = useState<Quotation[] | null>(null);
+  const [defaultContract, setDefaultContract] = useState<Contract | null>(null);
+  const [quotationData, setQuotationData] = useState<Quotation[] | null>(null);
+  const handleLogout = async () => {
+    try {
+      await firebase.auth().signOut();
+      navigation.reset({
+        index: 0,
+        routes: [{name: 'FirstAppScreen'}],
+      });
+    } catch (error) {
+      console.error('Failed to sign out: ', error);
+    }
+  };
+  const handleErrorResponse = (error: ErrorResponse) => {
+    switch (error.message) {
+      case 'logout':
+        handleLogout();
+        break;
+      case 'redirectToCreateCompany':
+        navigation.navigate('CreateCompanyScreen');
+        break;
+      case 'retry':
+        console.log('Retrying...');
+        // Implement retry logic here if necessary
+        break;
+      default:
+        console.error('Unhandled error action:', error.message);
+    }
+  };
+
   const handleNoResponse = () => {
     setIsModalSignContract(false);
   };
@@ -74,7 +117,7 @@ const InvoiceDashboard = ({navigation}: DashboardScreenProps) => {
     }
   };
 
-  const removeInvoice = async (id: string) => {
+  const removeQuotation = async (id: string) => {
     handleModalClose();
     setIsLoadingAction(true);
     if (!user || !user.uid) {
@@ -86,7 +129,7 @@ const InvoiceDashboard = ({navigation}: DashboardScreenProps) => {
       const response = await fetch(
         `${BACK_END_SERVER_URL}/api/documents/removeQuotation?id=${encodeURIComponent(
           id,
-        )}}`,
+        )}`,
         {
           method: 'DELETE',
           headers: {
@@ -98,7 +141,7 @@ const InvoiceDashboard = ({navigation}: DashboardScreenProps) => {
 
       if (response.ok) {
         queryClient.invalidateQueries({
-          queryKey: ['dashboardQuotation'],
+          queryKey: ['dashboardQuotation', code],
         });
         setIsLoadingAction(false);
       } else {
@@ -127,20 +170,18 @@ const InvoiceDashboard = ({navigation}: DashboardScreenProps) => {
           onPress: () => console.log('Cancel Pressed'),
           style: 'cancel',
         },
-        {text: 'ลบเอกสาร', onPress: () => removeInvoice(id)},
+        {text: 'ลบเอกสาร', onPress: () => removeQuotation(id)},
       ],
       {cancelable: false},
     );
   };
   useEffect(() => {
-    if (data) {
-      // Ensuring data[0] exists and has a property `code` before attempting to access it
-      if (!data[0]) {
-        navigation.navigate('CreateCompanyScreen');
-      } else {
-        // If data[0] exists and has a non-null `code`, proceed with your logic
-        setCompanyData(data[0]);
-        setInvoiceData(data[1]);
+    if (data && data.length > 0) {
+      // If data[0] exists and has a non-null `code`, proceed with your logic
+      setCompanyData(data[0]);
+
+      if (data[1] && data[1].length > 0) {
+        setQuotationData(data[1]);
         setOriginalData(data[1]);
       }
     }
@@ -161,6 +202,14 @@ const InvoiceDashboard = ({navigation}: DashboardScreenProps) => {
     }
   }, [user]);
 
+  if (isLoading || isLoadingAction) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size={'large'} />
+      </View>
+    );
+  }
+
   const filtersToShow: QuotationStatusKey[] = [
     QuotationStatus.ALL,
     QuotationStatus.PENDING,
@@ -168,6 +217,18 @@ const InvoiceDashboard = ({navigation}: DashboardScreenProps) => {
     QuotationStatus.CONTRACT,
     QuotationStatus.ONPROCESS,
   ];
+  const handleCreateContract = (index: number) => {
+    if (companyData && quotationData && quotationData.length > 0) {
+      console.log('quotationSelected', selectedItem);
+      navigation.navigate('ContractOptions', {
+        id: selectedItem.id,
+        sellerId: selectedItem.id,
+        allTotal: selectedItem.allTotal,
+        customerName: selectedItem.customer?.name as string,
+      });
+    }
+    setIsModalSignContract(false);
+  };
   const handleSignContractModal = (item: Quotation, index: number) => {
     setSelectedItem(item);
     setSelectedIndex(index);
@@ -197,6 +258,10 @@ const InvoiceDashboard = ({navigation}: DashboardScreenProps) => {
       services,
     });
   };
+
+  if (isError && error) {
+    handleErrorResponse(error);
+  }
   const renderItem = ({item, index}: any) => (
     <>
       <View style={{marginTop: 10}}>
@@ -238,7 +303,12 @@ const InvoiceDashboard = ({navigation}: DashboardScreenProps) => {
                 <List.Item
                   onPress={() => {
                     handleModalClose();
-                    navigation.navigate('DocViewScreen', {id: item.id});
+                    navigation.navigate('ProjectViewScreen', {
+                      id: item.id,
+                      pdfUrl: item.pdfUrl,
+                      fileName: `ใบเสนอราคา ${item.customer.name}.pdf`,
+                    });
+                    // navigation.navigate('DocViewScreen', {id: item.id});
                   }}
                   centered={true}
                   title="พรีวิวเอกสาร"
@@ -294,21 +364,13 @@ const InvoiceDashboard = ({navigation}: DashboardScreenProps) => {
     </>
   );
 
-  const createNewInvoice = () => {
+  const createNewQuotation = () => {
     if (!companyData) {
       navigation.navigate('CreateCompanyScreen');
     }
-    navigation.navigate('SelectDoc');
+    navigation.navigate('CreateQuotation');
   };
-  if (isError) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text>เกิดข้อผิดพลาด {error?.message}</Text>
-      </View>
-    );
-  }
-  console.log('filteredData', filteredData);
-  console.log('isLoading', isLoading);
+
   return (
     <>
       <PaperProvider>
@@ -328,7 +390,7 @@ const InvoiceDashboard = ({navigation}: DashboardScreenProps) => {
             <Appbar.Content
               title={
                 activeFilter == QuotationStatus.ALL
-                  ? 'ใบวางบิลทั้งหมด'
+                  ? 'รายการทั้งหมด'
                   : activeFilter === QuotationStatus.PENDING
                   ? 'รายการรออนุมัติ'
                   : activeFilter === QuotationStatus.APPROVED
@@ -352,72 +414,78 @@ const InvoiceDashboard = ({navigation}: DashboardScreenProps) => {
               // }}
             />
           </Appbar.Header>
-          <>
-            <View>
-              <FlatList
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                data={filtersToShow}
-                renderItem={({item}) => (
-                  <FilterButton
-                    filter={item}
-                    isActive={item === activeFilter}
-                    onPress={() => {
-                      updateActiveFilter(item);
-                    }}
-                  />
-                )}
-                keyExtractor={item => item}
-              />
+          {isLoadingAction ? (
+            <View
+              style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+              <ActivityIndicator size="large" />
             </View>
-            {isLoading || isLoadingAction ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator color='primary'/>
-              </View>
-            ) : (
-              <View
-                style={{
-                  flex: 1,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  backgroundColor: '#f5f5f5',
-                }}>
+          ) : (
+            <>
+              <View>
                 <FlatList
-                  data={filteredData}
-                  renderItem={renderItem}
-                  keyExtractor={item => item.id}
-                  ListEmptyComponent={
-                    <View
-                      style={{
-                        flex: 1,
-                        justifyContent: 'flex-start',
-                        height: height,
-
-                        alignItems: 'center',
-                        marginTop: height * 0.2,
-                      }}>
-                      <Icon source="inbox" color={'gray'} size={80} />
-                      <Text style={{marginTop: 10, color: 'gray'}}>
-                        ยังไม่มีเอกสาร
-                      </Text>
-                      <Text style={{marginTop: 10, color: 'gray'}}>
-                        กดปุ่ม + ด้านล่างเพื่อสร้างใบวาางบิล
-                      </Text>
-                    </View>
-                  }
-                  contentContainerStyle={invoiceData?.length === 0 && {flex: 1}}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  data={filtersToShow}
+                  renderItem={({item}) => (
+                    <FilterButton
+                      filter={item}
+                      isActive={item === activeFilter}
+                      onPress={() => {
+                        updateActiveFilter(item);
+                      }}
+                    />
+                  )}
+                  keyExtractor={item => item}
                 />
               </View>
-            )}
-            <FAB
-              style={styles.fabStyle}
-              icon="plus"
-              // onPress={()=>testConnection()}
-              onPress={() => createNewInvoice()}
-              color="white"
-            />
+              {data && (
+                <View
+                  style={{
+                    flex: 1,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: '#f5f5f5',
+                  }}>
+                  <FlatList
+                    data={filteredData}
+                    renderItem={renderItem}
+                    keyExtractor={item => item.id}
+                    ListEmptyComponent={
+                      <View
+                        style={{
+                          flex: 1,
+                          justifyContent: 'flex-start',
+                          height: height,
 
-            {/* <FAB.Group
+                          alignItems: 'center',
+                          marginTop: height * 0.2,
+                        }}>
+                        <Icon source="inbox" color={'gray'} size={80} />
+                        <Text style={{marginTop: 10, color: 'gray'}}>
+                          ยังไม่มีเอกสาร
+                        </Text>
+                        <Text style={{marginTop: 10, color: 'gray'}}>
+                          กดปุ่ม + ด้านล่างเพื่อสร้างใบเสนอราคา
+                        </Text>
+                      </View>
+                    }
+                    contentContainerStyle={
+                      quotationData?.length === 0 && {flex: 1}
+                    }
+                  />
+                </View>
+              )}
+              <FAB
+                variant="primary"
+                mode="elevated"
+                style={styles.fabStyle}
+                icon="plus"
+                // onPress={()=>testConnection()}
+                onPress={() => createNewQuotation()}
+                color="white"
+              />
+
+              {/* <FAB.Group
                 open={open}
                 visible
                 color="white"
@@ -448,14 +516,54 @@ const InvoiceDashboard = ({navigation}: DashboardScreenProps) => {
                   }
                 }}
               /> */}
-          </>
+            </>
+          )}
+          {/* modal popup */}
+          <Dialog
+            style={styles.modalContainer}
+            // backdropTransitionOutTiming={100}
+            onDismiss={handleNoResponse}
+            visible={isModalSignContract}>
+            <Dialog.Content>
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}>
+                <Text style={styles.selectedQuotationText}>
+                  ทำสัญญากับลูกค้า
+                </Text>
+                <Text style={styles.selectedQuotationText}>
+                  {selectedItem?.customer?.name}
+                </Text>
+                <Text style={styles.modalText}>
+                  คุณได้นัดเข้าดูพื้นที่หน้างานโครงการนี้เรียบร้อยแล้วหรือไม่ ?
+                </Text>
+                <TouchableOpacity
+                  style={styles.button}
+                  onPress={() => handleCreateContract(selectedIndex)}>
+                  <Text style={styles.whiteText}> ดูหน้างานแล้ว</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.button}
+                  onPress={handleNoResponse}>
+                  <Text style={styles.whiteText}>ยังไม่ได้ดูหน้างาน</Text>
+                </TouchableOpacity>
+                <Text style={styles.RedText}>
+                  {' '}
+                  *จำเป็นต้องดูหน้างานก่อนเริ่มทำสัญญา
+                </Text>
+              </View>
+            </Dialog.Content>
+          </Dialog>
         </Portal>
       </PaperProvider>
     </>
   );
 };
 
-export default InvoiceDashboard;
+export default Dashboard;
 const {width, height} = Dimensions.get('window');
 
 const styles = StyleSheet.create({
@@ -466,14 +574,17 @@ const styles = StyleSheet.create({
     bottom: height * 0.1,
     right: width * 0.05,
     position: 'absolute',
-    backgroundColor: '#1b52a7',
+    // backgroundColor: '#1b52a7',
+    backgroundColor: '#00674a',
+    // backgroundColor: '#009995',
   },
   fab: {
     position: 'absolute',
     margin: 16,
     right: 0,
     bottom: 10,
-    backgroundColor: '#1b52a7',
+    backgroundColor: '#00674a',
+    // backgroundColor: '#1b52a7',
     borderRadius: 28,
     height: 56,
     width: 56,

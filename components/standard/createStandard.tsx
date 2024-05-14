@@ -38,7 +38,7 @@ type Props = {
 const CreateStandard = (props: Props) => {
   const {isVisible, onClose} = props;
   const {
-    state: {isEmulator, code, companySellerState},
+    state: {isEmulator, code, companyID},
     dispatch,
   }: any = useContext(Store);
   const [isError, setError] = React.useState('');
@@ -49,7 +49,7 @@ const CreateStandard = (props: Props) => {
     content: null,
     badStandardImage: null,
     badStandardEffect: null,
-    sellerId: companySellerState.id,
+    sellerId: companyID,
   };
   const {
     register,
@@ -118,8 +118,8 @@ const CreateStandard = (props: Props) => {
       return;
     }
     try {
-      setValue('image', uploadedImages[0]);
-      setValue('badStandardImage', uploadedImages[1]);
+      setValue('image', uploadedImages[0].originalUrl);
+      setValue('badStandardImage', uploadedImages[1].originalUrl);
 
       // Step 3: Proceed with creating the standard
       const formData = {

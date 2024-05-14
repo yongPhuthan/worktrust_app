@@ -168,7 +168,7 @@ const SelectDoc = ({navigation}: Props) => {
             }}>
             <Appbar.BackAction onPress={() => navigation.goBack()} />
             <Appbar.Content
-              title={'สร้างใบวางบิลใหม่'}
+              title={'สร้างใบวางบิล'}
               titleStyle={{
                 fontSize: 18,
                 fontWeight: 'bold',
@@ -176,10 +176,8 @@ const SelectDoc = ({navigation}: Props) => {
               }}
             />
             <Appbar.Action
-              icon="bell-outline"
-              // onPress={() => {
-              //   navigation.navigate('SearchScreen');
-              // }}
+              icon="plus"
+          onPress={() => navigation.navigate('CreateNewInvoice')}
             />
           </Appbar.Header>
           {isLoadingAction ? (
@@ -207,7 +205,7 @@ const SelectDoc = ({navigation}: Props) => {
                       color: 'gray',
                       marginLeft: 20,
                     }}>
-                    เลือกจากใบเสนอราคา
+                    สร้างใบวางบิลจากใบเสนอราคา
                   </Text>
                   <FlatList
                     data={filteredData}
@@ -223,7 +221,7 @@ const SelectDoc = ({navigation}: Props) => {
                           alignItems: 'center',
                         }}>
                         <Text style={{marginTop: 10}}>
-                          สร้างใบเสนอราคาก่อนที่จะสร้างใบวางบิล
+                          ยังไม่มีใบเสนอราคา
                         </Text>
                       </View>
                     }

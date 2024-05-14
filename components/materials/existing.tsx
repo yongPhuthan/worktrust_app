@@ -110,6 +110,8 @@ const ExistingMaterials = ({
         {
           id: material.id,
           name: material.name,
+          description : material.description,
+          image : material.image,
         },
       ];
       setValue('materials', updatedMaterials, {shouldDirty: true});
@@ -138,7 +140,7 @@ const ExistingMaterials = ({
   const handleAddNewProduct = () => {
     setIsOpenModal(true);
   };
-
+console.log('materials', materials)
   return (
     <Modal isVisible={isVisible} style={styles.modal} onBackdropPress={onClose}>
       <Appbar.Header

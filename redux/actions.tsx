@@ -6,6 +6,7 @@ export const code_company = (payload: string) => ({
   type: contrains.CODE,
   payload,
 });
+
 export const get_companyID = (payload:string) => ({
   type: contrains.GET_COMPANYID,
   payload,
@@ -16,8 +17,8 @@ export const add_product = (payload: any) => ({
   payload,
 });
 
-export const get_company_seller = (payload: any) => ({
-  type: contrains.GET_COMPANY_SELLER,
+export const get_company_state = (payload: any) => ({
+  type: contrains.GET_COMPANY_STATE,
   payload,
 });
 
@@ -33,6 +34,21 @@ export const get_default_contract = (payload: any) => ({
 
 export const get_logo = (payload: any) => ({
   type: contrains.GET_LOGO,
+  payload
+});
+
+export const get_default_warranty = (payload: any) => ({
+  type: contrains.GET_DEFAULT_WARRANTY,
+  payload
+});
+
+export const get_existing_workers = (payload: any) => ({
+  type: contrains.GET_EXISTING_WORKERS,
+  payload
+});
+
+export const get_user_signature = (payload: any) => ({
+  type: contrains.GET_USER_SIGNATURE,
   payload
 });
 
@@ -55,9 +71,9 @@ export const addProduct = (payload: any) => {
   };
 }
 
-export const getCompanySeller = (payload: any) => {
+export const getCompanyState = (payload: any) => {
   return (dispatch: any) => {
-    dispatch(get_company_seller(payload));
+    dispatch(get_company_state(payload));
   };
 };
 
@@ -78,3 +94,22 @@ export const getLogo = (payload: any) => {
     dispatch(get_logo(payload));
   };
 }
+
+export const getDefaultWarranty = (payload: any) => {
+  return (dispatch: any) => {
+    dispatch(get_default_warranty(payload));
+  };
+}
+
+export const getExistingWorkers = (payload: any) => {
+  return (dispatch: any) => {
+    dispatch(get_existing_workers(payload));
+  };
+}
+
+export const getUserSignature = (payload: any) => {
+  return (dispatch: any) => {
+    dispatch(get_user_signature(payload));
+  };
+}
+

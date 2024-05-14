@@ -22,7 +22,7 @@ import Modal from 'react-native-modal';
 import {Checkbox} from 'react-native-paper';
 import {useUser} from '../../providers/UserContext';
 import {Store} from '../../redux/store';
-import {Workers} from '../../types/docType';
+import {Worker} from '../../types/docType';
 import AddNewWorker from './addNew';
 interface ExistingModalProps {
   isVisible: boolean;
@@ -32,8 +32,13 @@ interface ExistingModalProps {
 const {width, height} = Dimensions.get('window');
 const imageContainerWidth = width / 3 - 10;
 const ExistingWorkers = ({isVisible, onClose}: ExistingModalProps) => {
-  const [workers, setWorkers] = useState<Workers[]>([]);
+  const {
+    state: {existingWorkers, code, serviceImages},
+    dispatch,
+  }: any = useContext(Store);
+  const [workers, setWorkers] = useState<Worker[]>(existingWorkers);
   const [isOpenModal, setIsOpenModal] = useState(false);
+  const [refetch, setRefetch] = useState(false);
   const context = useFormContext();
   const {
     register,
@@ -45,11 +50,6 @@ const ExistingWorkers = ({isVisible, onClose}: ExistingModalProps) => {
   } = context as any;
   const route = useRoute();
   const user = useUser();
-
-  const {
-    state: {serviceList, selectedMaterials, code, serviceImages},
-    dispatch,
-  }: any = useContext(Store);
 
   const fetchExistingWorkers = async () => {
     if (!user) {
@@ -72,6 +72,7 @@ const ExistingWorkers = ({isVisible, onClose}: ExistingModalProps) => {
         throw new Error('Network response was not ok');
       }
       setWorkers(data.workers);
+      setRefetch(false);
 
       return data;
     }
@@ -80,6 +81,7 @@ const ExistingWorkers = ({isVisible, onClose}: ExistingModalProps) => {
   const {data, isLoading, isError, error} = useQuery({
     queryKey: ['workers', code],
     queryFn: fetchExistingWorkers,
+    enabled: !!refetch,
   });
 
   const currentWorkers = useWatch({
@@ -87,24 +89,32 @@ const ExistingWorkers = ({isVisible, onClose}: ExistingModalProps) => {
     name: 'workers',
   });
 
-  const handleSelectWorker = (workers: Workers) => {
-    const workerIndex = currentWorkers.findIndex(
-      (worker: any) => worker.id === workers.id,
-    );
-    if (workerIndex !== -1) {
-      const updatedWorkers = [...currentWorkers];
-      updatedWorkers.splice(workerIndex, 1);
-      setValue('workers', updatedWorkers, {shouldDirty: true});
-    } else {
-      const updatedWorkers = [...currentWorkers, workers];
-      setValue('workers', updatedWorkers, {shouldDirty: true});
-    }
-  };
+  const handleSelectWorker = (worker: Worker) => {
+    // Ensure currentWorkers is an array; use an empty array if it's null or undefined
+    const safeWorkers = currentWorkers || [];
 
-  if(isLoading) {
+    // Find the index of the worker in the array
+    const workerIndex = safeWorkers.findIndex(
+      (existingWorker: Worker) => existingWorker.id === worker.id
+    );
+
+    if (workerIndex !== -1) {
+        // If the worker is found, remove the worker from the array
+        const updatedWorkers = [...safeWorkers];
+        updatedWorkers.splice(workerIndex, 1);
+        setValue('workers', updatedWorkers, { shouldDirty: true });
+    } else {
+        // If the worker is not found, add the worker to the array
+        const updatedWorkers = [...safeWorkers, worker];
+        setValue('workers', updatedWorkers, { shouldDirty: true });
+    }
+};
+
+
+  if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator color='white' />
+        <ActivityIndicator />
       </View>
     );
   }
@@ -120,6 +130,7 @@ const ExistingWorkers = ({isVisible, onClose}: ExistingModalProps) => {
   const handleAddNewProduct = () => {
     setIsOpenModal(true);
   };
+  console.log('Current Workers', currentWorkers)
   return (
     <>
       <Appbar.Header
@@ -133,9 +144,7 @@ const ExistingWorkers = ({isVisible, onClose}: ExistingModalProps) => {
           title="เลือกทีมงานติดตั้ง"
           titleStyle={{fontSize: 18, fontWeight: 'bold'}}
         />
-        {workers.length > 0 && (
-          <Appbar.Action icon={'plus'} onPress={handleAddNewProduct} />
-        )}
+        <Appbar.Action icon={'plus'} onPress={handleAddNewProduct} />
       </Appbar.Header>
       <View style={styles.container}>
         <FlatList
@@ -145,14 +154,14 @@ const ExistingWorkers = ({isVisible, onClose}: ExistingModalProps) => {
               <TouchableOpacity
                 style={[
                   styles.card,
-                  currentWorkers.some((m: any) => m.id === item.id)
+                  currentWorkers?.some((m: any) => m.id === item.id)
                     ? styles.cardChecked
                     : null,
                 ]}
                 onPress={() => handleSelectWorker(item)}>
                 <Checkbox.Android
                   status={
-                    currentWorkers.some((worker: any) => worker.id === item.id)
+                    currentWorkers?.some((worker: any) => worker.id === item.id)
                       ? 'checked'
                       : 'unchecked'
                   }
@@ -160,10 +169,13 @@ const ExistingWorkers = ({isVisible, onClose}: ExistingModalProps) => {
                   style={styles.checkboxContainer}
                 />
                 <View style={styles.textContainer}>
-                  <Text style={styles.productTitle}>{item.name}</Text>
-                  <Text style={styles.description}>{item.mainSkill}</Text>
+                  <Text style={styles.productTitle}>{item?.name}</Text>
+                  <Text style={styles.description}>{item?.mainSkill}</Text>
                 </View>
-                <Image source={{uri: item.image}} style={styles.productImage} />
+                <Image
+                  source={{uri: item?.image}}
+                  style={styles.productImage}
+                />
               </TouchableOpacity>
             </>
           )}
@@ -217,7 +229,9 @@ const ExistingWorkers = ({isVisible, onClose}: ExistingModalProps) => {
         style={styles.modal}
         onBackdropPress={() => setIsOpenModal(false)}>
         <AddNewWorker
-          isVisible={isOpenModal}
+          setRefetch={() => {
+            setRefetch(true);
+          }}
           onClose={() => setIsOpenModal(false)}
         />
       </Modal>

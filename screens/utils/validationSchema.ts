@@ -149,6 +149,26 @@ export const defaultContractSchema = yup.object().shape({
     .integer(),
 
 });
+export const warrantySchema = yup.object().shape({
+  productWarantyYear: yup
+    .number()
+    .required('*')
+    .positive('ต้องมากกว่า0')
+    .integer(),
+  skillWarantyYear: yup
+    .number()
+    .required('*')
+    .positive('ต้องมากกว่า0')
+    .integer(),
+  fixDays: yup
+    .number()
+    .required('*')
+    .positive('ต้องมากกว่า0')
+    .integer(),
+    condition: yup.string().required('ระบุเงื่อนไขการรับประกัน'),
+
+
+});
 export const signContractValidationSchema = yup.object().shape({
   projectName: yup.string().required('ระบุชื่อโครงการ'),
   sellerSignature: yup.string(),

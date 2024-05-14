@@ -34,6 +34,14 @@ export type ServiceList = {
   total: number;
 };
 
+export type Warranty = {
+  productWarantyYear: string;
+  skillWarantyYear: string;
+  fixDays: string;
+  companySellerId: number;
+  condition : string
+};
+
 export type Quotation = {
   id: string;
   services: Service[];
@@ -56,7 +64,7 @@ export type Quotation = {
   sellerId: string;
   discountType: string;
   discountPercentage: number;
-  workers: Workers[];
+  workers: Worker[];
 };
 
 export type CustomerForm = {
@@ -67,7 +75,7 @@ export type CustomerForm = {
   taxId: string;
 };
 
-export type Workers = {
+export type Worker = {
   id: string;
   name: string;
   mainSkill: string;

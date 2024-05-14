@@ -92,7 +92,7 @@ const CreateMaterial = (props: Props) => {
       Alert.alert('Error', 'กรุณากรอกข้อมูลให้ครบถ้วน');
       return;
     }
-    const uploadPromises = [uploadImage(image)];
+    const uploadPromises = [(await uploadImage(image)).originalUrl]
     const downloadUrl = await Promise.all(uploadPromises);
 
     if (uploadError) {

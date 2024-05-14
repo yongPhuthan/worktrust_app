@@ -30,6 +30,8 @@ import DashboardDrawer from './dashboardDrawer';
 import ContractViewScreen from '../screens/contract/webview';
 import SelectDoc from '../screens/invoice/selectDoc';
 import CreateByQuotation from '../screens/invoice/create/createByquotation';
+import CreateNewInvoice from '../screens/invoice/create/createNew';
+
 import SignupMobileScreen from '../screens/register/phoneAuth/signupMobile';
 import LoginMobileScreen from '../screens/register/phoneAuth/loginMobileScreen';
 import ProjectViewScreen from '../screens/preview/project';
@@ -104,12 +106,23 @@ const Navigation = ({initialRouteName}: any) => {
             headerTintColor: 'black',
           }}
         />
+       <Stack.Screen
+          name="CreateNewInvoice"
+          component={CreateNewInvoice}
+          options={{
+            ...commonScreenOptions,
+            headerShown: false,
+            title: 'สร้างใบวางบิล',
+            headerBackTitle: '',
 
-              <Stack.Screen
-          name="ProjectViewScreen"
-          component={ProjectViewScreen}
-         
+            headerStyle: {
+              backgroundColor: '#ffffff',
+            },
+            headerTintColor: 'black',
+          }}
         />
+
+
                     <Stack.Screen
           name="PDFViewScreen"
           component={PDFViewScreen}

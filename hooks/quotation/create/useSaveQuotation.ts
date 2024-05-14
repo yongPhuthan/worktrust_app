@@ -5,11 +5,11 @@ import { BACK_END_SERVER_URL } from '@env';
 export interface QuotationActions {
   setQuotationServerId: (id: string) => void;
   setPdfUrl: (url: string) => void;
-  setShowProjectModal: (show: boolean) => void;
+  openProjectModal: () => void;
 }
 // Pass actions via props
 const useCreateQuotation = (actions: QuotationActions) => {
-  const { setQuotationServerId, setPdfUrl, setShowProjectModal } = actions;
+  const { setQuotationServerId, setPdfUrl, openProjectModal } = actions;
   const queryClient = useQueryClient();
   const user = useUser();
 
@@ -24,7 +24,7 @@ const useCreateQuotation = (actions: QuotationActions) => {
     }
 
     const token = await user.getIdToken(true);
-    const response = await fetch(`${BACK_END_SERVER_URL}/api/documents/createQuotation`, {
+    const response = await fetch(`${BACK_END_SERVER_URL}/api/docs/createQuotation`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -48,7 +48,7 @@ const useCreateQuotation = (actions: QuotationActions) => {
     onSuccess: (responseData:any) => {
       setQuotationServerId(responseData.quotationId);
       setPdfUrl(responseData.pdfUrl);
-      setShowProjectModal(true);
+      openProjectModal();
       queryClient.invalidateQueries({queryKey: ['dashboardQuotation']});
     },
     onError: (error: any) => {

@@ -17,7 +17,21 @@ type Props = {
 };
 
 const windowWidth = Dimensions.get('window').width;
+function convertDateToDDMMYYYY(dateString :string) {
+  const date = new Date(dateString);
 
+  // Get the day, month, and year from the date object
+  const day = date.getDate();
+  const month = date.getMonth() + 1; // getMonth() returns month from 0 to 11
+  const year = date.getFullYear();
+
+  // Pad the day and month with zeros if they are less than 10
+  const formattedDay = day < 10 ? '0' + day : day;
+  const formattedMonth = month < 10 ? '0' + month : month;
+
+  // Return the formatted date string
+  return `${formattedDay}/${formattedMonth}/${year}`;
+}
 const CardDashBoard = (props: Props) => {
   return (
     <TouchableOpacity onPress={props.onCardPress} style={styles.subContainer}>
@@ -84,8 +98,8 @@ const CardDashBoard = (props: Props) => {
   
 
       <View style={styles.telAndTax}>
-        <Text style={styles.summaryPrice}>วันที่ {(props.date).replace(/-/g, '/')}</Text>
-        <Text style={styles.summaryPrice}>สิ้นสุด {(props.end).replace(/-/g, '/')}</Text>
+        <Text style={styles.summaryPrice}>วันที่ {convertDateToDDMMYYYY(props.date)}</Text>
+        <Text style={styles.summaryPrice}>สิ้นสุด {convertDateToDDMMYYYY(props.end)}</Text>
       </View>
     </TouchableOpacity>
   );

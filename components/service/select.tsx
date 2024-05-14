@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, {useContext, useState} from 'react';
 import {
   Dimensions,
   FlatList,
@@ -8,17 +8,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {
-  Appbar,
-  Button,
-  Text
-} from 'react-native-paper';
-import { Store } from '../../redux/store';
+import {Appbar, Button, Text} from 'react-native-paper';
+import {Store} from '../../redux/store';
 import AddProductFormModal from './addNew';
-interface Item {
-  id: string;
-  name: string;
-}
 
 interface Props {
   visible: boolean;
@@ -36,12 +28,13 @@ const SelectProductModal: React.FC<Props> = ({
   currentValue,
 }) => {
   const {
-    state: { existingServices },
+    state: {existingServices},
     dispatch,
   }: any = useContext(Store);
   const [showAddNewService, setShowAddNewService] = useState(false);
   const [selectService, setSelectService] = useState<any>(null);
   const [addNewService, setAddNewService] = useState(false);
+
   return (
     <>
       <Modal animationType="slide" visible={visible}>
@@ -78,11 +71,10 @@ const SelectProductModal: React.FC<Props> = ({
           <FlatList
             data={existingServices}
             keyExtractor={item => item.id}
-            renderItem={({ item, index }) => (
+            renderItem={({item, index}) => (
               <TouchableOpacity
                 key={index}
                 onPress={() => {
-                  console.log('item', item);
                   setSelectService(item);
                   setShowAddNewService(true);
                   onClose();
@@ -90,8 +82,8 @@ const SelectProductModal: React.FC<Props> = ({
                 style={styles.subContainer}>
                 <View style={styles.row}>
                   <Image
-                    source={{ uri: item.serviceImages[0] }}
-                    style={{ width: 50, height: 50 }}
+                    source={{uri: item.serviceImages[0].thumbnailUrl}}
+                    style={{width: 50, height: 50}}
                   />
                   <View>
                     <Text style={styles.title}>{item.title}</Text>
@@ -106,7 +98,7 @@ const SelectProductModal: React.FC<Props> = ({
                 children="เพิ่มรายการใหม่"
                 testID="submited-button"
                 mode="outlined"
-                onPress={() => { 
+                onPress={() => {
                   setShowAddNewService(true);
                   setAddNewService(true);
                   onClose();
@@ -115,7 +107,7 @@ const SelectProductModal: React.FC<Props> = ({
           />
         </View>
       </Modal>
-      {selectService  && (
+      {selectService && (
         <AddProductFormModal
           resetSelectService={() => setSelectService(null)}
           selectService={selectService}
@@ -127,7 +119,7 @@ const SelectProductModal: React.FC<Props> = ({
           onClose={() => setShowAddNewService(false)}
         />
       )}
-            {addNewService  && (
+      {addNewService && (
         <AddProductFormModal
           resetSelectService={() => setSelectService(null)}
           selectService={selectService}
@@ -150,13 +142,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     paddingTop: 20,
     paddingHorizontal: 16,
-    
   },
   itemContainer: {
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#ccc',
-    
   },
   subContainer: {
     backgroundColor: '#ffffff',
@@ -166,7 +156,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 15,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.05,
     shadowRadius: 3.84,
     elevation: 5,

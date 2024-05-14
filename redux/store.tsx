@@ -1,17 +1,27 @@
 import React, {createContext, useReducer} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {CompanySeller, Contract, ExsistingService, SelectedAuditData, Standard} from '../types/docType';
+import {
+  CompanySeller,
+  Contract,
+  ExsistingService,
+  SelectedAuditData,
+  Standard,
+  Warranty,
+  Worker,
+} from '../types/docType';
 import * as contrains from './constrains';
 import {Service} from '../types/docType';
 export type StateType = {
   companyID: string;
   code: string;
   services: any[];
-  companySellerState: CompanySeller | null;
+  companyState: CompanySeller | null;
   existingServices: ExsistingService[];
-  defaultContract : Contract | null
-  logoSrc : string
-  
+  defaultContract: Contract | null;
+  defaultWarranty: Warranty | null;
+  logoSrc: string;
+  existingWorkers: Worker[];
+  userSignature: string;
 };
 
 type ActionType = {
@@ -29,11 +39,13 @@ export const Store = createContext<ContextType>({
     companyID: '',
     code: '',
     services: [],
-    companySellerState: null,
+    companyState: null,
     existingServices: [],
-    defaultContract:null,
-    logoSrc : ''
-
+    defaultContract: null,
+    defaultWarranty: null,
+    logoSrc: '',
+    existingWorkers: [],
+    userSignature: '',
   },
   dispatch: () => {},
 });
@@ -42,10 +54,13 @@ const initialState: StateType = {
   companyID: '',
   code: '',
   services: [],
-  companySellerState: null,
+  companyState: null,
   existingServices: [],
-  defaultContract:null,
-  logoSrc : ''
+  defaultContract: null,
+  defaultWarranty: null,
+  logoSrc: '',
+  existingWorkers: [],
+  userSignature: '',
 };
 
 function reducer(state: StateType, action: ActionType): StateType {
@@ -54,8 +69,8 @@ function reducer(state: StateType, action: ActionType): StateType {
       return {...state, code: action.payload as string};
     case contrains.GET_COMPANYID:
       return {...state, companyID: action.payload as string};
-    case contrains.GET_COMPANY_SELLER:
-      return {...state, companySellerState: action.payload as CompanySeller};
+    case contrains.GET_COMPANY_STATE:
+      return {...state, companyState: action.payload as CompanySeller};
     case contrains.ADD_PRODUCT:
       return {
         ...state,
@@ -67,6 +82,12 @@ function reducer(state: StateType, action: ActionType): StateType {
       return {...state, defaultContract: action.payload as Contract};
     case contrains.GET_LOGO:
       return {...state, logoSrc: action.payload as string};
+    case contrains.GET_DEFAULT_WARRANTY:
+      return {...state, defaultWarranty: action.payload as Warranty};
+    case contrains.GET_EXISTING_WORKERS:
+      return {...state, existingWorkers: action.payload as Worker[]};
+    case contrains.GET_USER_SIGNATURE:
+      return {...state, userSignature: action.payload as string};
 
     default:
       return state;

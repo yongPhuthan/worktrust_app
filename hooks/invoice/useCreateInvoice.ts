@@ -1,66 +1,62 @@
-import {useState} from 'react';
-import {useUser} from '../../providers/UserContext';
-import firebase from '../../firebase';
-
-interface UseCreateInvoiceResponse {
-  loading: boolean;
-  error: Error | null;
-  data: any | null;
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Quotation } from 'types/docType';
+import { useUser } from '../../providers/UserContext';
+import { BACK_END_SERVER_URL } from '@env';
+export interface InvoiceActions {
+  setInvoiceServerId: (id: string) => void;
+  setPdfUrl: (url: string) => void;
+  openPDFModal: () => void;
 }
-
-const useCreateInvoice = (
-  url: string,
-): [(data: any) => Promise<void>, UseCreateInvoiceResponse] => {
-  const [response, setResponse] = useState<any | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<Error | null>(null);
+// Pass actions via props
+const useCreateNewInvoice = (actions: InvoiceActions) => {
+  const { setInvoiceServerId, setPdfUrl, openPDFModal } = actions;
+  const queryClient = useQueryClient();
   const user = useUser();
 
-  const createInvoice = async (data: any) => {
-    if (!user || !user.email) {
-      setError(new Error('User or user email is not available'));
-      return;
+  if (!user || !user.uid) {
+    console.error("User authentication failed: No user available");
+    throw new Error('User is not authenticated');
+  }
+
+  const createQuotation = async (data: Quotation) => {
+    if (!user || !user.uid) {
+      throw new Error('User is not available');
     }
-    console.log('data invoice', data);
-    try {
-      setLoading(true);
-      setError(null);
-      const token = await user.getIdToken(true);
-      const response = await fetch(
-        `${url}?email=${encodeURIComponent(user.email)}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({data}),
-        },
-      );
-      if (!response.ok) {
-        if (response.status === 401) {
-          const errorData = await response.json();
-          if (
-            errorData.message ===
-            'Token has been revoked. Please reauthenticate.'
-          ) {
-            // Handle specific 401 cases here if needed
-            firebase.auth().signOut();
-          }
-          throw new Error(errorData.message);
-        }
-        throw new Error('Network response was not ok.');
-      }
-      const responseData = await response.json();
-      setResponse(responseData);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error(String(err)));
-    } finally {
-      setLoading(false);
+
+    const token = await user.getIdToken(true);
+    const response = await fetch(`${BACK_END_SERVER_URL}/api/invoice/createInvoice`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({data}),
+    });
+
+    if (!response.ok) {
+      const errorMsg = await response.text();
+      console.error("Error from server:", errorMsg);
+      throw new Error(errorMsg || 'Network response was not ok.');
     }
+
+    const responseData = await response.json();
+    return responseData;  
   };
 
-  return [createInvoice, {loading, error, data: response}];
+  const { mutate, data, error, isError, isPending, isSuccess, reset } = useMutation( {
+    mutationFn: createQuotation,
+    onSuccess: (responseData:any) => {
+      setInvoiceServerId(responseData.quotationId);
+      setPdfUrl(responseData.pdfUrl);
+      openPDFModal();
+      queryClient.invalidateQueries({queryKey: ['dashboardInvoice']});
+    },
+    onError: (error: any) => {
+      console.error("Mutation error:", error.message);
+    }
+  });
+
+  return { mutate, data, error, isError, isPending, isSuccess, reset };
 };
 
-export default useCreateInvoice;
+export default useCreateNewInvoice;

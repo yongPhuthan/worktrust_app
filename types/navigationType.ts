@@ -36,6 +36,7 @@ type OnAddService = (service: Service) => void;
 
 export type ParamListBase = {
   Quotation: undefined;
+  CreateNewInvoice: undefined;
   RegisterScreen: undefined;
   SignupMobileScreen  : undefined;
   LoginMobileScreen: undefined;

@@ -234,7 +234,7 @@ const AddProductFormModal = (props: Props) => {
                         <View style={styles.imageContainer}>
                           <TouchableOpacity
                             onPress={() => setModalImagesVisible(true)}>
-                            <Image source={{uri: item}} style={styles.image} />
+                            <Image source={{uri: item.originalUrl}} style={styles.image} />
                           </TouchableOpacity>
                         </View>
                       );

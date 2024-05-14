@@ -1,82 +1,69 @@
- [{
-     "defaultChecked": false,
-     "id": "42gE342bVGM86lnkB8Fn",
-     "tags": ["สีเขียว"],
-     "url": {
-         "originalUrl": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/users%2F608699%2Fimages%2Fgallery%2F12bb16ca-cfeb-4079-b4ea-3a561919b05a%2F93F6amAghFPI12GtMeG7n2F8pzC3%2Foriginal%2F4F70FE5D-832B-4494-A149-AF4484B423B7.jpg?alt=media&token=3cad4132-97b6-40e6-b2ea-a9ca90dcd3b4",
-         "thumbnailUrl": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/users%2F608699%2Fimages%2Fgallery%2F12bb16ca-cfeb-4079-b4ea-3a561919b05a%2F93F6amAghFPI12GtMeG7n2F8pzC3%2Fthumbnail%2F24EA17A7-C239-4086-BD73-570B3E9E1E97.png?alt=media&token=7c311d55-54bb-485a-a269-e810a7b68faa"
+ {
+     "data": {
+         "services": [{
+             "id": "clw5ml51h0005nsccu0nt9hay",
+             "title": "Project2",
+             "description": "Description2",
+             "standards": [{
+                 "id": "8dd90af9-75ec-40fc-b2a6-317aed7653a9",
+                 "image": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/983524%2Fstandards%2F%E0%B8%A1%E0%B8%B2%E0%B8%95%E0%B8%A3%E0%B8%90%E0%B8%B2%E0%B8%99%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%9B%E0%B9%89%E0%B8%AD%E0%B8%87%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%99%E0%B9%89%E0%B8%B3%E0%B8%A3%E0%B8%B1%E0%B9%88%E0%B8%A7%E0%B8%8B%E0%B8%B6%E0%B8%A1%2Fr7iAOvVdCILiWBTwHFJF6Zqflt8A%2Foriginal%2F21CA09E2-6B61-41CE-879E-E4FAC1776183.png?alt=media&token=42034056-d8d4-4a2a-98e5-9e21ce3f5004",
+                 "content": "น้ำไม่รั่วไหล",
+                 "badStandardEffect": "น้ำอาจจะเข้าบ้านคุณได้",
+                 "badStandardImage": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/983524%2FbadStandard%2F%E0%B8%A1%E0%B8%B2%E0%B8%95%E0%B8%A3%E0%B8%90%E0%B8%B2%E0%B8%99%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%9B%E0%B9%89%E0%B8%AD%E0%B8%87%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%99%E0%B9%89%E0%B8%B3%E0%B8%A3%E0%B8%B1%E0%B9%88%E0%B8%A7%E0%B8%8B%E0%B8%B6%E0%B8%A1%2FbadStandard%2Fr7iAOvVdCILiWBTwHFJF6Zqflt8A%2Foriginal%2F9C06C12B-4E0D-435E-AF27-8A170F550C29.png?alt=media&token=26e3713a-477b-4fc6-8831-b98bf290fdeb",
+                 "standardShowTitle": "มาตรฐานการป้องกันน้ำรั่วซึม",
+                 "createdAt": "2024-05-12T11:31:41.083Z",
+                 "tags": [],
+                 "companyId": "clw3fh6lo0001evsq862rrsyr",
+                 "serviceId": "clw5ml51h0005nsccu0nt9hay"
+             }],
+             "materials": [{
+                 "id": "clw3glgpt00077muxe8c6nne7",
+                 "name": "ด้ามจับไกด์บน",
+                 "description": "แสตนเลส 404",
+                 "image": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/983524%2Fmaterials%2F%E0%B8%94%E0%B9%89%E0%B8%B2%E0%B8%A1%E0%B8%88%E0%B8%B1%E0%B8%9A%E0%B9%84%E0%B8%81%E0%B8%94%E0%B9%8C%E0%B8%9A%E0%B8%99%2Fr7iAOvVdCILiWBTwHFJF6Zqflt8A%2Foriginal%2F04D3C5AF-9C02-41AA-8498-1E91B34E92FB.png?alt=media&token=ac3f34ea-a451-4095-a7a1-691ef076a03b",
+                 "created": "2024-05-12T11:35:54.591Z",
+                 "serviceId": "clw5ml51h0005nsccu0nt9hay",
+                 "tags": [],
+                 "companyId": "clw3fh6lo0001evsq862rrsyr"
+             }],
+             "serviceImages": [{
+                 "originalUrl": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/users%2F983524%2Fimages%2Fgallery%2F0d5d1cc0-477f-419e-9e27-62a06040c4bd%2Fr7iAOvVdCILiWBTwHFJF6Zqflt8A%2Foriginal%2FDC855528-3540-4E53-BE22-8F65A9FE9DE6.png?alt=media&token=4c5f5f6c-4ca6-4993-9ddc-a9c24fcafac0",
+                 "thumbnailUrl": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/users%2F983524%2Fimages%2Fgallery%2F0d5d1cc0-477f-419e-9e27-62a06040c4bd%2Fr7iAOvVdCILiWBTwHFJF6Zqflt8A%2Fthumbnail%2FE27E2C42-739B-4C40-86AB-67812E7221C9.png?alt=media&token=f1c720ad-b3af-44cb-a66a-41214aa83a17"
+             }],
+             "qty": 2,
+             "unitPrice": "4000",
+             "total": "8000",
+             "unit": "ชุด"
+         }],
+         "customer": {
+             "name": "ลูกค้าใบวางบิล",
+             "address": "เชียงใหม่",
+             "customerTax": "",
+             "phone": "053306426"
+         },
+         "company": {
+             "bizName": "Doubledoor engineering",
+             "companyTax": "1100800667422",
+             "signature": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/983524%2Fsignature%2Fsignature983524.pngc92f4fa1-33a6-43f8-ae39-af9cb17f454a?alt=media&token=b570420e-8593-480f-b187-e2b80e054f29",
+             "code": "983524",
+             "id": "clw3fh6lo0001evsq862rrsyr",
+             "logo": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/983524%2Flogo%2FDoubledoor%20engineering%2Fr7iAOvVdCILiWBTwHFJF6Zqflt8A%2Foriginal%2FB9EC2EF8-8E46-4A44-B7F3-CD8F70FC9A4D.png?alt=media&token=71ea8462-f8a6-4895-9616-b5685edbc6be"
+         },
+         "vat7": "0.00",
+         "taxType": "NOTAX",
+         "taxValue": "0.00",
+         "summary": "8000.00",
+         "summaryAfterDiscount": "8000.00",
+         "discountType": "PERCENT",
+         "discountPercentage": 0,
+         "discountValue": "0.00",
+         "allTotal": "8000.00",
+         "dateOffer": "2024-05-14T10:29:57.470Z",
+         "noteToCustomer": "หมายเหตุถึงลูกค้า",
+         "noteToTeam": "โน๊ตถึงทีมงาน",
+         "dateEnd": "2024-05-21T10:29:57.470Z",
+         "docNumber": "20240514510",
+         "FCMToken": "",
+         "sellerSignature": ""
      }
- }, {
-     "defaultChecked": false,
-     "id": "DF8yhpM2B7cs5mFZ8gF5",
-     "tags": ["สีเขียว"],
-     "url": {
-         "originalUrl": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/users%2F608699%2Fimages%2Fgallery%2F77e1b9e0-dd80-44d8-91da-15895deb5a31%2F93F6amAghFPI12GtMeG7n2F8pzC3%2Foriginal%2F38BA1188-DE7B-4BD6-A861-7DB01FEBAD86.jpg?alt=media&token=274bca2e-1fb6-4a0e-b5dd-d51ce42e0df9",
-         "thumbnailUrl": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/users%2F608699%2Fimages%2Fgallery%2F77e1b9e0-dd80-44d8-91da-15895deb5a31%2F93F6amAghFPI12GtMeG7n2F8pzC3%2Fthumbnail%2F6F0F3299-6943-4B3D-9352-019621C41881.png?alt=media&token=93f764ba-1644-414d-b82f-366d1250070d"
-     }
- }, {
-     "defaultChecked": false,
-     "id": "DGVk7bubGXcVjhnTWaSd",
-     "tags": ["สีขาว"],
-     "url": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/608699%2Fgallery%2Fimages%2Fce654d5e-ae67-4627-9900-0ebf058419c2%2F93F6amAghFPI12GtMeG7n2F8pzC3?alt=media&token=755fcaee-9b5b-4dee-8855-f45b285df5f5"
- }, {
-     "defaultChecked": false,
-     "id": "GEF1ofviMipaqq8TIquy",
-     "tags": ["สีเขียว"],
-     "url": {
-         "originalUrl": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/users%2F608699%2Fimages%2Fgallery%2Fd6612f4a-762d-4845-949b-195708a59092%2F93F6amAghFPI12GtMeG7n2F8pzC3%2Foriginal%2FEC6EFE13-70B6-44D0-80B5-3DA39DCFF857.png?alt=media&token=19925d35-d351-4556-be6b-1f3d4b0aad2f",
-         "thumbnailUrl": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/users%2F608699%2Fimages%2Fgallery%2Fd6612f4a-762d-4845-949b-195708a59092%2F93F6amAghFPI12GtMeG7n2F8pzC3%2Fthumbnail%2F0285112D-7543-4041-8DF2-2042CDC2354F.png?alt=media&token=cccc29ba-81a2-43a0-9298-d35ff8d547b3"
-     }
- }, {
-     "defaultChecked": false,
-     "id": "JnAcGlgUyejeXNkHSGYJ",
-     "tags": ["สีดำด้าน"],
-     "url": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/608699%2Fgallery%2Fimages%2Facd8176f-87c6-424f-9f3a-030e4f997bad%2F93F6amAghFPI12GtMeG7n2F8pzC3?alt=media&token=280b203e-f218-4eb9-bf05-16ad16ca56d9"
- }, {
-     "defaultChecked": false,
-     "id": "eEc0DHsqDvBOB3z7pMXQ",
-     "tags": ["สีเขียว"],
-     "url": {
-         "originalUrl": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/users%2F608699%2Fimages%2Fgallery%2F6764aeed-60bb-40a9-bd74-6efc7f459f6f%2F93F6amAghFPI12GtMeG7n2F8pzC3%2Foriginal%2FB6B5EDAE-6C2B-46CE-8018-F0F8CFCE15DA.jpg?alt=media&token=f1d6c070-867f-4075-be7e-e8d458dffae8",
-         "thumbnailUrl": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/users%2F608699%2Fimages%2Fgallery%2F6764aeed-60bb-40a9-bd74-6efc7f459f6f%2F93F6amAghFPI12GtMeG7n2F8pzC3%2Fthumbnail%2F53725670-0017-4BE8-B39F-265AB4950DCC.png?alt=media&token=dbe117f6-6147-41fe-a456-1255347160f1"
-     }
- }, {
-     "defaultChecked": false,
-     "id": "enCgZjbABclyTUKeBYbz",
-     "tags": ["สีขาว"],
-     "url": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/608699%2Fgallery%2Fimages%2F03f54008-59ea-4ebd-9fc2-bdf61c9d1e15%2F93F6amAghFPI12GtMeG7n2F8pzC3?alt=media&token=8a954004-a0be-4447-86a4-26b7443add5d"
- }, {
-     "defaultChecked": false,
-     "id": "knyJjSqUlUoIl8k9aeVp",
-     "tags": ["สีเขียว"],
-     "url": {
-         "originalUrl": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/users%2F608699%2Fimages%2Fgallery%2F0974bb0d-e8f5-465f-a7a3-afdeef0f6cd3%2F93F6amAghFPI12GtMeG7n2F8pzC3%2Foriginal%2FB27469AD-A605-4B13-A459-4D61838D3CF9.jpg?alt=media&token=6d80015b-3b1d-4ab0-a579-73670571f6c3",
-         "thumbnailUrl": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/users%2F608699%2Fimages%2Fgallery%2F0974bb0d-e8f5-465f-a7a3-afdeef0f6cd3%2F93F6amAghFPI12GtMeG7n2F8pzC3%2Fthumbnail%2F5E60A79B-DB45-4A5D-920E-9BEB0DA16D52.png?alt=media&token=56b17b86-9a3f-4718-9287-8b878477dd45"
-     }
- }, {
-     "defaultChecked": false,
-     "id": "nFuzjTt3d4UbJWlOZLtK",
-     "tags": ["สีเขียว"],
-     "url": {
-         "originalUrl": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/users%2F608699%2Fimages%2Fgallery%2Fcabed7fb-9e80-4980-ac06-e8d647295528%2F93F6amAghFPI12GtMeG7n2F8pzC3%2Foriginal%2F6A4206C1-15EF-4D11-BCAC-BB93B6428860.png?alt=media&token=be8401f6-e7fa-486b-a8a7-035640eb0f3d",
-         "thumbnailUrl": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/users%2F608699%2Fimages%2Fgallery%2Fcabed7fb-9e80-4980-ac06-e8d647295528%2F93F6amAghFPI12GtMeG7n2F8pzC3%2Fthumbnail%2F5ED986D2-D7E5-4899-970E-DED31EE30A91.png?alt=media&token=dc576015-c118-4b3f-a543-abd32fb42fb1"
-     }
- }, {
-     "defaultChecked": false,
-     "id": "sC8lwQ6NxUsh2MssXbKc",
-     "tags": ["สีเขียว"],
-     "url": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/608699%2Fgallery%2Fimages%2F0fb90af0-6a2a-459f-83c7-28db674d67f4%2F93F6amAghFPI12GtMeG7n2F8pzC3?alt=media&token=c2e6bed0-9e9e-4197-9d21-3d4500753ebe"
- }, {
-     "defaultChecked": false,
-     "id": "wylhCfVzJIzk1ppLN6Yz",
-     "tags": ["สีขาว"],
-     "url": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/608699%2Fgallery%2Fimages%2Ff9bb0ec6-dcfb-4698-93ca-47cb27bb25a2%2F93F6amAghFPI12GtMeG7n2F8pzC3?alt=media&token=90132d39-3875-42c5-9cd0-2d2b130ec6f5"
- }, {
-     "defaultChecked": false,
-     "id": "znFeukEkbZ8aVVWIWp9B",
-     "tags": ["สีเขียว"],
-     "url": {
-         "originalUrl": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/users%2F608699%2Fimages%2Fgallery%2Fd88b4556-941f-47d8-804a-cb9c55dcbdac%2F93F6amAghFPI12GtMeG7n2F8pzC3%2Foriginal%2F31F1B35F-D91D-4220-8DB2-0A4E5EA00C81.png?alt=media&token=2d575f59-9e6e-4886-8441-22d8b1cf6910",
-         "thumbnailUrl": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/users%2F608699%2Fimages%2Fgallery%2Fd88b4556-941f-47d8-804a-cb9c55dcbdac%2F93F6amAghFPI12GtMeG7n2F8pzC3%2Fthumbnail%2F3D1094D0-939B-46EE-B895-C4D8116FFBF7.png?alt=media&token=00cb2e2e-da12-437d-8a2a-9dae84f54762"
-     }
- }]
+ }

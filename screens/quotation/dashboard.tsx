@@ -50,7 +50,10 @@ import {
   QuotationStatusKey,
 } from '../../models/QuotationStatus';
 import ProjectModalScreen from '../../components/webview/project';
-
+interface ErrorResponse {
+  message: string;
+  action: 'logout' | 'redirectToCreateCompany' | 'contactSupport' | 'retry';
+}
 const Dashboard = ({navigation}: DashboardScreenProps) => {
   const [showModal, setShowModal] = useState(true);
   const user = useUser();
@@ -73,6 +76,34 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   const [companyData, setCompanyData] = useState<CompanySeller | null>(null);
   const [defaultContract, setDefaultContract] = useState<Contract | null>(null);
   const [quotationData, setQuotationData] = useState<Quotation[] | null>(null);
+  const handleLogout = async () => {
+    try {
+      await firebase.auth().signOut();
+      navigation.reset({
+        index: 0,
+        routes: [{name: 'FirstAppScreen'}],
+      });
+    } catch (error) {
+      console.error('Failed to sign out: ', error);
+    }
+  };
+  const handleErrorResponse = (error: ErrorResponse) => {
+    switch (error.message) {
+      case 'logout':
+        handleLogout();
+        break;
+      case 'redirectToCreateCompany':
+        navigation.navigate('CreateCompanyScreen');
+        break;
+      case 'retry':
+        console.log('Retrying...');
+        // Implement retry logic here if necessary
+        break;
+      default:
+        console.error('Unhandled error action:', error.message);
+    }
+  };
+
   const handleNoResponse = () => {
     setIsModalSignContract(false);
   };
@@ -144,19 +175,13 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     );
   };
   useEffect(() => {
-    if (data) {
-      // Ensuring data[0] exists and has a property `code` before attempting to access it
-      if (!data[0]) {
-        navigation.navigate('CreateCompanyScreen');
-      } else {
-        // If data[0] exists and has a non-null `code`, proceed with your logic
-        setCompanyData(data[0]);
+    if (data && data.length > 0) {
+      // If data[0] exists and has a non-null `code`, proceed with your logic
+      setCompanyData(data[0]);
+
+      if (data[1] && data[1].length > 0) {
         setQuotationData(data[1]);
         setOriginalData(data[1]);
-        const {id, ...restOfData} = data[3];
-
-        dispatch(stateAction.get_default_contract(restOfData));
-        dispatch(stateAction.code_company(data[0].code));
       }
     }
   }, [data]);
@@ -175,14 +200,6 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
       return unsubscribe;
     }
   }, [user]);
-
-  if (isLoading || isLoadingAction) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size={'large'} />
-      </View>
-    );
-  }
 
   const filtersToShow: QuotationStatusKey[] = [
     QuotationStatus.ALL,
@@ -233,8 +250,8 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     });
   };
 
-  if (isError && error?.message === 'Company not found') {
-    navigation.navigate('CreateCompanyScreen');
+  if (isError && error) {
+    handleErrorResponse(error);
   }
   const renderItem = ({item, index}: any) => (
     <>
@@ -276,7 +293,6 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                 <Divider />
                 <List.Item
                   onPress={() => {
-
                     handleModalClose();
                     navigation.navigate('ProjectViewScreen', {
                       id: item.id,
@@ -392,7 +408,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
           {isLoadingAction ? (
             <View
               style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-              <ActivityIndicator size="large" />
+              <ActivityIndicator color='primary' />
             </View>
           ) : (
             <>
@@ -413,7 +429,11 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                   keyExtractor={item => item}
                 />
               </View>
-              {data && (
+              {isLoading || isLoadingAction ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size={'large'} />
+                </View>
+              ) : (
                 <View
                   style={{
                     flex: 1,
@@ -533,10 +553,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
             </Dialog.Content>
           </Dialog>
         </Portal>
-
-
       </PaperProvider>
-
     </>
   );
 };

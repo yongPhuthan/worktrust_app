@@ -270,6 +270,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
     onError: (error: any) => {
       console.error('There was a problem calling the function:', error);
       console.log(error.response);
+      Alert.alert('Error', 'There was an error processing the request'); 
     },
   });
 
@@ -300,7 +301,8 @@ const CreateCompanyScreen = ({navigation}: Props) => {
       </View>
     );
   }
-
+console.log('logo:', logo)
+console.log('USER:', user)
   const renderPage = () => {
     switch (page) {
       case 1:
@@ -688,7 +690,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
               />
               <Button
                 onPress={handleSave}
-                disabled={!categoryId || isUploading || isPending}
+                disabled={ isUploading || isPending}
                 mode="contained"
                 loading={isPending || userLoading || isUploading}>
                 บันทึก
