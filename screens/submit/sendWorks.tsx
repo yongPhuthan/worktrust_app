@@ -1,4 +1,4 @@
-import { yupResolver } from '@hookform/resolvers/yup';
+import {yupResolver} from '@hookform/resolvers/yup';
 import React, {
   useCallback,
   useContext,
@@ -6,15 +6,15 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 
-import { BACK_END_SERVER_URL } from '@env';
-import { faClose, faPlus } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { RouteProp } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Controller, useForm, useWatch } from 'react-hook-form';
+import {BACK_END_SERVER_URL} from '@env';
+import {faClose, faPlus} from '@fortawesome/free-solid-svg-icons';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {RouteProp} from '@react-navigation/native';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {useMutation, useQueryClient} from '@tanstack/react-query';
+import {Controller, useForm, useWatch} from 'react-hook-form';
 import {
   Alert,
   Dimensions,
@@ -37,17 +37,19 @@ import {
   Appbar,
   Button,
   Divider,
+  Icon,
+  IconButton,
   ProgressBar,
-  TextInput
+  TextInput,
 } from 'react-native-paper';
 import DatePickerButton from '../../components/styles/DatePicker';
 import SmallDivider from '../../components/styles/SmallDivider';
-import { useUriToBlob } from '../../hooks/utils/image/useUriToBlob';
-import { useSlugify } from '../../hooks/utils/useSlugify';
-import { useUser } from '../../providers/UserContext';
-import { Store } from '../../redux/store';
-import { ParamListBase } from '../../types/navigationType';
-import { sendWorkValidationSchema } from '../utils/validationSchema';
+import {useUriToBlob} from '../../hooks/utils/image/useUriToBlob';
+import {useSlugify} from '../../hooks/utils/useSlugify';
+import {useUser} from '../../providers/UserContext';
+import {Store} from '../../redux/store';
+import {ParamListBase} from '../../types/navigationType';
+import {sendWorkValidationSchema} from '../utils/validationSchema';
 type Props = {
   navigation: StackNavigationProp<ParamListBase>;
   route: RouteProp<ParamListBase, 'SendWorks'>;
@@ -61,9 +63,10 @@ const SendWorks = (props: Props) => {
     month: '2-digit',
     day: '2-digit',
   });
-
-  const {id, services, title, companyUser, customer, workStatus, contract} =
-    route.params;
+  const {
+    state: {code, editQuotation},
+    dispatch,
+  }: any = useContext(Store);
 
   const [isImageUpload, setIsImageUpload] = useState(false);
   const slugify = useSlugify();
@@ -71,11 +74,9 @@ const SendWorks = (props: Props) => {
   const user = useUser();
   const uriToBlobFunction = useUriToBlob();
   const [serviceImages, setServiceImages] = useState<string[]>([]);
+  const [services, setServices] = useState(editQuotation.services);
 
-  const {
-    state: {code},
-    dispatch,
-  }: any = useContext(Store);
+
   const createWorkDelivery = async (data: any) => {
     if (!user || !user.email) {
       throw new Error('User or user email is not available');
@@ -136,8 +137,8 @@ const SendWorks = (props: Props) => {
 
     const blob = (await uriToBlobFunction(imagePath)) as Blob;
     const filePath = __DEV__
-      ? `Test/${code}/projects/${id}/workdelivery/${filename}`
-      : `${code}/projects/${id}/workdelivery/${filename}`;
+      ? `Test/${code}/projects/${editQuotation.id}/workdelivery/${filename}`
+      : `${code}/projects/${editQuotation.id}/workdelivery/${filename}`;
 
     try {
       const token = await user.getIdToken(true);
@@ -204,51 +205,54 @@ const SendWorks = (props: Props) => {
   } = useForm({
     mode: 'all',
     defaultValues: {
-      installationAddress: contract.signAddress,
+      installationAddress: editQuotation.customer.address || '',
       workDescription: '',
       dateOffer: initialDateOffer,
-      services: services,
+      services: editQuotation.services,
       serviceImages: [],
     },
-    resolver: yupResolver(sendWorkValidationSchema),
   });
 
   const dateOffer = useWatch({control, name: 'dateOffer'});
   useEffect(() => {
-   setValue('dateOffer', dateOffer, {shouldValidate: true, shouldDirty: true});
-  }, [])
-  
-  const handleUploadMoreImages = useCallback(() => {
-    setIsImageUpload(true);
+    setValue('dateOffer', dateOffer, {shouldValidate: true, shouldDirty: true});
+    setValue('services', services);
 
-    const options: ImageLibraryOptions = {
-      mediaType: 'photo' as MediaType,
-    };
+  }, [services, dateOffer]);
 
-    launchImageLibrary(options, async (response: ImagePickerResponse) => {
-      if (response.didCancel) {
-        console.log('User cancelled image picker');
-        setIsImageUpload(false);
-      } else if (response.errorMessage) {
-        console.log('ImagePicker Error: ', response.errorMessage);
-        setIsImageUpload(false);
-      } else if (response.assets && response.assets.length > 0) {
-        const source = {uri: response.assets[0].uri ?? null};
-        if (source.uri) {
-          // Directly add the URI to serviceImages without uploading
-          setServiceImages([...serviceImages, source.uri]);
-          setValue('serviceImages', [...serviceImages, source.uri], {shouldDirty: true, shouldValidate: true});
-          setIsImageUpload(false);
-        }
-      }
-    });
-  }, [setServiceImages, serviceImages]);
-  const {mutate, isLoading} = useMutation({
+  // const handleUploadMoreImages = useCallback(() => {
+  //   setIsImageUpload(true);
+
+  //   const options: ImageLibraryOptions = {
+  //     mediaType: 'photo' as MediaType,
+  //   };
+
+  //   launchImageLibrary(options, async (response: ImagePickerResponse) => {
+  //     if (response.didCancel) {
+  //       console.log('User cancelled image picker');
+  //       setIsImageUpload(false);
+  //     } else if (response.errorMessage) {
+  //       console.log('ImagePicker Error: ', response.errorMessage);
+  //       setIsImageUpload(false);
+  //     } else if (response.assets && response.assets.length > 0) {
+  //       const source = {uri: response.assets[0].uri ?? null};
+  //       if (source.uri) {
+  //         // Directly add the URI to serviceImages without uploading
+  //         setServiceImages([...serviceImages, source.uri]);
+  //         setValue('serviceImages', [...serviceImages, source.uri], {shouldDirty: true, shouldValidate: true});
+  //         setIsImageUpload(false);
+  //       }
+  //     }
+  //   });
+  // }, [setServiceImages, serviceImages]);
+  const {mutate, isPending} = useMutation({
     mutationFn: createWorkDelivery,
 
     onSuccess: () => {
-      queryClient.invalidateQueries(['dashboardData']);
-      const newId = id.slice(0, 8) as string;
+      queryClient.invalidateQueries({
+        queryKey: ['workDelivery', editQuotation.id],
+      });
+      const newId = editQuotation.id.slice(0, 8) as string;
       navigation.navigate('DocViewScreen', {id: newId});
     },
     onError: (error: any) => {
@@ -265,20 +269,25 @@ const SendWorks = (props: Props) => {
     },
   });
 
-  const removeImage = useCallback(
-    (uri: string) => {
-      // Filter out the image URI from the current state
-      const updatedImages = serviceImages.filter(image => image !== uri);
-      
-      // Update the local state with the filtered images
-      setServiceImages(updatedImages);
-      
-      // Update the form state to reflect the change and optionally re-validate
-      setValue('serviceImages', updatedImages, { shouldValidate: true });
-    },
-    [serviceImages, setValue],
-  );
-  
+  const removeService = (index: number) => {
+    const updatedServices = services.filter((_: any, i: number) => i !== index);
+    setServices(updatedServices);
+  };
+
+  // const removeImage = useCallback(
+  //   (uri: string) => {
+  //     // Filter out the image URI from the current state
+  //     const updatedImages = serviceImages.filter(image => image !== uri);
+
+  //     // Update the local state with the filtered images
+  //     setServiceImages(updatedImages);
+
+  //     // Update the form state to reflect the change and optionally re-validate
+  //     setValue('serviceImages', updatedImages, { shouldValidate: true });
+  //   },
+  //   [serviceImages, setValue],
+  // );
+
   const handleDone = useCallback(async () => {
     let uploadedImageUrls: string[] = [];
 
@@ -289,27 +298,28 @@ const SendWorks = (props: Props) => {
       }
     }
     setServiceImages(uploadedImageUrls);
-    
+
     const modifiedData = {
-      id,
-      workStatus,
-      companyUserId: companyUser.id,
-      customerId: customer.id,
+      id: editQuotation.id,
+      workStatus: 'WWW',
+      companyUserId: editQuotation.company.id,
+      customerId: editQuotation.customer.id,
       description: getValues('workDescription'),
-      dateOffer : getValues('dateOffer'),
-      services : getValues('services'),
+      dateOffer: getValues('dateOffer'),
+      services: getValues('services'),
       installationAddress: getValues('installationAddress'),
-      serviceImages:uploadedImageUrls,
+      serviceImages: uploadedImageUrls,
       // serviceImages: uploadedImageUrls,
     };
     await mutate(modifiedData);
   }, [serviceImages, uploadImageToFbStorage]);
 
-
-
   const handleDateSigne = (date: Date) => {
     const formattedDate = thaiDateFormatter.format(date);
-    setValue('dateOffer', formattedDate, {shouldValidate: true, shouldDirty: true});
+    setValue('dateOffer', formattedDate, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
   };
 
   return (
@@ -326,7 +336,7 @@ const SendWorks = (props: Props) => {
           }}
         />
         <Appbar.Content
-          title="แจ้งส่งงานลูกค้า"
+          title="หนังสือส่งงาน"
           titleStyle={{
             fontSize: 18,
             fontWeight: 'bold',
@@ -334,15 +344,14 @@ const SendWorks = (props: Props) => {
           }}
         />
         <Button
-          loading={isLoading}
+          loading={isPending}
           disabled={!isValid}
           mode="contained"
-          buttonColor={'#1b72e8'}
+          // buttonColor={'#1b72e8'}
           onPress={handleDone}>
           {'บันทึก'}
         </Button>
       </Appbar.Header>
-      <ProgressBar progress={1} color={'#1b52a7'} />
       <KeyboardAwareScrollView>
         <ScrollView
           style={{
@@ -354,26 +363,13 @@ const SendWorks = (props: Props) => {
             <View
               style={{
                 flexDirection: 'row',
-                justifyContent: 'flex-start',
-                width: '100%',
+                justifyContent: 'space-between',
+
                 marginVertical: 15,
+                alignContent: 'center',
               }}>
-              <Text style={styles.title}>โครงการ: </Text>
-              <Text style={{marginTop: 2, marginLeft: 10, height: 'auto'}}>
-                {contract.projectName}
-              </Text>
-            </View>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'flex-start',
-                width: '100%',
-                marginVertical: 15,
-              }}>
-              <Text style={styles.title}>ลูกค้า: </Text>
-              <Text style={{marginTop: 2, marginLeft: 10}}>
-                {customer.name}
-              </Text>
+              <Text style={styles.title}>ลูกค้า </Text>
+              <Text>{editQuotation.customer.name}</Text>
             </View>
           </View>
 
@@ -382,10 +378,9 @@ const SendWorks = (props: Props) => {
           <View
             style={{
               flexDirection: 'row',
-              justifyContent: 'flex-start',
-              width: '70%',
+              justifyContent: 'space-between',
             }}>
-            <Text style={styles.titleDate}>วันที่ส่งงาน:</Text>
+            <Text style={styles.titleDate}>วันที่ส่งงาน</Text>
             <View style={{marginTop: 10, marginLeft: 10}}>
               <DatePickerButton
                 title="วันที่ส่งงาน"
@@ -398,7 +393,7 @@ const SendWorks = (props: Props) => {
 
           <SmallDivider />
           <View style={{alignSelf: 'flex-start', marginVertical: 10}}>
-            <Text style={styles.title}>หนังสือส่งงานทำขึ้นที่:</Text>
+            <Text style={styles.title}>หนังสือส่งงานทำขึ้นที่</Text>
             <Controller
               control={control}
               name="installationAddress"
@@ -410,6 +405,7 @@ const SendWorks = (props: Props) => {
                 <View>
                   <TextInput
                     multiline
+                    style={styles.input}
                     error={!!error}
                     mode="outlined"
                     numberOfLines={4}
@@ -430,68 +426,79 @@ const SendWorks = (props: Props) => {
               )}
             />
           </View>
-          <Divider style={{marginVertical: 20}} />
+          <Divider style={{marginBottom: 20}} />
 
           <View>
             <Text style={styles.title}>งานที่แจ้งส่ง</Text>
-            {services.map((service, index) => (
-              <View key={index}>
-                <Text style={styles.listTitle}>
-                  {index + 1}. {service.title}
-                </Text>
-                <Text style={styles.listDescription}>
-                  {service.description}
-                </Text>
-              </View>
-            ))}
+            {services.map((service: any, index: number) => (
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }} key={index}>
+          <View>
+            <Text style={styles.listTitle}>
+              {index + 1}. {service.title}
+            </Text>
+            <Text style={styles.listDescription}>
+              {service.description}
+            </Text>
+          </View>
+          
+          <IconButton
+            icon="delete"
+            size={20}
+            iconColor="gray"
+            onPress={() => removeService(index)}
+          />
+        </View>
+      ))}
           </View>
 
           <Divider style={{marginVertical: 20}} />
           <View>
-            <Text style={styles.title}>เพิ่มรูปผลงาน</Text>
-            {services.map((service, index) => (
-             
-                <FlatList
-                  key={service.id}
-                  data={serviceImages}
-                  horizontal={true}
-                  renderItem={({item, index}) => {
-                    return (
-                      <View key={index} style={styles.imageContainer}>
-                        <Image source={{uri: item}} style={styles.image} />
-                        <TouchableOpacity
-                          style={styles.closeIcon}
-                          onPress={() => removeImage(item)}>
-                          <FontAwesomeIcon
-                            icon={faClose}
-                            size={15}
-                            color="white"
-                          />
-                        </TouchableOpacity>
-                      </View>
-                    );
-                  }}
-                  keyExtractor={(item, index) => index.toString()}
-                  ListFooterComponent={
-                    serviceImages.length > 0 ? (
+            <Text style={styles.title}>รูปก่อนติดตั้ง</Text>
+            {editQuotation.services.map((service: any, index: number) => (
+              <FlatList
+                key={service.id}
+                data={serviceImages}
+                horizontal={true}
+                renderItem={({item, index}) => {
+                  return (
+                    <View key={index} style={styles.imageContainer}>
+                      <Image source={{uri: item}} style={styles.image} />
                       <TouchableOpacity
-                        style={styles.addButtonContainer}
-                        onPress={() => {
-                          handleUploadMoreImages(); // navigation.navigate('GalleryScreen', {code});
-                        }}>
+                        style={styles.closeIcon}
+                        onPress={
+                          () => {}
+                          // removeImage(item)
+                        }>
                         <FontAwesomeIcon
-                          icon={faPlus}
-                          size={32}
-                          // color="#0073BA"
+                          icon={faClose}
+                          size={15}
+                          color="white"
                         />
                       </TouchableOpacity>
-                    ) : null
-                  }
-                  ListEmptyComponent={
+                    </View>
+                  );
+                }}
+                keyExtractor={(item, index) => index.toString()}
+                ListFooterComponent={
+                  serviceImages.length > 0 ? (
                     <TouchableOpacity
+                      style={styles.addButtonContainer}
+                      onPress={() => {
+                        // handleUploadMoreImages();
+                      }}>
+                      <FontAwesomeIcon
+                        icon={faPlus}
+                        size={32}
+                        // color="#0073BA"
+                      />
+                    </TouchableOpacity>
+                  ) : null
+                }
+                ListEmptyComponent={
+                  <TouchableOpacity
                     style={styles.addButtonContainer}
                     onPress={() => {
-                      handleUploadMoreImages(); // navigation.navigate('GalleryScreen', {code});
+                      // handleUploadMoreImages();
                     }}>
                     <FontAwesomeIcon
                       icon={faPlus}
@@ -499,15 +506,73 @@ const SendWorks = (props: Props) => {
                       // color="#0073BA"
                     />
                   </TouchableOpacity>
-                  }
-                />
-       
+                }
+              />
+            ))}
+          </View>
+          <Divider style={{marginVertical: 10}} />
+          <View>
+            <Text style={styles.title}>รูปหลังติดตั้ง</Text>
+            {editQuotation.services.map((service: any, index: number) => (
+              <FlatList
+                key={service.id}
+                data={serviceImages}
+                horizontal={true}
+                renderItem={({item, index}) => {
+                  return (
+                    <View key={index} style={styles.imageContainer}>
+                      <Image source={{uri: item}} style={styles.image} />
+                      <TouchableOpacity
+                        style={styles.closeIcon}
+                        onPress={
+                          () => {}
+                          // removeImage(item)
+                        }>
+                        <FontAwesomeIcon
+                          icon={faClose}
+                          size={15}
+                          color="white"
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  );
+                }}
+                keyExtractor={(item, index) => index.toString()}
+                ListFooterComponent={
+                  serviceImages.length > 0 ? (
+                    <TouchableOpacity
+                      style={styles.addButtonContainer}
+                      onPress={() => {
+                        // handleUploadMoreImages();
+                      }}>
+                      <FontAwesomeIcon
+                        icon={faPlus}
+                        size={32}
+                        // color="#0073BA"
+                      />
+                    </TouchableOpacity>
+                  ) : null
+                }
+                ListEmptyComponent={
+                  <TouchableOpacity
+                    style={styles.addButtonContainer}
+                    onPress={() => {
+                      // handleUploadMoreImages();
+                    }}>
+                    <FontAwesomeIcon
+                      icon={faPlus}
+                      size={32}
+                      // color="#0073BA"
+                    />
+                  </TouchableOpacity>
+                }
+              />
             ))}
           </View>
           <Divider style={{marginVertical: 10}} />
 
           <View style={{alignSelf: 'flex-start', marginVertical: 10}}>
-            <Text style={styles.title}>รายละเอียดงานที่ส่ง:</Text>
+            <Text style={styles.title}>รายละเอียดงานที่ส่ง</Text>
             <Controller
               control={control}
               rules={{required: true}}
@@ -518,6 +583,7 @@ const SendWorks = (props: Props) => {
               }) => (
                 <TextInput
                   error={!!error}
+                  style={styles.input}
                   multiline
                   numberOfLines={4}
                   mode="outlined"
@@ -764,7 +830,7 @@ const styles = StyleSheet.create({
     // shadowOpacity: 0.3,
     // shadowRadius: 3,
 
-    width: '80%',
+    width: '100%',
     alignSelf: 'baseline',
     marginTop: 20,
   },

@@ -1,52 +1,49 @@
-import {BACK_END_SERVER_URL} from '@env';
+import { BACK_END_SERVER_URL } from '@env';
 import messaging from '@react-native-firebase/messaging';
-import {DrawerActions} from '@react-navigation/native';
-import {useQueryClient} from '@tanstack/react-query';
-import React, {useContext, useEffect, useMemo, useState} from 'react';
+import { DrawerActions } from '@react-navigation/native';
+import { useQueryClient } from '@tanstack/react-query';
+import React, { useContext, useEffect, useState } from 'react';
 import {
   Alert,
   Dimensions,
   FlatList,
   StyleSheet,
   Text,
-  TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import Modal from 'react-native-modal';
-import {FilterButton} from '../../components/ui/Dashboard/FilterButton'; // Adjust the import path as necessary
-import firebase from '../../firebase';
-import {useActiveFilter} from '../../hooks/dashboard/useActiveFilter';
-import {useFilteredData} from '../../hooks/dashboard/useFilteredData';
-import {useRemoveQuotation} from '../../hooks/quotation/dashboard/useRemoveQuotation';
 import CardDashBoard from '../../components/CardDashBoard';
-import {useUser} from '../../providers/UserContext';
+import { FilterButton } from '../../components/ui/Dashboard/FilterButton'; // Adjust the import path as necessary
+import { useActiveFilter } from '../../hooks/dashboard/useActiveFilter';
+import { useFilteredData } from '../../hooks/dashboard/useFilteredData';
+import { useUser } from '../../providers/UserContext';
 import * as stateAction from '../../redux/actions';
-import {Store} from '../../redux/store';
-import {CompanySeller, Customer, Quotation, Service} from '../../types/docType';
-import {DashboardScreenProps} from '../../types/navigationType';
+import { Store } from '../../redux/store';
+import { CompanySeller, Customer, Quotation, Service } from '../../types/docType';
+import { DashboardScreenProps } from '../../types/navigationType';
 
 import {
   ActivityIndicator,
   Appbar,
-  Dialog,
   Divider,
   FAB,
+  Icon,
   List,
   PaperProvider,
-  Portal,
+  Portal
 } from 'react-native-paper';
-import {requestNotifications} from 'react-native-permissions';
-import useFetchDashboard from '../../hooks/quotation/dashboard/useFetchDashboard'; // adjust the path as needed
+import { requestNotifications } from 'react-native-permissions';
+import useFetchDashboardInvoice from '../../hooks/invoice/queryInvoices';
 import {
   QuotationStatus,
   QuotationStatusKey,
 } from '../../models/QuotationStatus';
+import useFetchDashboardReceipt from '../../hooks/receipt/queryInvoices';
 
 const ReceiptDashboard = ({navigation}: DashboardScreenProps) => {
   const [showModal, setShowModal] = useState(true);
   const user = useUser();
-  const email = user?.email;
-  const {data, isLoading, isError, error} = useFetchDashboard();
+  const {data, isLoading, isError, error} = useFetchDashboardReceipt();
   const {activeFilter, updateActiveFilter} = useActiveFilter();
   const {width, height} = Dimensions.get('window');
   const [isLoadingAction, setIsLoadingAction] = useState(false);
@@ -59,7 +56,7 @@ const ReceiptDashboard = ({navigation}: DashboardScreenProps) => {
   const {dispatch}: any = useContext(Store);
   const filteredData = useFilteredData(originalData, activeFilter);
   const [companyData, setCompanyData] = useState<CompanySeller | null>(null);
-  const [invoiceData, setInvoiceData] = useState<Quotation[] | null>(null);
+  const [receiptData, setReceiptData] = useState<Quotation[] | null>(null);
   const handleNoResponse = () => {
     setIsModalSignContract(false);
   };
@@ -75,7 +72,7 @@ const ReceiptDashboard = ({navigation}: DashboardScreenProps) => {
   const removeReceipt = async (id: string) => {
     handleModalClose();
     setIsLoadingAction(true);
-    if (!user || !email) {
+    if (!user || !user.uid) {
       console.error('User or user email is not available');
       return;
     }
@@ -84,7 +81,7 @@ const ReceiptDashboard = ({navigation}: DashboardScreenProps) => {
       const response = await fetch(
         `${BACK_END_SERVER_URL}/api/documents/removeQuotation?id=${encodeURIComponent(
           id,
-        )}&email=${encodeURIComponent(email)}`,
+        )}}`,
         {
           method: 'DELETE',
           headers: {
@@ -96,7 +93,7 @@ const ReceiptDashboard = ({navigation}: DashboardScreenProps) => {
 
       if (response.ok) {
         queryClient.invalidateQueries({
-          queryKey: ['dashboardQuotation', email],
+          queryKey: ['dashboardQuotation'],
         });
         setIsLoadingAction(false);
       } else {
@@ -138,9 +135,8 @@ const ReceiptDashboard = ({navigation}: DashboardScreenProps) => {
       } else {
         // If data[0] exists and has a non-null `code`, proceed with your logic
         setCompanyData(data[0]);
-        setInvoiceData(data[1]);
+        setReceiptData(data[1]);
         setOriginalData(data[1]);
-        dispatch(stateAction.code_company(data[0].code));
       }
     }
   }, [data]);
@@ -160,14 +156,6 @@ const ReceiptDashboard = ({navigation}: DashboardScreenProps) => {
     }
   }, [user]);
 
-  if (isLoading || isLoadingAction) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size={'large'} />
-      </View>
-    );
-  }
-
   const filtersToShow: QuotationStatusKey[] = [
     QuotationStatus.ALL,
     QuotationStatus.PENDING,
@@ -175,18 +163,6 @@ const ReceiptDashboard = ({navigation}: DashboardScreenProps) => {
     QuotationStatus.CONTRACT,
     QuotationStatus.ONPROCESS,
   ];
-  const handleCreateContract = (index: number) => {
-    if (companyData && invoiceData && invoiceData.length > 0) {
-      console.log('quotationSelected', selectedItem);
-      navigation.navigate('ContractOptions', {
-        id: selectedItem.id,
-        sellerId: selectedItem.id,
-        allTotal: selectedItem.allTotal,
-        customerName: selectedItem.customer?.name as string,
-      });
-    }
-    setIsModalSignContract(false);
-  };
   const handleSignContractModal = (item: Quotation, index: number) => {
     setSelectedItem(item);
     setSelectedIndex(index);
@@ -205,7 +181,7 @@ const ReceiptDashboard = ({navigation}: DashboardScreenProps) => {
     setSelectedIndex(null);
     setShowModal(false);
   };
-  const editQuotation = async (services: Service[], quotation: Quotation) => {
+  const editReveipt = async (services: Service[], quotation: Quotation) => {
     setIsLoadingAction(true);
     dispatch(stateAction.get_companyID(data[0].id));
     setIsLoadingAction(false);
@@ -271,7 +247,7 @@ const ReceiptDashboard = ({navigation}: DashboardScreenProps) => {
                     <List.Item
                       onPress={() => {
                         setShowModal(false);
-                        editQuotation(selectedItem.services, selectedItem);
+                        editReveipt(selectedItem.services, selectedItem);
                       }}
                       title="แก้ไขเอกสาร"
                       titleStyle={{textAlign: 'center', color: 'black'}} // จัดให้ข้อความอยู่ตรงกลาง
@@ -317,8 +293,16 @@ const ReceiptDashboard = ({navigation}: DashboardScreenProps) => {
     if (!companyData) {
       navigation.navigate('CreateCompanyScreen');
     }
-    navigation.navigate('CreateQuotation');
+    navigation.navigate('CreateNewReceipt')
+    // navigation.navigate('SelectDoc');
   };
+  if (isError) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text>เกิดข้อผิดพลาด {error?.message}</Text>
+      </View>
+    );
+  }
   return (
     <>
       <PaperProvider>
@@ -338,7 +322,7 @@ const ReceiptDashboard = ({navigation}: DashboardScreenProps) => {
             <Appbar.Content
               title={
                 activeFilter == QuotationStatus.ALL
-                  ? 'ใบเสร็จรับเงินทั้งหมด'
+                  ? 'ใบเสร็จรับเงิน'
                   : activeFilter === QuotationStatus.PENDING
                   ? 'รายการรออนุมัติ'
                   : activeFilter === QuotationStatus.APPROVED
@@ -362,71 +346,72 @@ const ReceiptDashboard = ({navigation}: DashboardScreenProps) => {
               // }}
             />
           </Appbar.Header>
-          {isLoadingAction ? (
-            <View
-              style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-              <ActivityIndicator size="large" />
+          <>
+            <View>
+              <FlatList
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                data={filtersToShow}
+                renderItem={({item}) => (
+                  <FilterButton
+                    filter={item}
+                    isActive={item === activeFilter}
+                    onPress={() => {
+                      updateActiveFilter(item);
+                    }}
+                  />
+                )}
+                keyExtractor={item => item}
+              />
             </View>
-          ) : (
-            <>
-              <View>
+            {isLoading || isLoadingAction ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator color='primary'/>
+              </View>
+            ) : (
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  backgroundColor: '#f5f5f5',
+                }}>
                 <FlatList
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  data={filtersToShow}
-                  renderItem={({item}) => (
-                    <FilterButton
-                      filter={item}
-                      isActive={item === activeFilter}
-                      onPress={() => {
-                        updateActiveFilter(item);
-                      }}
-                    />
-                  )}
-                  keyExtractor={item => item}
+                  data={filteredData}
+                  renderItem={renderItem}
+                  keyExtractor={item => item.id}
+                  ListEmptyComponent={
+                    <View
+                      style={{
+                        flex: 1,
+                        justifyContent: 'flex-start',
+                        height: height,
+
+                        alignItems: 'center',
+                        marginTop: height * 0.2,
+                      }}>
+                      <Icon source="inbox" color={'gray'} size={80} />
+                      <Text style={{marginTop: 10, color: 'gray'}}>
+                        ยังไม่มีเอกสาร
+                      </Text>
+                      <Text style={{marginTop: 10, color: 'gray'}}>
+                        กดปุ่ม + ด้านล่างเพื่อสร้างใบเสร็จรับเงิน
+                      </Text>
+                    </View>
+                  }
+                  contentContainerStyle={receiptData?.length === 0 && {flex: 1}}
                 />
               </View>
-              {data && (
-                <View
-                  style={{
-                    flex: 1,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    backgroundColor: '#f5f5f5',
-                  }}>
-                  <FlatList
-                    data={filteredData}
-                    renderItem={renderItem}
-                    keyExtractor={item => item.id}
-                    ListEmptyComponent={
-                      <View
-                        style={{
-                          flex: 1,
-                          justifyContent: 'center',
-                          height: height * 0.5,
+            )}
+            <FAB
+              style={styles.fabStyle}
+              icon="plus"
+              // onPress={()=>testConnection()}
+              onPress={() => createNewReceipt()}
+              color="white"
+            />
 
-                          alignItems: 'center',
-                        }}>
-                        <Text style={{marginTop: 10}}>
-                          กดปุ่ม + ด้านล่างเพื่อสร้างใบเสร็จรับเงิน
-                        </Text>
-                      </View>
-                    }
-                    contentContainerStyle={
-                      invoiceData?.length === 0 && {flex: 1}
-                    }
-                  />
-                </View>
-              )}
-              <FAB
-                style={styles.fabStyle}
-                icon="plus"
-                // onPress={()=>testConnection()}
-                onPress={() => createNewReceipt()}
-                color="white"
-              />
-
-              {/* <FAB.Group
+            {/* <FAB.Group
                 open={open}
                 visible
                 color="white"
@@ -457,8 +442,7 @@ const ReceiptDashboard = ({navigation}: DashboardScreenProps) => {
                   }
                 }}
               /> */}
-            </>
-          )}
+          </>
         </Portal>
       </PaperProvider>
     </>

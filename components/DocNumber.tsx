@@ -9,11 +9,12 @@ type Props = {
 
 const windowWidth = Dimensions.get('window').width;
 
-const DocNumber = (props) => {
+const DocNumber = (props : Props) => {
   return (
     <View style={styles.container}>
       <Text style={styles.label}>{props.label}</Text>
       <TextInput
+      textAlign='right'
         style={styles.input}
         value={props.value}
         onChangeText={(text) => props.onChange(text)} // Pass the new text value
@@ -29,7 +30,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     backgroundColor:'white',
-    marginVertical: 10,
+    marginTop: 10,
     alignItems: 'center',
     paddingHorizontal: 10,
     height:40,
@@ -45,7 +46,8 @@ const styles = StyleSheet.create({
   },
   input: {
     justifyContent: 'flex-end',
-
+    width: '50%' ,
     fontSize: 14,
+    
   },
 });

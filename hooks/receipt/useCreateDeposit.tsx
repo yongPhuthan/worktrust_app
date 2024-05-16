@@ -7,7 +7,7 @@ export interface InvoiceActions {
   openPDFModal: () => void;
 }
 // Pass actions via props
-const useCreateNewInvoice = (actions: InvoiceActions) => {
+const useCreateNewDepositReceipt = (actions: InvoiceActions) => {
   const {  setPdfUrl, openPDFModal } = actions;
   const queryClient = useQueryClient();
   const user = useUser();
@@ -17,13 +17,13 @@ const useCreateNewInvoice = (actions: InvoiceActions) => {
     throw new Error('User is not authenticated');
   }
 
-  const createInvoice = async (data: Quotation) => {
+  const createDepositReceiipt = async (data:any) => {
     if (!user || !user.uid) {
       throw new Error('User is not available');
     }
 
     const token = await user.getIdToken(true);
-    const response = await fetch(`${BACK_END_SERVER_URL}/api/invoice/createInvoice`, {
+    const response = await fetch(`${BACK_END_SERVER_URL}/api/invoice/createDepositReceipt`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -43,7 +43,7 @@ const useCreateNewInvoice = (actions: InvoiceActions) => {
   };
 
   const { mutate, data, error, isError, isPending, isSuccess, reset } = useMutation( {
-    mutationFn: createInvoice,
+    mutationFn: createDepositReceiipt,
     onSuccess: (responseData:any) => {
       setPdfUrl(responseData.pdfUrl);
       openPDFModal();
@@ -57,4 +57,4 @@ const useCreateNewInvoice = (actions: InvoiceActions) => {
   return { mutate, data, error, isError, isPending, isSuccess, reset };
 };
 
-export default useCreateNewInvoice;
+export default useCreateNewDepositReceipt;

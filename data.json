@@ -1,69 +1,60 @@
- {
-     "data": {
-         "services": [{
-             "id": "clw5ml51h0005nsccu0nt9hay",
-             "title": "Project2",
-             "description": "Description2",
-             "standards": [{
-                 "id": "8dd90af9-75ec-40fc-b2a6-317aed7653a9",
-                 "image": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/983524%2Fstandards%2F%E0%B8%A1%E0%B8%B2%E0%B8%95%E0%B8%A3%E0%B8%90%E0%B8%B2%E0%B8%99%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%9B%E0%B9%89%E0%B8%AD%E0%B8%87%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%99%E0%B9%89%E0%B8%B3%E0%B8%A3%E0%B8%B1%E0%B9%88%E0%B8%A7%E0%B8%8B%E0%B8%B6%E0%B8%A1%2Fr7iAOvVdCILiWBTwHFJF6Zqflt8A%2Foriginal%2F21CA09E2-6B61-41CE-879E-E4FAC1776183.png?alt=media&token=42034056-d8d4-4a2a-98e5-9e21ce3f5004",
-                 "content": "น้ำไม่รั่วไหล",
-                 "badStandardEffect": "น้ำอาจจะเข้าบ้านคุณได้",
-                 "badStandardImage": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/983524%2FbadStandard%2F%E0%B8%A1%E0%B8%B2%E0%B8%95%E0%B8%A3%E0%B8%90%E0%B8%B2%E0%B8%99%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%9B%E0%B9%89%E0%B8%AD%E0%B8%87%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%99%E0%B9%89%E0%B8%B3%E0%B8%A3%E0%B8%B1%E0%B9%88%E0%B8%A7%E0%B8%8B%E0%B8%B6%E0%B8%A1%2FbadStandard%2Fr7iAOvVdCILiWBTwHFJF6Zqflt8A%2Foriginal%2F9C06C12B-4E0D-435E-AF27-8A170F550C29.png?alt=media&token=26e3713a-477b-4fc6-8831-b98bf290fdeb",
-                 "standardShowTitle": "มาตรฐานการป้องกันน้ำรั่วซึม",
-                 "createdAt": "2024-05-12T11:31:41.083Z",
-                 "tags": [],
-                 "companyId": "clw3fh6lo0001evsq862rrsyr",
-                 "serviceId": "clw5ml51h0005nsccu0nt9hay"
-             }],
-             "materials": [{
-                 "id": "clw3glgpt00077muxe8c6nne7",
-                 "name": "ด้ามจับไกด์บน",
-                 "description": "แสตนเลส 404",
-                 "image": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/983524%2Fmaterials%2F%E0%B8%94%E0%B9%89%E0%B8%B2%E0%B8%A1%E0%B8%88%E0%B8%B1%E0%B8%9A%E0%B9%84%E0%B8%81%E0%B8%94%E0%B9%8C%E0%B8%9A%E0%B8%99%2Fr7iAOvVdCILiWBTwHFJF6Zqflt8A%2Foriginal%2F04D3C5AF-9C02-41AA-8498-1E91B34E92FB.png?alt=media&token=ac3f34ea-a451-4095-a7a1-691ef076a03b",
-                 "created": "2024-05-12T11:35:54.591Z",
-                 "serviceId": "clw5ml51h0005nsccu0nt9hay",
-                 "tags": [],
-                 "companyId": "clw3fh6lo0001evsq862rrsyr"
-             }],
-             "serviceImages": [{
-                 "originalUrl": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/users%2F983524%2Fimages%2Fgallery%2F0d5d1cc0-477f-419e-9e27-62a06040c4bd%2Fr7iAOvVdCILiWBTwHFJF6Zqflt8A%2Foriginal%2FDC855528-3540-4E53-BE22-8F65A9FE9DE6.png?alt=media&token=4c5f5f6c-4ca6-4993-9ddc-a9c24fcafac0",
-                 "thumbnailUrl": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/users%2F983524%2Fimages%2Fgallery%2F0d5d1cc0-477f-419e-9e27-62a06040c4bd%2Fr7iAOvVdCILiWBTwHFJF6Zqflt8A%2Fthumbnail%2FE27E2C42-739B-4C40-86AB-67812E7221C9.png?alt=media&token=f1c720ad-b3af-44cb-a66a-41214aa83a17"
-             }],
-             "qty": 2,
-             "unitPrice": "4000",
-             "total": "8000",
-             "unit": "ชุด"
-         }],
-         "customer": {
-             "name": "ลูกค้าใบวางบิล",
-             "address": "เชียงใหม่",
-             "customerTax": "",
-             "phone": "053306426"
-         },
-         "company": {
-             "bizName": "Doubledoor engineering",
-             "companyTax": "1100800667422",
-             "signature": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/983524%2Fsignature%2Fsignature983524.pngc92f4fa1-33a6-43f8-ae39-af9cb17f454a?alt=media&token=b570420e-8593-480f-b187-e2b80e054f29",
-             "code": "983524",
-             "id": "clw3fh6lo0001evsq862rrsyr",
-             "logo": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/983524%2Flogo%2FDoubledoor%20engineering%2Fr7iAOvVdCILiWBTwHFJF6Zqflt8A%2Foriginal%2FB9EC2EF8-8E46-4A44-B7F3-CD8F70FC9A4D.png?alt=media&token=71ea8462-f8a6-4895-9616-b5685edbc6be"
-         },
-         "vat7": "0.00",
-         "taxType": "NOTAX",
-         "taxValue": "0.00",
-         "summary": "8000.00",
-         "summaryAfterDiscount": "8000.00",
-         "discountType": "PERCENT",
-         "discountPercentage": 0,
-         "discountValue": "0.00",
-         "allTotal": "8000.00",
-         "dateOffer": "2024-05-14T10:29:57.470Z",
-         "noteToCustomer": "หมายเหตุถึงลูกค้า",
-         "noteToTeam": "โน๊ตถึงทีมงาน",
-         "dateEnd": "2024-05-21T10:29:57.470Z",
-         "docNumber": "20240514510",
-         "FCMToken": "",
-         "sellerSignature": ""
-     }
- }
+invoice: {
+    customer: {
+      id: 'clw3nqa7n0000d0w9l6od2htq',
+      name: 'Customer 1',
+      address: 'Address',
+      customerTax: '',
+      customerType: null,
+      phone: '04042042',
+      emailCustomerApproved: null,
+      customerPosition: null,
+      customerNameSign: null,
+      socialProvider: null,
+      customerSignature: null,
+      customerPositionSignQuotation: null,
+      customerNameSignQuotaiton: null,
+      customerSignQuotation: null,
+      customerDateSign: null,
+      customerDateSignQuotation: null,
+      customerImage: null,
+      companySelllerId: 'clw3fh6lo0001evsq862rrsyr',
+      signType: 'PENDING'
+    },
+    id: 'clw3nqa7u0001d0w9mymmshhj',
+    company: {
+      id: 'clw3fh6lo0001evsq862rrsyr',
+      code: '983524',
+      bizName: 'Doubledoor engineering',
+      address: '7/44 หมู่ 5 ต.อ้อมใหญ่ อ.สามพราน  จ.นครปฐม',
+      officeTel: '053306426',
+      mobileTel: '0959962030',
+      companyTax: '1100800667422',
+      bizType: 'individual',
+      logo: 'http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/983524%2Flogo%2FDoubledoor%20engineering%2Fr7iAOvVdCILiWBTwHFJF6Zqflt8A%2Foriginal%2FB9EC2EF8-8E46-4A44-B7F3-CD8F70FC9A4D.png?alt=media&token=71ea8462-f8a6-4895-9616-b5685edbc6be',
+      isActive: true,
+      signature: 'http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/983524%2Fsignature%2Fsignature983524.pngc92f4fa1-33a6-43f8-ae39-af9cb17f454a?alt=media&token=b570420e-8593-480f-b187-e2b80e054f29',
+      categoryId: null,
+      userIds: [ 'clw3buzlt0001texm6m89cmd8' ],
+      bankAccounts: []
+    },
+    services: [
+      {
+        id: 'clw3nqa7y0002d0w9ohw25b6j',
+        title: 'Doorfolding Whte',
+        description: 'Tempered Glass',
+        unitPrice: 5990,
+        qty: 1,
+        unit: 'ชุด',
+        discountType: 'PERCENT',
+        discountValue: 0,
+        total: 5990,
+        quotationId: 'clw3nqa7u0001d0w9mymmshhj',
+        companyId: 'clw3fh6lo0001evsq862rrsyr',
+        invoiceId: null,
+        receiptsId: null,
+        serviceImages: [Array],
+        created: 2024-05-12T14:55:36.766Z,
+        updated: 2024-05-12T14:55:36.766Z
+      }
+    ]
+  }

@@ -129,7 +129,9 @@ const SelectDoc = ({navigation}: Props) => {
                 <List.Item
                   onPress={() => {
                     setShowModal(false);
-                    createNewByQuotation(selectedItem.services, selectedItem);
+                    // createNewByQuotation(selectedItem.services, selectedItem);
+                    dispatch(stateAction.get_edit_quotation(selectedItem));
+                    navigation.navigate('CreateNewInvoice');
                   }}
                   centered={true}
                   title="ใบวางบิลเต็มจำนวน"

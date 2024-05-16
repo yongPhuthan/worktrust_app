@@ -103,27 +103,27 @@ const Selectworks = (props: Props) => {
       throw err;
     }
   }
-  const {
-    isLoading: isQuery,
-    error,
-    data,
-    refetch,
-  } = useQuery({
-    queryFn: fetchContractByQuotation,
-    queryKey: ['quotation-submit', quotationId],
-    enabled: !!user,
-    onSuccess: data => {
-      reset({
-        services: data.services,
-        projectName: data.contract.projectName,
-        signAddress: data.signAddress,
-        customerName: data.customer.name,
-        periodPercent: data.periodPercent,
-        companyUserId: data.companyUser.id,
-        customerId: data.customer.id,
-      });
-    },
-  });
+  // const {
+  //   isLoading: isQuery,
+  //   error,
+  //   data,
+  //   refetch,
+  // } = useQuery({
+  //   queryFn: fetchContractByQuotation,
+  //   queryKey: ['quotation-submit', quotationId],
+  //   enabled: !!user,
+  //   // onSuccess: data => {
+  //   //   reset({
+  //   //     services: data.services,
+  //   //     projectName: data.contract.projectName,
+  //   //     signAddress: data.signAddress,
+  //   //     customerName: data.customer.name,
+  //   //     periodPercent: data.periodPercent,
+  //   //     companyUserId: data.companyUser.id,
+  //   //     customerId: data.customer.id,
+  //   //   });
+  //   // },
+  // });
   const handleSelectedAll = () => {
     setSelectedAll(!selectedAll);
     if (selectedAll) {
@@ -143,32 +143,13 @@ const Selectworks = (props: Props) => {
   };
   const handleDonePress = () => {
     const modifyData = {
-      ...data,
+      
       services: selectedServices,
       workStatus:
         selectedServices.length === watch('services').length ? 'ALL' : 'PERIOD',
     };
-    console.log('modifyData', modifyData);
-
-    navigation.navigate('SendWorks', {
-      ...modifyData,
-    });
   };
-  if (isQuery || !data) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator />
-      </View>
-    );
-  }
 
-  if (error) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text>Error </Text>
-      </View>
-    );
-  }
 
   return (
     <>

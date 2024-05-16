@@ -1,13 +1,13 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Quotation } from 'types/docType';
-import { useUser } from '../../providers/UserContext';
+import { useUser } from '../../../providers/UserContext';
 import { BACK_END_SERVER_URL } from '@env';
 export interface InvoiceActions {
   setPdfUrl: (url: string) => void;
   openPDFModal: () => void;
 }
 // Pass actions via props
-const useCreateNewInvoice = (actions: InvoiceActions) => {
+const useCreateNewDepositInvoice = (actions: InvoiceActions) => {
   const {  setPdfUrl, openPDFModal } = actions;
   const queryClient = useQueryClient();
   const user = useUser();
@@ -17,13 +17,13 @@ const useCreateNewInvoice = (actions: InvoiceActions) => {
     throw new Error('User is not authenticated');
   }
 
-  const createInvoice = async (data: Quotation) => {
+  const createDepositInvoice = async (data:any) => {
     if (!user || !user.uid) {
       throw new Error('User is not available');
     }
 
     const token = await user.getIdToken(true);
-    const response = await fetch(`${BACK_END_SERVER_URL}/api/invoice/createInvoice`, {
+    const response = await fetch(`${BACK_END_SERVER_URL}/api/invoice/createDepositInvoice`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -43,7 +43,7 @@ const useCreateNewInvoice = (actions: InvoiceActions) => {
   };
 
   const { mutate, data, error, isError, isPending, isSuccess, reset } = useMutation( {
-    mutationFn: createInvoice,
+    mutationFn: createDepositInvoice,
     onSuccess: (responseData:any) => {
       setPdfUrl(responseData.pdfUrl);
       openPDFModal();
@@ -57,4 +57,4 @@ const useCreateNewInvoice = (actions: InvoiceActions) => {
   return { mutate, data, error, isError, isPending, isSuccess, reset };
 };
 
-export default useCreateNewInvoice;
+export default useCreateNewDepositInvoice;

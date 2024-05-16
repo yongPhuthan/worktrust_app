@@ -241,13 +241,16 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   const editQuotation = async (services: Service[], quotation: Quotation) => {
     setIsLoadingAction(true);
     dispatch(stateAction.get_companyID(data[0].id));
+    dispatch(stateAction.get_edit_quotation(quotation));
     setIsLoadingAction(false);
     handleModalClose();
-    navigation.navigate('EditQuotation', {
-      quotation,
-      company: data[0],
-      services,
-    });
+    navigation.navigate('CreateQuotation');
+
+    // navigation.navigate('EditQuotation', {
+    //   quotation,
+    //   company: data[0],
+    //   services,
+    // });
   };
 
   if (isError && error) {
@@ -299,11 +302,17 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                       pdfUrl: item.pdfUrl,
                       fileName: `ใบเสนอราคา ${item.customer.name}.pdf`,
                     });
-                    // navigation.navigate('DocViewScreen', {id: item.id});
                   }}
                   centered={true}
                   title="พรีวิวเอกสาร"
-                  titleStyle={{textAlign: 'center', color: 'black'}} // จัดให้ข้อความอยู่ตรงกลาง
+                  titleStyle={{textAlign: 'center', color: 'black'}}
+                />
+
+                <Divider />
+                <List.Item
+                  onPress={() => {}}
+                  title="เอกสาร PDF"
+                  titleStyle={{textAlign: 'center'}}
                 />
 
                 <Divider />
@@ -315,10 +324,61 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                         setShowModal(false);
                         editQuotation(selectedItem.services, selectedItem);
                       }}
-                      title="แก้ไขเอกสาร"
-                      titleStyle={{textAlign: 'center', color: 'black'}} // จัดให้ข้อความอยู่ตรงกลาง
+                      title="แก้ไข"
+                      titleStyle={{textAlign: 'center', color: 'black'}}
                     />
 
+                    <Divider />
+                    <List.Item
+                      onPress={() => {
+                        dispatch(stateAction.get_edit_quotation(selectedItem));
+                        setShowModal(false);
+                        navigation.navigate('CreateNewInvoice');
+                      }}
+                      title="สร้างใบวางบิล"
+                      titleStyle={{textAlign: 'center'}}
+                    />
+                    <Divider />
+                    <List.Item
+                      onPress={() => {
+                        dispatch(stateAction.get_edit_quotation(selectedItem));
+                        setShowModal(false);
+                        navigation.navigate('InvoiceDepositScreen');
+                      }}
+                      title="มัดจำใบวางบิล"
+                      titleStyle={{textAlign: 'center'}}
+                    />
+                    <Divider />
+                    <List.Item
+                      onPress={() => {
+                        dispatch(stateAction.get_edit_quotation(selectedItem));
+                        setShowModal(false);
+                        navigation.navigate('CreateNewReceipt');
+                      }}
+                      title="สร้างใบเสร็จรับเงิน"
+                      titleStyle={{textAlign: 'center'}}
+                    />
+
+                    <Divider />
+                    <List.Item
+                      onPress={() => {
+                        dispatch(stateAction.get_edit_quotation(selectedItem));
+                        setShowModal(false);
+                        navigation.navigate('ReceiptDepositScreen');
+                      }}
+                      title="มัดจำใบเสร็จรับเงิน"
+                      titleStyle={{textAlign: 'center'}}
+                    />
+                    <Divider />
+                    <List.Item
+                      onPress={() => {
+                        dispatch(stateAction.get_edit_quotation(selectedItem));
+                        setShowModal(false);
+                        navigation.navigate('SendWorks');
+                      }}
+                      title="ส่งงาน"
+                      titleStyle={{textAlign: 'center'}}
+                    />
                     <Divider />
                     <List.Item
                       onPress={() =>
@@ -328,13 +388,11 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                         )
                       }
                       title="ลบเอกสาร"
-                      titleStyle={{textAlign: 'center', color: 'red'}} // จัดให้ข้อความอยู่ตรงกลาง
+                      titleStyle={{textAlign: 'center', color: 'red'}}
                     />
-
-                    <Divider />
                   </>
                 )}
-                {selectedItem?.status !== QuotationStatus.APPROVED && (
+                {/* {selectedItem?.status !== QuotationStatus.APPROVED && (
                   <>
                     <Divider />
                     <List.Item
@@ -346,7 +404,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                       titleStyle={{textAlign: 'center', color: 'black'}} // จัดให้ข้อความอยู่ตรงกลาง
                     />
                   </>
-                )}
+                )} */}
               </List.Section>
             </Modal>
           </PaperProvider>
@@ -408,7 +466,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
           {isLoadingAction ? (
             <View
               style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-              <ActivityIndicator color='primary' />
+              <ActivityIndicator color="primary" />
             </View>
           ) : (
             <>

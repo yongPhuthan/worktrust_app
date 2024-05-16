@@ -73,6 +73,46 @@ const PDFModalScreen = (props: Props) => {
       })
       .catch(err => console.log('BLOB ERROR -> ', err));
   };
+  const handleShareFile = async () => {
+    console.log('Share button pressed');
+    let dirs = ReactNativeBlobUtil.fs.dirs;
+    
+    const type = 'application/pdf'; // MIME type
+    const configOptions = {
+      fileCache: true,
+      path: `${dirs.DocumentDir}/${fileName}`,
+      
+      addAndroidDownloads: {
+        useDownloadManager: true,
+        notification: true,
+        title: `${fileName}`,
+        description: 'File downloaded by Worktrust App.',
+        mime: 'application/pdf',
+      },
+    };
+
+    ReactNativeBlobUtil.config(configOptions)
+      .fetch('GET', pdfUrl)
+      .then(async resp => {
+        let filePath = resp.path();
+        let options = {
+          type: type,
+          url: 'file://' + filePath,
+          
+        };
+
+        await Share.open(options);
+        // Use ReactNativeBlobUtil's fs.unlink to remove the file after sharing
+        ReactNativeBlobUtil.fs
+          .unlink(filePath)
+          .then(() => console.log('File deleted successfully'))
+          .catch(err => console.error('Error deleting file', err));
+      })
+      .catch(error => {
+        console.error('Error sharing', error);
+      });
+  };
+
   return (
       <Modal animationType="slide" visible={visible}>
         <Appbar.Header
@@ -87,7 +127,7 @@ const PDFModalScreen = (props: Props) => {
       
           />
           <Appbar.Content
-            title="สัญญา"
+            title="PDF"
             titleStyle={{
               fontSize: 18,
               fontWeight: 'bold',
@@ -95,14 +135,19 @@ const PDFModalScreen = (props: Props) => {
             }}
           />
           <Appbar.Action
-            mode="outlined"
+            mode="contained"
             icon="download"
             onPress={downloadFile}
           />
           <Appbar.Action
-            mode="outlined"
+            mode="contained"
             icon="printer"
             onPress={printRemotePDF}
+          />
+          <Appbar.Action
+            mode="contained"
+            icon="share-variant"
+            onPress={handleShareFile}
           />
         </Appbar.Header>
 

@@ -78,7 +78,7 @@ interface Props {
 
 const Quotation = ({navigation}: Props) => {
   const {
-    state: {companyState, defaultContract, defaultWarranty},
+    state: {companyState, editQuotation, defaultWarranty},
     dispatch,
   }: any = useContext(Store);
 
@@ -96,9 +96,9 @@ const Quotation = ({navigation}: Props) => {
   // const [customerName, setCustomerName] = useState('');
   const [signaturePicker, setSignaturePicker] = useState(false);
   const [contractPicker, setContractPicker] = useState(false);
-
+  const [openNoteToCustomer, setOpenNoteToCustomer] = useState(false);
+  const [openNoteToTeam, setOpenNoteToTeam] = useState(false);
   const [workerPicker, setWorkerpicker] = useState(false);
-
   const [quotationServerId, setQuotationServerId] = useState<string | null>(
     null,
   );
@@ -201,7 +201,7 @@ const Quotation = ({navigation}: Props) => {
     noteToCustomer: '',
     noteToTeam: '',
     dateEnd: initialDateEnd,
-    docNumber: initialDocnumber,
+    docNumber: `QT${initialDocnumber}`,
     workers: null,
     FCMToken: fcmToken,
     sellerSignature: '',
@@ -209,7 +209,7 @@ const Quotation = ({navigation}: Props) => {
   };
   const methods = useForm<any>({
     mode: 'all',
-    defaultValues: quotationDefaultValues,
+    defaultValues: editQuotation ? editQuotation : quotationDefaultValues,
     resolver: yupResolver(quotationsValidationSchema),
   });
   const {fields, append, remove, update} = useFieldArray({
@@ -336,7 +336,6 @@ const Quotation = ({navigation}: Props) => {
     closeSignatureModal();
     // methods.setValue('sellerSignature', '', {shouldDirty: true});
   };
-  console.log('sellerSignature', sellerSignature);
   return (
     <>
       <Appbar.Header
@@ -598,10 +597,13 @@ const Quotation = ({navigation}: Props) => {
                 <Text style={styles.signHeader}>หมายเหตุ</Text>
                 <Switch
                   trackColor={{false: '#767577', true: '#81b0ff'}}
-                  thumbColor={noteToCustomer ? '#ffffff' : '#f4f3f4'}
+                  thumbColor={openNoteToCustomer ? '#ffffff' : '#f4f3f4'}
                   ios_backgroundColor="#3e3e3e"
-                  onValueChange={useNotetoCustomer}
-                  value={noteToCustomer ? true : false}
+                  onValueChange={
+                    ()=>                    setOpenNoteToCustomer(!openNoteToCustomer)
+
+                  }
+                  value={openNoteToCustomer ? true : false}
                   style={Platform.select({
                     ios: {
                       transform: [{scaleX: 0.7}, {scaleY: 0.7}],
@@ -611,7 +613,7 @@ const Quotation = ({navigation}: Props) => {
                   })}
                 />
               </View>
-              {noteToCustomer && (
+              {openNoteToCustomer && (
                 <View>
                   <Controller
                     control={methods.control}
@@ -626,7 +628,7 @@ const Quotation = ({navigation}: Props) => {
                           style={
                             Platform.OS === 'ios'
                               ? {
-                                  height: 50,
+                                  height: 100,
                                   textAlignVertical: 'top',
                                   marginTop: 10,
                                 }
@@ -650,10 +652,12 @@ const Quotation = ({navigation}: Props) => {
                 <Text style={styles.signHeader}>โน๊ตภายในบริษัท</Text>
                 <Switch
                   trackColor={{false: '#767577', true: '#81b0ff'}}
-                  thumbColor={noteToTeam ? '#ffffff' : '#f4f3f4'}
+                  thumbColor={openNoteToTeam ? '#ffffff' : '#f4f3f4'}
                   ios_backgroundColor="#3e3e3e"
-                  onValueChange={useNotetoTeam}
-                  value={noteToTeam ? true : false}
+                  onValueChange={
+                    ()=>                    setOpenNoteToTeam(!openNoteToTeam)
+                  }
+                  value={openNoteToTeam ? true : false}
                   style={Platform.select({
                     ios: {
                       transform: [{scaleX: 0.7}, {scaleY: 0.7}],
@@ -663,7 +667,7 @@ const Quotation = ({navigation}: Props) => {
                   })}
                 />
               </View>
-              {noteToTeam && (
+              {openNoteToTeam && (
                 <View>
                   <Controller
                     control={methods.control}
@@ -678,7 +682,7 @@ const Quotation = ({navigation}: Props) => {
                           style={
                             Platform.OS === 'ios'
                               ? {
-                                  height: 50,
+                                  height: 100,
                                   textAlignVertical: 'top',
                                   marginTop: 10,
                                 }
@@ -852,6 +856,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
     marginBottom: 10,
     height: 'auto',
+    paddingBottom: 200,
+
   },
   form: {
     borderColor: '#0073BA',

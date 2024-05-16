@@ -36,7 +36,12 @@ type OnAddService = (service: Service) => void;
 
 export type ParamListBase = {
   Quotation: undefined;
+  
   CreateNewInvoice: undefined;
+  InvoiceDepositScreen  : undefined;
+  ReceiptDepositScreen  : undefined;
+
+  CreateNewReceipt: undefined;
   RegisterScreen: undefined;
   SignupMobileScreen  : undefined;
   LoginMobileScreen: undefined;
@@ -107,32 +112,7 @@ export type ParamListBase = {
   CreateCompanyScreen: undefined;
   FirstAppScreen: undefined;
   SelectWorks: {quotationId: string};
-  SendWorks: {
-    id: string;
-    companyUser: CompanySeller;
-    workStatus: string;
-    title: string;
-    signAddress: string;
-    contract: {
-      id: string;
-      projectName: string;
-      description: string;
-      signAddress: string;
-    };
-    customer: {
-      id: string;
-      name: string;
-      email: string;
-      phone: string;
-      address: string;
-    };
-    description: string;
-    services: {
-      id: string;
-      title: string;
-      description: string;
-    }[];
-  };
+  SendWorks: undefined,
   Signature: {
     text: string;
     data: Quotation;

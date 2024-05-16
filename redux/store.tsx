@@ -4,6 +4,7 @@ import {
   CompanySeller,
   Contract,
   ExsistingService,
+  Quotation,
   SelectedAuditData,
   Standard,
   Warranty,
@@ -19,6 +20,7 @@ export type StateType = {
   existingServices: ExsistingService[];
   defaultContract: Contract | null;
   defaultWarranty: Warranty | null;
+  editQuotation : Quotation | null;
   logoSrc: string;
   existingWorkers: Worker[];
   userSignature: string;
@@ -46,6 +48,7 @@ export const Store = createContext<ContextType>({
     logoSrc: '',
     existingWorkers: [],
     userSignature: '',
+    editQuotation: null,
   },
   dispatch: () => {},
 });
@@ -61,6 +64,7 @@ const initialState: StateType = {
   logoSrc: '',
   existingWorkers: [],
   userSignature: '',
+  editQuotation: null,
 };
 
 function reducer(state: StateType, action: ActionType): StateType {
@@ -88,6 +92,8 @@ function reducer(state: StateType, action: ActionType): StateType {
       return {...state, existingWorkers: action.payload as Worker[]};
     case contrains.GET_USER_SIGNATURE:
       return {...state, userSignature: action.payload as string};
+    case contrains.GET_EDIT_QUOTATION:
+      return {...state, editQuotation: action.payload as Quotation};
 
     default:
       return state;

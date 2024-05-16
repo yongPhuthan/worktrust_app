@@ -73,15 +73,16 @@ import WarrantyModal from '../../../components/warranty/create';
 import AddProductFormModal from '../../../components/service/addNew';
 import {useModal} from '../../../hooks/quotation/create/useModal';
 import useCreateNewInvoice from '../../../hooks/invoice/useCreateInvoice';
+import useCreateNewReceipt from '../../../hooks/receipt/useCreateInvoice';
 import * as stateAction from '../../../redux/actions';
 
 interface Props {
-  navigation: StackNavigationProp<ParamListBase, 'CreateNewInvoice'>;
+  navigation: StackNavigationProp<ParamListBase, 'CreateNewReceipt'>;
 }
 
-const CreateNewInvoice = ({navigation}: Props) => {
+const CreateNewReceipt = ({navigation}: Props) => {
   const {
-    state: {companyState, editQuotation},
+    state: {companyState, editQuotation, defaultWarranty},
     dispatch,
   }: any = useContext(Store);
 
@@ -102,8 +103,10 @@ const CreateNewInvoice = ({navigation}: Props) => {
 
   const [workerPicker, setWorkerpicker] = useState(false);
 
-  const [invoiceServerId, setInvoiceServerId] = useState<string | null>(null);
-  const [pdfUrl, setPdfUrl] = useState<string | null>('');
+  const [invoiceServerId, setInvoiceServerId] = useState<string | null>(
+    null,
+  );
+  const [pdfUrl, setPdfUrl] = useState<string | null>('true');
   const [value, setValue] = React.useState('');
   const [openNoteToCustomer, setOpenNoteToCustomer] = useState(false);
   const [openNoteToTeam, setOpenNoteToTeam] = useState(false);
@@ -120,7 +123,6 @@ const CreateNewInvoice = ({navigation}: Props) => {
   const [serviceIndex, setServiceIndex] = useState<number>(0);
   const [fcmToken, setFtmToken] = useState('');
 
-  const url = `https://www.worktrust.co/preview/${invoiceServerId}`;
 
   const {
     openModal: openAddCustomerModal,
@@ -196,7 +198,7 @@ const CreateNewInvoice = ({navigation}: Props) => {
     noteToCustomer: '',
     noteToTeam: '',
     dateEnd: initialDateEnd,
-    docNumber: `IV${initialDocnumber}`,
+    docNumber: `RC${initialDocnumber}`,
     FCMToken: fcmToken,
     sellerSignature: '',
     quotationRefNumber: '',
@@ -224,6 +226,7 @@ const CreateNewInvoice = ({navigation}: Props) => {
     name: 'sellerSignature',
   });
 
+
   const isCustomerDisabled = useMemo(() => {
     return customer.name === '' && customer.address === '';
   }, [customer.name, customer.address]);
@@ -233,7 +236,6 @@ const CreateNewInvoice = ({navigation}: Props) => {
     methods.setValue('FCMToken', fcmToken);
   }, [dateEndFormatted, dateOfferFormatted, fcmToken, methods]);
 
-  const handleShare = useShare({url, title: `ใบเสนอราคา ${customer.name}`});
 
   const useSignature = () => {
     if (sellerSignature) {
@@ -243,6 +245,8 @@ const CreateNewInvoice = ({navigation}: Props) => {
       openSignatureModal();
     }
   };
+
+
 
   const handleModalClose = () => {
     setVisibleModalIndex(null);
@@ -256,12 +260,11 @@ const CreateNewInvoice = ({navigation}: Props) => {
   };
 
   const actions: any = {
-    setInvoiceServerId,
     setPdfUrl,
     openPDFModal,
   };
 
-  const {mutate, isPending} = useCreateNewInvoice(actions);
+  const {mutate, isPending} = useCreateNewReceipt(actions);
 
   const handleButtonPress = async () => {
     await mutate(methods.getValues());
@@ -270,6 +273,10 @@ const CreateNewInvoice = ({navigation}: Props) => {
   const handleInvoiceNumberChange = (text: string) => {
     methods.setValue('docNumber', text);
   };
+
+  const handleQuotationRefNumberChange = (text: string) => {
+    methods.setValue('quotationRefNumber', text);
+  }
 
   const handleStartDateSelected = (date: Date) => {
     setDateOfferFormatted(thaiDateFormatter(date));
@@ -289,10 +296,6 @@ const CreateNewInvoice = ({navigation}: Props) => {
     setSignaturePicker(false);
     closeSignatureModal();
     // methods.setValue('sellerSignature', '', {shouldDirty: true});
-  };
-
-  const handleQuotationRefNumberChange = (text: string) => {
-    methods.setValue('quotationRefNumber', text);
   };
   useEffect(() => {
     if (!openNoteToCustomer || !openNoteToTeam) {
@@ -328,9 +331,10 @@ const CreateNewInvoice = ({navigation}: Props) => {
                 {
                   text: 'ปิดหน้าต่าง',
                   onPress: () => {
+                    
                     dispatch(stateAction.get_edit_quotation(null));
-                    navigation.goBack();
-                  },
+
+                    navigation.goBack()},
                 },
               ],
               {cancelable: false},
@@ -338,7 +342,7 @@ const CreateNewInvoice = ({navigation}: Props) => {
           }}
         />
         <Appbar.Content
-          title="สร้างใบวางบิล"
+          title="สร้างใบเสร็จรับเงิน"
           titleStyle={{
             fontSize: 18,
             fontWeight: 'bold',
@@ -369,7 +373,7 @@ const CreateNewInvoice = ({navigation}: Props) => {
                 onChange={handleInvoiceNumberChange}
                 value={methods.watch('docNumber')}
               />
-              <DocNumber
+               <DocNumber
                 label="อ้างอิงใบเสนอราคาเลขที่"
                 onChange={handleQuotationRefNumberChange}
                 value={methods.watch('quotationRefNumber')}
@@ -629,8 +633,9 @@ const CreateNewInvoice = ({navigation}: Props) => {
           onClose={() => setContractModal(false)}
         /> */}
 
-        {pdfUrl && (
+        { pdfUrl && (
           <>
+           
             <PDFModalScreen
               fileName={customer.name}
               visible={showPDFModal}
@@ -658,12 +663,7 @@ const CreateNewInvoice = ({navigation}: Props) => {
                   icon: 'file-document',
                   onPress: () => openPDFModal(),
                 },
-                {
-                  value: 'train',
-                  label: 'แชร์',
-                  icon: 'share-variant',
-                  onPress: handleShare,
-                },
+                
               ]}
             />
           </>
@@ -685,7 +685,7 @@ const CreateNewInvoice = ({navigation}: Props) => {
   );
 };
 
-export default CreateNewInvoice;
+export default CreateNewReceipt;
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
 const imageContainerWidth = windowWidth / 3 - 10;

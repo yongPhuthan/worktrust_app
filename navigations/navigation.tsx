@@ -29,13 +29,15 @@ import DashboardDrawer from './dashboardDrawer';
 // import BootSplash from "react-native-bootsplash";
 import ContractViewScreen from '../screens/contract/webview';
 import SelectDoc from '../screens/invoice/selectDoc';
-import CreateByQuotation from '../screens/invoice/create/createByquotation';
 import CreateNewInvoice from '../screens/invoice/create/createNew';
 
 import SignupMobileScreen from '../screens/register/phoneAuth/signupMobile';
 import LoginMobileScreen from '../screens/register/phoneAuth/loginMobileScreen';
 import ProjectViewScreen from '../screens/preview/project';
 import PDFViewScreen from '../screens/preview/pdf';
+import CreateNewReceipt from '../screens/receipt/create/createNew';
+import InvoiceDepositScreen from '../screens/deposit/invoiceDeposit';
+import ReceiptDepositScreen from '../screens/deposit/receiptDeposit';
 
 const Theme = {
   ...DefaultTheme,
@@ -121,6 +123,22 @@ const Navigation = ({initialRouteName}: any) => {
             headerTintColor: 'black',
           }}
         />
+               <Stack.Screen
+          name="CreateNewReceipt"
+          component={CreateNewReceipt}
+          options={{
+            ...commonScreenOptions,
+            headerShown: false,
+            title: 'สร้างใบเสร็จรับเงิน',
+            headerBackTitle: '',
+
+            headerStyle: {
+              backgroundColor: '#ffffff',
+            },
+            headerTintColor: 'black',
+          }}
+        />
+
 
 
                     <Stack.Screen
@@ -229,6 +247,38 @@ const Navigation = ({initialRouteName}: any) => {
             headerTintColor: 'black',
           }}
         />
+        {/* InvoiceDepositScreen */}
+        <Stack.Screen
+          name="InvoiceDepositScreen"
+          component={InvoiceDepositScreen}
+          options={{
+            ...commonScreenOptions,
+            headerShown: false,
+            title: 'มัดจำใบวางบิล',
+            headerBackTitleVisible: false,
+            headerStyle: {
+              backgroundColor: '#ffffff',
+            },
+            headerTintColor: 'black',
+          }}
+        />
+            <Stack.Screen
+          name="ReceiptDepositScreen"
+          component={ReceiptDepositScreen}
+          options={{
+            ...commonScreenOptions,
+            headerShown: false,
+            title: 'มัดจำใบเสร็จรับเงิน',
+            headerBackTitleVisible: false,
+            headerStyle: {
+              backgroundColor: '#ffffff',
+            },
+            headerTintColor: 'black',
+          }}
+        />
+
+
+
         <Stack.Screen
           name="SettingsScreen"
           component={SettingsScreen}
@@ -290,36 +340,7 @@ const Navigation = ({initialRouteName}: any) => {
             headerTintColor: 'black',
           }}
         />
-        <Stack.Screen
-          name="CreateByQuotation"
-          component={CreateByQuotation}
-          options={{
-            ...commonScreenOptions,
-            headerShown: false,
-            title: 'สร้างใบวางบิลใหม่',
-            headerBackTitleVisible: false,
-
-            headerStyle: {
-              backgroundColor: '#ffffff',
-            },
-            headerTintColor: 'black',
-          }}
-        />
-        {/* <Stack.Screen
-          name="DocViewScreen"
-          component={DocViewScreen}
-          
-          options={{
-            headerShown: false,
-            title: '',
-            headerBackTitleVisible: false,
-
-            headerStyle: {
-              backgroundColor: '#ffffff',
-            },
-            headerTintColor: 'black',
-          }}
-        /> */}
+       
         <Stack.Screen
           name="DefaultContract"
           component={DefaultContract}

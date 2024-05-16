@@ -32,7 +32,6 @@ const Summary = ({vat7Props, taxProps, pickerTaxProps}: Props) => {
   const [vat7Value, setVat7Value] = useState(0);
   const context = useFormContext();
   const {
-    register,
     control,
     getValues,
     setValue,
