@@ -152,8 +152,8 @@ const AddProductFormModal = (props: Props) => {
   ]);
   const isButtonDisbled = useMemo(() => {
     return (
-      materials.length > 0 &&
-      standards?.length > 0 &&
+      // materials.length > 0 &&
+      // standards?.length > 0 &&
       title &&
       unitPrice > 0 &&
       qty > 0

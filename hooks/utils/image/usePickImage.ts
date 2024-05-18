@@ -28,7 +28,7 @@ export const usePickImage = (onChange: (uri: string) => void): UsePickImageRetur
         console.log('Image source:', source);
 
         if (source.uri) {
-          onChange(source.uri); // Update the form field with the new image URI
+          onChange(source.uri); 
         }
       }
       setIsImageUploading(false);

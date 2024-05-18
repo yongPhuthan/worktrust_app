@@ -7,6 +7,7 @@ import React, {
   useState,
 } from 'react';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import useThaiDateFormatter from '../../hooks/utils/useThaiDateFormatter';
 
 import {BACK_END_SERVER_URL} from '@env';
 import {faClose, faPlus} from '@fortawesome/free-solid-svg-icons';
@@ -48,34 +49,45 @@ import {useUriToBlob} from '../../hooks/utils/image/useUriToBlob';
 import {useSlugify} from '../../hooks/utils/useSlugify';
 import {useUser} from '../../providers/UserContext';
 import {Store} from '../../redux/store';
+import useSelectedDates from '../../hooks/quotation/create/useSelectDates';
+
 import {ParamListBase} from '../../types/navigationType';
 import {sendWorkValidationSchema} from '../utils/validationSchema';
+import { usePickImage } from '../../hooks/utils/image/usePickImage';
 type Props = {
   navigation: StackNavigationProp<ParamListBase>;
   route: RouteProp<ParamListBase, 'SendWorks'>;
 };
+type FormValues = {
+  installationAddress: string;
+  workDescription: string;
+  dateOffer: Date;
+  services: any; // Adjust the type according to your actual services structure
+  serviceImages: string[];
+};
 
 const SendWorks = (props: Props) => {
   const {route, navigation} = props;
-
-  const thaiDateFormatter = new Intl.DateTimeFormat('th-TH', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  });
+  const {
+    initialDocnumber,
+    initialDateOfferFormatted,
+    initialDateEndFormatted,
+    initialDateEnd,
+    initialDateOffer,
+  } = useSelectedDates();
   const {
     state: {code, editQuotation},
     dispatch,
   }: any = useContext(Store);
-
+  const [dateOfferFormatted, setDateOfferFormatted] = useState<string>(
+    initialDateOfferFormatted,
+  );
   const [isImageUpload, setIsImageUpload] = useState(false);
   const slugify = useSlugify();
   const queryClient = useQueryClient();
   const user = useUser();
   const uriToBlobFunction = useUriToBlob();
-  const [serviceImages, setServiceImages] = useState<string[]>([]);
-  const [services, setServices] = useState(editQuotation.services);
-
+  const thaiDateFormatter = useThaiDateFormatter();
 
   const createWorkDelivery = async (data: any) => {
     if (!user || !user.email) {
@@ -186,23 +198,14 @@ const SendWorks = (props: Props) => {
       console.error('There was a problem with the fetch operation:', error);
     }
   };
-  const {initialDateOffer} = useMemo(() => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
 
-    const dateOffer = `${day}-${month}-${year}`;
-
-    return {initialDateOffer: dateOffer};
-  }, []) as any;
   const {
     control,
     getValues,
     setValue,
     watch,
     formState: {isValid, errors},
-  } = useForm({
+  } = useForm<FormValues>({
     mode: 'all',
     defaultValues: {
       installationAddress: editQuotation.customer.address || '',
@@ -212,39 +215,17 @@ const SendWorks = (props: Props) => {
       serviceImages: [],
     },
   });
-
+  const serviceImages = useWatch({control, name: 'serviceImages'});
   const dateOffer = useWatch({control, name: 'dateOffer'});
-  useEffect(() => {
-    setValue('dateOffer', dateOffer, {shouldValidate: true, shouldDirty: true});
-    setValue('services', services);
 
-  }, [services, dateOffer]);
 
-  // const handleUploadMoreImages = useCallback(() => {
-  //   setIsImageUpload(true);
+  const { isImagePicking, pickImage } = usePickImage((uri: string) => {
+    setValue('serviceImages', [...serviceImages, uri], {shouldDirty: true, shouldValidate: true});
+  });
+  const services = useWatch({control, name: 'services'});
+  console.log('services', services);
 
-  //   const options: ImageLibraryOptions = {
-  //     mediaType: 'photo' as MediaType,
-  //   };
 
-  //   launchImageLibrary(options, async (response: ImagePickerResponse) => {
-  //     if (response.didCancel) {
-  //       console.log('User cancelled image picker');
-  //       setIsImageUpload(false);
-  //     } else if (response.errorMessage) {
-  //       console.log('ImagePicker Error: ', response.errorMessage);
-  //       setIsImageUpload(false);
-  //     } else if (response.assets && response.assets.length > 0) {
-  //       const source = {uri: response.assets[0].uri ?? null};
-  //       if (source.uri) {
-  //         // Directly add the URI to serviceImages without uploading
-  //         setServiceImages([...serviceImages, source.uri]);
-  //         setValue('serviceImages', [...serviceImages, source.uri], {shouldDirty: true, shouldValidate: true});
-  //         setIsImageUpload(false);
-  //       }
-  //     }
-  //   });
-  // }, [setServiceImages, serviceImages]);
   const {mutate, isPending} = useMutation({
     mutationFn: createWorkDelivery,
 
@@ -253,7 +234,6 @@ const SendWorks = (props: Props) => {
         queryKey: ['workDelivery', editQuotation.id],
       });
       const newId = editQuotation.id.slice(0, 8) as string;
-      navigation.navigate('DocViewScreen', {id: newId});
     },
     onError: (error: any) => {
       console.error('There was a problem calling the function:', error);
@@ -271,22 +251,19 @@ const SendWorks = (props: Props) => {
 
   const removeService = (index: number) => {
     const updatedServices = services.filter((_: any, i: number) => i !== index);
-    setServices(updatedServices);
+    setValue('services', updatedServices, {shouldDirty: true, shouldValidate: true});
   };
 
-  // const removeImage = useCallback(
-  //   (uri: string) => {
-  //     // Filter out the image URI from the current state
-  //     const updatedImages = serviceImages.filter(image => image !== uri);
+  const removeImage = useCallback(
+    (uri: string) => {
+      // Filter out the image URI from the current state
+      const updatedImages = serviceImages.filter(image => image !== uri);
 
-  //     // Update the local state with the filtered images
-  //     setServiceImages(updatedImages);
-
-  //     // Update the form state to reflect the change and optionally re-validate
-  //     setValue('serviceImages', updatedImages, { shouldValidate: true });
-  //   },
-  //   [serviceImages, setValue],
-  // );
+      // Update the form state to reflect the change and optionally re-validate
+      setValue('serviceImages', updatedImages, { shouldValidate: true });
+    },
+    [serviceImages, setValue],
+  );
 
   const handleDone = useCallback(async () => {
     let uploadedImageUrls: string[] = [];
@@ -297,8 +274,6 @@ const SendWorks = (props: Props) => {
         uploadedImageUrls.push(uploadedUrl);
       }
     }
-    setServiceImages(uploadedImageUrls);
-
     const modifiedData = {
       id: editQuotation.id,
       workStatus: 'WWW',
@@ -314,12 +289,8 @@ const SendWorks = (props: Props) => {
     await mutate(modifiedData);
   }, [serviceImages, uploadImageToFbStorage]);
 
-  const handleDateSigne = (date: Date) => {
-    const formattedDate = thaiDateFormatter.format(date);
-    setValue('dateOffer', formattedDate, {
-      shouldValidate: true,
-      shouldDirty: true,
-    });
+  const handleStartDateSelected = (date: Date) => {
+    setValue('dateOffer', date);
   };
 
   return (
@@ -386,7 +357,7 @@ const SendWorks = (props: Props) => {
                 title="วันที่ส่งงาน"
                 label=""
                 date="today"
-                onDateSelected={handleDateSigne}
+                onDateSelected={handleStartDateSelected}
               />
             </View>
           </View>
@@ -409,7 +380,7 @@ const SendWorks = (props: Props) => {
                     error={!!error}
                     mode="outlined"
                     numberOfLines={4}
-                    placeholder="บ้านเลขที่ ถนน ตำบล อำเภอ จังหวัด...."
+                    placeholder="สถาณที่ติดตั้งงาน เลขที่ ถนน ตำบล อำเภอ จังหวัด...."
                     onBlur={onBlur}
                     placeholderTextColor={'#A6A6A6'}
                     keyboardType="default"
@@ -466,8 +437,8 @@ const SendWorks = (props: Props) => {
                       <TouchableOpacity
                         style={styles.closeIcon}
                         onPress={
-                          () => {}
-                          // removeImage(item)
+                          () => 
+                          removeImage(item)
                         }>
                         <FontAwesomeIcon
                           icon={faClose}
@@ -525,8 +496,8 @@ const SendWorks = (props: Props) => {
                       <TouchableOpacity
                         style={styles.closeIcon}
                         onPress={
-                          () => {}
-                          // removeImage(item)
+                          () => 
+                          removeImage(item)
                         }>
                         <FontAwesomeIcon
                           icon={faClose}
@@ -542,7 +513,7 @@ const SendWorks = (props: Props) => {
                   serviceImages.length > 0 ? (
                     <TouchableOpacity
                       style={styles.addButtonContainer}
-                      onPress={() => {
+                      onPress={() => {    pickImage();
                         // handleUploadMoreImages();
                       }}>
                       <FontAwesomeIcon
@@ -557,6 +528,7 @@ const SendWorks = (props: Props) => {
                   <TouchableOpacity
                     style={styles.addButtonContainer}
                     onPress={() => {
+                      pickImage();
                       // handleUploadMoreImages();
                     }}>
                     <FontAwesomeIcon

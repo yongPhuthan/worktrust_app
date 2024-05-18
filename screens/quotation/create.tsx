@@ -257,7 +257,7 @@ const Quotation = ({navigation}: Props) => {
   const isDisabled = !customer.name || services.length === 0;
   useEffect(() => {
     methods.setValue('FCMToken', fcmToken);
-  }, [dateEndFormatted, dateOfferFormatted, fcmToken, methods]);
+  }, [dateEndFormatted, fcmToken, methods]);
 
   const handleShare = useShare({url, title: `ใบเสนอราคา ${customer.name}`});
 
