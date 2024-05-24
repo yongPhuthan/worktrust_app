@@ -1,13 +1,5 @@
-import {yupResolver} from '@hookform/resolvers/yup';
-import React, {
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, {useCallback, useContext, useState} from 'react';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-import useThaiDateFormatter from '../../hooks/utils/useThaiDateFormatter';
 
 import {BACK_END_SERVER_URL} from '@env';
 import {faClose, faPlus} from '@fortawesome/free-solid-svg-icons';
@@ -15,7 +7,7 @@ import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {RouteProp} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {useMutation, useQueryClient} from '@tanstack/react-query';
-import {Controller, useForm, useWatch} from 'react-hook-form';
+import {Controller, useForm, useWatch, set} from 'react-hook-form';
 import {
   Alert,
   Dimensions,
@@ -29,42 +21,45 @@ import {
   View,
 } from 'react-native';
 import {
-  ImageLibraryOptions,
-  ImagePickerResponse,
-  MediaType,
-  launchImageLibrary,
-} from 'react-native-image-picker';
-import {
   Appbar,
   Button,
   Divider,
-  Icon,
   IconButton,
-  ProgressBar,
+  Snackbar,
   TextInput,
 } from 'react-native-paper';
+import {v4 as uuidv4} from 'uuid';
 import DatePickerButton from '../../components/styles/DatePicker';
 import SmallDivider from '../../components/styles/SmallDivider';
-import {useUriToBlob} from '../../hooks/utils/image/useUriToBlob';
+import useSelectedDates from '../../hooks/quotation/create/useSelectDates';
 import {useSlugify} from '../../hooks/utils/useSlugify';
 import {useUser} from '../../providers/UserContext';
 import {Store} from '../../redux/store';
-import useSelectedDates from '../../hooks/quotation/create/useSelectDates';
+import Clipboard from '@react-native-clipboard/clipboard';
 
+import {useUploadToFirebase} from '../../hooks/submission/useUploadToFirebase';
+import {usePickImage} from '../../hooks/utils/image/usePickImage';
 import {ParamListBase} from '../../types/navigationType';
-import {sendWorkValidationSchema} from '../utils/validationSchema';
-import { usePickImage } from '../../hooks/utils/image/usePickImage';
 type Props = {
   navigation: StackNavigationProp<ParamListBase>;
   route: RouteProp<ParamListBase, 'SendWorks'>;
 };
 type FormValues = {
-  installationAddress: string;
+  address: string;
   workDescription: string;
   dateOffer: Date;
   services: any; // Adjust the type according to your actual services structure
-  serviceImages: string[];
+  beforeImages: string[];
+  afterImages: string[];
 };
+
+interface ServerError extends Error {
+  response?: {
+    data?: {
+      error?: string;
+    };
+  };
+}
 
 const SendWorks = (props: Props) => {
   const {route, navigation} = props;
@@ -82,21 +77,20 @@ const SendWorks = (props: Props) => {
   const [dateOfferFormatted, setDateOfferFormatted] = useState<string>(
     initialDateOfferFormatted,
   );
-  const [isImageUpload, setIsImageUpload] = useState(false);
-  const slugify = useSlugify();
   const queryClient = useQueryClient();
   const user = useUser();
-  const uriToBlobFunction = useUriToBlob();
-  const thaiDateFormatter = useThaiDateFormatter();
-
+  const [copied, setCopied] = useState(false);
+  const imageRandomId = uuidv4();
+  const [submissionId, setSubmissionId] = useState<string>('');
+  const [opneSubmissionModal, setOpenSubmissionModal] = useState<boolean>(false);
   const createWorkDelivery = async (data: any) => {
-    if (!user || !user.email) {
-      throw new Error('User or user email is not available');
+    if (!user || !user.uid) {
+      throw new Error('User is not available');
     }
     try {
       const token = await user.getIdToken(true);
       const response = await fetch(
-        `${BACK_END_SERVER_URL}/api/documents/workDeliveyCreated`,
+        `${BACK_END_SERVER_URL}/api/submission/submissionWork`,
         {
           method: 'POST',
           headers: {
@@ -118,87 +112,6 @@ const SendWorks = (props: Props) => {
     }
   };
 
-  const uploadImageToFbStorage = async (imagePath: string) => {
-    setIsImageUpload(true);
-    if (!imagePath) {
-      console.log('No image path provided');
-      return;
-    }
-    if (!user || !user.email) {
-      console.error('User or user email is not available');
-      return;
-    }
-
-    const name = imagePath.substring(imagePath.lastIndexOf('/') + 1);
-    const fileType = imagePath.substring(imagePath.lastIndexOf('.') + 1);
-    const filename = slugify(name);
-
-    let contentType = '';
-    switch (fileType.toLowerCase()) {
-      case 'jpg':
-      case 'jpeg':
-        contentType = 'image/jpeg';
-        break;
-      case 'png':
-        contentType = 'image/png';
-        break;
-      default:
-        console.error('Unsupported file type:', fileType);
-        return;
-    }
-
-    const blob = (await uriToBlobFunction(imagePath)) as Blob;
-    const filePath = __DEV__
-      ? `Test/${code}/projects/${editQuotation.id}/workdelivery/${filename}`
-      : `${code}/projects/${editQuotation.id}/workdelivery/${filename}`;
-
-    try {
-      const token = await user.getIdToken(true);
-
-      const response = await fetch(
-        `${BACK_END_SERVER_URL}/api/upload/postImageApprove`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            filePath,
-            contentType: contentType,
-          }),
-        },
-      );
-
-      if (!response.ok) {
-        const text = await response.text();
-        console.error('Server responded with:', text);
-        throw new Error('Server error');
-      }
-
-      const {signedUrl, publicUrl} = await response.json();
-
-      const uploadResponse = await fetch(signedUrl, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': contentType,
-        },
-        body: blob,
-      });
-
-      if (!uploadResponse.ok) {
-        console.error('Failed to upload file to Firebase Storage');
-        return;
-      }
-      console.log('Upload to Firebase Storage success');
-
-      setIsImageUpload(false);
-      return publicUrl;
-    } catch (error) {
-      console.error('There was a problem with the fetch operation:', error);
-    }
-  };
-
   const {
     control,
     getValues,
@@ -208,41 +121,68 @@ const SendWorks = (props: Props) => {
   } = useForm<FormValues>({
     mode: 'all',
     defaultValues: {
-      installationAddress: editQuotation.customer.address || '',
+      address: editQuotation.customer.address || '',
       workDescription: '',
       dateOffer: initialDateOffer,
       services: editQuotation.services,
-      serviceImages: [],
+      beforeImages: [],
+      afterImages: [],
     },
   });
-  const serviceImages = useWatch({control, name: 'serviceImages'});
-  const dateOffer = useWatch({control, name: 'dateOffer'});
+  const beforeImages = useWatch({control, name: 'beforeImages'});
+  const afterImages = useWatch({control, name: 'afterImages'});
 
+  const beforeImagesStoragePath = `/users/${code}/quotations/submission/${editQuotation.docNumber}/beforeImages/${imageRandomId}`;
+  const afterImagesStoragePath = `/users/${code}/quotations/submission/${editQuotation.docNumber}/afterImages/${imageRandomId}`;
+  const {
+    isUploading: isBeforeImagesUploading,
+    error: isBeforeImageError,
+    uploadImage: uploadBeforeImages,
+  } = useUploadToFirebase(beforeImagesStoragePath);
+  const {
+    isUploading: isAfterImagesUploading,
+    error: isAfterImageError,
+    uploadImage: uploadAfterImages,
+  } = useUploadToFirebase(afterImagesStoragePath);
+  const {isImagePicking: pickingBeforeImage, pickImage: pickBeforeImage} =
+    usePickImage((uri: string) => {
+      setValue('beforeImages', [...beforeImages, uri], {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    });
 
-  const { isImagePicking, pickImage } = usePickImage((uri: string) => {
-    setValue('serviceImages', [...serviceImages, uri], {shouldDirty: true, shouldValidate: true});
-  });
+  const {isImagePicking: pickingAfterImage, pickImage: pickAfterImage} =
+    usePickImage((uri: string) => {
+      setValue('afterImages', [...afterImages, uri], {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    });
   const services = useWatch({control, name: 'services'});
-  console.log('services', services);
 
-
-  const {mutate, isPending} = useMutation({
+  const {mutate, isPending, data, error, isError} = useMutation({
     mutationFn: createWorkDelivery,
 
-    onSuccess: () => {
+    onSuccess: data => {
       queryClient.invalidateQueries({
         queryKey: ['workDelivery', editQuotation.id],
+        // queryClient.invalidateQueries({queryKey: ['dashboardQuotation']});
       });
+      setSubmissionId(data.workdeliveryId);
+      setOpenSubmissionModal(true);
+
       const newId = editQuotation.id.slice(0, 8) as string;
     },
-    onError: (error: any) => {
-      console.error('There was a problem calling the function:', error);
-      let errorMessage = 'An unexpected error occurred';
 
-      if (error.response && error.response.status === 401) {
-        errorMessage = 'Authentication error. Please re-login.';
-      } else if (error.response) {
-        errorMessage = error.response.data.error || errorMessage;
+    onError: (error: ServerError) => {
+      console.error('There was a problem calling the function:', error);
+
+      let errorMessage = 'An error occurred';
+      if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.message) {
+        errorMessage = error.message;
       }
 
       Alert.alert('Error', errorMessage);
@@ -251,46 +191,85 @@ const SendWorks = (props: Props) => {
 
   const removeService = (index: number) => {
     const updatedServices = services.filter((_: any, i: number) => i !== index);
-    setValue('services', updatedServices, {shouldDirty: true, shouldValidate: true});
+    setValue('services', updatedServices, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
   };
 
-  const removeImage = useCallback(
+  const removeBeforeImage = useCallback(
     (uri: string) => {
       // Filter out the image URI from the current state
-      const updatedImages = serviceImages.filter(image => image !== uri);
+      const updatedImages = beforeImages.filter(image => image !== uri);
 
       // Update the form state to reflect the change and optionally re-validate
-      setValue('serviceImages', updatedImages, { shouldValidate: true });
+      setValue('beforeImages', updatedImages, {shouldValidate: true});
     },
-    [serviceImages, setValue],
+    [beforeImages, setValue],
+  );
+  const removeAfterImage = useCallback(
+    (uri: string) => {
+      // Filter out the image URI from the current state
+      const updatedImages = afterImages.filter(image => image !== uri);
+
+      // Update the form state to reflect the change and optionally re-validate
+      setValue('afterImages', afterImages, {shouldValidate: true});
+    },
+    [afterImages, setValue],
   );
 
   const handleDone = useCallback(async () => {
-    let uploadedImageUrls: string[] = [];
+    let uploadedBeforeImageUrls: string[] = [];
+    let uploadedAfterImageUrls: string[] = [];
 
-    for (const imageUri of serviceImages) {
-      const uploadedUrl = await uploadImageToFbStorage(imageUri);
-      if (uploadedUrl) {
-        uploadedImageUrls.push(uploadedUrl);
-      }
-    }
+    // Upload before images in parallel
+    const beforeImageUploadPromises = beforeImages.map(imageUri =>
+      uploadBeforeImages(imageUri),
+    );
+    const beforeImageUploadResults = await Promise.all(
+      beforeImageUploadPromises,
+    );
+    uploadedBeforeImageUrls = beforeImageUploadResults
+      .map(result => result.originalUrl)
+      .filter((url): url is string => !!url);
+
+    // Upload after images in parallel
+    const afterImageUploadPromises = afterImages.map(imageUri =>
+      uploadAfterImages(imageUri),
+    );
+    const afterImageUploadResults = await Promise.all(afterImageUploadPromises);
+    uploadedAfterImageUrls = afterImageUploadResults
+      .map(result => result.originalUrl)
+      .filter((url): url is string => !!url);
+
     const modifiedData = {
       id: editQuotation.id,
-      workStatus: 'WWW',
-      companyUserId: editQuotation.company.id,
+      workStatus: 'SUBMITTED',
+      companyId: editQuotation.company.id,
       customerId: editQuotation.customer.id,
+      quotationId: editQuotation.id,
       description: getValues('workDescription'),
       dateOffer: getValues('dateOffer'),
       services: getValues('services'),
-      installationAddress: getValues('installationAddress'),
-      serviceImages: uploadedImageUrls,
-      // serviceImages: uploadedImageUrls,
+      address: getValues('address'),
+      beforeImages: uploadedBeforeImageUrls,
+      afterImages: uploadedAfterImageUrls,
     };
+
     await mutate(modifiedData);
-  }, [serviceImages, uploadImageToFbStorage]);
+  }, [beforeImages, afterImages, editQuotation, getValues, mutate]);
 
   const handleStartDateSelected = (date: Date) => {
     setValue('dateOffer', date);
+  };
+
+  const copyLinkToClipboard = () => {
+    const link = `www.worktrust.co/submission/${submissionId}`;
+    Clipboard.setString(link);
+    setCopied(true);
+    setTimeout(() => {
+      setCopied(false);
+    }, 2000);
   };
 
   return (
@@ -315,7 +294,9 @@ const SendWorks = (props: Props) => {
           }}
         />
         <Button
-          loading={isPending}
+          loading={
+            isPending || isBeforeImagesUploading || isAfterImagesUploading
+          }
           disabled={!isValid}
           mode="contained"
           // buttonColor={'#1b72e8'}
@@ -367,7 +348,7 @@ const SendWorks = (props: Props) => {
             <Text style={styles.title}>หนังสือส่งงานทำขึ้นที่</Text>
             <Controller
               control={control}
-              name="installationAddress"
+              name="address"
               rules={{required: true}}
               render={({
                 field: {onChange, onBlur, value},
@@ -402,24 +383,26 @@ const SendWorks = (props: Props) => {
           <View>
             <Text style={styles.title}>งานที่แจ้งส่ง</Text>
             {services.map((service: any, index: number) => (
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }} key={index}>
-          <View>
-            <Text style={styles.listTitle}>
-              {index + 1}. {service.title}
-            </Text>
-            <Text style={styles.listDescription}>
-              {service.description}
-            </Text>
-          </View>
-          
-          <IconButton
-            icon="delete"
-            size={20}
-            iconColor="gray"
-            onPress={() => removeService(index)}
-          />
-        </View>
-      ))}
+              <View
+                style={{flexDirection: 'row', justifyContent: 'space-between'}}
+                key={index}>
+                <View>
+                  <Text style={styles.listTitle}>
+                    {index + 1}. {service.title}
+                  </Text>
+                  <Text style={styles.listDescription}>
+                    {service.description}
+                  </Text>
+                </View>
+
+                <IconButton
+                  icon="delete"
+                  size={20}
+                  iconColor="gray"
+                  onPress={() => removeService(index)}
+                />
+              </View>
+            ))}
           </View>
 
           <Divider style={{marginVertical: 20}} />
@@ -428,7 +411,7 @@ const SendWorks = (props: Props) => {
             {editQuotation.services.map((service: any, index: number) => (
               <FlatList
                 key={service.id}
-                data={serviceImages}
+                data={beforeImages}
                 horizontal={true}
                 renderItem={({item, index}) => {
                   return (
@@ -436,10 +419,7 @@ const SendWorks = (props: Props) => {
                       <Image source={{uri: item}} style={styles.image} />
                       <TouchableOpacity
                         style={styles.closeIcon}
-                        onPress={
-                          () => 
-                          removeImage(item)
-                        }>
+                        onPress={() => removeBeforeImage(item)}>
                         <FontAwesomeIcon
                           icon={faClose}
                           size={15}
@@ -451,32 +431,28 @@ const SendWorks = (props: Props) => {
                 }}
                 keyExtractor={(item, index) => index.toString()}
                 ListFooterComponent={
-                  serviceImages.length > 0 ? (
-                    <TouchableOpacity
+                  beforeImages.length > 0 ? (
+                    <IconButton
+                      icon={'plus'}
+                      loading={pickingBeforeImage}
                       style={styles.addButtonContainer}
                       onPress={() => {
+                        pickBeforeImage();
+
                         // handleUploadMoreImages();
-                      }}>
-                      <FontAwesomeIcon
-                        icon={faPlus}
-                        size={32}
-                        // color="#0073BA"
-                      />
-                    </TouchableOpacity>
+                      }}></IconButton>
                   ) : null
                 }
                 ListEmptyComponent={
-                  <TouchableOpacity
+                  <IconButton
+                    icon={'plus'}
+                    loading={pickingBeforeImage}
                     style={styles.addButtonContainer}
                     onPress={() => {
+                      pickBeforeImage();
+
                       // handleUploadMoreImages();
-                    }}>
-                    <FontAwesomeIcon
-                      icon={faPlus}
-                      size={32}
-                      // color="#0073BA"
-                    />
-                  </TouchableOpacity>
+                    }}></IconButton>
                 }
               />
             ))}
@@ -487,7 +463,7 @@ const SendWorks = (props: Props) => {
             {editQuotation.services.map((service: any, index: number) => (
               <FlatList
                 key={service.id}
-                data={serviceImages}
+                data={afterImages}
                 horizontal={true}
                 renderItem={({item, index}) => {
                   return (
@@ -495,10 +471,7 @@ const SendWorks = (props: Props) => {
                       <Image source={{uri: item}} style={styles.image} />
                       <TouchableOpacity
                         style={styles.closeIcon}
-                        onPress={
-                          () => 
-                          removeImage(item)
-                        }>
+                        onPress={() => removeAfterImage(item)}>
                         <FontAwesomeIcon
                           icon={faClose}
                           size={15}
@@ -510,33 +483,26 @@ const SendWorks = (props: Props) => {
                 }}
                 keyExtractor={(item, index) => index.toString()}
                 ListFooterComponent={
-                  serviceImages.length > 0 ? (
-                    <TouchableOpacity
+                  afterImages.length > 0 ? (
+                    <IconButton
+                      icon={'plus'}
+                      loading={pickingAfterImage}
                       style={styles.addButtonContainer}
-                      onPress={() => {    pickImage();
+                      onPress={() => {
+                        pickAfterImage();
                         // handleUploadMoreImages();
-                      }}>
-                      <FontAwesomeIcon
-                        icon={faPlus}
-                        size={32}
-                        // color="#0073BA"
-                      />
-                    </TouchableOpacity>
+                      }}></IconButton>
                   ) : null
                 }
                 ListEmptyComponent={
-                  <TouchableOpacity
+                  <IconButton
+                    icon={'plus'}
+                    loading={pickingAfterImage}
                     style={styles.addButtonContainer}
                     onPress={() => {
-                      pickImage();
+                      pickAfterImage();
                       // handleUploadMoreImages();
-                    }}>
-                    <FontAwesomeIcon
-                      icon={faPlus}
-                      size={32}
-                      // color="#0073BA"
-                    />
-                  </TouchableOpacity>
+                    }}></IconButton>
                 }
               />
             ))}
@@ -582,6 +548,29 @@ const SendWorks = (props: Props) => {
             </View> */}
         </ScrollView>
       </KeyboardAwareScrollView>
+      <Snackbar
+        style={{backgroundColor: 'lightgreen'}}
+        duration={20000}
+        visible={opneSubmissionModal}
+        onDismiss={() => setOpenSubmissionModal(false)}
+        action={{
+          label: 'คัดลอก',
+          labelStyle: {color: 'black'},
+          onPress: () => {
+            copyLinkToClipboard();
+          },
+        }}>
+        <Text>ใบส่งงานลูกค้า {editQuotation.customer.name} </Text>
+      </Snackbar>
+
+      <Snackbar
+        visible={copied}
+        style={{
+          backgroundColor: 'lightgreen',
+        }}
+        onDismiss={() => setCopied(false)}>
+        <Text>คัดลอกสำเร็จ!</Text>
+      </Snackbar>
     </>
   );
 };

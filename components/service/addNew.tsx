@@ -43,9 +43,9 @@ import SelectStandard from '../standard/selectStandard';
 import SmallDivider from '../styles/SmallDivider';
 import {ParamListBase} from '../../types/navigationType';
 import {serviceValidationSchema} from '../../screens/utils/validationSchema';
-
 import Decimal from 'decimal.js-light';
 import ProjectModalScreen from 'components/webview/project';
+import { v4 as uuidv4 } from 'uuid';
 
 type Props = {
   quotationId: string;
@@ -79,6 +79,7 @@ const AddProductFormModal = (props: Props) => {
   // const {isImageUpload, imageUrl, handleLogoUpload} = useImageUpload();
   const [serviceID, setServiceID] = useState<string>('');
   const handleDone = () => {
+    methods.setValue('id', uuidv4());
     onAddService(methods.watch());
     onClose();
     methods.reset();
@@ -87,11 +88,11 @@ const AddProductFormModal = (props: Props) => {
   };
 
   const defaultService = {
+    id: '',
     title: null,
     description: null,
     unitPrice: '0',
     qty: '1',
-    discountPercent: '0',
     total: '0',
     unit: 'ชุด',
     serviceImages: [],
@@ -136,14 +137,16 @@ const AddProductFormModal = (props: Props) => {
   });
 
   useEffect(() => {
-    const unitPriceValue = methods.watch('unitPrice') || 0;
-    const quantityValue = methods.watch('qty') || 0;
+    const unitPriceValue = methods.watch('unitPrice') || '0';
+    const quantityValue = methods.watch('qty') || '0';
 
-    const unitPrice = new Decimal(unitPriceValue);
-    const quantity = new Decimal(quantityValue);
+    const unitPrice = new Decimal(Number(unitPriceValue));
+    const quantity = new Decimal(Number(quantityValue));
 
-    const total = unitPrice.times(quantity);
-    methods.setValue('total', total.toString());
+    const total = unitPrice.times(Number(quantity));
+    methods.setValue('total', Number(total));
+    methods.setValue('unitPrice', Number(unitPrice));
+    methods.setValue('qty', Number(quantity));
   }, [
     methods.watch('unitPrice'),
     methods.watch('qty'),

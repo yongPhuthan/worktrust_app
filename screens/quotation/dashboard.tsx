@@ -191,6 +191,8 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   }, []);
   useEffect(() => {
     if (user) {
+      console.log('User:', user);
+      
       const unsubscribe = messaging().setBackgroundMessageHandler(
         async remoteMessage => {
           console.log('Message handled in the background!', remoteMessage);
@@ -239,6 +241,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     setShowModal(false);
   };
   const editQuotation = async (services: Service[], quotation: Quotation) => {
+    console.log('quotationSelected', quotation);
     setIsLoadingAction(true);
     dispatch(stateAction.get_companyID(data[0].id));
     dispatch(stateAction.get_edit_quotation(quotation));

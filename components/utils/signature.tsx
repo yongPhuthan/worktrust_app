@@ -62,7 +62,7 @@ const SignatureComponent = ({
 
   const updateUserSignature = async (data: any) => {
     if (!user || !user.uid) {
-      throw new Error('User or user email is not available');
+      throw new Error('User is not available');
     }
     try {
       const token = await user.getIdToken(true);
@@ -74,46 +74,40 @@ const SignatureComponent = ({
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({data}),
+          body: JSON.stringify({ data }),
         },
       );
-
+  
       if (!response.ok) {
         const contentType = response.headers.get('content-type');
         if (contentType && contentType.indexOf('application/json') !== -1) {
           const errorData = await response.json(); // Parse the error response only if it's JSON
           throw new Error(errorData.message || 'Network response was not ok.');
         } else {
-          throw new Error('Network response was not ok and not JSON.');
+          const text = await response.text(); // Read the response as text
+          throw new Error(`Network response was not ok and not JSON. Response: ${text}`);
         }
       }
-
-      if (response.status === 200) {
-        return response.json();
-      } else {
-        const errorData = await response.json();
-        console.error('Response:', await response.text());
-        throw new Error(errorData.message || 'Network response was not ok.');
-      }
+  
+      return response.json();
     } catch (err) {
       console.error('Error in updateContractAndQuotation:', err);
-      throw new Error(err as any);
+      throw new Error(err instanceof Error ? err.message : 'Unknown error occurred');
     }
   };
-
-  const {mutate, isPending} = useMutation({
+  
+  const { mutate, isPending } = useMutation({
     mutationFn: updateUserSignature,
-
     onError: (error: any) => {
       Alert.alert(
         'Update Error',
         `Server-side user creation failed: ${error.message}`,
-        [{text: 'OK'}],
-        {cancelable: false},
+        [{ text: 'OK' }],
+        { cancelable: false },
       );
     },
   });
-
+  
   const sellerSignature = useWatch({
     control: control,
     name: 'sellerSignature',
@@ -141,7 +135,6 @@ const SignatureComponent = ({
       try {
         const storageRef = firebase.storage().ref(storagePath);
         const base64String = imageUri.split(',')[1];
-        console.log('base64String', base64String);
 
         const snapshot = await storageRef.putString(base64String, 'base64', {
           contentType: 'image/png',
@@ -151,9 +144,6 @@ const SignatureComponent = ({
           console.error('Snapshot metadata is undefined');
           return null;
         }
-
-        console.log('Uploaded a base64 string!', snapshot);
-
         // Use getDownloadURL to get the URL for the uploaded file
         const downloadUrl = await storageRef.getDownloadURL();
         console.log('File uploaded successfully. URL:', downloadUrl);

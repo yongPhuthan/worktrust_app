@@ -2148,6 +2148,8 @@ PODS:
   - RecaptchaInterop (100.0.0)
   - RNCAsyncStorage (1.23.0):
     - React-Core
+  - RNCClipboard (1.14.1):
+    - React-Core
   - RNCPicker (2.6.1):
     - React-Core
   - RNDateTimePicker (7.6.3):
@@ -2286,6 +2288,7 @@ DEPENDENCIES:
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - ReactNativeWebPFormat (from `../node_modules/react-native-webp-format`)
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
+  - "RNCClipboard (from `../node_modules/@react-native-clipboard/clipboard`)"
   - "RNCPicker (from `../node_modules/@react-native-picker/picker`)"
   - "RNDateTimePicker (from `../node_modules/@react-native-community/datetimepicker`)"
   - RNFastImage (from `../node_modules/react-native-fast-image`)
@@ -2465,6 +2468,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-webp-format"
   RNCAsyncStorage:
     :path: "../node_modules/@react-native-async-storage/async-storage"
+  RNCClipboard:
+    :path: "../node_modules/@react-native-clipboard/clipboard"
   RNCPicker:
     :path: "../node_modules/@react-native-picker/picker"
   RNDateTimePicker:
@@ -2598,6 +2603,7 @@ SPEC CHECKSUMS:
   ReactNativeWebPFormat: f5f043cc9ded052e535c3869ec341f91ba5a67c5
   RecaptchaInterop: 7d1a4a01a6b2cb1610a47ef3f85f0c411434cb21
   RNCAsyncStorage: e31a32913b3b5d8a42621be993a8f51c34073f1f
+  RNCClipboard: 0a720adef5ec193aa0e3de24c3977222c7e52a37
   RNCPicker: b18aaf30df596e9b1738e7c1f9ee55402a229dca
   RNDateTimePicker: 7b38b71bcd7c4cfa1cb95f2dff9a4f1faed2dced
   RNFastImage: 5c9c9fed9c076e521b3f509fe79e790418a544e8

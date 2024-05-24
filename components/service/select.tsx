@@ -34,7 +34,6 @@ const SelectProductModal: React.FC<Props> = ({
   const [showAddNewService, setShowAddNewService] = useState(false);
   const [selectService, setSelectService] = useState<any>(null);
   const [addNewService, setAddNewService] = useState(false);
-
   return (
     <>
       <Modal animationType="slide" visible={visible}>
@@ -82,7 +81,7 @@ const SelectProductModal: React.FC<Props> = ({
                 style={styles.subContainer}>
                 <View style={styles.row}>
                   <Image
-                    source={{uri: item.serviceImages[0].thumbnailUrl}}
+                    source={{uri: item?.serviceImages[0]?.thumbnailUrl}}
                     style={{width: 50, height: 50}}
                   />
                   <View>

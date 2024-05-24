@@ -1,60 +1,62 @@
-invoice: {
-    customer: {
-      id: 'clw3nqa7n0000d0w9l6od2htq',
-      name: 'Customer 1',
-      address: 'Address',
-      customerTax: '',
-      customerType: null,
-      phone: '04042042',
-      emailCustomerApproved: null,
-      customerPosition: null,
-      customerNameSign: null,
-      socialProvider: null,
-      customerSignature: null,
-      customerPositionSignQuotation: null,
-      customerNameSignQuotaiton: null,
-      customerSignQuotation: null,
-      customerDateSign: null,
-      customerDateSignQuotation: null,
-      customerImage: null,
-      companySelllerId: 'clw3fh6lo0001evsq862rrsyr',
-      signType: 'PENDING'
+{
+    "allTotal": 12240,
+    "company": {
+        "id": "664f1579a39dcc08a55247ef"
     },
-    id: 'clw3nqa7u0001d0w9mymmshhj',
-    company: {
-      id: 'clw3fh6lo0001evsq862rrsyr',
-      code: '983524',
-      bizName: 'Doubledoor engineering',
-      address: '7/44 หมู่ 5 ต.อ้อมใหญ่ อ.สามพราน  จ.นครปฐม',
-      officeTel: '053306426',
-      mobileTel: '0959962030',
-      companyTax: '1100800667422',
-      bizType: 'individual',
-      logo: 'http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/983524%2Flogo%2FDoubledoor%20engineering%2Fr7iAOvVdCILiWBTwHFJF6Zqflt8A%2Foriginal%2FB9EC2EF8-8E46-4A44-B7F3-CD8F70FC9A4D.png?alt=media&token=71ea8462-f8a6-4895-9616-b5685edbc6be',
-      isActive: true,
-      signature: 'http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/983524%2Fsignature%2Fsignature983524.pngc92f4fa1-33a6-43f8-ae39-af9cb17f454a?alt=media&token=b570420e-8593-480f-b187-e2b80e054f29',
-      categoryId: null,
-      userIds: [ 'clw3buzlt0001texm6m89cmd8' ],
-      bankAccounts: []
+    "customer": {
+        "address": "Address",
+        "customerTax": "",
+        "id": "456fe8be-38d6-4991-a79a-fb52a5f17a16",
+        "name": "Customer5",
+        "phone": "05424242"
     },
-    services: [
-      {
-        id: 'clw3nqa7y0002d0w9ohw25b6j',
-        title: 'Doorfolding Whte',
-        description: 'Tempered Glass',
-        unitPrice: 5990,
-        qty: 1,
-        unit: 'ชุด',
-        discountType: 'PERCENT',
-        discountValue: 0,
-        total: 5990,
-        quotationId: 'clw3nqa7u0001d0w9mymmshhj',
-        companyId: 'clw3fh6lo0001evsq862rrsyr',
-        invoiceId: null,
-        receiptsId: null,
-        serviceImages: [Array],
-        created: 2024-05-12T14:55:36.766Z,
-        updated: 2024-05-12T14:55:36.766Z
-      }
-    ]
-  }
+    "dateEnd": "2024-05-31T03:31:43.795Z",
+    "dateOffer": "2024-05-24T03:31:43.795Z",
+    "discountType": "PERCENT",
+    "discountValue": 0,
+    "docNumber": "QT20240524403",
+    "id": "66500fe301268bb9e0dddc9c",
+    "pdfUrl": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/652447%2Fquotations%2FQT20240524403?alt=media&token=e269266f-7397-4e6d-8101-7ddc6bf10fc2",
+    "sellerSignature": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/652447%2Fusers%2Fsignature%2Fsignature652447.png7938df02-d7aa-415d-a3d4-a5d677b0ea9f?alt=media&token=c185b794-b483-486e-8222-67153d78586c",
+    "services": [{
+        "description": "กระจกเทมเปอร์",
+        "id": "489b5969-e102-4a8d-a4c5-f5c62cb61562",
+        "materials": [Array],
+        "qty": 2,
+        "serviceImages": [Array],
+        "standards": [Array],
+        "title": "ประตูบานเฟี้ยมสีดำด้าน",
+        "total": 6000,
+        "unit": "ชุด",
+        "unitPrice": 3000
+    }, {
+        "description": "กระจกเทมเปอร์",
+        "id": "42ec5f62-e0b1-458a-ba68-3aeed766d5e6",
+        "materials": [Array],
+        "qty": 2,
+        "serviceImages": [Array],
+        "standards": [Array],
+        "title": "ประตูบานเฟี้ยมสีดำด้าน",
+        "total": 6000,
+        "unit": "ชุด",
+        "unitPrice": 3000
+    }],
+    "status": "PENDING",
+    "summaryAfterDiscount": 12000,
+    "taxType": "TAX5",
+    "taxValue": 600,
+    "vat7": 840,
+    "workers": [{
+        "id": "664f600cd5bf9f0e839408c3",
+        "image": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/users%2F652447%2Fimages%2Fworkers%2F%E0%B8%8A%E0%B9%88%E0%B8%B2%E0%B8%87%E0%B8%95%E0%B9%89%E0%B8%99%E0%B8%AD%E0%B8%A5%E0%B8%B9%E0%B8%A1%E0%B8%B4%E0%B9%80%E0%B8%99%E0%B8%B5%E0%B8%A2%E0%B8%A1%2F5Mj137rHpC37WdNGspgLqUTAm0k5%2Foriginal%2F9D3BDBA3-CEEC-4F82-AD5B-B89ED16DA540.png?alt=media&token=790c678d-5ff3-45b2-9415-668a4e5899cc",
+        "mainSkill": "อลูมิเนียม",
+        "name": "ช่างต้นอลูมิเนียม",
+        "workerStatus": "MAINWORKER"
+    }, {
+        "id": "664f603ad5bf9f0e839408c4",
+        "image": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/users%2F652447%2Fimages%2Fworkers%2F%E0%B8%8A%E0%B9%88%E0%B8%B2%E0%B8%87%E0%B9%80%E0%B8%88%E0%B8%A1%E0%B8%AA%E0%B9%8C%2F5Mj137rHpC37WdNGspgLqUTAm0k5%2Foriginal%2F0EB9A4F7-7949-4F49-8B44-0FEE6CC9CBE5.png?alt=media&token=60619c3d-53ed-4b9f-bb44-bae537f4220f",
+        "mainSkill": "อลูมิเนียม",
+        "name": "ช่างเจมส์",
+        "workerStatus": "MAINWORKER"
+    }]
+}

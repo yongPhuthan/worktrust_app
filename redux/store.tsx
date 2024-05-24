@@ -24,6 +24,7 @@ export type StateType = {
   logoSrc: string;
   existingWorkers: Worker[];
   userSignature: string;
+  sellerId: string;
 };
 
 type ActionType = {
@@ -49,6 +50,7 @@ export const Store = createContext<ContextType>({
     existingWorkers: [],
     userSignature: '',
     editQuotation: null,
+    sellerId: '',
   },
   dispatch: () => {},
 });
@@ -65,6 +67,7 @@ const initialState: StateType = {
   existingWorkers: [],
   userSignature: '',
   editQuotation: null,
+  sellerId: '',
 };
 
 function reducer(state: StateType, action: ActionType): StateType {
@@ -94,6 +97,8 @@ function reducer(state: StateType, action: ActionType): StateType {
       return {...state, userSignature: action.payload as string};
     case contrains.GET_EDIT_QUOTATION:
       return {...state, editQuotation: action.payload as Quotation};
+    case contrains.GET_SELLER_ID:
+      return {...state, sellerId: action.payload as string}; 
 
     default:
       return state;

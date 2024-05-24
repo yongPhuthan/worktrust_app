@@ -304,6 +304,7 @@ const CreateNewInvoice = ({navigation}: Props) => {
       methods.setValue('docNumber', `IV${initialDocnumber}`);
     }
   }, [openNoteToCustomer, openNoteToTeam]);
+  console.log('editQuotation', editQuotation);
   return (
     <>
       <Appbar.Header

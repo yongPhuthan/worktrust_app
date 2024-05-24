@@ -49,7 +49,7 @@ const useCreateQuotation = (actions: QuotationActions) => {
       setQuotationServerId(responseData.quotationId);
       setPdfUrl(responseData.pdfUrl);
       openProjectModal();
-      queryClient.invalidateQueries({queryKey: ['dashboardQuotation']});
+      queryClient.invalidateQueries({queryKey: ['dashboardData']});
     },
     onError: (error: any) => {
       console.error("Mutation error:", error.message);

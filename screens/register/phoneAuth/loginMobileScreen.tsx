@@ -1,7 +1,7 @@
 import {yupResolver} from '@hookform/resolvers/yup';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, {useRef, useState} from 'react';
-import {Dimensions, SafeAreaView, StyleSheet, View} from 'react-native';
+import {Dimensions, SafeAreaView, StyleSheet, View, Alert} from 'react-native';
 import {Appbar, Button, Text, TextInput} from 'react-native-paper';
 import firebase from '../../../firebase';
 
@@ -25,7 +25,24 @@ const LoginMobileScreen = ({navigation}: Props) => {
   const [timer, setTimer] = useState<number>(60);
   const inputRefs = useRef<Array<any | null>>([]);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  React.useEffect(() => {
+    const unsubscribe = firebase.auth().onAuthStateChanged(async user => {
+      if (user) {
+        const token = await user.getIdToken(true);
+        if (token) {
+          await AsyncStorage.setItem('userToken', token);
+          navigation.reset({
+            index: 0,
+            routes: [{name: 'DashboardQuotation'}],
+          });
+        } else {
+          console.error('Token is undefined after login');
+        }
+      }
+    });
 
+    return () => unsubscribe();
+  }, []);
   const {
     handleSubmit,
     register,
@@ -101,24 +118,14 @@ const LoginMobileScreen = ({navigation}: Props) => {
             'User creation was successful, but no user data was returned.',
           );
         }
-        const token = await user.getIdToken(true);
-        if (token) {
-          await AsyncStorage.setItem('userToken', token);
-          setIsLoading(false);
-          navigation.reset({
-            index: 0,
-            routes: [{name: 'DashboardQuotation'}],
-          });
-        } else {
-          console.error('Token is undefined after login');
-          setIsLoading(false);
-        }
       }
     } catch (error) {
       console.error(
         'Invalid code or error in adding user to Firestore:',
         error,
       );
+      Alert.alert('Error', 'Invalid code or error in adding user to Firestore');
+
       // Handle the invalid code case or error in adding user to Firestore
     } finally {
       setIsLoading(false);
@@ -159,6 +166,7 @@ const LoginMobileScreen = ({navigation}: Props) => {
       }
     };
   }, [timer]);
+
   if (!confirm) {
     return (
       <>

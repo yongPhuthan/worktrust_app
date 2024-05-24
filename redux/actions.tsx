@@ -57,6 +57,11 @@ export const get_edit_quotation = (payload: any) => ({
   payload
 });
 
+export const get_seller_id = (payload: any) => ({
+  type: contrains.GET_SELLER_ID,
+  payload
+});
+
 
 
 // COMPONENTS  => ACTION
@@ -121,5 +126,11 @@ export const getUserSignature = (payload: any) => {
 export const getEditQuotation = (payload: any) => {
   return (dispatch: any) => {
     dispatch(get_edit_quotation(payload));
+  };
+}
+
+export const getSellerId = (payload: any) => {
+  return (dispatch: any) => {
+    dispatch(get_seller_id(payload));
   };
 }

@@ -78,7 +78,7 @@ interface Props {
 
 const Quotation = ({navigation}: Props) => {
   const {
-    state: {companyState, editQuotation, defaultWarranty},
+    state: {companyState, editQuotation, defaultWarranty, sellerId},
     dispatch,
   }: any = useContext(Store);
 
@@ -170,6 +170,7 @@ const Quotation = ({navigation}: Props) => {
   );
 
   const defalutCustomer = {
+    id: uuidv4(),
     name: '',
     address: '',
     customerTax: '',
@@ -193,6 +194,7 @@ const Quotation = ({navigation}: Props) => {
     taxValue: 0,
     summary: 0,
     summaryAfterDiscount: 0,
+    sellerId,
     discountType: 'PERCENT',
     discountPercentage: 0,
     discountValue: 0,
@@ -395,16 +397,17 @@ const Quotation = ({navigation}: Props) => {
                 date="today"
                 onDateSelected={handleStartDateSelected}
               />
-              <DocNumber
-                label="เลขที่เอกสาร"
-                onChange={handleInvoiceNumberChange}
-                value={methods.watch('docNumber')}
-              />
+       
               <DatePickerButton
                 label="ยืนราคาถึงวันที่ี"
                 title="ยืนราคาถึงวันที่ี"
                 date="sevenDaysFromNow"
                 onDateSelected={handleEndDateSelected}
+              />
+                     <DocNumber
+                label="เลขที่เอกสาร"
+                onChange={handleInvoiceNumberChange}
+                value={methods.watch('docNumber')}
               />
             </View>
             <View style={styles.subContainer}>
@@ -842,6 +845,8 @@ const styles = StyleSheet.create({
     // backgroundColor:'#f3f8f3',
     backgroundColor: '#e9f7ff',
     height: 'auto',
+    flexDirection: 'column',
+    gap: 10,
   },
   modalFull: {
     margin: 0,

@@ -42,6 +42,6 @@ if (__DEV__) {
   firebase.firestore().useEmulator(emulatorHost, 8080);
 }
 
-console.log('Firebase App name: ', firebase.app().name);
+console.log('Firebase App name: ', firebase.app().appCheck().app.name);
 
 export default firebase;

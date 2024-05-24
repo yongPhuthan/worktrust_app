@@ -1,60 +1,43 @@
-import {BACK_END_SERVER_URL} from '@env';
-import {faCamera, faClose} from '@fortawesome/free-solid-svg-icons';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {useMutation, useQueryClient} from '@tanstack/react-query';
-import React, {useCallback, useContext, useState, useEffect} from 'react';
-import {Controller, set, useForm, useWatch} from 'react-hook-form';
-import {yupResolver} from '@hookform/resolvers/yup';
-import {useQuery} from '@tanstack/react-query';
+import { BACK_END_SERVER_URL } from '@env';
+import { faCamera } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import Marker, {
-  ImageFormat,
-  Position,
-  TextBackgroundType,
+  Position
 } from 'react-native-image-marker';
 
 import {
-  createStandardSchema,
-  imageTogallery,
-} from '../../screens/utils/validationSchema';
-import {
+  ActivityIndicator,
   Alert,
   Dimensions,
+  FlatList,
   Image,
   StyleSheet,
   Text,
   TouchableOpacity,
-  ActivityIndicator,
-  FlatList,
   View,
 } from 'react-native';
 import {
-  ImageLibraryOptions,
-  ImagePickerResponse,
-  MediaType,
-  launchImageLibrary,
-} from 'react-native-image-picker';
-import {
-  TextInput,
-  Button,
   Appbar,
-  Chip,
+  Button,
   Checkbox,
-  List,
-  Menu,
-  RadioButton,
   Divider,
+  RadioButton,
+  TextInput
 } from 'react-native-paper';
+import {
+  imageTogallery
+} from '../../screens/utils/validationSchema';
 
+import { v4 as uuidv4 } from 'uuid';
 import firebase from '../../firebase';
-import {useUriToBlob} from '../../hooks/utils/image/useUriToBlob';
-import {useSlugify} from '../../hooks/utils/useSlugify';
-import {useUser} from '../../providers/UserContext';
-import {Store} from '../../redux/store';
-import SaveButton from '../ui/Button/SaveButton';
-import {useUploadToFirebase} from '../../hooks/useUploadtoFirebase';
-import {useCreateToServer} from '../../hooks/useUploadToserver';
-import {v4 as uuidv4} from 'uuid';
-import {usePickImage} from '../../hooks/utils/image/usePickImage';
+import { useUploadToFirebase } from '../../hooks/useUploadtoFirebase';
+import { usePickImage } from '../../hooks/utils/image/usePickImage';
+import { useUser } from '../../providers/UserContext';
+import { Store } from '../../redux/store';
 
 interface ExistingModalProps {
   isVisible: boolean;
@@ -470,8 +453,9 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
             lineHeight: 24,
           }}
         />
+        
         <Button
-          loading={isPending || isImageUpload || isUploading || isLoading}
+          loading={isPending || isImageUpload || isUploading }
           disabled={!image || !selectedTags || selectedTags.length === 0}
           children="บันทึก"
           mode="contained"

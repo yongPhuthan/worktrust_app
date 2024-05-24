@@ -72,11 +72,6 @@ const SelectStandard = ({
     state: {selectedAudit, companyID, code, serviceList},
     dispatch,
   }: any = useContext(Store);
-  const [yourExpanded, setYourExpanded] = React.useState(true);
-  const [badExpanded, setBadExpanded] = React.useState(true);
-
-  const handleYourExpandPress = () => setYourExpanded(!yourExpanded);
-  const handleBadExpandPress = () => setBadExpanded(!badExpanded);
   const fetchStandards = async () => {
     if (!user) {
       throw new Error('User not authenticated');
@@ -127,8 +122,8 @@ const SelectStandard = ({
         {
           id: standard.id,
           standardShowTitle: standard.standardShowTitle,
-          image : standard.image,
-          content : standard.content,
+          image: standard.image,
+          content: standard.content,
         },
       ];
       setValue('standards', updatedStandards, {shouldDirty: true});
@@ -348,8 +343,7 @@ const SelectStandard = ({
               <Button
                 onPress={() => setIsCreateStandard(true)}
                 mode="contained"
-                icon={'plus'}
-                >
+                icon={'plus'}>
                 <Text
                   variant="titleMedium"
                   style={{color: 'white', fontFamily: 'Sukhumvit set'}}>
@@ -368,7 +362,6 @@ const SelectStandard = ({
               alignSelf: 'center',
               marginBottom: 20,
             }}
-           
             mode="contained"
             onPress={handleDonePress}>
             {`บันทึก ${watch('standards')?.length} มาตรฐาน`}{' '}

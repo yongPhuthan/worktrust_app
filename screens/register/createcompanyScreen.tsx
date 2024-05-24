@@ -71,23 +71,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
 
   const user = useUser();
 
-  const getCategories = async () => {
-    const API_URL = `${BACK_END_SERVER_URL}/api/company/getCategories`;
 
-    try {
-      const response = await fetch(API_URL);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Network response was not ok: ${errorText}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Error:', error);
-      throw new Error('There was an error processing the request');
-    }
-  };
   const {
     handleSubmit,
     setValue,
@@ -194,7 +178,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
       throw new Error('User or user email is not available');
     }
 
-    const downloadUrl =  (await uploadImage(logo as string));
+    const downloadUrl = await uploadImage(logo as string);
 
     // Additional validation if URLs are required
     if (isLogoError) {
@@ -227,26 +211,8 @@ const CreateCompanyScreen = ({navigation}: Props) => {
   const isNextDisabledPage2 = !address || !mobileTel;
   useEffect(() => {
     setValue('code', Math.floor(100000 + Math.random() * 900000).toString());
-    const API_URL = `${BACK_END_SERVER_URL}/api/company/getCategories`;
-
-    fetch(API_URL)
-      .then(response => response.json())
-      .then(data =>
-        setCategories(
-          data.map((category: any) => ({
-            key: category.id.toString(),
-            value: category.name,
-          })),
-        ),
-      )
-      .catch(error => console.error('Error fetching categories:', error));
   }, []);
 
-  const {isLoading, error, data, refetch} = useQuery({
-    queryKey: ['category'],
-    queryFn: getCategories,
-    // enabled: !!user,
-  });
 
   const handleNextPage = () => {
     setPage(page + 1);
@@ -270,7 +236,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
     onError: (error: any) => {
       console.error('There was a problem calling the function:', error);
       console.log(error.response);
-      Alert.alert('Error', 'There was an error processing the request'); 
+      Alert.alert('Error', 'There was an error processing the request');
     },
   });
 
@@ -301,8 +267,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
       </View>
     );
   }
-console.log('logo:', logo)
-console.log('USER:', user)
+
   const renderPage = () => {
     switch (page) {
       case 1:
@@ -541,11 +506,11 @@ console.log('USER:', user)
                 titleStyle={{fontSize: 18}}
               />
               <Button
-                onPress={handleNextPage}
-                disabled={isNextDisabledPage2}
+                onPress={handleSave}
+                disabled={isUploading || isPending}
                 mode="contained"
-                loading={isPending || userLoading}>
-                ไปต่อ
+                loading={isPending || userLoading || isUploading}>
+                บันทึก
               </Button>
             </Appbar.Header>
             <ProgressBar progress={progress} />
@@ -674,72 +639,72 @@ console.log('USER:', user)
             </View>
           </>
         );
-      case 3:
-        return (
-          <>
-            <Appbar.Header
-              elevated
-              mode="center-aligned"
-              style={{
-                backgroundColor: 'white',
-              }}>
-              <Appbar.BackAction onPress={handlePrevPage} />
-              <Appbar.Content
-                title="ตั้งค่าธุรกิจ"
-                titleStyle={{fontSize: 18}}
-              />
-              <Button
-                onPress={handleSave}
-                disabled={ isUploading || isPending}
-                mode="contained"
-                loading={isPending || userLoading || isUploading}>
-                บันทึก
-              </Button>
-            </Appbar.Header>
-            <View style={{paddingHorizontal: 10, marginTop: 30}}>
-              <Text
-                style={{marginBottom: 10, fontSize: 16, fontWeight: 'bold'}}>
-                เลือกหมวดหมู่ธุรกิจของคุณ
-              </Text>
-              <View>
-                {categories.map((category: Category, index: number) => (
-                  <Controller
-                    control={control}
-                    name="categoryId"
-                    key={index}
-                    render={({field: {onChange, value}}) => (
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          marginTop: 20,
-                        }}>
-                        <Checkbox.Android
-                          status={
-                            value === category.key ? 'checked' : 'unchecked'
-                          }
-                          onPress={() => {
-                            onChange(category.key);
-                            setValue('categoryId', category.key, {
-                              shouldDirty: true,
-                            });
-                          }}
-                        />
-                        <Text style={{fontSize: 16}}>{category.value}</Text>
-                      </View>
-                    )}
-                  />
-                ))}
-              </View>
-            </View>
-          </>
-        );
+      // case 3:
+      //   return (
+      //     <>
+      //       <Appbar.Header
+      //         elevated
+      //         mode="center-aligned"
+      //         style={{
+      //           backgroundColor: 'white',
+      //         }}>
+      //         <Appbar.BackAction onPress={handlePrevPage} />
+      //         <Appbar.Content
+      //           title="ตั้งค่าธุรกิจ"
+      //           titleStyle={{fontSize: 18}}
+      //         />
+      //         <Button
+      //           onPress={handleSave}
+      //           disabled={ isUploading || isPending}
+      //           mode="contained"
+      //           loading={isPending || userLoading || isUploading}>
+      //           บันทึก
+      //         </Button>
+      //       </Appbar.Header>
+      //       <View style={{paddingHorizontal: 10, marginTop: 30}}>
+      //         <Text
+      //           style={{marginBottom: 10, fontSize: 16, fontWeight: 'bold'}}>
+      //           เลือกหมวดหมู่ธุรกิจของคุณ
+      //         </Text>
+      //         <View>
+      //           {categories.map((category: Category, index: number) => (
+      //             <Controller
+      //               control={control}
+      //               name="categoryId"
+      //               key={index}
+      //               render={({field: {onChange, value}}) => (
+      //                 <View
+      //                   style={{
+      //                     flexDirection: 'row',
+      //                     alignItems: 'center',
+      //                     marginTop: 20,
+      //                   }}>
+      //                   <Checkbox.Android
+      //                     status={
+      //                       value === category.key ? 'checked' : 'unchecked'
+      //                     }
+      //                     onPress={() => {
+      //                       onChange(category.key);
+      //                       setValue('categoryId', category.key, {
+      //                         shouldDirty: true,
+      //                       });
+      //                     }}
+      //                   />
+      //                   <Text style={{fontSize: 16}}>{category.value}</Text>
+      //                 </View>
+      //               )}
+      //             />
+      //           ))}
+      //         </View>
+      //       </View>
+      //     </>
+      //   );
 
       default:
         return null;
     }
   };
-  const progress = page / 3;
+  const progress = page / 2;
 
   return (
     <>

@@ -67,7 +67,6 @@ const ExistingWorkers = ({isVisible, onClose}: ExistingModalProps) => {
         },
       });
       const data = await response.json();
-      console.log(data);
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
@@ -81,7 +80,6 @@ const ExistingWorkers = ({isVisible, onClose}: ExistingModalProps) => {
   const {data, isLoading, isError, error} = useQuery({
     queryKey: ['workers', code],
     queryFn: fetchExistingWorkers,
-    enabled: !!refetch,
   });
 
   const currentWorkers = useWatch({
