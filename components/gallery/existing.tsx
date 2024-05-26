@@ -105,7 +105,7 @@ const GalleryScreen = ({
     setValue('serviceImages', urls, {shouldDirty: true});
   };
   const getGallery = async () => {
-    const imagesCollectionPath = `${code}/gallery/Images`;
+    const imagesCollectionPath = `${code}/gallery/images`;
     const imagesRef = firebase.firestore().collection(imagesCollectionPath);
 
     try {

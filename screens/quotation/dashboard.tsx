@@ -422,7 +422,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     }
     navigation.navigate('CreateQuotation');
   };
-
+console.log('SERVER_URL', BACK_END_SERVER_URL)
   return (
     <>
       <PaperProvider>

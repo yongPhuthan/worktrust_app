@@ -45,7 +45,7 @@ const useFetchDashboard = (): UseQueryResult<DashboardData, ErrorResponse> => {
     }
 
     const data = await response.json();
-
+    console.log('data', data);
     if (data && data.length > 0) {
       const [
         companyData, , , defaultContract, defaultWarranty, workers, userSignature, sellerId

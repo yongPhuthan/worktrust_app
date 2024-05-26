@@ -1,13 +1,11 @@
-import { BACK_END_SERVER_URL } from '@env';
-import { faCamera } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { yupResolver } from '@hookform/resolvers/yup';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { Controller, useForm, useWatch } from 'react-hook-form';
-import Marker, {
-  Position
-} from 'react-native-image-marker';
+import {BACK_END_SERVER_URL} from '@env';
+import {faCamera} from '@fortawesome/free-solid-svg-icons';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {yupResolver} from '@hookform/resolvers/yup';
+import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
+import React, {useCallback, useContext, useEffect, useState} from 'react';
+import {Controller, set, useForm, useWatch} from 'react-hook-form';
+import Marker, {Position} from 'react-native-image-marker';
 
 import {
   ActivityIndicator,
@@ -26,18 +24,16 @@ import {
   Checkbox,
   Divider,
   RadioButton,
-  TextInput
+  TextInput,
 } from 'react-native-paper';
-import {
-  imageTogallery
-} from '../../screens/utils/validationSchema';
+import {imageTogallery} from '../../screens/utils/validationSchema';
 
-import { v4 as uuidv4 } from 'uuid';
+import {v4 as uuidv4} from 'uuid';
 import firebase from '../../firebase';
-import { useUploadToFirebase } from '../../hooks/useUploadtoFirebase';
-import { usePickImage } from '../../hooks/utils/image/usePickImage';
-import { useUser } from '../../providers/UserContext';
-import { Store } from '../../redux/store';
+import {useUploadToFirebase} from '../../hooks/useUploadtoFirebase';
+import {usePickImage} from '../../hooks/utils/image/usePickImage';
+import {useUser} from '../../providers/UserContext';
+import {Store} from '../../redux/store';
 
 interface ExistingModalProps {
   isVisible: boolean;
@@ -174,7 +170,7 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
     name: 'selectedTags',
   });
   const fetchTags = async () => {
-    const tagsCollectionPath = `${code}/gallery/Tags`;
+    const tagsCollectionPath = `${code}/gallery/tags`;
     const tagsRef = firebase.firestore().collection(tagsCollectionPath);
     try {
       const snapshot = await tagsRef.get();
@@ -205,10 +201,7 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
   const [isWatermarkMenuVisible, setWatermarkMenuVisible] =
     useState<boolean>(true);
 
-  const toggleWatermarkMenu = () =>
-    setWatermarkMenuVisible(!isWatermarkMenuVisible);
-
-  const storagePath = `/users/${code}/images/gallery/`;
+  const storagePath = `${code}/gallery`;
 
   const {
     isUploading,
@@ -216,64 +209,9 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
     uploadImage,
   } = useUploadToFirebase(storagePath);
 
-  const addImage = useCallback(async () => {
-    if (!user || !user.uid || !isValid) {
-      console.error('User or user email or Image is not available');
-      return;
-    }
-    const uploadPromises = [uploadImage(image)];
-    const downloadUrl = await Promise.all(uploadPromises);
-    if (uploadError) {
-      throw new Error('There was an error uploading the images');
-    }
-    if (!downloadUrl) {
-      throw new Error('ไม่สามาถอัพโหลดรูปภาพได้');
-    }
-    try {
-      setValue('image', downloadUrl[0] as string);
-      const formData = {
-        ...getValues(),
-      };
-
-      // await createToServer(formData);
-    } catch (err) {
-      // Handle errors from image upload or worker creation
-      console.error('An error occurred:', err);
-      Alert.alert(
-        'เกิดข้อผิดพลาด',
-        'An error occurred while creating the worker. Please try again.',
-        [{text: 'OK', onPress: () => console.log('OK Pressed')}],
-        {cancelable: false},
-      );
-    }
-  }, [
-    user,
-    isValid,
-    image,
-    code,
-    uploadImage,
-    // createToServer,
-    queryClient,
-    BACK_END_SERVER_URL,
-    getValues,
-  ]);
-
-  const {mutate, isPending} = useMutation({
-    mutationFn: addImage,
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['workers', code],
-      });
-      onClose();
-    },
-    onError: error => {
-      console.log('onError', error);
-    },
-  });
-
   const handleAddTag = async () => {
     setIsLoading(true);
-    const tagsCollectionPath = `${code}/gallery/Tags`;
+    const tagsCollectionPath = `${code}/gallery/tags`;
     const tagRef = firebase
       .firestore()
       .collection(tagsCollectionPath)
@@ -302,7 +240,6 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
       setIsLoading(false);
     }
   };
-
   const uploadImageWithTags = async (): Promise<void> => {
     if (!image || selectedTags.length === 0) {
       alert(
@@ -313,8 +250,8 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
     setIsLoading(true);
 
     const db = firebase.firestore();
-    const imageCollectionRef = db.collection(`${code}/gallery/Images`);
-    const tagsCollectionRef = db.collection(`${code}/gallery/Tags`);
+    const imageCollectionRef = db.collection(`${code}/gallery/images`);
+    const tagsCollectionRef = db.collection(`${code}/gallery/tags`);
 
     try {
       // Create a new document in the Images collection
@@ -323,6 +260,7 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
         console.error('Image upload returned null or undefined.');
         return;
       }
+
       const imageDocRef = await imageCollectionRef.add({
         url: uploadedImageUrl,
         tags: selectedTags, // Assuming selectedTags are IDs or names of tags
@@ -399,7 +337,7 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
           src: logoSrc,
           scale: logoScale,
           position: {
-            position: getPositionBasedOn(watermarkPosition), 
+            position: getPositionBasedOn(watermarkPosition),
           },
         },
       ],
@@ -434,7 +372,6 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
         return Position.bottomRight;
     }
   }
-  console.log('logoSrc', logoSrc);
   return (
     <>
       <Appbar.Header
@@ -453,9 +390,9 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
             lineHeight: 24,
           }}
         />
-        
+
         <Button
-          loading={isPending || isImageUpload || isUploading }
+          loading={isImageUpload || isUploading}
           disabled={!image || !selectedTags || selectedTags.length === 0}
           children="บันทึก"
           mode="contained"

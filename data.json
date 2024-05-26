@@ -1,62 +1,35 @@
 {
-    "allTotal": 12240,
-    "company": {
-        "id": "664f1579a39dcc08a55247ef"
+    "id": "11340087029797934",
+    "source": "//storage.googleapis.com/projects/_/buckets/worktrust-b9c02.appspot.com",
+    "specversion": "1.0",
+    "type": "google.cloud.storage.object.v1.finalized",
+    "subject": "objects/348098/gallery/Images/rxQGlJpA1Xa1UB9rVJspAECqxhb2/original/510CF22C-5BA2-4A99-92E8-E0E920390D04.png",
+    "time": "2024-05-24T17:12:25.195903Z",
+    "bucket": "worktrust-b9c02.appspot.com",
+    "data": {
+        "kind": "storage#object",
+        "id": "worktrust-b9c02.appspot.com/348098/gallery/Images/rxQGlJpA1Xa1UB9rVJspAECqxhb2/original/510CF22C-5BA2-4A99-92E8-E0E920390D04.png/1716570745193761",
+        "selfLink": "https://www.googleapis.com/storage/v1/b/worktrust-b9c02.appspot.com/o/348098%2Fgallery%2FImages%2FrxQGlJpA1Xa1UB9rVJspAECqxhb2%2Foriginal%2F510CF22C-5BA2-4A99-92E8-E0E920390D04.png",
+        "name": "348098/gallery/Images/rxQGlJpA1Xa1UB9rVJspAECqxhb2/original/510CF22C-5BA2-4A99-92E8-E0E920390D04.png",
+        "bucket": "worktrust-b9c02.appspot.com",
+        "generation": "1716570745193761",
+        "metageneration": "1",
+        "contentType": "image/png",
+        "timeCreated": "2024-05-24T17:12:25.195Z",
+        "updated": "2024-05-24T17:12:25.195Z",
+        "storageClass": "STANDARD",
+        "timeStorageClassUpdated": "2024-05-24T17:12:25.195Z",
+        "size": "1488632",
+        "md5Hash": "ZTeICpLF3QNKPFcHPtfg4w==",
+        "mediaLink": "https://storage.googleapis.com/download/storage/v1/b/worktrust-b9c02.appspot.com/o/348098%2Fgallery%2FImages%2FrxQGlJpA1Xa1UB9rVJspAECqxhb2%2Foriginal%2F510CF22C-5BA2-4A99-92E8-E0E920390D04.png?generation=1716570745193761&alt=media",
+        "contentDisposition": "inline; filename*=utf-8''510CF22C-5BA2-4A99-92E8-E0E920390D04.png",
+        "metadata": {
+            "firebaseStorageDownloadTokens": "fc69a87c-7d04-4d70-bcb2-a6f2520161a7"
+        },
+        "crc32c": "tfUCyA==",
+        "etag": "CKGK/6vkpoYDEAE="
     },
-    "customer": {
-        "address": "Address",
-        "customerTax": "",
-        "id": "456fe8be-38d6-4991-a79a-fb52a5f17a16",
-        "name": "Customer5",
-        "phone": "05424242"
-    },
-    "dateEnd": "2024-05-31T03:31:43.795Z",
-    "dateOffer": "2024-05-24T03:31:43.795Z",
-    "discountType": "PERCENT",
-    "discountValue": 0,
-    "docNumber": "QT20240524403",
-    "id": "66500fe301268bb9e0dddc9c",
-    "pdfUrl": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/652447%2Fquotations%2FQT20240524403?alt=media&token=e269266f-7397-4e6d-8101-7ddc6bf10fc2",
-    "sellerSignature": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/652447%2Fusers%2Fsignature%2Fsignature652447.png7938df02-d7aa-415d-a3d4-a5d677b0ea9f?alt=media&token=c185b794-b483-486e-8222-67153d78586c",
-    "services": [{
-        "description": "กระจกเทมเปอร์",
-        "id": "489b5969-e102-4a8d-a4c5-f5c62cb61562",
-        "materials": [Array],
-        "qty": 2,
-        "serviceImages": [Array],
-        "standards": [Array],
-        "title": "ประตูบานเฟี้ยมสีดำด้าน",
-        "total": 6000,
-        "unit": "ชุด",
-        "unitPrice": 3000
-    }, {
-        "description": "กระจกเทมเปอร์",
-        "id": "42ec5f62-e0b1-458a-ba68-3aeed766d5e6",
-        "materials": [Array],
-        "qty": 2,
-        "serviceImages": [Array],
-        "standards": [Array],
-        "title": "ประตูบานเฟี้ยมสีดำด้าน",
-        "total": 6000,
-        "unit": "ชุด",
-        "unitPrice": 3000
-    }],
-    "status": "PENDING",
-    "summaryAfterDiscount": 12000,
-    "taxType": "TAX5",
-    "taxValue": 600,
-    "vat7": 840,
-    "workers": [{
-        "id": "664f600cd5bf9f0e839408c3",
-        "image": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/users%2F652447%2Fimages%2Fworkers%2F%E0%B8%8A%E0%B9%88%E0%B8%B2%E0%B8%87%E0%B8%95%E0%B9%89%E0%B8%99%E0%B8%AD%E0%B8%A5%E0%B8%B9%E0%B8%A1%E0%B8%B4%E0%B9%80%E0%B8%99%E0%B8%B5%E0%B8%A2%E0%B8%A1%2F5Mj137rHpC37WdNGspgLqUTAm0k5%2Foriginal%2F9D3BDBA3-CEEC-4F82-AD5B-B89ED16DA540.png?alt=media&token=790c678d-5ff3-45b2-9415-668a4e5899cc",
-        "mainSkill": "อลูมิเนียม",
-        "name": "ช่างต้นอลูมิเนียม",
-        "workerStatus": "MAINWORKER"
-    }, {
-        "id": "664f603ad5bf9f0e839408c4",
-        "image": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/users%2F652447%2Fimages%2Fworkers%2F%E0%B8%8A%E0%B9%88%E0%B8%B2%E0%B8%87%E0%B9%80%E0%B8%88%E0%B8%A1%E0%B8%AA%E0%B9%8C%2F5Mj137rHpC37WdNGspgLqUTAm0k5%2Foriginal%2F0EB9A4F7-7949-4F49-8B44-0FEE6CC9CBE5.png?alt=media&token=60619c3d-53ed-4b9f-bb44-bae537f4220f",
-        "mainSkill": "อลูมิเนียม",
-        "name": "ช่างเจมส์",
-        "workerStatus": "MAINWORKER"
-    }]
+    "traceparent": "00-6600707d96b11f1304471ee7afbe4f79-f63436de7ae25a28-01"
 }
+"
+timestamp: "2024-05-24T17:12:26.332344Z"
