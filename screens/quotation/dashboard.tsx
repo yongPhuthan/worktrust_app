@@ -126,7 +126,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     try {
       const token = await user.getIdToken(true);
       const response = await fetch(
-        `${BACK_END_SERVER_URL}/api/documents/removeQuotation?id=${encodeURIComponent(
+        `${BACK_END_SERVER_URL}/api/docs/deleteQuotation?id=${encodeURIComponent(
           id,
         )}`,
         {
@@ -140,7 +140,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
 
       if (response.ok) {
         queryClient.invalidateQueries({
-          queryKey: ['dashboardQuotation', code],
+          queryKey: ['dashboardData'],
         });
         setIsLoadingAction(false);
       } else {

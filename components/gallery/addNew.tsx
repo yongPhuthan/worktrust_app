@@ -285,12 +285,12 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
         }
       });
 
-      queryClient.invalidateQueries({
-        queryKey: ['gallery', code],
-      });
       onClose();
       reset();
       setIsLoading(false);
+      queryClient.invalidateQueries({
+        queryKey: ['gallery', code],
+      });
     } catch (error) {
       console.error('Error uploading image with tags:', error);
       alert('Error uploading image with tags, please try again.');

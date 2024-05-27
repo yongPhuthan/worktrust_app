@@ -169,6 +169,7 @@ const GalleryScreen = ({
       setGalleryImages(initialGalleryImages);
     }
   };
+  console.log('galleryImages', galleryImages.length);
   return (
     <>
       <Modal
@@ -253,7 +254,7 @@ const GalleryScreen = ({
                           }}
                         />
                       </View>
-                      <TouchableOpacity
+                      {/* <TouchableOpacity
                         style={styles.expandButton}
                         onPress={() => {
                           setSelectedImage(item.url.thumbnailUrl);
@@ -264,15 +265,19 @@ const GalleryScreen = ({
                           style={{marginVertical: 5}}
                           color="white"
                         />
-                      </TouchableOpacity>
+                      </TouchableOpacity> */}
                     </View>
                   )}
                   keyExtractor={item => item.id.toString()}
                 />
-              </View>
-
-              {galleryImages.length > 0 && (
-                <View style={styles.buttonContainer}>
+                  {galleryImages.length > 0 && (
+                <View style={{
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+         
+                
+                }}>
                   <Button
                     mode="contained"
                     style={{
@@ -289,6 +294,9 @@ const GalleryScreen = ({
                   </Button>
                 </View>
               )}
+              </View>
+
+            
               <Modal
                 isVisible={modalVisible}
                 onBackdropPress={() => setModalVisible(false)}>
@@ -317,6 +325,7 @@ const GalleryScreen = ({
           />
         </Modal>
       </Modal>
+      
     </>
   );
 };
@@ -481,8 +490,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   addButtonContainer: {
+    flexDirection: 'row',
+    display: 'flex',
     width: 100,
-    margin: 5,
+    marginBottom: 15,
     height: 110,
     justifyContent: 'center',
     alignItems: 'center',

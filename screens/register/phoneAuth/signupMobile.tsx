@@ -36,8 +36,6 @@ const SignupMobileScreen = ({navigation}: Props) => {
 
   // verification code (OTP - One-Time-Passcode)
   const [code, setCode] = useState('');
-  // State for each input field
-  const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
   // Timer state
   const [timer, setTimer] = useState<number>(60);
   const inputRefs = useRef<Array<any | null>>([]);
@@ -47,11 +45,7 @@ const SignupMobileScreen = ({navigation}: Props) => {
 
   const onToggleSnackBar = () => setVisible(!visible);
   const onDismissSnackBar = () => setVisible(false);
-  const handleChange = (text: string, index: number) => {
-    const newOtp = [...otp];
-    newOtp[index] = text;
-    setOtp(newOtp);
-  };
+
   const {
     handleSubmit,
     register,
@@ -130,7 +124,6 @@ const SignupMobileScreen = ({navigation}: Props) => {
     setIsLoading(true);
     try {
       // Combine all OTP digits into a single string
-      const code = otp.join('');
 
       if (confirm) {
         await confirm.confirm(code); // Use the confirm method with the code
@@ -189,23 +182,8 @@ const SignupMobileScreen = ({navigation}: Props) => {
     }
   };
 
-  // Function to focus the next input
-  const focusNextInput = (index: number, value: string) => {
-    if (value.length === 1 && index < 5) {
-      inputRefs.current[index + 1]?.focus();
-    }
-    const newOtp = [...otp];
-    newOtp[index] = value;
-    setOtp(newOtp);
-  };
-  const isOtpComplete = otp.every(digit => digit.trim().length === 1);
 
-  // Function to focus the previous input
-  const focusPreviousInput = (key: string, index: number) => {
-    if (key === 'Backspace' && index > 0) {
-      inputRefs.current[index - 1]?.focus();
-    }
-  };
+const isCodeValid = code.length === 6;
 
   const phoneNumber = getValues('phoneNumber'); // Get the phone number from the form
   React.useEffect(() => {
@@ -352,33 +330,23 @@ const SignupMobileScreen = ({navigation}: Props) => {
         <Text style={styles.timerText2}> {phoneNumber}</Text>
 
         <View style={styles.otpContainer}>
-          {otp.map((digit, index) => (
-            <TextInput
-              key={index}
-              ref={(ref: any) => {
-                inputRefs.current[index] = ref;
-              }}
+        <TextInput
               mode="outlined"
               style={styles.otpInput}
               textAlign="center"
               textAlignVertical="center"
               keyboardType="numeric"
+              
               inputMode="numeric"
               textContentType="oneTimeCode"
-              maxLength={1}
-              onChangeText={value => focusNextInput(index, value)}
-              onKeyPress={({nativeEvent}) => {
-                if (nativeEvent.key === 'Backspace') {
-                  focusPreviousInput(nativeEvent.key, index);
-                }
-              }}
-              value={digit}
+              maxLength={6}
+              onChangeText={value => setCode(value)}
+              value={code}
             />
-          ))}
         </View>
         <Button
           loading={isLoading}
-          disabled={!isOtpComplete || isLoading}
+          disabled={!isCodeValid || isLoading}
           mode="contained"
           contentStyle={{
             width: '100%',
@@ -390,7 +358,7 @@ const SignupMobileScreen = ({navigation}: Props) => {
             fontSize: 16,
           }}
           onPress={confirmCode}>
-          ต่อไป{' '}
+          ต่อไป
         </Button>
 
         {/* Display phone number and reference */}
@@ -446,7 +414,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   otpInput: {
-    width: 45,
+    width: '100%',
     height: 45,
     textAlign: 'center',
     marginHorizontal: 5,

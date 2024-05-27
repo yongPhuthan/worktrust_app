@@ -7,7 +7,7 @@ import firebase from '../../../firebase';
 
 import {FirebaseAuthTypes} from '@react-native-firebase/auth';
 import {StackNavigationProp} from '@react-navigation/stack';
-import {Controller, useForm} from 'react-hook-form';
+import {Controller, set, useForm} from 'react-hook-form';
 import {ParamListBase} from '../../../types/navigationType';
 import {signupMobilevalidationSchema} from '../../utils/validationSchema';
 interface Props {
@@ -18,6 +18,7 @@ const LoginMobileScreen = ({navigation}: Props) => {
   const [confirm, setConfirm] =
     useState<FirebaseAuthTypes.ConfirmationResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [code, setCode] = useState('');
 
   // State for each input field
   const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
@@ -87,8 +88,8 @@ const LoginMobileScreen = ({navigation}: Props) => {
   });
 
   const resendCode = async () => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
+    if (code) {
+     setCode('');
     }
     const phoneNumber = getValues('phoneNumber');
     const formattedPhoneNumber = formatPhoneNumber(phoneNumber);
@@ -107,7 +108,7 @@ const LoginMobileScreen = ({navigation}: Props) => {
     setIsLoading(true);
     try {
       // Combine all OTP digits into a single string
-      const code = otp.join('');
+   
 
       if (confirm) {
         await confirm.confirm(code);
@@ -166,6 +167,7 @@ const LoginMobileScreen = ({navigation}: Props) => {
       }
     };
   }, [timer]);
+  const isCodeValid = code.length === 6;
 
   if (!confirm) {
     return (
@@ -284,33 +286,23 @@ const LoginMobileScreen = ({navigation}: Props) => {
         <Text style={styles.timerText2}> {phoneNumber}</Text>
 
         <View style={styles.otpContainer}>
-          {otp.map((digit, index) => (
-            <TextInput
-              key={index}
-              ref={(ref: any) => {
-                inputRefs.current[index] = ref;
-              }}
+        <TextInput
               mode="outlined"
               style={styles.otpInput}
               textAlign="center"
               textAlignVertical="center"
               keyboardType="numeric"
+              
               inputMode="numeric"
               textContentType="oneTimeCode"
-              maxLength={1}
-              onChangeText={value => focusNextInput(index, value)}
-              onKeyPress={({nativeEvent}) => {
-                if (nativeEvent.key === 'Backspace') {
-                  focusPreviousInput(nativeEvent.key, index);
-                }
-              }}
-              value={digit}
+              maxLength={6}
+              onChangeText={value => setCode(value)}
+              value={code}
             />
-          ))}
         </View>
         <Button
           loading={isLoading}
-          disabled={!isOtpComplete}
+          disabled={!isCodeValid || isLoading}
           mode="contained"
           contentStyle={{
             width: '100%',
@@ -322,7 +314,7 @@ const LoginMobileScreen = ({navigation}: Props) => {
             fontSize: 16,
           }}
           onPress={confirmCode}>
-          ต่อไป{' '}
+          ต่อไป
         </Button>
 
         {/* Display phone number and reference */}
@@ -331,9 +323,9 @@ const LoginMobileScreen = ({navigation}: Props) => {
             ส่งรหัสอีกครั้ง
           </Button>
         ) : (
-          <Text
-            children={` กรุณารอ ${timer} ก่อนกดส่งอีกครั้ง`}
-            style={styles.rimindText}></Text>
+          <Text style={styles.rimindText}>
+            กรุณารอ {timer} ก่อนกดส่งอีกครั้ง
+          </Text>
         )}
       </View>
     </>
@@ -378,7 +370,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   otpInput: {
-    width: 45,
+    width: '100%',
     height: 45,
     textAlign: 'center',
     marginHorizontal: 5,

@@ -274,9 +274,9 @@ const AddProductFormModal = (props: Props) => {
                             height: 150,
                             width: 200,
                           }}
-                          onPress={() => {
-                            setModalImagesVisible(true);
-                          }}>
+                          onPress={() => 
+                            setModalImagesVisible(true)
+                          }>
                           <FontAwesomeIcon
                             icon={faImages}
                             style={{marginVertical: 5, marginHorizontal: 50}}

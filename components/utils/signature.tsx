@@ -12,7 +12,7 @@ import firebase from '../../firebase';
 import * as stateAction from '../../redux/actions';
 
 import {BACK_END_SERVER_URL} from '@env';
-import {useMutation} from '@tanstack/react-query';
+import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {useFormContext, useWatch} from 'react-hook-form';
 import {
   Alert,
@@ -26,6 +26,7 @@ import {ActivityIndicator, Button} from 'react-native-paper';
 import Signature from 'react-native-signature-canvas';
 import {useUser} from '../../providers/UserContext';
 import {Store} from '../../redux/store';
+import {useUploadToFirebase} from '../../hooks/useUploadtoFirebase';
 interface SignaturePadProps {
   setSignatureUrl: React.Dispatch<React.SetStateAction<string | null>>;
   onSignatureSuccess?: () => void;
@@ -41,7 +42,7 @@ const SignatureComponent = ({
   const ref = useRef<any>();
   const [isImageUpload, setIsImageUpload] = useState(false);
   const [isSigned, setIsSigned] = useState(false);
-
+  const queryClient = useQueryClient();
   const [createNewSignature, setCreateNewSignature] = useState<boolean>(false);
   const imageId = uuidv4();
   const user = useUser();
@@ -60,6 +61,39 @@ const SignatureComponent = ({
     dispatch,
   }: any = useContext(Store);
 
+  const filename = `signature${code}${imageId}.png`;
+  const storagePath = `${code}/signature/${filename}`;
+
+const getSinature = async () => {
+  const signaturePath = `${code}/signature`;
+  const storageRef = firebase.firestore().collection(signaturePath)
+  try {
+    const imageSnapshot = await storageRef.get();
+    const images = imageSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return data;
+    });
+
+    return images; 
+  } catch (error) {
+    console.error('Error fetching gallery images:', error);
+    return null
+  }
+}
+
+// const {data, isLoading, error} = useQuery({
+//   queryKey: ['signature', code],
+//   queryFn: getSinature,
+// });
+
+// if (isLoading) {
+//   return (
+//     <View style={styles.loadingContainer}>
+//       <ActivityIndicator />
+//     </View>
+//   );
+// }
+
   const updateUserSignature = async (data: any) => {
     if (!user || !user.uid) {
       throw new Error('User is not available');
@@ -74,10 +108,10 @@ const SignatureComponent = ({
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ data }),
+          body: JSON.stringify({data}),
         },
       );
-  
+
       if (!response.ok) {
         const contentType = response.headers.get('content-type');
         if (contentType && contentType.indexOf('application/json') !== -1) {
@@ -85,29 +119,41 @@ const SignatureComponent = ({
           throw new Error(errorData.message || 'Network response was not ok.');
         } else {
           const text = await response.text(); // Read the response as text
-          throw new Error(`Network response was not ok and not JSON. Response: ${text}`);
+          throw new Error(
+            `Network response was not ok and not JSON. Response: ${text}`,
+          );
         }
       }
-  
+
+
+
       return response.json();
     } catch (err) {
       console.error('Error in updateContractAndQuotation:', err);
-      throw new Error(err instanceof Error ? err.message : 'Unknown error occurred');
+      throw new Error(
+        err instanceof Error ? err.message : 'Unknown error occurred',
+      );
     }
   };
-  
-  const { mutate, isPending } = useMutation({
+
+  const {mutate, isPending} = useMutation({
     mutationFn: updateUserSignature,
     onError: (error: any) => {
       Alert.alert(
         'Update Error',
         `Server-side user creation failed: ${error.message}`,
-        [{ text: 'OK' }],
-        { cancelable: false },
+        [{text: 'OK'}],
+        {cancelable: false},
       );
     },
+    onSuccess: () => {
+      console.log('User signature updated successfully');
+      queryClient.invalidateQueries({
+        queryKey: ['userSignature'],
+      });
+    }
   });
-  
+
   const sellerSignature = useWatch({
     control: control,
     name: 'sellerSignature',
@@ -129,11 +175,8 @@ const SignatureComponent = ({
         return null;
       }
 
-      const filename = `signature${code}.png`;
-      const storagePath = `${code}/users/signature/${filename}${imageId}`;
-
       try {
-        const storageRef = firebase.storage().ref(storagePath);
+        const storageRef = firebase.app().storage('gs://worktrust-images').ref(storagePath);
         const base64String = imageUri.split(',')[1];
 
         const snapshot = await storageRef.putString(base64String, 'base64', {
@@ -146,9 +189,19 @@ const SignatureComponent = ({
         }
         // Use getDownloadURL to get the URL for the uploaded file
         const downloadUrl = await storageRef.getDownloadURL();
-        console.log('File uploaded successfully. URL:', downloadUrl);
+        const webpDownloadURL = downloadUrl.replace('.png', '.webp');
 
-        return downloadUrl;
+        console.log('File uploaded successfully. URL:', webpDownloadURL);
+        // const signaturePath = `${code}/signature`;
+        // const docRef = firebase.firestore().collection(signaturePath).doc();
+        // const data = {
+        //   id: docRef.id,
+        //   url: webpDownloadURL,
+        //   createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        //   createdBy: user.uid,
+        // };
+        // await docRef.set(data);
+        return webpDownloadURL;
       } catch (error) {
         console.error('Error uploading file to Firebase:', error);
         return null;
@@ -168,12 +221,12 @@ const SignatureComponent = ({
       try {
         setIsImageUpload(true);
         const imageUrl = await uploadFileToFirebase(signature);
-
         if (!imageUrl) {
-          throw new Error('Image upload failed');
+          console.error('Image upload returned null or undefined.');
+          return;
         }
 
-        await mutate(imageUrl);
+        mutate(imageUrl);
         dispatch(stateAction.get_user_signature(imageUrl));
         setValue('sellerSignature', imageUrl, {shouldDirty: true});
         setCreateNewSignature(false);
@@ -227,6 +280,15 @@ const SignatureComponent = ({
   const handleConfirm = () => {
     ref.current.readSignature();
   };
+  console.log('userSignature', userSignature);
+  // if(error) {
+  //   console.error('Error fetching signature:', error);
+  //   return (
+  //     <View style={styles.loadingContainer}>
+  //       <Text>เกิดข้อผิดพลาดในการดึงลายเซ็น</Text>
+  //     </View>
+  //   );
+  // }
   return (
     <>
       {isSignatureUpload || isPending ? (
@@ -238,6 +300,7 @@ const SignatureComponent = ({
               <View style={styles.underline} />
 
               {userSignature && (
+       
                 <FastImage
                   style={styles.image}
                   source={{

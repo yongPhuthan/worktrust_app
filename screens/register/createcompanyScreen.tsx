@@ -71,7 +71,6 @@ const CreateCompanyScreen = ({navigation}: Props) => {
 
   const user = useUser();
 
-
   const {
     handleSubmit,
     setValue,
@@ -177,21 +176,20 @@ const CreateCompanyScreen = ({navigation}: Props) => {
     if (!user || !user.uid) {
       throw new Error('User or user email is not available');
     }
+    if (logo) {
+      const downloadUrl = await uploadImage(logo as string);
 
-    const downloadUrl = await uploadImage(logo as string);
-
-    // Additional validation if URLs are required
-    if (isLogoError) {
-      throw new Error('There was an error uploading the images');
+      // Additional validation if URLs are required
+      if (isLogoError) {
+        throw new Error('There was an error uploading the images');
+      }
+      if (!downloadUrl) {
+        throw new Error('ไม่สามาถอัพโหลดรูปภาพได้');
+      }
+      setValue('logo', downloadUrl.originalUrl);
     }
-    if (!downloadUrl) {
-      throw new Error('ไม่สามาถอัพโหลดรูปภาพได้');
-    }
-    console.log('downloadUrl:', downloadUrl);
 
     try {
-      setValue('logo', downloadUrl.originalUrl);
-
       const formData = {
         ...getValues(),
       };
@@ -213,7 +211,6 @@ const CreateCompanyScreen = ({navigation}: Props) => {
     setValue('code', Math.floor(100000 + Math.random() * 900000).toString());
   }, []);
 
-
   const handleNextPage = () => {
     setPage(page + 1);
   };
@@ -234,7 +231,6 @@ const CreateCompanyScreen = ({navigation}: Props) => {
       // navigation.navigate('DashboardQuotation');
     },
     onError: (error: any) => {
-      console.error('There was a problem calling the function:', error);
       console.log(error.response);
       Alert.alert('Error', 'There was an error processing the request');
     },

@@ -170,6 +170,9 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
   if (!isAuthenticated) {
     return null;
   }
+  console.log('company', company);
+  console.log('logo', logo);
+
   return (
     <>
       {company && seller && (
@@ -180,7 +183,7 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
             <TouchableOpacity
               style={{alignItems: 'center', marginBottom: 24}}
               onPress={handleLogoUpload}>
-              {logo && logo !== 'NONE' ? (
+              {logo  ? (
                 <Image
                   source={{
                     uri: logo,

@@ -134,7 +134,7 @@ const EditSetting = ({navigation, route}: Props) => {
       if (!downloadUrl) {
         throw new Error('ไม่สามาถอัพโหลดรูปภาพได้');
       }
-      setValue('logo', downloadUrl);
+      setValue('logo', downloadUrl.originalUrl, {shouldDirty: true});
     }
 
     try {
