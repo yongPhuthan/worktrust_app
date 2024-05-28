@@ -7,6 +7,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {yupResolver} from '@hookform/resolvers/yup';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {StackNavigationProp} from '@react-navigation/stack';
 import React, {useContext, useEffect, useMemo, useState} from 'react';
 import {
@@ -357,7 +358,7 @@ const CreateNewInvoice = ({navigation}: Props) => {
       </Appbar.Header>
       <FormProvider {...methods}>
         <View style={{flex: 1}}>
-          <ScrollView style={styles.container}>
+          <KeyboardAwareScrollView style={styles.container}>
             <View style={styles.subContainerHead}>
               <DatePickerButton
                 label="วันที่"
@@ -570,7 +571,7 @@ const CreateNewInvoice = ({navigation}: Props) => {
                 </View>
               )}
             </View>
-          </ScrollView>
+          </KeyboardAwareScrollView>
           <Modal
             visible={addCustomerModal}
             animationType="slide"
@@ -702,6 +703,8 @@ const styles = StyleSheet.create({
     // backgroundColor:'#f3f8f3',
     backgroundColor: '#e9f7ff',
     height: 'auto',
+    flexDirection: 'column',
+    gap: 10,
   },
   modalFull: {
     margin: 0,

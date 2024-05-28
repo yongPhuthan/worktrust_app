@@ -92,11 +92,11 @@ async function uploadToFirebase(
 ): Promise<string> {
   try {
     const fileName = `${storagePath}/${type}/${Date.now()}.png`;
-    // const reference = storage().ref(fileName);
-    const reference = firebase
-      .app()
-      .storage('gs://worktrust-images')
-      .ref(fileName);
+    const reference = storage().ref(fileName);
+    // const reference = firebase
+    //   .app()
+    //   .storage('gs://worktrust-images')
+    //   .ref(fileName);
     // const reference = firebase.storage().ref(fileName);
 
     const base64DataString = await uriToBase64(uri);

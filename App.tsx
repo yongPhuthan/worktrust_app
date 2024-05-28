@@ -19,7 +19,7 @@ const theme = {
   colors: {
     ...DefaultTheme.colors,
     // primary: '#1b72e8',
-
+    // primary:'#0363d3',
     primary: '#00674a',
     secondaryContainer: '#e3fcf7', // This is a lighter shade of the primary color
 

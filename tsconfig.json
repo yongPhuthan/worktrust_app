@@ -11,9 +11,11 @@
     "paths": {
       "@env": ["./node_modules/react-native-dotenv"]
     },
+    "types": ["jest"],
     "jsx": "react-native",
     "esModuleInterop": true
   },
+  "exclude": ["node_modules", "babel.config.js", "metro.config.js", "jest.config.js"],
   "compileOnSave": true,
   "include": [
     "src",

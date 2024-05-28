@@ -25,7 +25,7 @@ const LoginMobileScreen = ({navigation}: Props) => {
   // Timer state
   const [timer, setTimer] = useState<number>(60);
   const inputRefs = useRef<Array<any | null>>([]);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<any | null>(null);
   React.useEffect(() => {
     const unsubscribe = firebase.auth().onAuthStateChanged(async user => {
       if (user) {

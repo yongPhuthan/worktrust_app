@@ -1,9 +1,9 @@
 // screens/FirstAppScreen.tsx
 import {FirebaseAuthTypes} from '@react-native-firebase/auth';
 import React, {useEffect, useState} from 'react';
-import {Image, Pressable, StyleSheet, Text, View} from 'react-native';
-import {Button, TextInput, ActivityIndicator} from 'react-native-paper';
-import {BRAND_NAME,BACK_END_SERVER_URL} from '@env';
+import {Image, Pressable, StyleSheet, View} from 'react-native';
+import {Button, TextInput, Text} from 'react-native-paper';
+import {BRAND_NAME, BACK_END_SERVER_URL} from '@env';
 import firebase from '../../firebase';
 
 const FirstAppScreen = ({navigation}: any) => {
@@ -29,22 +29,21 @@ const FirstAppScreen = ({navigation}: any) => {
 
   //     return unsubscribe;
   // }, []);
-const appCheck = async () => {
-  try {
-    const { token } = await firebase.appCheck().getToken(true);
-  
-    if (token.length > 0) {
-      console.log('AppCheck verification passed');
-    }
-  } catch (error) {
-    console.log('AppCheck verification failed');
-  }
-}
+  const appCheck = async () => {
+    try {
+      const {token} = await firebase.appCheck().getToken(true);
 
-useEffect(() => {
-  appCheck();
-}
-, []);
+      if (token.length > 0) {
+        console.log('AppCheck verification passed');
+      }
+    } catch (error) {
+      console.log('AppCheck verification failed');
+    }
+  };
+
+  useEffect(() => {
+    appCheck();
+  }, []);
 
   return (
     <View
@@ -86,17 +85,14 @@ useEffect(() => {
             alignItems: 'center',
             alignContent: 'center',
             alignSelf: 'center',
-          
           }}
           children="ลงทะเบียนใช้งาน"
           style={{
-       
             width: '80%',
           }}
           onPress={handleRegister}></Button>
         <Button
           mode="outlined"
-          
           labelStyle={{
             fontSize: 16,
             fontWeight: 'bold',
@@ -108,11 +104,9 @@ useEffect(() => {
             alignItems: 'center',
             alignContent: 'center',
             alignSelf: 'center',
-          
           }}
           style={{
             width: '80%',
-   
           }}
           onPress={handleLogin}>
           เข้าสู่ระบบ{' '}
@@ -125,7 +119,9 @@ useEffect(() => {
 const styles = StyleSheet.create({
   logo: {
     fontSize: 32,
-    color: '#012b20',
+    color: '#5C5F62',
+
+    // color: '#012b20',
     marginBottom: 32,
     fontWeight: 'bold',
   },

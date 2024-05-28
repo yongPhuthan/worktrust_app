@@ -512,6 +512,7 @@ console.log('SERVER_URL', BACK_END_SERVER_URL)
                           flex: 1,
                           justifyContent: 'flex-start',
                           height: height,
+                          width: width,
 
                           alignItems: 'center',
                           marginTop: height * 0.2,

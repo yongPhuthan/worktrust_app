@@ -39,7 +39,7 @@ const SignupMobileScreen = ({navigation}: Props) => {
   // Timer state
   const [timer, setTimer] = useState<number>(60);
   const inputRefs = useRef<Array<any | null>>([]);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<any | null>(null);
   const [visible, setVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
 

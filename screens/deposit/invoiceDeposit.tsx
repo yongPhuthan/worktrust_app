@@ -10,6 +10,8 @@ import {
   Switch,
   SegmentedButtons,
 } from 'react-native-paper';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+
 import {StackNavigationProp} from '@react-navigation/stack';
 import {ParamListBase} from '../../types/navigationType';
 import * as stateAction from '../../redux/actions';
@@ -220,7 +222,7 @@ const InvoiceDepositScreen = ({navigation}: Props) => {
           {'บันทึก'}
         </Button>
       </Appbar.Header>
-      <ScrollView style={styles.container}>
+      <KeyboardAwareScrollView style={styles.container}>
         <View style={styles.subContainerHead}>
           <DatePickerButton
             label="วันที่"
@@ -545,7 +547,7 @@ const InvoiceDepositScreen = ({navigation}: Props) => {
           </View>
         )}
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
 
       {pdfUrl && (
         <>
@@ -596,6 +598,8 @@ const styles = StyleSheet.create({
     // backgroundColor:'#f3f8f3',
     backgroundColor: '#e9f7ff',
     height: 'auto',
+    flexDirection: 'column',
+    gap: 10,
   },
   subContainer: {
     backgroundColor: '#ffffff',

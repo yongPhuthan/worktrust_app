@@ -8,6 +8,8 @@ import {
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {yupResolver} from '@hookform/resolvers/yup';
 import {StackNavigationProp} from '@react-navigation/stack';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+
 import React, {useContext, useEffect, useMemo, useState} from 'react';
 import {
   FormProvider,
@@ -274,14 +276,14 @@ const Quotation = ({navigation}: Props) => {
   const useNotetoCustomer = () => {
     if (noteToCustomer) {
       methods.setValue('noteToCustomer', '', {shouldDirty: true});
-    } 
+    }
   };
 
   const useNotetoTeam = () => {
     if (noteToTeam) {
       methods.setValue('noteToTeam', '', {shouldDirty: true});
-    } 
-  }
+    }
+  };
 
   const useWorkers = () => {
     if (workers) {
@@ -389,7 +391,7 @@ const Quotation = ({navigation}: Props) => {
 
       <FormProvider {...methods}>
         <View style={{flex: 1}}>
-          <ScrollView style={styles.container}>
+          <KeyboardAwareScrollView style={styles.container}>
             <View style={styles.subContainerHead}>
               <DatePickerButton
                 label="วันที่เสนอราคา"
@@ -397,14 +399,14 @@ const Quotation = ({navigation}: Props) => {
                 date="today"
                 onDateSelected={handleStartDateSelected}
               />
-       
+
               <DatePickerButton
                 label="ยืนราคาถึงวันที่ี"
                 title="ยืนราคาถึงวันที่ี"
                 date="sevenDaysFromNow"
                 onDateSelected={handleEndDateSelected}
               />
-                     <DocNumber
+              <DocNumber
                 label="เลขที่เอกสาร"
                 onChange={handleInvoiceNumberChange}
                 value={methods.watch('docNumber')}
@@ -602,9 +604,8 @@ const Quotation = ({navigation}: Props) => {
                   trackColor={{false: '#767577', true: '#81b0ff'}}
                   thumbColor={openNoteToCustomer ? '#ffffff' : '#f4f3f4'}
                   ios_backgroundColor="#3e3e3e"
-                  onValueChange={
-                    ()=>                    setOpenNoteToCustomer(!openNoteToCustomer)
-
+                  onValueChange={() =>
+                    setOpenNoteToCustomer(!openNoteToCustomer)
                   }
                   value={openNoteToCustomer ? true : false}
                   style={Platform.select({
@@ -657,9 +658,7 @@ const Quotation = ({navigation}: Props) => {
                   trackColor={{false: '#767577', true: '#81b0ff'}}
                   thumbColor={openNoteToTeam ? '#ffffff' : '#f4f3f4'}
                   ios_backgroundColor="#3e3e3e"
-                  onValueChange={
-                    ()=>                    setOpenNoteToTeam(!openNoteToTeam)
-                  }
+                  onValueChange={() => setOpenNoteToTeam(!openNoteToTeam)}
                   value={openNoteToTeam ? true : false}
                   style={Platform.select({
                     ios: {
@@ -705,7 +704,7 @@ const Quotation = ({navigation}: Props) => {
                 </View>
               )}
             </View>
-          </ScrollView>
+          </KeyboardAwareScrollView>
           <Modal
             visible={addCustomerModal}
             animationType="slide"
@@ -862,7 +861,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     height: 'auto',
     paddingBottom: 200,
-
   },
   form: {
     borderColor: '#0073BA',

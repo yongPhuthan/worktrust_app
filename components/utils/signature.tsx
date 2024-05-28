@@ -10,6 +10,7 @@ import FastImage from 'react-native-fast-image';
 import {v4 as uuidv4} from 'uuid';
 import firebase from '../../firebase';
 import * as stateAction from '../../redux/actions';
+import storage from '@react-native-firebase/storage';
 
 import {BACK_END_SERVER_URL} from '@env';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
@@ -176,7 +177,8 @@ const getSinature = async () => {
       }
 
       try {
-        const storageRef = firebase.app().storage('gs://worktrust-images').ref(storagePath);
+        const storageRef = storage().ref(storagePath);
+
         const base64String = imageUri.split(',')[1];
 
         const snapshot = await storageRef.putString(base64String, 'base64', {

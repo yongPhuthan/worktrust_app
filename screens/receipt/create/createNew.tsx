@@ -1,47 +1,36 @@
-import {
-  faBriefcase,
-  faPlus,
-  faSign,
-  faSignature,
-  faUser,
-} from '@fortawesome/free-solid-svg-icons';
+import {faBriefcase, faUser} from '@fortawesome/free-solid-svg-icons';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {yupResolver} from '@hookform/resolvers/yup';
 import {StackNavigationProp} from '@react-navigation/stack';
 import React, {useContext, useEffect, useMemo, useState} from 'react';
 import {
+  Controller,
   FormProvider,
-  set,
   useFieldArray,
   useForm,
   useWatch,
-  Controller,
 } from 'react-hook-form';
 import {
   Alert,
   Dimensions,
-  FlatList,
   Image,
+  Modal,
   Platform,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
-  Modal,
   View,
 } from 'react-native';
 import {
   Appbar,
   Button,
-  ProgressBar,
-  Switch,
-  List,
   Divider,
-  IconButton,
-  TextInput,
   SegmentedButtons,
-  Icon,
+  Switch,
+  TextInput,
 } from 'react-native-paper';
 import {v4 as uuidv4} from 'uuid';
 import AddServices from '../../../components/AddServices';
@@ -50,31 +39,25 @@ import CardProject from '../../../components/CardProject';
 import DocNumber from '../../../components/DocNumber';
 import Summary from '../../../components/Summary';
 import AddCustomer from '../../../components/add/AddCustomer';
-import ContractModal from '../../../components/contract/create';
 import SelectProductModal from '../../../components/service/select';
 import DatePickerButton from '../../../components/styles/DatePicker';
 // import Divider from '../../components/styles/Divider';
+import AddProductFormModal from '../../../components/service/addNew';
 import SmallDivider from '../../../components/styles/SmallDivider';
 import AddCard from '../../../components/ui/Button/AddCard';
 import SignatureComponent from '../../../components/utils/signature';
-import ProjectModalScreen from '../../../components/webview/project';
+import PDFModalScreen from '../../../components/webview/pdf';
 import ExistingWorkers from '../../../components/workers/existing';
-import useCreateQuotation from '../../../hooks/quotation/create/useSaveQuotation';
+import {useModal} from '../../../hooks/quotation/create/useModal';
 import useSelectedDates from '../../../hooks/quotation/create/useSelectDates';
+import useCreateNewReceipt from '../../../hooks/receipt/useCreateInvoice';
 import useThaiDateFormatter from '../../../hooks/utils/useThaiDateFormatter';
 import {TaxType} from '../../../models/Tax';
+import * as stateAction from '../../../redux/actions';
 import {Store} from '../../../redux/store';
-import {CompanySeller, Service} from '../../../types/docType';
+import {Service} from '../../../types/docType';
 import {ParamListBase} from '../../../types/navigationType';
 import {quotationsValidationSchema} from '../../utils/validationSchema';
-import PDFModalScreen from '../../../components/webview/pdf';
-import useShare from '../../../hooks/webview/useShare';
-import WarrantyModal from '../../../components/warranty/create';
-import AddProductFormModal from '../../../components/service/addNew';
-import {useModal} from '../../../hooks/quotation/create/useModal';
-import useCreateNewInvoice from '../../../hooks/invoice/useCreateInvoice';
-import useCreateNewReceipt from '../../../hooks/receipt/useCreateInvoice';
-import * as stateAction from '../../../redux/actions';
 
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'CreateNewReceipt'>;
@@ -103,9 +86,7 @@ const CreateNewReceipt = ({navigation}: Props) => {
 
   const [workerPicker, setWorkerpicker] = useState(false);
 
-  const [invoiceServerId, setInvoiceServerId] = useState<string | null>(
-    null,
-  );
+  const [invoiceServerId, setInvoiceServerId] = useState<string | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>('true');
   const [value, setValue] = React.useState('');
   const [openNoteToCustomer, setOpenNoteToCustomer] = useState(false);
@@ -122,7 +103,6 @@ const CreateNewReceipt = ({navigation}: Props) => {
   );
   const [serviceIndex, setServiceIndex] = useState<number>(0);
   const [fcmToken, setFtmToken] = useState('');
-
 
   const {
     openModal: openAddCustomerModal,
@@ -226,7 +206,6 @@ const CreateNewReceipt = ({navigation}: Props) => {
     name: 'sellerSignature',
   });
 
-
   const isCustomerDisabled = useMemo(() => {
     return customer.name === '' && customer.address === '';
   }, [customer.name, customer.address]);
@@ -236,7 +215,6 @@ const CreateNewReceipt = ({navigation}: Props) => {
     methods.setValue('FCMToken', fcmToken);
   }, [dateEndFormatted, dateOfferFormatted, fcmToken, methods]);
 
-
   const useSignature = () => {
     if (sellerSignature) {
       methods.setValue('sellerSignature', '', {shouldDirty: true});
@@ -245,8 +223,6 @@ const CreateNewReceipt = ({navigation}: Props) => {
       openSignatureModal();
     }
   };
-
-
 
   const handleModalClose = () => {
     setVisibleModalIndex(null);
@@ -276,7 +252,7 @@ const CreateNewReceipt = ({navigation}: Props) => {
 
   const handleQuotationRefNumberChange = (text: string) => {
     methods.setValue('quotationRefNumber', text);
-  }
+  };
 
   const handleStartDateSelected = (date: Date) => {
     setDateOfferFormatted(thaiDateFormatter(date));
@@ -331,10 +307,10 @@ const CreateNewReceipt = ({navigation}: Props) => {
                 {
                   text: 'ปิดหน้าต่าง',
                   onPress: () => {
-                    
                     dispatch(stateAction.get_edit_quotation(null));
 
-                    navigation.goBack()},
+                    navigation.goBack();
+                  },
                 },
               ],
               {cancelable: false},
@@ -360,7 +336,7 @@ const CreateNewReceipt = ({navigation}: Props) => {
       </Appbar.Header>
       <FormProvider {...methods}>
         <View style={{flex: 1}}>
-          <ScrollView style={styles.container}>
+          <KeyboardAwareScrollView style={styles.container}>
             <View style={styles.subContainerHead}>
               <DatePickerButton
                 label="วันที่"
@@ -373,7 +349,7 @@ const CreateNewReceipt = ({navigation}: Props) => {
                 onChange={handleInvoiceNumberChange}
                 value={methods.watch('docNumber')}
               />
-               <DocNumber
+              <DocNumber
                 label="อ้างอิงใบเสนอราคาเลขที่"
                 onChange={handleQuotationRefNumberChange}
                 value={methods.watch('quotationRefNumber')}
@@ -573,7 +549,7 @@ const CreateNewReceipt = ({navigation}: Props) => {
                 </View>
               )}
             </View>
-          </ScrollView>
+          </KeyboardAwareScrollView>
           <Modal
             visible={addCustomerModal}
             animationType="slide"
@@ -633,9 +609,8 @@ const CreateNewReceipt = ({navigation}: Props) => {
           onClose={() => setContractModal(false)}
         /> */}
 
-        { pdfUrl && (
+        {pdfUrl && (
           <>
-           
             <PDFModalScreen
               fileName={customer.name}
               visible={showPDFModal}
@@ -663,7 +638,6 @@ const CreateNewReceipt = ({navigation}: Props) => {
                   icon: 'file-document',
                   onPress: () => openPDFModal(),
                 },
-                
               ]}
             />
           </>
@@ -701,6 +675,8 @@ const styles = StyleSheet.create({
     // backgroundColor:'#f3f8f3',
     backgroundColor: '#e9f7ff',
     height: 'auto',
+    flexDirection: 'column',
+    gap: 10,
   },
   modalFull: {
     margin: 0,
