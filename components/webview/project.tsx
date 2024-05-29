@@ -74,7 +74,7 @@ const ProjectModalScreen = (props: Props) => {
           }}
         />
         <Appbar.Content
-          title="เสนอราคา"
+          title="Project view"
           titleStyle={{
             fontSize: 18,
             fontWeight: 'bold',

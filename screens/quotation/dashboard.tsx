@@ -50,6 +50,8 @@ import {
   QuotationStatusKey,
 } from '../../models/QuotationStatus';
 import ProjectModalScreen from '../../components/webview/project';
+import {useModal} from '../../hooks/quotation/create/useModal';
+import PDFModalScreen from '../../components/webview/pdf';
 interface ErrorResponse {
   message: string;
   action: 'logout' | 'redirectToCreateCompany' | 'contactSupport' | 'retry';
@@ -57,6 +59,16 @@ interface ErrorResponse {
 const Dashboard = ({navigation}: DashboardScreenProps) => {
   const [showModal, setShowModal] = useState(true);
   const user = useUser();
+  const {
+    openModal: openPDFModal,
+    closeModal: closePDFModal,
+    isVisible: showPDFModal,
+  } = useModal();
+  const {
+    openModal: openProjectModal,
+    closeModal: closeProjectModal,
+    isVisible: showProjectModal,
+  } = useModal();
   const {
     dispatch,
     state: {isEmulator, code},
@@ -66,7 +78,6 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   const {width, height} = Dimensions.get('window');
   const [isLoadingAction, setIsLoadingAction] = useState(false);
   const queryClient = useQueryClient();
-  const [showProjectModal, setShowProjectModal] = useState(false);
   const [visible, setVisible] = useState(false);
   const [isModalSignContract, setIsModalSignContract] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null) as any;
@@ -192,7 +203,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   useEffect(() => {
     if (user) {
       console.log('User:', user);
-      
+
       const unsubscribe = messaging().setBackgroundMessageHandler(
         async remoteMessage => {
           console.log('Message handled in the background!', remoteMessage);
@@ -202,6 +213,15 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
       return unsubscribe;
     }
   }, [user]);
+
+  useEffect(() => {
+    // ใช้ useEffect เพื่อตรวจสอบการเปลี่ยนแปลงของ showProjectModal และ showPDFModal
+    // และทำการเปลี่ยนแปลงค่าของ showModal ให้เป็น false เพื่อปิด Modal
+    // ที่เปิดอยู่ก่อนหน้านี้
+    if (showProjectModal || showPDFModal) {
+      setShowModal(false);
+    }
+  }, [showProjectModal, showPDFModal]);
 
   const filtersToShow: QuotationStatusKey[] = [
     QuotationStatus.ALL,
@@ -241,7 +261,6 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     setShowModal(false);
   };
   const editQuotation = async (services: Service[], quotation: Quotation) => {
-    console.log('quotationSelected', quotation);
     setIsLoadingAction(true);
     dispatch(stateAction.get_companyID(data[0].id));
     dispatch(stateAction.get_edit_quotation(quotation));
@@ -274,128 +293,147 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
       </View>
 
       {selectedIndex === index && (
-        <Portal>
-          <PaperProvider>
-            <Modal
-              backdropOpacity={0.1}
-              backdropTransitionOutTiming={100}
-              onBackdropPress={handleModalClose}
-              isVisible={showModal}
-              style={styles.modalContainer}
-              onDismiss={handleModalClose}>
-              <List.Section
-                style={{
-                  width: '100%',
-                }}>
-                <List.Subheader
+        <>
+          <Portal>
+            <PaperProvider>
+              <Modal
+                backdropOpacity={0.1}
+                backdropTransitionOutTiming={100}
+                onBackdropPress={handleModalClose}
+                isVisible={showModal}
+                style={styles.modalContainer}
+                onDismiss={handleModalClose}>
+                <List.Section
                   style={{
-                    textAlign: 'center',
-                    fontWeight: 'bold',
-                    fontFamily: 'Sukhumvit Set Bold',
-                    color: 'gray',
+                    width: '100%',
                   }}>
-                  {item.customer?.name}
-                </List.Subheader>
-                <Divider />
-                <List.Item
-                  onPress={() => {
-                    handleModalClose();
-                    navigation.navigate('ProjectViewScreen', {
-                      id: item.id,
-                      pdfUrl: item.pdfUrl,
-                      fileName: `ใบเสนอราคา ${item.customer.name}.pdf`,
-                    });
-                  }}
-                  centered={true}
-                  title="พรีวิวเอกสาร"
-                  titleStyle={{textAlign: 'center', color: 'black'}}
-                />
+                  <List.Subheader
+                    style={{
+                      textAlign: 'center',
+                      fontWeight: 'bold',
+                      fontFamily: 'Sukhumvit Set Bold',
+                      color: 'gray',
+                    }}>
+                    {item.customer?.name}
+                  </List.Subheader>
+                  <Divider />
+                  <List.Item
+                    onPress={() => {
+                      handleModalClose();
+                      navigation.navigate('ProjectViewScreen', {
+                        id: item.id,
+                        pdfUrl: item.pdfUrl,
 
-                <Divider />
-                <List.Item
-                  onPress={() => {}}
-                  title="เอกสาร PDF"
-                  titleStyle={{textAlign: 'center'}}
-                />
+                        fileName: `ใบเสนอราคา ${item.customer.name}.pdf`,
+                      });
+                    }}
+                    centered={true}
+                    title="พรีวิวเอกสาร"
+                    titleStyle={{textAlign: 'center', color: 'black'}}
+                  />
 
-                <Divider />
+                  <Divider />
+                  <List.Item
+                    onPress={() => {
+                      handleModalClose();
+                      navigation.navigate('PDFViewScreen', {
+                        pdfUrl: item.pdfUrl,
 
-                {selectedItem?.status === QuotationStatus.PENDING && (
-                  <>
-                    <List.Item
-                      onPress={() => {
-                        setShowModal(false);
-                        editQuotation(selectedItem.services, selectedItem);
-                      }}
-                      title="แก้ไข"
-                      titleStyle={{textAlign: 'center', color: 'black'}}
-                    />
+                        fileName: `ใบเสนอราคา ${item.customer.name}.pdf`,
+                      });
+                    }}
+                    title="เอกสาร PDF"
+                    titleStyle={{textAlign: 'center'}}
+                  />
 
-                    <Divider />
-                    <List.Item
-                      onPress={() => {
-                        dispatch(stateAction.get_edit_quotation(selectedItem));
-                        setShowModal(false);
-                        navigation.navigate('CreateNewInvoice');
-                      }}
-                      title="สร้างใบวางบิล"
-                      titleStyle={{textAlign: 'center'}}
-                    />
-                    <Divider />
-                    <List.Item
-                      onPress={() => {
-                        dispatch(stateAction.get_edit_quotation(selectedItem));
-                        setShowModal(false);
-                        navigation.navigate('InvoiceDepositScreen');
-                      }}
-                      title="มัดจำใบวางบิล"
-                      titleStyle={{textAlign: 'center'}}
-                    />
-                    <Divider />
-                    <List.Item
-                      onPress={() => {
-                        dispatch(stateAction.get_edit_quotation(selectedItem));
-                        setShowModal(false);
-                        navigation.navigate('CreateNewReceipt');
-                      }}
-                      title="สร้างใบเสร็จรับเงิน"
-                      titleStyle={{textAlign: 'center'}}
-                    />
+                  <Divider />
 
-                    <Divider />
-                    <List.Item
-                      onPress={() => {
-                        dispatch(stateAction.get_edit_quotation(selectedItem));
-                        setShowModal(false);
-                        navigation.navigate('ReceiptDepositScreen');
-                      }}
-                      title="มัดจำใบเสร็จรับเงิน"
-                      titleStyle={{textAlign: 'center'}}
-                    />
-                    <Divider />
-                    <List.Item
-                      onPress={() => {
-                        dispatch(stateAction.get_edit_quotation(selectedItem));
-                        setShowModal(false);
-                        navigation.navigate('SendWorks');
-                      }}
-                      title="ส่งงาน"
-                      titleStyle={{textAlign: 'center'}}
-                    />
-                    <Divider />
-                    <List.Item
-                      onPress={() =>
-                        confirmRemoveQuotation(
-                          item.id,
-                          selectedItem?.customer?.name,
-                        )
-                      }
-                      title="ลบเอกสาร"
-                      titleStyle={{textAlign: 'center', color: 'red'}}
-                    />
-                  </>
-                )}
-                {/* {selectedItem?.status !== QuotationStatus.APPROVED && (
+                  {selectedItem?.status === QuotationStatus.PENDING && (
+                    <>
+                      <List.Item
+                        onPress={() => {
+                          setShowModal(false);
+                          editQuotation(selectedItem.services, selectedItem);
+                        }}
+                        title="แก้ไข"
+                        titleStyle={{textAlign: 'center', color: 'black'}}
+                      />
+
+                      <Divider />
+                      <List.Item
+                        onPress={() => {
+                          dispatch(
+                            stateAction.get_edit_quotation(selectedItem),
+                          );
+                          setShowModal(false);
+                          navigation.navigate('CreateNewInvoice');
+                        }}
+                        title="สร้างใบวางบิล"
+                        titleStyle={{textAlign: 'center'}}
+                      />
+                      <Divider />
+                      <List.Item
+                        onPress={() => {
+                          dispatch(
+                            stateAction.get_edit_quotation(selectedItem),
+                          );
+                          setShowModal(false);
+                          navigation.navigate('InvoiceDepositScreen');
+                        }}
+                        title="มัดจำใบวางบิล"
+                        titleStyle={{textAlign: 'center'}}
+                      />
+                      <Divider />
+                      <List.Item
+                        onPress={() => {
+                          dispatch(
+                            stateAction.get_edit_quotation(selectedItem),
+                          );
+                          setShowModal(false);
+                          navigation.navigate('CreateNewReceipt');
+                        }}
+                        title="สร้างใบเสร็จรับเงิน"
+                        titleStyle={{textAlign: 'center'}}
+                      />
+
+                      <Divider />
+                      <List.Item
+                        onPress={() => {
+                          dispatch(
+                            stateAction.get_edit_quotation(selectedItem),
+                          );
+                          setShowModal(false);
+                          navigation.navigate('ReceiptDepositScreen');
+                        }}
+                        title="มัดจำใบเสร็จรับเงิน"
+                        titleStyle={{textAlign: 'center'}}
+                      />
+                      <Divider />
+                      <List.Item
+                        onPress={() => {
+                          dispatch(
+                            stateAction.get_edit_quotation(selectedItem),
+                          );
+                          setShowModal(false);
+                          navigation.navigate('SendWorks');
+                        }}
+                        title="ส่งงาน"
+                        titleStyle={{textAlign: 'center'}}
+                      />
+                      <Divider />
+                      <List.Item
+                        onPress={() =>
+                          confirmRemoveQuotation(
+                            item.id,
+                            selectedItem?.customer?.name,
+                          )
+                        }
+                        title="ลบเอกสาร"
+                        titleStyle={{textAlign: 'center', color: 'red'}}
+                      />
+                    </>
+                  )}
+                  {/* {selectedItem?.status !== QuotationStatus.APPROVED && (
                   <>
                     <Divider />
                     <List.Item
@@ -408,10 +446,11 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                     />
                   </>
                 )} */}
-              </List.Section>
-            </Modal>
-          </PaperProvider>
-        </Portal>
+                </List.Section>
+              </Modal>
+            </PaperProvider>
+          </Portal>
+        </>
       )}
     </>
   );
@@ -420,9 +459,9 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     if (!companyData) {
       navigation.navigate('CreateCompanyScreen');
     }
+    dispatch(stateAction.reset_edit_quotation());
     navigation.navigate('CreateQuotation');
   };
-console.log('SERVER_URL', BACK_END_SERVER_URL)
   return (
     <>
       <PaperProvider>

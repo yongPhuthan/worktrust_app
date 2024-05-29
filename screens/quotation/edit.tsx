@@ -19,6 +19,7 @@ import {
   View,
 } from 'react-native';
 import Modal from 'react-native-modal';
+import * as stateAction from '../../redux/actions';
 import { Appbar, Button, ProgressBar } from 'react-native-paper';
 import AddClient from '../../components/AddClient';
 import AddServices from '../../components/AddServices';
@@ -234,7 +235,6 @@ const EditQuotation = ({navigation, route}: Props) => {
     setVisibleModalIndex(null);
     remove(index);
   };
-  console.log('quotation', quotation);
   return (
     <>
       <Appbar.Header
@@ -246,6 +246,7 @@ const EditQuotation = ({navigation, route}: Props) => {
         <Appbar.BackAction
           onPress={() => {
             navigation.goBack();
+            dispatch(stateAction.reset_edit_quotation());
           }}
         />
         <Appbar.Content

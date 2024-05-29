@@ -21,7 +21,7 @@ type Props = {
 };
 const PDFModalScreen = (props: Props) => {
   const {pdfUrl, fileName, onClose, visible} = props;
-  const source = {uri: pdfUrl, cache: true};
+  const source = {uri: pdfUrl, cache: false};
 
   const printRemotePDF = async () => {
     try {
@@ -74,7 +74,6 @@ const PDFModalScreen = (props: Props) => {
       .catch(err => console.log('BLOB ERROR -> ', err));
   };
   const handleShareFile = async () => {
-    console.log('Share button pressed');
     let dirs = ReactNativeBlobUtil.fs.dirs;
     
     const type = 'application/pdf'; // MIME type
@@ -135,17 +134,17 @@ const PDFModalScreen = (props: Props) => {
             }}
           />
           <Appbar.Action
-            mode="contained"
+           
             icon="download"
             onPress={downloadFile}
           />
           <Appbar.Action
-            mode="contained"
+            
             icon="printer"
             onPress={printRemotePDF}
           />
           <Appbar.Action
-            mode="contained"
+         
             icon="share-variant"
             onPress={handleShareFile}
           />

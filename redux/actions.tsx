@@ -56,6 +56,10 @@ export const get_edit_quotation = (payload: any) => ({
   type: contrains.GET_EDIT_QUOTATION,
   payload
 });
+export const reset_edit_quotation = () => ({
+  type: contrains.RESET_EDIT_QUOTATION,
+});
+
 
 export const get_seller_id = (payload: any) => ({
   type: contrains.GET_SELLER_ID,
@@ -126,6 +130,12 @@ export const getUserSignature = (payload: any) => {
 export const getEditQuotation = (payload: any) => {
   return (dispatch: any) => {
     dispatch(get_edit_quotation(payload));
+  };
+}
+
+export const resetEditQuotation = () => {
+  return (dispatch: any) => {
+    dispatch(reset_edit_quotation());
   };
 }
 

@@ -6,6 +6,9 @@ import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import React, {useCallback, useContext, useEffect, useState} from 'react';
 import {Controller, set, useForm, useWatch} from 'react-hook-form';
 import Marker, {Position} from 'react-native-image-marker';
+import Modal from 'react-native-modal';
+import Slider from '@react-native-community/slider';
+import {debounce} from 'lodash';
 
 import {
   ActivityIndicator,
@@ -14,15 +17,20 @@ import {
   FlatList,
   Image,
   StyleSheet,
+  Platform,
   Text,
   TouchableOpacity,
+  ScrollView,
   View,
 } from 'react-native';
 import {
   Appbar,
   Button,
   Checkbox,
+  IconButton,
   Divider,
+  Switch,
+  Chip,
   RadioButton,
   TextInput,
 } from 'react-native-paper';
@@ -71,18 +79,19 @@ interface WatermarkOptions {
   filename: string;
 }
 const WatermarkPositions = [
-  'Top Left',
-  'Top Center',
-  'Top Right',
-  'Center',
-  'Bottom Left',
-  'Bottom Center',
-  'Bottom Right',
+  'ซ้าย-บน',
+  'ขวา-บน',
+  'กลาง-บน',
+  'กลาง',
+  'ขวา-ล่าง',
+  'กลาง-ล่าง',
+  'ซ้าย-ล่าง',
 ];
 const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
   const queryClient = useQueryClient();
   const [isImageUpload, setIsImageUpload] = useState(false);
   const [addNewTag, setAddNewTag] = useState(false);
+  const [addWatermark, setAddWatermark] = useState(false);
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const user = useUser();
   const imageId = uuidv4();
@@ -90,7 +99,7 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
   const [inputNewTag, setInputNewTag] = useState<string>('');
   const [tags, setTags] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [applyTrigger, setApplyTrigger] = useState(false); // Trigger for applying watermark
+  const [applyTrigger, setApplyTrigger] = useState(false);
 
   const [checked, setChecked] = React.useState('first');
 
@@ -103,16 +112,6 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
       applyWatermark();
     }
   }, [watermarkPosition]);
-
-  const getImageSize = (uri: string): Promise<ImageSize> => {
-    return new Promise((resolve, reject) => {
-      Image.getSize(
-        uri,
-        (width, height) => resolve({width, height}),
-        error => reject(error),
-      );
-    });
-  };
 
   const getLogoScale = async (
     backgroundImageUri: string,
@@ -132,6 +131,18 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
       console.error('Error getting image sizes:', error);
       return 0.1; // Default scale if there's an error
     }
+  };
+
+  const [logoScale, setLogoScale] = useState(1);
+
+  const getImageSize = (uri: string): Promise<ImageSize> => {
+    return new Promise((resolve, reject) => {
+      Image.getSize(
+        uri,
+        (width, height) => resolve({width, height}),
+        error => reject(error),
+      );
+    });
   };
 
   const handleDeleteTag = (tagToDelete: string): void => {
@@ -324,7 +335,7 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
 
   const applyWatermark = async () => {
     if (!originalImage) return;
-    const logoScale = await getLogoScale(originalImage, logoSrc);
+    // const logoScale = await getLogoScale(originalImage, logoSrc);
     const options = {
       // background image
       backgroundImage: {
@@ -356,18 +367,22 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
   };
   function getPositionBasedOn(watermarkPosition: string): Position {
     switch (watermarkPosition) {
-      case 'Center':
+      case 'กลาง':
         return Position.center;
-      case 'Top Left':
+      case 'ซ้าย-บน':
         return Position.topLeft;
-      case 'Top Center':
+      case 'กลาง-บน':
         return Position.topCenter;
-      case 'Top Right':
+      case 'ขวา-บน':
         return Position.topRight;
-      case 'Bottom Left':
+
+      case 'ซ้าย-ล่าง':
         return Position.bottomLeft;
-      case 'Bottom Center':
+      case 'กลาง-ล่าง':
         return Position.bottomCenter;
+      case 'ขวา-ล่าง':
+        return Position.bottomRight;
+
       default:
         return Position.bottomRight;
     }
@@ -390,149 +405,215 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
             lineHeight: 24,
           }}
         />
-
         <Button
           loading={isImageUpload || isUploading}
           disabled={!image || !selectedTags || selectedTags.length === 0}
-          children="บันทึก"
           mode="contained"
           onPress={() => {
             uploadImageWithTags();
-          }}></Button>
+          }}>
+          บันทึก
+        </Button>
       </Appbar.Header>
-      <View style={styles.container}>
-        <Controller
-          control={control}
-          name="image"
-          rules={{required: 'Image is required'}}
-          render={({field: {onChange, value}}) => (
-            <TouchableOpacity
-              onPress={() => pickImage()}
-              style={styles.imageUploader}>
-              {value ? (
-                <Image source={{uri: value}} style={styles.image} />
-              ) : (
-                <FontAwesomeIcon icon={faCamera} size={40} color="gray" />
+      <FlatList
+        style={styles.container}
+        data={[{key: 'main'}]}
+        renderItem={() => (
+          <View style={{
+            marginBottom: 80,
+          }}>
+            <Controller
+              control={control}
+              name="image"
+              rules={{required: 'Image is required'}}
+              render={({field: {onChange, value}}) => (
+                <TouchableOpacity
+                  onPress={() => pickImage()}
+                  style={styles.imageView}>
+                  {value ? (
+                    isImagePicking ? (
+                      <ActivityIndicator />
+                    ) : (
+                      <Image source={{uri: value}} style={styles.image} />
+                    )
+                  ) : isImagePicking ? (
+                    <ActivityIndicator />
+                  ) : (
+                    <View style={styles.imageUploader}>
+                      <IconButton
+                        icon={'camera-plus'}
+                        size={40}
+                        iconColor="#0073BA"
+                      />
+                    </View>
+                  )}
+                </TouchableOpacity>
               )}
-            </TouchableOpacity>
-          )}
-        />
-        {addNewTag ? (
-          <View
-            style={{
-              flex: 1,
-              flexDirection: 'column',
-              alignItems: 'center',
-              padding: 10,
-              gap: 10,
-            }}>
-            <TextInput
-              placeholder="เช่น สีดำด้าน, กระจกเทมเปอร์..."
-              label={'เพิ่มหมวดหมู่ของรูปภาพนี้'}
-              mode="outlined"
-              style={{width: '80%'}}
-              textAlignVertical="top"
-              value={inputNewTag}
-              onChangeText={setInputNewTag}
             />
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                padding: 10,
-                gap: 10,
-              }}>
-              <Button
-                mode="text"
-                onPress={() => setAddNewTag(false)}
-                children="ยกเลิก"
-              />
-              <Button
-                mode="contained"
-                disabled={isLoading || !inputNewTag}
-                loading={isLoading}
-                onPress={() => handleAddTag()}
-                children="บันทึก"
-              />
-            </View>
-          </View>
-        ) : (
-          <View>
-            {tags.length > 0 && (
-              <Button
-                mode="text"
-                icon={'plus'}
-                onPress={() => setAddNewTag(!addNewTag)}
-                style={{
-                  width: '50%',
-                  marginTop: 10,
-                  alignSelf: 'flex-end',
-                }}
-                children="เพิ่มหมวดหมู่"
-              />
-            )}
-            <FlatList
-              data={tags}
-              keyExtractor={(item, index) => index.toString()}
-              renderItem={({item}) => (
-                <View
-                  style={{
-                    flex: 1,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                  }}>
-                  <Checkbox.Android
-                    status={
-                      selectedTags.includes(item) ? 'checked' : 'unchecked'
-                    }
-                    onPress={() => handleSelectTag(item)}
-                  />
-                  <Text>{item}</Text>
-                </View>
-              )}
-              numColumns={2}
-              ListEmptyComponent={
-                <Button
-                  mode="outlined"
-                  icon={'plus'}
-                  onPress={() => setAddNewTag(!addNewTag)}
-                  style={{
-                    width: '50%',
-                  }}
-                  children="เพิ่มหมวดหมู่"
-                />
-              }
-            />
-            <Divider style={{marginVertical: 20}} />
+                          <Divider style={{marginVertical: 10}} />
 
-            <Button mode="outlined" icon={'plus'} children="เพิ่มลายน้ำ" />
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'flex-start',
-                marginTop: 10,
-                gap: 10,
-              }}>
-              {WatermarkPositions.map((position, index) => (
+            <View>
+              {tags.length > 0 && (
                 <View
-                  key={index}
-                  style={{flexDirection: 'row', alignItems: 'center'}}>
-                  <RadioButton
-                    value={position}
-                    status={checked === position ? 'checked' : 'unchecked'}
-                    onPress={() => {
-                      setChecked(position);
-                      setWatermarkPosition(position);
-                    }}
-                  />
-                  <Text>{position}</Text>
+                  style={{
+                    flexDirection: 'row',
+                    alignContent: 'center',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+              
+                  }}>
+                  <Text style={styles.label}>เลือกหมวดหมู่</Text>
+                  <Button
+                    icon={'plus'}
+                    onPress={() => setAddNewTag(!addNewTag)}
+                    style={{
+                      width: '100%',
+                    }}>
+                    เพิ่มหมวดหมู่
+                  </Button>
                 </View>
-              ))}
+              )}
+
+              <FlatList
+                data={tags}
+                keyExtractor={(item, index) => index.toString()}
+                renderItem={({item}) => (
+                  <View style={styles.chipContainer}>
+                    <Chip
+                      mode={selectedTags.includes(item) ? 'outlined' : 'flat'}
+                      selected={selectedTags.includes(item)}
+                      onPress={() => handleSelectTag(item)}
+                      textStyle={
+                        selectedTags.includes(item) && styles.selectedChipText
+                      }>
+                      {item}
+                    </Chip>
+                  </View>
+                )}
+                numColumns={2}
+                ListEmptyComponent={
+                  <Button
+                    mode="outlined"
+                    icon={'plus'}
+                    onPress={() => setAddNewTag(!addNewTag)}
+                    style={{
+                      width: '50%',
+                    }}>
+                    เพิ่มหมวดหมู่
+                  </Button>
+                }
+              />
+              <Divider style={{marginVertical: 10}} />
             </View>
+
+            <View style={styles.row}>
+              <Text style={styles.signHeader}>เพิ่มโลโก้</Text>
+              <Switch
+                trackColor={{false: '#767577', true: '#81b0ff'}}
+                thumbColor={addWatermark ? '#ffffff' : '#f4f3f4'}
+                ios_backgroundColor="#3e3e3e"
+                onValueChange={() => setAddWatermark(!addWatermark)}
+                value={addWatermark ? true : false}
+                style={Platform.select({
+                  ios: {
+                    transform: [{scaleX: 0.7}, {scaleY: 0.7}],
+                    marginTop: 5,
+                  },
+                  android: {},
+                })}
+              />
+            </View>
+            {addWatermark && (
+              <>
+                <FlatList
+                  data={WatermarkPositions}
+                  horizontal={true}
+               
+                  ItemSeparatorComponent={() => <View style={{width: 10}} />}
+                  keyExtractor={(item, index) => index.toString()}
+                  renderItem={({item}) => (
+                    <View style={styles.checkBoxContainer}>
+                      <Checkbox.Android
+                        status={checked === item ? 'checked' : 'unchecked'}
+                        onPress={() => {
+                          setChecked(item);
+                          setWatermarkPosition(item);
+                        }}
+                      />
+                      <Text>{item}</Text>
+                    </View>
+                  )}
+                />
+                <View style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  marginTop: 10,
+                }}>
+                <Text style={styles.signHeader}>
+                </Text>
+                <Slider
+                  style={{width: '50%', height: 40}}
+                  minimumValue={0.1}
+                  maximumValue={0.3}
+                  value={logoScale}
+                  onValueChange={value => setLogoScale(value)}
+                  onSlidingComplete={debounce(applyWatermark, 1000)}
+                  minimumTrackTintColor="#1EB1FC"
+                  maximumTrackTintColor="#8e8e93"
+                  thumbTintColor="#1EB1FC"
+                />
+                </View>
+              </>
+            )}
+
+            {addNewTag && (
+              <Modal
+                isVisible={addNewTag}
+                animationIn="slideInUp"
+                animationOut="slideOutDown"
+                onBackdropPress={() => {
+                  setAddNewTag(false);
+                  setInputNewTag('');
+                }}
+                onBackButtonPress={() => {
+                  setAddNewTag(false);
+                  setInputNewTag('');
+                }}
+                style={styles.modalContainer}>
+                <View style={styles.modalContent}>
+                  <TextInput
+                    placeholder="เช่น สีดำด้าน..."
+                    label={'เพิ่มหมวดหมู่ของรูปภาพนี้'}
+                    mode="outlined"
+                    style={{width: '80%'}}
+                    textAlignVertical="top"
+                    value={inputNewTag}
+                    onChangeText={setInputNewTag}
+                  />
+                  <View style={styles.buttonContainer}>
+                    <Button
+                      mode="text"
+                      onPress={() => {
+                        setAddNewTag(false);
+                        setInputNewTag('');
+                      }}>
+                      ยกเลิก
+                    </Button>
+                    <Button
+                      mode="contained"
+                      disabled={isLoading || !inputNewTag}
+                      loading={isLoading}
+                      onPress={() => handleAddTag()}>
+                      บันทึก
+                    </Button>
+                  </View>
+                </View>
+              </Modal>
+            )}
           </View>
         )}
-      </View>
+        keyExtractor={() => 'main'}
+      />
     </>
   );
 };
@@ -544,19 +625,31 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     backgroundColor: '#ffffff',
     width: windowWidth,
-    height: windowHeight,
+    height: 'auto',
+  },
+  imageView: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 'auto',
+    maxHeight: windowHeight * 0.6,
   },
   imageUploader: {
     alignItems: 'center',
     justifyContent: 'center',
-    height: '30%',
-    backgroundColor: '#f0f0f0',
+    height: windowHeight * 0.3,
+    width: windowWidth * 0.9,
+    borderColor: '#0073BA',
+    borderWidth: 1,
+    borderRadius: 5,
+    borderStyle: 'dashed',
     marginBottom: 16,
   },
   image: {
     width: '100%',
     height: '100%',
+    maxHeight: windowHeight * 0.7,
     resizeMode: 'contain',
+    margin: 10,
   },
   input: {
     height: 40,
@@ -595,6 +688,35 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     alignItems: 'center',
   },
+  modalMedium: {
+    width: windowWidth,
+    height: 'auto',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+  },
+  containerModal: {
+    flex: 1,
+    padding: 16,
+  },
+  modalContainer: {
+    justifyContent: 'flex-end',
+    margin: 0,
+  },
+  modalContent: {
+    height: '40%',
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 16,
+    paddingTop: '20%',
+    alignItems: 'center',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    gap: 10,
+  },
   button: {
     width: '90%',
     top: '30%',
@@ -606,19 +728,28 @@ const styles = StyleSheet.create({
   },
   checkBoxContainer: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
-    justifyContent: 'flex-start',
     marginTop: 10,
-    marginBottom: 20,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  signHeader: {
+    flexDirection: 'row',
+    marginTop: 10,
+    fontSize: 16,
+    color: '#19232e',
   },
   chipContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 10,
+    margin: 4,
   },
   chip: {
-    marginRight: 5,
-    marginBottom: 5,
+    backgroundColor: '#e0e0e0',
+  },
+  selectedChipText: {
+    color: 'black',
   },
 });
 

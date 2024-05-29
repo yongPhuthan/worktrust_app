@@ -99,6 +99,9 @@ function reducer(state: StateType, action: ActionType): StateType {
       return {...state, editQuotation: action.payload as Quotation};
     case contrains.GET_SELLER_ID:
       return {...state, sellerId: action.payload as string}; 
+    case contrains.RESET_EDIT_QUOTATION:
+      return {...state, editQuotation: null};
+
 
     default:
       return state;

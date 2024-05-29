@@ -74,24 +74,29 @@ const ProjectViewScreen = ({navigation, route}: Props) => {
           }}
         />
         <Appbar.Content
-          title="เสนอราคา"
+          title="Project view"
           titleStyle={{
             fontSize: 18,
             fontWeight: 'bold',
             fontFamily: 'Sukhumvit Set Bold',
           }}
         />
-        <Button
+        <Appbar.Action
+          icon={'share-variant'}
+          onPress={() => {
+            handleShare();
+          }}
+        />
+        {/* <Button
           mode="outlined"
           onPress={() => {
             navigation.navigate('PDFViewScreen', {
-              pdfUrl:
-                'https://firebasestorage.googleapis.com/v0/b/worktrust-b9c02.appspot.com/o/20240422949.pdf?alt=media&token=a69310b8-5e35-4af3-8269-8f6d70742021',
+              pdfUrl,
               fileName,
             });
           }}>
           {'ดูสัญญา'}
-        </Button>
+        </Button> */}
       </Appbar.Header>
       <SafeAreaView style={{flex: 1}}>
         <WebView
@@ -108,13 +113,6 @@ const ProjectViewScreen = ({navigation, route}: Props) => {
           source={{uri: url}}
         />
       </SafeAreaView>
-
-      <FAB
-        style={styles.fabStyle}
-        icon="share-variant"
-        onPress={handleShare}
-        color="white"
-      />
     </>
   );
 };

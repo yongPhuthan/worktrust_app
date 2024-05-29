@@ -21,27 +21,64 @@ interface Props {
 }
 const PDFViewScreen = ({navigation, route}: Props) => {
   const {pdfUrl, fileName} = route.params;
+
   const [isLoading, setIsLoading] = useState(false);
-  const source = {uri: pdfUrl, cache: true};
-
-
+  const source = {uri: pdfUrl, cache: false};
   const printRemotePDF = async () => {
     try {
       // Download the file first
       const res = await ReactNativeBlobUtil.config({
         fileCache: true,
       }).fetch('GET', pdfUrl);
-  
+
       const localFileUri = res.path(); // Get the local file path
-  
+console.log(localFileUri)
       // Print the downloaded file
-      await RNPrint.print({ filePath: localFileUri });
-  
+      await RNPrint.print({filePath: localFileUri});
+
       // Clean up the file after printing
       ReactNativeBlobUtil.fs.unlink(localFileUri);
     } catch (error) {
       console.error('Error printing PDF:', error);
     }
+  };
+  const handleShareFile = async () => {
+    let dirs = ReactNativeBlobUtil.fs.dirs;
+    
+    const type = 'application/pdf'; // MIME type
+    const configOptions = {
+      fileCache: true,
+      path: `${dirs.DocumentDir}/${fileName}`,
+      
+      addAndroidDownloads: {
+        useDownloadManager: true,
+        notification: true,
+        title: `${fileName}`,
+        description: 'File downloaded by Worktrust App.',
+        mime: 'application/pdf',
+      },
+    };
+
+    ReactNativeBlobUtil.config(configOptions)
+      .fetch('GET', pdfUrl)
+      .then(async resp => {
+        let filePath = resp.path();
+        let options = {
+          type: type,
+          url: 'file://' + filePath,
+          
+        };
+
+        await Share.open(options);
+        // Use ReactNativeBlobUtil's fs.unlink to remove the file after sharing
+        ReactNativeBlobUtil.fs
+          .unlink(filePath)
+          .then(() => console.log('File deleted successfully'))
+          .catch(err => console.error('Error deleting file', err));
+      })
+      .catch(error => {
+        console.log('Error sharing', error);
+      });
   };
   const downloadFile = () => {
     let dirs = ReactNativeBlobUtil.fs.dirs;
@@ -92,15 +129,20 @@ const PDFViewScreen = ({navigation, route}: Props) => {
           }}
         />
         <Appbar.Content
-          title="สัญญา"
+          title="PDF"
           titleStyle={{
             fontSize: 18,
             fontWeight: 'bold',
             fontFamily: 'Sukhumvit Set Bold',
           }}
         />
-        <Appbar.Action mode='outlined' icon="download"  onPress={downloadFile} />
-        <Appbar.Action mode='outlined' icon="printer" onPress={printRemotePDF} />
+        <Appbar.Action  icon="download"  onPress={downloadFile} />
+        <Appbar.Action  icon="printer" onPress={printRemotePDF} />
+        <Appbar.Action
+          
+            icon="share-variant"
+            onPress={handleShareFile}
+          />
       </Appbar.Header>
 
       <SafeAreaView style={{flex: 1}}>

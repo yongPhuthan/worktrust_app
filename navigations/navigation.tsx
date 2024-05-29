@@ -55,7 +55,7 @@ const Navigation = ({initialRouteName}: any) => {
     {name: 'CreateCompanyScreen', component: CreateCompanyScreen},
     {name: 'RegisterScreen', component: RegisterScreen},
     {name: 'SignupMobileScreen', component: SignupMobileScreen},
-{ name: 'LoginMobileScreen', component: LoginMobileScreen },
+    {name: 'LoginMobileScreen', component: LoginMobileScreen},
     {name: 'DocViewScreen', component: DocViewScreen},
     {name: 'FirstAppScreen', component: FirstAppScreen},
     {name: 'LoginScreen', component: LoginScreen},
@@ -108,7 +108,7 @@ const Navigation = ({initialRouteName}: any) => {
             headerTintColor: 'black',
           }}
         />
-       <Stack.Screen
+        <Stack.Screen
           name="CreateNewInvoice"
           component={CreateNewInvoice}
           options={{
@@ -123,7 +123,7 @@ const Navigation = ({initialRouteName}: any) => {
             headerTintColor: 'black',
           }}
         />
-               <Stack.Screen
+        <Stack.Screen
           name="CreateNewReceipt"
           component={CreateNewReceipt}
           options={{
@@ -139,13 +139,8 @@ const Navigation = ({initialRouteName}: any) => {
           }}
         />
 
-
-
-                    <Stack.Screen
-          name="PDFViewScreen"
-          component={PDFViewScreen}
-         
-        />
+        <Stack.Screen name="PDFViewScreen" component={PDFViewScreen} />
+        <Stack.Screen name="ProjectViewScreen" component={ProjectViewScreen} />
 
         <Stack.Screen
           name="AddProduct"
@@ -262,7 +257,7 @@ const Navigation = ({initialRouteName}: any) => {
             headerTintColor: 'black',
           }}
         />
-            <Stack.Screen
+        <Stack.Screen
           name="ReceiptDepositScreen"
           component={ReceiptDepositScreen}
           options={{
@@ -276,8 +271,6 @@ const Navigation = ({initialRouteName}: any) => {
             headerTintColor: 'black',
           }}
         />
-
-
 
         <Stack.Screen
           name="SettingsScreen"
@@ -293,7 +286,6 @@ const Navigation = ({initialRouteName}: any) => {
             headerTintColor: 'black',
           }}
         />
-
 
         <Stack.Screen
           name="ExistingContract"
@@ -340,7 +332,7 @@ const Navigation = ({initialRouteName}: any) => {
             headerTintColor: 'black',
           }}
         />
-       
+
         <Stack.Screen
           name="DefaultContract"
           component={DefaultContract}
