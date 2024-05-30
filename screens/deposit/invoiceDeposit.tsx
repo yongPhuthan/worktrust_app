@@ -1,35 +1,31 @@
-import React, {useContext, useState, useEffect} from 'react';
-import {View, StyleSheet, Alert, Platform, ScrollView} from 'react-native';
+import React, { useContext, useEffect, useState } from 'react';
+import { Alert, Platform, StyleSheet, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import {
-  TextInput,
-  Button,
   Appbar,
-  Text,
+  Button,
   Divider,
-  Checkbox,
-  Switch,
   SegmentedButtons,
+  Switch,
+  Text,
+  TextInput
 } from 'react-native-paper';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 
-import {StackNavigationProp} from '@react-navigation/stack';
-import {ParamListBase} from '../../types/navigationType';
-import * as stateAction from '../../redux/actions';
-import {Store} from '../../redux/store';
-import RNPickerSelect from 'react-native-picker-select';
+import { StackNavigationProp } from '@react-navigation/stack';
 import CurrencyInput from 'react-native-currency-input';
-import Summary from '../../components/Summary';
-import {TaxType} from '../../models/Tax';
-import DatePickerButton from '../../components/styles/DatePicker';
 import DocNumber from '../../components/DocNumber';
+import DatePickerButton from '../../components/styles/DatePicker';
 import useSelectedDates from '../../hooks/quotation/create/useSelectDates';
 import useThaiDateFormatter from '../../hooks/utils/useThaiDateFormatter';
+import { TaxType } from '../../models/Tax';
+import { Store } from '../../redux/store';
+import { ParamListBase } from '../../types/navigationType';
 
-import {useForm, useWatch, Controller} from 'react-hook-form';
 import Decimal from 'decimal.js-light';
-import useCreateNewDepositInvoice from '../../hooks/invoice/deposit/useCreateDeposit';
-import {useModal} from '../../hooks/quotation/create/useModal';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import PDFModalScreen from '../../components/webview/pdf';
+import useCreateNewDepositInvoice from '../../hooks/invoice/deposit/useCreateDeposit';
+import { useModal } from '../../hooks/quotation/create/useModal';
 const taxLabel = [
   {label: '3%', value: 3},
   {label: '5%', value: 5},
@@ -40,7 +36,7 @@ interface Props {
 const InvoiceDepositScreen = ({navigation}: Props) => {
   const {
     dispatch,
-    state: {editQuotation},
+    state: {editQuotation,sellerId},
   }: any = useContext(Store);
 
   const [amount, setAmount] = React.useState('');
@@ -72,8 +68,18 @@ const InvoiceDepositScreen = ({navigation}: Props) => {
     defaultValues: {
       vat7: 0,
       quotationId: editQuotation.id,
+      customer: editQuotation.customer,
+      company : editQuotation.company,
+      summary: editQuotation.summary ? editQuotation.summary : 0,
+      summaryAfterDiscount: editQuotation.summaryAfterDiscount ? editQuotation.summaryAfterDiscount : 0,
+      services: editQuotation.services,
+      discountType: editQuotation.discountType ? editQuotation.discountType : 'PERCENTAGE',
+      discountPercentage: editQuotation.discountPercentage  ? editQuotation.discountPercentage : 0,
+      discountValue: editQuotation.discountValue ? editQuotation.discountValue : 0,
+      sellerSignature: '',
       taxType: TaxType.NOTAX,
       depositApplied: 0,
+      sellerId,
       allTotal: editQuotation.allTotal,
       dateOffer: initialDateOffer,
       docNumber: `IV${initialDocnumber}`,
@@ -242,93 +248,96 @@ const InvoiceDepositScreen = ({navigation}: Props) => {
           />
         </View>
         <View style={styles.subContainer}>
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-          
-          }}>
-          <Text style={styles.summaryTaxVat}>ลูกค้า:</Text>
-          <Text style={styles.summaryTaxVat}>{editQuotation.customer.name}</Text>
-        </View>
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-
-          }}>
-          <Text style={styles.summaryTaxVat}>ยอดรวมทั้งหมด:</Text>
-          <Text style={styles.summaryTaxVat}>
-            {new Intl.NumberFormat('th-TH', {
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 2,
-            }).format(editQuotation.allTotal)}
-          </Text>
-        </View>
-        <Controller
-          control={methods.control}
-          name="depositApplied"
-          rules={{required: true}}
-          render={({field: {onChange, onBlur, value}, fieldState: {error}}) => (
-            <CurrencyInput
-              onBlur={onBlur}
-              renderTextInput={(textInputProps: any) => (
-                <TextInput
-                  left={<TextInput.Affix text={'ยอดมัดจำ'} />}
-                  contentStyle={{
-                    textAlign: 'center',
-                  }}
-                  right={<TextInput.Affix text={'บาท'} />}
-                  {...textInputProps}
-                  mode="outlined"
-                  textAlignVertical="center"
-                  keyboardType="number-pad"
-                  error={!!error}
-                  textAlign="center"
-                  style={{
-                    marginTop: 10,
-                  }}
-                />
-              )}
-              onChangeValue={newValue => {
-                onChange(newValue);
-              }}
-              value={value}
-              delimiter=","
-              separator="."
-              precision={0}
-              minValue={0}
-            />
-          )}
-        />
-        <Divider />
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-
-            marginTop: 20,
-          }}>
-          <Text style={styles.summaryTaxVat}>รวมเป็นเงิน</Text>
-
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+            }}>
+            <Text style={styles.summaryTaxVat}>ลูกค้า:</Text>
+            <Text style={styles.summaryTaxVat}>
+              {editQuotation.customer.name}
+            </Text>
+          </View>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+            }}>
+            <Text style={styles.summaryTaxVat}>ยอดรวมทั้งหมด:</Text>
+            <Text style={styles.summaryTaxVat}>
+              {new Intl.NumberFormat('th-TH', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2,
+              }).format(editQuotation.allTotal)}
+            </Text>
+          </View>
           <Controller
             control={methods.control}
             name="depositApplied"
-            defaultValue={0}
-            render={({field: {value}}) => (
-              <Text variant="titleLarge">
-                {value
-                  ? new Intl.NumberFormat('th-TH', {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 2,
-                    }).format(new Decimal(value).toNumber())
-                  : 0}
-              </Text>
+            rules={{required: true}}
+            render={({
+              field: {onChange, onBlur, value},
+              fieldState: {error},
+            }) => (
+              <CurrencyInput
+                onBlur={onBlur}
+                renderTextInput={(textInputProps: any) => (
+                  <TextInput
+                    left={<TextInput.Affix text={'ยอดมัดจำ'} />}
+                    contentStyle={{
+                      textAlign: 'center',
+                    }}
+                    right={<TextInput.Affix text={'บาท'} />}
+                    {...textInputProps}
+                    mode="outlined"
+                    textAlignVertical="center"
+                    keyboardType="number-pad"
+                    error={!!error}
+                    textAlign="center"
+                    style={{
+                      marginTop: 10,
+                    }}
+                  />
+                )}
+                onChangeValue={newValue => {
+                  onChange(newValue);
+                }}
+                value={value}
+                delimiter=","
+                separator="."
+                precision={0}
+                minValue={0}
+              />
             )}
           />
-        </View>
-        {/* <View style={styles.summary}>
+          <Divider />
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+
+              marginTop: 20,
+            }}>
+            <Text style={styles.summaryTaxVat}>รวมเป็นเงิน</Text>
+
+            <Controller
+              control={methods.control}
+              name="depositApplied"
+              defaultValue={0}
+              render={({field: {value}}) => (
+                <Text variant="titleLarge">
+                  {value
+                    ? new Intl.NumberFormat('th-TH', {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 2,
+                      }).format(new Decimal(value).toNumber())
+                    : 0}
+                </Text>
+              )}
+            />
+          </View>
+          {/* <View style={styles.summary}>
           <Text style={styles.summaryTaxVat}>หัก ณ ที่จ่าย</Text>
           <Switch
             trackColor={{false: '#767577', true: '#81b0ff'}}
@@ -345,7 +354,7 @@ const InvoiceDepositScreen = ({navigation}: Props) => {
             })}
           />
         </View> */}
-        {/* {pickerVisible && (
+          {/* {pickerVisible && (
           <View
             style={{
               flexDirection: 'row',
@@ -376,176 +385,176 @@ const InvoiceDepositScreen = ({navigation}: Props) => {
             </Text>
           </View>
         )} */}
-        <Divider />
-        <View style={styles.summary}>
-          <Text style={[styles.summaryTaxVat]}>ภาษีมูลค่าเพิ่ม </Text>
-          <Switch
-            trackColor={{false: '#767577', true: '#81b0ff'}}
-            thumbColor={pickerVisible ? '#ffffff' : '#f4f3f4'}
-            ios_backgroundColor="#3e3e3e"
-            onValueChange={() => setVat7Picker(!vat7Picker)}
-            value={vat7Picker}
-            style={[
-              {},
-              Platform.select({
-                ios: {
-                  transform: [{scaleX: 0.7}, {scaleY: 0.7}],
-                },
-                android: {
-                  transform: [{scaleX: 1}, {scaleY: 1}],
-                },
-              }),
-            ]}
-          />
-        </View>
-        {vat7Picker && (
-          <View style={styles.pickerWrapper}>
-            <Text style={styles.summaryText}> 7 % </Text>
+          <Divider />
+          <View style={styles.summary}>
+            <Text style={[styles.summaryTaxVat]}>ภาษีมูลค่าเพิ่ม </Text>
+            <Switch
+              trackColor={{false: '#767577', true: '#81b0ff'}}
+              thumbColor={pickerVisible ? '#ffffff' : '#f4f3f4'}
+              ios_backgroundColor="#3e3e3e"
+              onValueChange={() => setVat7Picker(!vat7Picker)}
+              value={vat7Picker}
+              style={[
+                {},
+                Platform.select({
+                  ios: {
+                    transform: [{scaleX: 0.7}, {scaleY: 0.7}],
+                  },
+                  android: {
+                    transform: [{scaleX: 1}, {scaleY: 1}],
+                  },
+                }),
+              ]}
+            />
+          </View>
+          {vat7Picker && (
+            <View style={styles.pickerWrapper}>
+              <Text style={styles.summaryText}> 7 % </Text>
 
-            <Text
-              style={Platform.select({
-                ios: {
-                  fontSize: 16,
-                },
-                android: {
-                  fontSize: 16,
-                  marginVertical: 10,
-                },
-              })}>
+              <Text
+                style={Platform.select({
+                  ios: {
+                    fontSize: 16,
+                  },
+                  android: {
+                    fontSize: 16,
+                    marginVertical: 10,
+                  },
+                })}>
+                {new Intl.NumberFormat('th-TH', {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 2,
+                }).format(new Decimal(vat7).toNumber())}
+              </Text>
+            </View>
+          )}
+          <Divider />
+          {/* Summarysection*/}
+          <View style={styles.summaryTotal}>
+            <Text style={styles.summaryTaxVat}>จำนวนรวมทั้งสิ้น</Text>
+            <Text variant="titleLarge">
               {new Intl.NumberFormat('th-TH', {
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 2,
-              }).format(new Decimal(vat7).toNumber())}
+              }).format(netAmount)}
             </Text>
           </View>
-        )}
-        <Divider />
-        {/* Summarysection*/}
-        <View style={styles.summaryTotal}>
-          <Text style={styles.summaryTaxVat}>จำนวนรวมทั้งสิ้น</Text>
-          <Text variant="titleLarge">
-            {new Intl.NumberFormat('th-TH', {
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 2,
-            }).format(netAmount)}
-          </Text>
-        </View>
-        <View style={styles.summaryTotal}>
-          <Text style={styles.summaryTaxVat}>ยอดชำระคงเหลือ</Text>
-          <Text variant="titleMedium">
-            {new Intl.NumberFormat('th-TH', {
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 2,
-            }).format(remaining)}
-          </Text>
-        </View>
-        <Divider />
-        <View style={styles.signatureRow}>
-          <Text style={styles.signHeader}>หมายเหตุ</Text>
-          <Switch
-            trackColor={{false: '#767577', true: '#81b0ff'}}
-            thumbColor={openNoteToCustomer ? '#ffffff' : '#f4f3f4'}
-            ios_backgroundColor="#3e3e3e"
-            onValueChange={() => setOpenNoteToCustomer(!openNoteToCustomer)}
-            value={openNoteToCustomer ? true : false}
-            style={Platform.select({
-              ios: {
-                transform: [{scaleX: 0.7}, {scaleY: 0.7}],
-                marginTop: 5,
-              },
-              android: {},
-            })}
-          />
-        </View>
-        {openNoteToCustomer && (
-          <View>
-            <Controller
-              control={methods.control}
-              name="noteToCustomer"
-              render={({
-                field: {onChange, onBlur, value},
-                fieldState: {error},
-              }) => (
-                <View>
-                  <TextInput
-                    keyboardType="name-phone-pad"
-                    style={
-                      Platform.OS === 'ios'
-                        ? {
-                            height: 100,
-                            textAlignVertical: 'top',
-                            marginTop: 10,
-                          }
-                        : {marginTop: 10}
-                    }
-                    mode="outlined"
-                    numberOfLines={3}
-                    multiline={true}
-                    textAlignVertical="top"
-                    error={!!error}
-                    onChangeText={onChange}
-                    value={value}
-                  />
-                </View>
-              )}
+          <View style={styles.summaryTotal}>
+            <Text style={styles.summaryTaxVat}>ยอดชำระคงเหลือ</Text>
+            <Text variant="titleMedium">
+              {new Intl.NumberFormat('th-TH', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2,
+              }).format(remaining)}
+            </Text>
+          </View>
+          <Divider />
+          <View style={styles.signatureRow}>
+            <Text style={styles.signHeader}>หมายเหตุ</Text>
+            <Switch
+              trackColor={{false: '#767577', true: '#81b0ff'}}
+              thumbColor={openNoteToCustomer ? '#ffffff' : '#f4f3f4'}
+              ios_backgroundColor="#3e3e3e"
+              onValueChange={() => setOpenNoteToCustomer(!openNoteToCustomer)}
+              value={openNoteToCustomer ? true : false}
+              style={Platform.select({
+                ios: {
+                  transform: [{scaleX: 0.7}, {scaleY: 0.7}],
+                  marginTop: 5,
+                },
+                android: {},
+              })}
             />
           </View>
-        )}
-        <Divider />
-        <View style={styles.signatureRow}>
-          <Text style={styles.signHeader}>โน๊ตภายในบริษัท</Text>
-          <Switch
-            trackColor={{false: '#767577', true: '#81b0ff'}}
-            thumbColor={openNoteToTeam ? '#ffffff' : '#f4f3f4'}
-            ios_backgroundColor="#3e3e3e"
-            onValueChange={() => setOpenNoteToTeam(!openNoteToTeam)}
-            value={openNoteToTeam ? true : false}
-            style={Platform.select({
-              ios: {
-                transform: [{scaleX: 0.7}, {scaleY: 0.7}],
-                marginTop: 5,
-              },
-              android: {},
-            })}
-          />
-        </View>
-        {openNoteToTeam && (
-          <View
-            style={{
-              marginBottom: 100,
-            }}>
-            <Controller
-              control={methods.control}
-              name="noteToTeam"
-              render={({
-                field: {onChange, onBlur, value},
-                fieldState: {error},
-              }) => (
-                <View>
-                  <TextInput
-                    keyboardType="name-phone-pad"
-                    style={
-                      Platform.OS === 'ios'
-                        ? {
-                            height: 100,
-                            textAlignVertical: 'top',
-                            marginTop: 10,
-                          }
-                        : {marginTop: 10}
-                    }
-                    mode="outlined"
-                    numberOfLines={3}
-                    multiline={true}
-                    textAlignVertical="top"
-                    error={!!error}
-                    onChangeText={onChange}
-                    value={value}
-                  />
-                </View>
-              )}
+          {openNoteToCustomer && (
+            <View>
+              <Controller
+                control={methods.control}
+                name="noteToCustomer"
+                render={({
+                  field: {onChange, onBlur, value},
+                  fieldState: {error},
+                }) => (
+                  <View>
+                    <TextInput
+                      keyboardType="name-phone-pad"
+                      style={
+                        Platform.OS === 'ios'
+                          ? {
+                              height: 100,
+                              textAlignVertical: 'top',
+                              marginTop: 10,
+                            }
+                          : {marginTop: 10}
+                      }
+                      mode="outlined"
+                      numberOfLines={3}
+                      multiline={true}
+                      textAlignVertical="top"
+                      error={!!error}
+                      onChangeText={onChange}
+                      value={value}
+                    />
+                  </View>
+                )}
+              />
+            </View>
+          )}
+          <Divider />
+          <View style={styles.signatureRow}>
+            <Text style={styles.signHeader}>โน๊ตภายในบริษัท</Text>
+            <Switch
+              trackColor={{false: '#767577', true: '#81b0ff'}}
+              thumbColor={openNoteToTeam ? '#ffffff' : '#f4f3f4'}
+              ios_backgroundColor="#3e3e3e"
+              onValueChange={() => setOpenNoteToTeam(!openNoteToTeam)}
+              value={openNoteToTeam ? true : false}
+              style={Platform.select({
+                ios: {
+                  transform: [{scaleX: 0.7}, {scaleY: 0.7}],
+                  marginTop: 5,
+                },
+                android: {},
+              })}
             />
           </View>
-        )}
+          {openNoteToTeam && (
+            <View
+              style={{
+                marginBottom: 100,
+              }}>
+              <Controller
+                control={methods.control}
+                name="noteToTeam"
+                render={({
+                  field: {onChange, onBlur, value},
+                  fieldState: {error},
+                }) => (
+                  <View>
+                    <TextInput
+                      keyboardType="name-phone-pad"
+                      style={
+                        Platform.OS === 'ios'
+                          ? {
+                              height: 100,
+                              textAlignVertical: 'top',
+                              marginTop: 10,
+                            }
+                          : {marginTop: 10}
+                      }
+                      mode="outlined"
+                      numberOfLines={3}
+                      multiline={true}
+                      textAlignVertical="top"
+                      error={!!error}
+                      onChangeText={onChange}
+                      value={value}
+                    />
+                  </View>
+                )}
+              />
+            </View>
+          )}
         </View>
       </KeyboardAwareScrollView>
 
@@ -560,24 +569,20 @@ const InvoiceDepositScreen = ({navigation}: Props) => {
 
           <SegmentedButtons
             style={{
-    
               padding: 20,
               maxWidth: '90%',
-         
             }}
             value={value}
             onValueChange={setValue}
-            
             buttons={[
               {
                 value: 'train',
-          
+
                 label: 'PDF',
                 icon: 'file-document',
-                
+
                 onPress: () => openPDFModal(),
               },
-              
             ]}
           />
         </>
@@ -607,7 +612,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     height: 'auto',
     paddingBottom: 200,
-
   },
   summaryTaxVat: {
     fontSize: 16,

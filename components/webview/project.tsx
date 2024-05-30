@@ -8,56 +8,19 @@ import PDFModalScreen from './pdf';
 import useShare from '../../hooks/webview/useShare';
 
 type Props = {
-  quotationId: string;
-  pdfUrl: string;
+  quotationId: string;  
   fileName: string;
   onClose: () => void;
   visible: boolean;
 };
 const ProjectModalScreen = (props: Props) => {
-  const {quotationId, pdfUrl, fileName, onClose, visible} = props;
+  const {quotationId,fileName, onClose, visible} = props;
   const [url, setUrl] = useState(
     `https://www.worktrust.co/preview/${quotationId}`,
   );
   const [showPdf, setShowPdf] = useState(false);
   const handleShare = useShare({url, title: `ใบเสนอราคา ${fileName}`});
 
-  const handleShareFile = async () => {
-    console.log('Share button pressed');
-    let dirs = ReactNativeBlobUtil.fs.dirs;
-    const type = 'application/pdf'; // MIME type
-    const configOptions = {
-      fileCache: true,
-      path: `${dirs.DocumentDir}/${fileName}`,
-      addAndroidDownloads: {
-        useDownloadManager: true,
-        notification: true,
-        // title: `${fileName}`,
-        // description: 'File downloaded by Worktrust App.',
-        // mime: 'application/pdf',
-      },
-    };
-
-    ReactNativeBlobUtil.config(configOptions)
-      .fetch('GET', pdfUrl)
-      .then(async resp => {
-        let filePath = resp.path();
-        let options = {
-          type: type,
-          url: 'file://' + filePath,
-        };
-
-        await Share.open(options);
-        // Use ReactNativeBlobUtil's fs.unlink to remove the file after sharing
-        ReactNativeBlobUtil.fs
-          .unlink(filePath)
-          .then(() => console.log('File deleted successfully'))
-          .catch(err => console.error('Error deleting file', err));
-      })
-      .catch(error => {
-        console.error('Error sharing', error);
-      });
-  };
 
   return (
     <Modal animationType="slide" visible={visible}>

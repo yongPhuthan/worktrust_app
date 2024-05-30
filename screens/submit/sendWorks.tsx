@@ -25,6 +25,7 @@ import {
   Button,
   Divider,
   IconButton,
+  SegmentedButtons,
   Snackbar,
   TextInput,
 } from 'react-native-paper';
@@ -40,26 +41,25 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import {useUploadToFirebase} from '../../hooks/submission/useUploadToFirebase';
 import {usePickImage} from '../../hooks/utils/image/usePickImage';
 import {ParamListBase} from '../../types/navigationType';
+import useCreateSubmission from '../../hooks/submission/useSaveSubmission';
+import {useModal} from '../../hooks/quotation/create/useModal';
+import ProjectModalScreen from '../../components/webview/project';
+import useShare from '../../hooks/webview/useShare';
 type Props = {
   navigation: StackNavigationProp<ParamListBase>;
   route: RouteProp<ParamListBase, 'SendWorks'>;
 };
 type FormValues = {
+  id: string;
   address: string;
-  workDescription: string;
+  description: string;
+  quotationId: string;
   dateOffer: Date;
   services: any; // Adjust the type according to your actual services structure
   beforeImages: string[];
   afterImages: string[];
+  workStatus: string;
 };
-
-interface ServerError extends Error {
-  response?: {
-    data?: {
-      error?: string;
-    };
-  };
-}
 
 const SendWorks = (props: Props) => {
   const {route, navigation} = props;
@@ -82,35 +82,22 @@ const SendWorks = (props: Props) => {
   const [copied, setCopied] = useState(false);
   const imageRandomId = uuidv4();
   const [submissionId, setSubmissionId] = useState<string>('');
-  const [opneSubmissionModal, setOpenSubmissionModal] = useState<boolean>(false);
-  const createWorkDelivery = async (data: any) => {
-    if (!user || !user.uid) {
-      throw new Error('User is not available');
-    }
-    try {
-      const token = await user.getIdToken(true);
-      const response = await fetch(
-        `${BACK_END_SERVER_URL}/api/submission/submissionWork`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({data}),
-        },
-      );
+  const [submissionServerId, setSubmissionServerId] = useState<string | null>(
+    null,
+  );
+  const {
+    openModal: openProjectModal,
+    closeModal: closeProjectModal,
+    isVisible: showProjectModal,
+  } = useModal();
+  const url = `https://www.worktrust.co/submissions/${editQuotation.id}?${submissionServerId}`;
 
-      if (response.status === 200) {
-        return response.json();
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Network response was not ok.');
-      }
-    } catch (err) {
-      throw err;
-    }
-  };
+  const [opneSubmissionModal, setOpenSubmissionModal] =
+    useState<boolean>(false);
+  const handleShare = useShare({
+    url,
+    title: `ส่งงานลูกค้า ${editQuotation.customer.name}`,
+  });
 
   const {
     control,
@@ -121,29 +108,30 @@ const SendWorks = (props: Props) => {
   } = useForm<FormValues>({
     mode: 'all',
     defaultValues: {
+      id: uuidv4(),
       address: editQuotation.customer.address || '',
-      workDescription: '',
+      description: '',
       dateOffer: initialDateOffer,
       services: editQuotation.services,
       beforeImages: [],
       afterImages: [],
+      workStatus: '',
+      quotationId: editQuotation.id,
     },
   });
+
   const beforeImages = useWatch({control, name: 'beforeImages'});
   const afterImages = useWatch({control, name: 'afterImages'});
+  const [viewResult, setViewResult] = React.useState('');
 
-  const beforeImagesStoragePath = `/users/${code}/quotations/submission/${editQuotation.docNumber}/beforeImages/${imageRandomId}`;
-  const afterImagesStoragePath = `/users/${code}/quotations/submission/${editQuotation.docNumber}/afterImages/${imageRandomId}`;
+  const beforeImagesStoragePath = `${code}/submission/${editQuotation.docNumber}/beforeImages/${imageRandomId}`;
+  const afterImagesStoragePath = `${code}/submission/${editQuotation.docNumber}/afterImages/${imageRandomId}`;
   const {
-    isUploading: isBeforeImagesUploading,
-    error: isBeforeImageError,
-    uploadImage: uploadBeforeImages,
-  } = useUploadToFirebase(beforeImagesStoragePath);
-  const {
-    isUploading: isAfterImagesUploading,
-    error: isAfterImageError,
-    uploadImage: uploadAfterImages,
-  } = useUploadToFirebase(afterImagesStoragePath);
+    isUploading,
+    error,
+    uploadImages,
+  } = useUploadToFirebase();
+  
   const {isImagePicking: pickingBeforeImage, pickImage: pickBeforeImage} =
     usePickImage((uri: string) => {
       setValue('beforeImages', [...beforeImages, uri], {
@@ -161,33 +149,12 @@ const SendWorks = (props: Props) => {
     });
   const services = useWatch({control, name: 'services'});
 
-  const {mutate, isPending, data, error, isError} = useMutation({
-    mutationFn: createWorkDelivery,
+  const actions: any = {
+    setSubmissionServerId,
+    openProjectModal,
+  };
 
-    onSuccess: data => {
-      queryClient.invalidateQueries({
-        queryKey: ['workDelivery', editQuotation.id],
-        // queryClient.invalidateQueries({queryKey: ['dashboardQuotation']});
-      });
-      setSubmissionId(data.workdeliveryId);
-      setOpenSubmissionModal(true);
-
-      const newId = editQuotation.id.slice(0, 8) as string;
-    },
-
-    onError: (error: ServerError) => {
-      console.error('There was a problem calling the function:', error);
-
-      let errorMessage = 'An error occurred';
-      if (error.response?.data?.error) {
-        errorMessage = error.response.data.error;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-
-      Alert.alert('Error', errorMessage);
-    },
-  });
+  const {mutate, isPending} = useCreateSubmission(actions);
 
   const removeService = (index: number) => {
     const updatedServices = services.filter((_: any, i: number) => i !== index);
@@ -213,50 +180,21 @@ const SendWorks = (props: Props) => {
       const updatedImages = afterImages.filter(image => image !== uri);
 
       // Update the form state to reflect the change and optionally re-validate
-      setValue('afterImages', afterImages, {shouldValidate: true});
+      setValue('afterImages', updatedImages, {shouldValidate: true});
     },
     [afterImages, setValue],
   );
 
   const handleDone = useCallback(async () => {
-    let uploadedBeforeImageUrls: string[] = [];
-    let uploadedAfterImageUrls: string[] = [];
 
-    // Upload before images in parallel
-    const beforeImageUploadPromises = beforeImages.map(imageUri =>
-      uploadBeforeImages(imageUri),
-    );
-    const beforeImageUploadResults = await Promise.all(
-      beforeImageUploadPromises,
-    );
-    uploadedBeforeImageUrls = beforeImageUploadResults
-      .map(result => result.originalUrl)
-      .filter((url): url is string => !!url);
 
-    // Upload after images in parallel
-    const afterImageUploadPromises = afterImages.map(imageUri =>
-      uploadAfterImages(imageUri),
-    );
-    const afterImageUploadResults = await Promise.all(afterImageUploadPromises);
-    uploadedAfterImageUrls = afterImageUploadResults
-      .map(result => result.originalUrl)
-      .filter((url): url is string => !!url);
-
-    const modifiedData = {
-      id: editQuotation.id,
-      workStatus: 'SUBMITTED',
-      companyId: editQuotation.company.id,
-      customerId: editQuotation.customer.id,
-      quotationId: editQuotation.id,
-      description: getValues('workDescription'),
-      dateOffer: getValues('dateOffer'),
-      services: getValues('services'),
-      address: getValues('address'),
+    const uploadedBeforeImageUrls = await uploadImages(beforeImages, beforeImagesStoragePath);
+    const uploadedAfterImageUrls = await uploadImages(afterImages, afterImagesStoragePath);
+    mutate({
+      ...getValues(),
       beforeImages: uploadedBeforeImageUrls,
       afterImages: uploadedAfterImageUrls,
-    };
-
-    await mutate(modifiedData);
+    });
   }, [beforeImages, afterImages, editQuotation, getValues, mutate]);
 
   const handleStartDateSelected = (date: Date) => {
@@ -264,13 +202,28 @@ const SendWorks = (props: Props) => {
   };
 
   const copyLinkToClipboard = () => {
-    const link = `www.worktrust.co/submission/${submissionId}`;
+    const link = `www.worktrust.co/submission/${submissionServerId}`;
     Clipboard.setString(link);
     setCopied(true);
     setTimeout(() => {
       setCopied(false);
     }, 2000);
   };
+  React.useEffect(() => {
+    if (services.lenght !== editQuotation.services.length) {
+      setValue('workStatus', 'PERIOD', {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }else {
+      setValue('workStatus', 'ALL', {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+  }, [services]);
+
+
 
   return (
     <>
@@ -295,9 +248,9 @@ const SendWorks = (props: Props) => {
         />
         <Button
           loading={
-            isPending || isBeforeImagesUploading || isAfterImagesUploading
+           isUploading || isPending
           }
-          disabled={!isValid}
+          disabled={!isValid || isUploading || isPending}
           mode="contained"
           // buttonColor={'#1b72e8'}
           onPress={handleDone}>
@@ -362,7 +315,6 @@ const SendWorks = (props: Props) => {
                     mode="outlined"
                     numberOfLines={4}
                     placeholder="สถาณที่ติดตั้งงาน เลขที่ ถนน ตำบล อำเภอ จังหวัด...."
-                    onBlur={onBlur}
                     placeholderTextColor={'#A6A6A6'}
                     keyboardType="default"
                     onChangeText={onChange}
@@ -514,7 +466,7 @@ const SendWorks = (props: Props) => {
             <Controller
               control={control}
               rules={{required: true}}
-              name="workDescription"
+              name="description"
               render={({
                 field: {onChange, onBlur, value},
                 fieldState: {error},
@@ -571,6 +523,41 @@ const SendWorks = (props: Props) => {
         onDismiss={() => setCopied(false)}>
         <Text>คัดลอกสำเร็จ!</Text>
       </Snackbar>
+
+      {submissionServerId && (
+        <>
+          <ProjectModalScreen
+            fileName={editQuotation.customer.name}
+            visible={showProjectModal}
+            onClose={closeProjectModal}
+            quotationId={submissionServerId}
+          />
+
+          <SegmentedButtons
+            style={{
+              margin: 10,
+              marginHorizontal: 20,
+            }}
+            value={viewResult}
+            onValueChange={setViewResult}
+            buttons={[
+              {
+                value: 'preview',
+                label: 'พรีวิว',
+                icon: 'eye',
+                onPress: () => openProjectModal(),
+              },
+
+              {
+                value: 'train',
+                label: 'แชร์',
+                icon: 'share-variant',
+                onPress: handleShare,
+              },
+            ]}
+          />
+        </>
+      )}
     </>
   );
 };

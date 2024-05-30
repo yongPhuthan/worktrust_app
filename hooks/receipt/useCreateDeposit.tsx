@@ -23,7 +23,7 @@ const useCreateNewDepositReceipt = (actions: InvoiceActions) => {
     }
 
     const token = await user.getIdToken(true);
-    const response = await fetch(`${BACK_END_SERVER_URL}/api/invoice/createDepositReceipt`, {
+    const response = await fetch(`${BACK_END_SERVER_URL}/api/receipt/createDepositReceipt`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

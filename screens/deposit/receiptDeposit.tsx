@@ -37,7 +37,7 @@ interface Props {
 const ReceiptDepositScreen = ({navigation}: Props) => {
   const {
     dispatch,
-    state: {editQuotation},
+    state: {editQuotation,sellerId},
   }: any = useContext(Store);
 
   const [amount, setAmount] = React.useState('');
@@ -69,11 +69,21 @@ const ReceiptDepositScreen = ({navigation}: Props) => {
     defaultValues: {
       vat7: 0,
       quotationId: editQuotation.id,
+      customer: editQuotation.customer,
+      company : editQuotation.company,
+      summary: editQuotation.summary ? editQuotation.summary : 0,
+      summaryAfterDiscount: editQuotation.summaryAfterDiscount ? editQuotation.summaryAfterDiscount : 0,
+      services: editQuotation.services,
+      discountType: editQuotation.discountType ? editQuotation.discountType : 'PERCENTAGE',
+      discountPercentage: editQuotation.discountPercentage  ? editQuotation.discountPercentage : 0,
+      discountValue: editQuotation.discountValue ? editQuotation.discountValue : 0,
+      sellerSignature: '',
       taxType: TaxType.NOTAX,
       depositApplied: 0,
+      sellerId,
       allTotal: editQuotation.allTotal,
       dateOffer: initialDateOffer,
-      docNumber: `RCD${initialDocnumber}`,
+      docNumber: `IV${initialDocnumber}`,
       taxValue: 0,
       netAmount: 0,
       remaining: 0,

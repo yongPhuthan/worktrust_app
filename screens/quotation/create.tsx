@@ -105,7 +105,7 @@ const Quotation = ({navigation}: Props) => {
     null,
   );
   const [pdfUrl, setPdfUrl] = useState<string | null>('true');
-  const [value, setValue] = React.useState('');
+  const [viewResult, setViewResult] = React.useState('');
   const [selectService, setSelectService] = useState<Service | null>(null);
   const [currentValue, setCurrentValue] = useState<Service | null>(null);
   const [signature, setSignature] = useState<string | null>(null);
@@ -772,7 +772,6 @@ const Quotation = ({navigation}: Props) => {
               visible={showProjectModal}
               onClose={closeProjectModal}
               quotationId={quotationServerId}
-              pdfUrl={pdfUrl}
             />
             <PDFModalScreen
               fileName={customer.name}
@@ -786,8 +785,8 @@ const Quotation = ({navigation}: Props) => {
                 margin: 10,
                 marginHorizontal: 20,
               }}
-              value={value}
-              onValueChange={setValue}
+              value={viewResult}
+              onValueChange={setViewResult}
               buttons={[
                 {
                   value: 'preview',
