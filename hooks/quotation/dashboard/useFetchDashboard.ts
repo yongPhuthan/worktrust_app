@@ -10,6 +10,7 @@ import {useContext} from 'react';
 import {useUser} from '../../../providers/UserContext';
 import * as stateAction from '../../../redux/actions';
 import {Store} from '../../../redux/store';
+import {Company, Quotations} from '@prisma/client';
 
 interface ErrorResponse {
   message: string;
@@ -21,7 +22,10 @@ type DashboardData = any;
 const useFetchDashboard = (): UseQueryResult<DashboardData, ErrorResponse> => {
   const user = useUser();
   const queryClient = useQueryClient();
-  const { dispatch, state: { code } } = useContext(Store);
+  const {
+    dispatch,
+    state: {code},
+  } = useContext(Store);
 
   const fetchDashboard = async (): Promise<DashboardData> => {
     if (!user) {
@@ -30,51 +34,42 @@ const useFetchDashboard = (): UseQueryResult<DashboardData, ErrorResponse> => {
 
     const token = await user.getIdToken();
 
-    const response = await fetch(`${BACK_END_SERVER_URL}/api/dashboard/dashboard`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
+    const response = await fetch(
+      `${BACK_END_SERVER_URL}/api/dashboard/dashboard`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
       },
-    });
+    );
 
     if (!response.ok) {
       const errorData: ErrorResponse = await response.json();
-      queryClient.setQueryData(queryKey, { error: errorData });
+      queryClient.setQueryData(queryKey, {error: errorData});
       throw new Error(errorData.action);
     }
 
     const data = await response.json();
-    if (data && data.length > 0) {
-      const [
-        companyData, , , defaultContract, defaultWarranty, workers, userSignature, sellerId
-      ] = data;
 
-      dispatch(stateAction.code_company(companyData.code));
-      dispatch(stateAction.get_companyID(companyData.id));
-      dispatch(stateAction.get_logo(companyData.logo));
-      dispatch(stateAction.get_company_state(companyData));
+const company = data.company;
+const quotations = company.quotations;
+const services = quotations.flatMap((quotation : Quotations) => quotation.services.slice(0, 10));
+console.log(services);
 
-      if (data[2] && data[2].length > 0) {
-        const services = data[2].flatMap((item: any) => item.services);
-        dispatch(stateAction.get_existing_services(services));
-      }
-      if (defaultContract) {
-        dispatch(stateAction.get_default_contract(defaultContract));
-      }
-      if (defaultWarranty) {
-        const {companyId,...restData} = defaultWarranty;
-        dispatch(stateAction.get_default_warranty(restData));
-      }
-      if (workers && workers.length > 0) {
-        dispatch(stateAction.get_existing_workers(workers));
-      }
-      if (userSignature) {
-        dispatch(stateAction.get_user_signature(userSignature));
-      }
-      if (sellerId) {
-        dispatch(stateAction.get_seller_id(sellerId));
-      }
+    dispatch(stateAction.code_company(data.company.code));
+    dispatch(stateAction.get_companyID(data.company.id));
+    dispatch(stateAction.get_logo(data.company.logo));
+    dispatch(stateAction.get_company_state(data.company));
+
+    dispatch(stateAction.get_default_contract(data.company.defaultContract));
+    dispatch(stateAction.get_default_warranty(data.company.defaultWarranty));
+    dispatch(stateAction.get_existing_workers(data.company.workers));
+    dispatch(stateAction.get_existing_services(services));
+    if (data[1] && data[2]) {
+      dispatch(stateAction.get_user_signature(data.userSignature));
+      dispatch(stateAction.get_seller_id(data.sellerId));
     }
 
     return data;

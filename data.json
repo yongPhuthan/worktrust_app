@@ -1,35 +1,84 @@
 {
-    "id": "11340087029797934",
-    "source": "//storage.googleapis.com/projects/_/buckets/worktrust-b9c02.appspot.com",
-    "specversion": "1.0",
-    "type": "google.cloud.storage.object.v1.finalized",
-    "subject": "objects/348098/gallery/Images/rxQGlJpA1Xa1UB9rVJspAECqxhb2/original/510CF22C-5BA2-4A99-92E8-E0E920390D04.png",
-    "time": "2024-05-24T17:12:25.195903Z",
-    "bucket": "worktrust-b9c02.appspot.com",
-    "data": {
-        "kind": "storage#object",
-        "id": "worktrust-b9c02.appspot.com/348098/gallery/Images/rxQGlJpA1Xa1UB9rVJspAECqxhb2/original/510CF22C-5BA2-4A99-92E8-E0E920390D04.png/1716570745193761",
-        "selfLink": "https://www.googleapis.com/storage/v1/b/worktrust-b9c02.appspot.com/o/348098%2Fgallery%2FImages%2FrxQGlJpA1Xa1UB9rVJspAECqxhb2%2Foriginal%2F510CF22C-5BA2-4A99-92E8-E0E920390D04.png",
-        "name": "348098/gallery/Images/rxQGlJpA1Xa1UB9rVJspAECqxhb2/original/510CF22C-5BA2-4A99-92E8-E0E920390D04.png",
-        "bucket": "worktrust-b9c02.appspot.com",
-        "generation": "1716570745193761",
-        "metageneration": "1",
-        "contentType": "image/png",
-        "timeCreated": "2024-05-24T17:12:25.195Z",
-        "updated": "2024-05-24T17:12:25.195Z",
-        "storageClass": "STANDARD",
-        "timeStorageClassUpdated": "2024-05-24T17:12:25.195Z",
-        "size": "1488632",
-        "md5Hash": "ZTeICpLF3QNKPFcHPtfg4w==",
-        "mediaLink": "https://storage.googleapis.com/download/storage/v1/b/worktrust-b9c02.appspot.com/o/348098%2Fgallery%2FImages%2FrxQGlJpA1Xa1UB9rVJspAECqxhb2%2Foriginal%2F510CF22C-5BA2-4A99-92E8-E0E920390D04.png?generation=1716570745193761&alt=media",
-        "contentDisposition": "inline; filename*=utf-8''510CF22C-5BA2-4A99-92E8-E0E920390D04.png",
-        "metadata": {
-            "firebaseStorageDownloadTokens": "fc69a87c-7d04-4d70-bcb2-a6f2520161a7"
-        },
-        "crc32c": "tfUCyA==",
-        "etag": "CKGK/6vkpoYDEAE="
+    "company": {
+        "bizName": "Doubledoor engineering",
+        "companyTax": "100800667422",
+        "address": "7/44 Bangkok  nonthabury",
+        "mobileTel": "0959962030",
+        "officeTel": "053306426",
+        "signature": null,
+        "code": "879243",
+        "id": "6655c91ed18684ac88f7f494",
+        "logo": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/879243%2Flogo%2FDoubledoor%20engineering%7D%2Foriginal%2F1716992959984.webp?alt=media&token=b05b5f25-9852-45aa-95a8-eca4d19386c3",
+        "quotations": [{
+            "id": "665b4143f86dca13a122b5c0",
+            "vat7": 0,
+            "taxType": "NOTAX",
+            "taxValue": 0,
+            "summary": 4556,
+            "summaryAfterDiscount": 4556,
+            "discountType": "PERCENT",
+            "discountPercentage": 0,
+            "discountValue": 0,
+            "allTotal": 4556,
+            "dateOffer": "2024-06-02T15:41:00.000Z",
+            "dateEnd": "2024-06-08T15:41:14.690Z",
+            "docNumber": "QT20240601820",
+            "FCMToken": "",
+            "sellerSignature": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/879243%2Fsignature%2Fsignature879243c512a436-ddb3-4a17-a236-28f9be2c0d40.webp?alt=media&token=4d661e9e-4972-44a3-90cc-ef94ca7f85df",
+            "noteToCustomer": "",
+            "noteToTeam": null,
+            "status": "PENDING",
+            "dateApproved": null,
+            "pdfUrl": "http://127.0.0.1:9199/v0/b/worktrust-docs/o/879243%2Fquotations%2FQT20240601820?alt=media&token=ef3c62ea-0772-4511-b9a6-2618e6726b6d",
+            "sellerId": "6655c888d18684ac88f7f48f",
+            "periodPercent": [],
+            "companyId": "6655c91ed18684ac88f7f494",
+            "created": "2024-06-01T15:41:55.735Z",
+            "updated": "2024-06-01T15:41:55.735Z",
+            "services": [{
+                "id": "67290695-45a9-4711-8965-c73ad173989f",
+                "title": "Project Water Fall",
+                "description": "Tempered Glass",
+                "unitPrice": 4556,
+                "qty": 1,
+                "unit": "ชุด",
+                "discountType": "NONE",
+                "discountValue": 0,
+                "total": 4556,
+                "standards": [],
+                "serviceImages": [{
+                    "thumbnailUrl": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/879243%2Fgallery%2Fthumbnail%2F1717000460839.webp?alt=media&token=26cf71b8-0791-4613-a88d-87dfbf8f4eec",
+                    "originalUrl": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/879243%2Fgallery%2Foriginal%2F1717000459767.webp?alt=media&token=2cc69b38-c4ab-4435-9c0b-73ce341beb03"
+                }],
+                "materials": [],
+                "created": "2024-06-01T15:41:28.687Z"
+            }],
+            "reviews": [],
+            "submissions": [],
+            "contract": null,
+            "customer": {
+                "id": "b80341bd-4f23-4baa-a2c5-abab6ac50a9b",
+                "name": "Customer2",
+                "address": "Addres Customer",
+                "customerTax": "",
+                "phone": ""
+            },
+            "customerSign": null,
+            "workers": [],
+            "warranty": {
+                "id": "6655feb0441eccbe4de57843",
+                "skillWarantyYear": 22,
+                "productWarantyYear": 12,
+                "fixDays": 22,
+                "dateWaranty": null,
+                "endWaranty": null,
+                "condition": "รับประกันคุณภาพตัวสินค้า ตามมาตรฐานในการใชงานตามปกติเท่านั้น ขอสงวนสิทธ์การรับประกันที่เกิดจากการใช้งานสินค้าที่ไม่ถูกต้องหรือความเสียหายที่เกิดจากภัยธรรมชาติ หรือ การใช้งานผิดประเภทหรือปัญหาจากการกระทําของบคุคลอื่น เช่นความเสียหายที่เกิดจากการทำงานของผู้รับเหมาทีมอื่นหรือบุคคลที่สามโดยตั้งใจหรือไม่ได้ตั้งใจ"
+            }
+        }],
+        "defaultContracts": [],
+        "defaultWarranty": null,
+        "workers": []
     },
-    "traceparent": "00-6600707d96b11f1304471ee7afbe4f79-f63436de7ae25a28-01"
+    "userSignature": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/879243%2Fsignature%2Fsignature879243c512a436-ddb3-4a17-a236-28f9be2c0d40.webp?alt=media&token=4d661e9e-4972-44a3-90cc-ef94ca7f85df",
+    "userId": "6655c888d18684ac88f7f48f"
 }
-"
-timestamp: "2024-05-24T17:12:26.332344Z"

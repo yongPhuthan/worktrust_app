@@ -1,5 +1,5 @@
+import { QuotationStatus } from '@prisma/client';
 import React from 'react';
-import {QuotationStatus} from '../models/QuotationStatus';
 import {
   Dimensions,
   StyleSheet,
@@ -49,15 +49,13 @@ const CardDashBoard = (props: Props) => {
             <View
             style={{
               backgroundColor:
-                props.status === QuotationStatus.PENDING &&
-                QuotationStatus.WAITING_FOR_CUSTOMER_APPROVAL
+                props.status === QuotationStatus.PENDING 
                   ? '#ccc'
-                  : props.status === QuotationStatus.APPROVED &&
-                    QuotationStatus.SIGNED_CONTRACT
+                  : props.status === QuotationStatus.APPROVED 
                   ? '#43a047'
-                  : props.status === QuotationStatus.CONTRACT
+                  : props.status === QuotationStatus.INVOICE_DEPOSIT || props.status === QuotationStatus.RECEIPT_DEPOSIT
                   ? '#1079ae'
-                  : props.status === QuotationStatus.ONPROCESS
+                  : props.status === QuotationStatus.SUBMITTED
                   ? 'orange'
                   : '#ccc',
               borderRadius: 4,
@@ -77,20 +75,13 @@ const CardDashBoard = (props: Props) => {
                 ? 'รออนุมัติ'
                 : props.status === QuotationStatus.APPROVED
                 ? 'อนุมัติแล้ว'
-                : props.status === QuotationStatus.CONTRACT
-                ? 'ทำสัญญาแล้ว'
-                : props.status === QuotationStatus.SIGNED_CONTRACT
-                ? 'เซ็นเอกสารแล้ว'
-                : props.status === QuotationStatus.ONPROCESS
-                ? 'กำลังทำงาน'
-                : props.status === QuotationStatus.WAITING_FOR_CUSTOMER_APPROVAL
-                ? 'ส่งงานแล้ว-รอลูกค้าตรวจงาน'
-                : props.status === QuotationStatus.CUSTOMER_APPROVAL_SOMECOMPLETED
-                ? 'ลูกค้าอนุมัติงานบางส่วน-รอแก้ไขเพิ่มเติม'
-                : props.status === QuotationStatus.CUSTOMER_NOTAPPROVAL
-                ? 'ลูกค้าไม่อนุมัติงาน-แก้ไขงานใหม่และส่งงานอีกครั้ง'
-                : props.status === QuotationStatus.CUSTOMER_APPROVAL_ALLCOMPLETED
-                ? 'ลูกค้าอนุมัติงานทั้งหมดเรียบร้อย'
+
+                : props.status === QuotationStatus.INVOICE_DEPOSIT
+                ? 'มัดจำใบวางบิล'
+                : props.status === QuotationStatus.RECEIPT_DEPOSIT
+                ? 'มัดจำใบเสร็จ'
+                : props.status === QuotationStatus.SUBMITTED
+                ? 'แจ้งส่งงานแล้ว'
                 : ''}
             </Text>
           </View>

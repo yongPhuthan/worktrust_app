@@ -20,17 +20,15 @@ import {
 } from 'react-native-paper';
 import {Store} from '../../redux/store';
 import {
-  defaultContractSchema,
-  warrantySchema,
+  
+  warrantySchemas,
 } from '../../screens/utils/validationSchema';
+import {v4 as uuidv4} from 'uuid';
 
 import {Controller, useForm, useFormContext, useWatch} from 'react-hook-form';
 import {useUser} from '../../providers/UserContext';
-import {DefaultContractType} from '../../types/docType';
+import { WarrantyEmbed } from '@prisma/client';
 
-interface MyError {
-  response: object;
-}
 type Props = {
   onClose: () => void;
   visible: boolean;
@@ -41,15 +39,18 @@ const WarrantyModal = (props: Props) => {
   const {
     dispatch,
     state: {defaultWarranty},
-  }: any = useContext(Store);
-  const [defaultContractValues, setDefaultContractValues] =
-    useState<DefaultContractType>();
-  const initialValues = {
+  } = useContext(Store);
+
+  const initialWarranty : WarrantyEmbed = {
+    id: uuidv4(),
     productWarantyYear: 0,
     skillWarantyYear: 0,
     fixDays: 0,
-    condition: 'รับประกันคุณภาพตัวสินค้า ตามมาตรฐานในการใชงานตามปกติเท่านั้น ขอสงวนสิทธ์การรับประกันที่เกิดจากการใช้งานสินค้าที่ไม่ถูกต้องหรือความเสียหายที่เกิดจากภัยธรรมชาติ หรือ การใช้งานผิดประเภทหรือปัญหาจากการกระทําของบคุคลอื่น เช่นความเสียหายที่เกิดจากการทำงานของผู้รับเหมาทีมอื่นหรือบุคคลที่สามโดยตั้งใจหรือไม่ได้ตั้งใจ',
-  };
+    condition: '',
+    dateWaranty: null,
+    endWaranty: null,
+  } ;
+
   const {
     control,
     handleSubmit,
@@ -57,22 +58,23 @@ const WarrantyModal = (props: Props) => {
     formState: {isValid},
   } = useForm({
     mode: 'onChange',
-    defaultValues: defaultWarranty ? defaultWarranty : initialValues,
-    resolver: yupResolver(warrantySchema),
+    defaultValues: defaultWarranty ? defaultWarranty : null,
+    resolver: yupResolver(warrantySchemas),
   });
 
   const context = useFormContext();
-  const {register, setValue, watch} = context as any;
+  const {register, setValue, watch} = context 
 
   const warranty = context.watch('warranty');
 
   function safeToString(value: string | number | null | undefined) {
     return value !== undefined && value !== null ? value.toString() : '';
   }
+console.log('defaultWarranty', defaultWarranty)
 
 
   const renderWanranty = (
-    name: any,
+    name: string,
     label: string,
     defaultValue: string = '',
     textAffix: string,
@@ -208,8 +210,9 @@ const WarrantyModal = (props: Props) => {
                           height: Dimensions.get('window').height * 0.3,
                         }}
                         textAlign="center"
-                        placeholder=" 1. รับประกันสินค้า 1 ปี"
-                        
+                        placeholder=""
+                        defaultValue='
+                        รับประกันคุณภาพตัวสินค้า ตามมาตรฐานในการใช้งานตามปกติเท่านั้น ขอสงวนสิทธ์การรับประกันที่เกิดจากการใช้งานสินค้าที่ไม่ถูกต้องหรือความเสียหายที่เกิดจากภัยธรรมชาติ หรือ การใช้งานผิดประเภทหรือปัญหาจากการกระทําของบคุคลอื่น เช่นความเสียหายที่เกิดจากการทำงานของผู้รับเหมาทีมอื่นหรือบุคคลที่สามโดยตั้งใจหรือไม่ได้ตั้งใจ'
                         multiline
                         numberOfLines={5}
                         error={!!error}

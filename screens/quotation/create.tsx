@@ -11,6 +11,7 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 
 import React, {useContext, useEffect, useMemo, useState} from 'react';
+
 import {
   FormProvider,
   set,
@@ -18,6 +19,7 @@ import {
   useForm,
   useWatch,
   Controller,
+  Resolver,
 } from 'react-hook-form';
 import {
   Alert,
@@ -64,23 +66,34 @@ import ExistingWorkers from '../../components/workers/existing';
 import useCreateQuotation from '../../hooks/quotation/create/useSaveQuotation';
 import useSelectedDates from '../../hooks/quotation/create/useSelectDates';
 import useThaiDateFormatter from '../../hooks/utils/useThaiDateFormatter';
-import {TaxType} from '../../models/Tax';
 import {Store} from '../../redux/store';
-import {CompanySeller, Service} from '../../types/docType';
 import {ParamListBase} from '../../types/navigationType';
 import {quotationsValidationSchema} from '../utils/validationSchema';
 import PDFModalScreen from '../../components/webview/pdf';
 import useShare from '../../hooks/webview/useShare';
+import * as yup from 'yup';
 import WarrantyModal from '../../components/warranty/create';
 import AddProductFormModal from '../../components/service/addNew';
 import {useModal} from '../../hooks/quotation/create/useModal';
+import {
+  MaterialEmbed,
+  DiscountType,
+  QuotationStatus,
+  ServicesEmbed,
+  WorkerEmbed,
+  type CustomerEmbed,
+  type Quotations,
+  type WarrantyEmbed,
+  TaxType,
+} from '@prisma/client';
+import {JsonValue} from '@prisma/client/runtime/library';
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'Quotation'>;
 }
 
 const Quotation = ({navigation}: Props) => {
   const {
-    state: {companyState, editQuotation, defaultWarranty, sellerId},
+    state: {companyState, editQuotation, defaultWarranty, sellerId,existingServices},
     dispatch,
   }: any = useContext(Store);
 
@@ -97,17 +110,20 @@ const Quotation = ({navigation}: Props) => {
 
   // const [customerName, setCustomerName] = useState('');
   const [signaturePicker, setSignaturePicker] = useState(false);
-  const [contractPicker, setContractPicker] = useState(false);
   const [openNoteToCustomer, setOpenNoteToCustomer] = useState(false);
   const [openNoteToTeam, setOpenNoteToTeam] = useState(false);
   const [workerPicker, setWorkerpicker] = useState(false);
+  const [showDateOffer, setShowDateOffer] = useState(false);
+  const [showDateEnd, setShowDateEnd] = useState(false);
   const [quotationServerId, setQuotationServerId] = useState<string | null>(
     null,
   );
   const [pdfUrl, setPdfUrl] = useState<string | null>('true');
   const [viewResult, setViewResult] = React.useState('');
-  const [selectService, setSelectService] = useState<Service | null>(null);
-  const [currentValue, setCurrentValue] = useState<Service | null>(null);
+  const [selectService, setSelectService] = useState<ServicesEmbed | null>(
+    null,
+  );
+  const [currentValue, setCurrentValue] = useState<ServicesEmbed | null>(null);
   const [signature, setSignature] = useState<string | null>(null);
   const quotationId = uuidv4();
   const [dateOfferFormatted, setDateOfferFormatted] = useState<string>(
@@ -171,7 +187,7 @@ const Quotation = ({navigation}: Props) => {
     null,
   );
 
-  const defalutCustomer = {
+  const defalutCustomer: CustomerEmbed = {
     id: uuidv4(),
     name: '',
     address: '',
@@ -179,25 +195,59 @@ const Quotation = ({navigation}: Props) => {
     phone: '',
   };
 
-  const initialWarranty = {
+  const initialWarranty: WarrantyEmbed = {
+    id: uuidv4(),
     productWarantyYear: 0,
     skillWarantyYear: 0,
     fixDays: 0,
-    companyId: '',
     condition: '',
+    dateWaranty: null,
+    endWaranty: null,
   };
 
-  const quotationDefaultValues = {
+  // Custom resolver
+  const resolver: Resolver<Quotations> = async values => {
+    try {
+      const validatedValues = await quotationsValidationSchema.validate(
+        values,
+        {
+          abortEarly: false,
+        },
+      );
+      return {
+        values: validatedValues,
+        errors: {},
+      };
+    } catch (err) {
+      const validationErrors = err as yup.ValidationError;
+
+      return {
+        values: {},
+        errors: validationErrors.inner.reduce((allErrors, currentError) => {
+          if (currentError.path) {
+            allErrors[currentError.path] = {
+              type: currentError.type ?? 'validation',
+              message: currentError.message,
+            };
+          }
+          return allErrors;
+        }, {} as Record<string, {type: string; message: string}>),
+      };
+    }
+  };
+
+  const quotationDefaultValues: Quotations = {
+    id: uuidv4(),
     services: [],
     customer: defalutCustomer,
-    company: companyState,
+    companyId: companyState.id,
     vat7: 0,
     taxType: TaxType.NOTAX,
     taxValue: 0,
     summary: 0,
     summaryAfterDiscount: 0,
     sellerId,
-    discountType: 'PERCENT',
+    discountType: DiscountType.PERCENT,
     discountPercentage: 0,
     discountValue: 0,
     allTotal: 0,
@@ -206,20 +256,32 @@ const Quotation = ({navigation}: Props) => {
     noteToTeam: '',
     dateEnd: initialDateEnd,
     docNumber: `QT${initialDocnumber}`,
-    workers: null,
+    workers: [],
     FCMToken: fcmToken,
     sellerSignature: '',
-    warranty: defaultWarranty ? defaultWarranty : initialWarranty,
+    warranty: defaultWarranty ? defaultWarranty : null,
+    status: QuotationStatus.PENDING, // Set the status to a valid QuotationStatus value
+    dateApproved: null,
+    pdfUrl: '',
+    updated: new Date(),
+    created: new Date(),
+    reviews: [],
+    submissions: [],
+    customerSign: null,
   };
-  const methods = useForm<any>({
-    mode: 'all',
+
+  const methods = useForm<Quotations>({
+    mode: 'onBlur',
     defaultValues: editQuotation ? editQuotation : quotationDefaultValues,
-    resolver: yupResolver(quotationsValidationSchema),
+    resolver,
   });
   const {fields, append, remove, update} = useFieldArray({
     control: methods.control,
     name: 'services',
   });
+  const onSubmit = (data: Quotations) => {
+    console.log('Form data:', data);
+  };
 
   const customer = useWatch({
     control: methods.control,
@@ -286,8 +348,8 @@ const Quotation = ({navigation}: Props) => {
   };
 
   const useWorkers = () => {
-    if (workers) {
-      methods.setValue('workers', null, {shouldDirty: true});
+    if (workers.length > 0) {
+      methods.setValue('workers', [], {shouldDirty: true});
       closeWorkerModal();
     } else {
       openWorkerModal();
@@ -297,7 +359,7 @@ const Quotation = ({navigation}: Props) => {
   const handleModalClose = () => {
     setVisibleModalIndex(null);
   };
-  const handleEditService = (index: number, currentValue: Service) => {
+  const handleEditService = (index: number, currentValue: ServicesEmbed) => {
     openEditServiceModal();
     handleModalClose();
     setCurrentValue(currentValue);
@@ -314,21 +376,18 @@ const Quotation = ({navigation}: Props) => {
   const {mutate, isPending} = useCreateQuotation(actions);
 
   const handleButtonPress = async () => {
-    await mutate(methods.getValues());
+    const data = {
+      quotation: methods.getValues(),
+      company: companyState,
+    };
+    mutate(data);
   };
 
   const handleInvoiceNumberChange = (text: string) => {
     methods.setValue('docNumber', text);
   };
 
-  const handleStartDateSelected = (date: Date) => {
-    setDateOfferFormatted(thaiDateFormatter(date));
-    methods.setValue('dateOffer', date);
-  };
-  const handleEndDateSelected = (date: Date) => {
-    setDateEndFormatted(thaiDateFormatter(date));
-    methods.setValue('dateEnd', date);
-  };
+
 
   const handleRemoveService = (index: number) => {
     setVisibleModalIndex(null);
@@ -340,60 +399,75 @@ const Quotation = ({navigation}: Props) => {
     closeSignatureModal();
     // methods.setValue('sellerSignature', '', {shouldDirty: true});
   };
+
+  const handleStartDateSelected = (date: Date) => {
+    setDateOfferFormatted(thaiDateFormatter(date));
+    methods.setValue('dateOffer', date);
+
+  };
+  
+  const handleEndDateSelected = (date: Date) => {
+    setDateEndFormatted(thaiDateFormatter(date));
+    methods.setValue('dateEnd', date);
+  };
+
+console.log('existingServices',existingServices)
+  
   return (
     <>
-      <Appbar.Header
-        elevated
-        mode="center-aligned"
-        style={{
-          backgroundColor: 'white',
-        }}>
-        <Appbar.BackAction
-          onPress={() => {
-            Alert.alert(
-              'ปิดหน้าต่าง',
-              'ยืนยันไม่บันทึกข้อมูลและปิดหน้าต่าง',
-              [
-                // The "No" button
-                // Does nothing but dismiss the dialog when pressed
-                {
-                  text: 'อยู่ต่อ',
-                  style: 'cancel',
-                },
-                // The "Yes" button
-                {
-                  text: 'ปิดหน้าต่าง',
-                  onPress: () => navigation.goBack(),
-                },
-              ],
-              {cancelable: false},
-            );
-          }}
-        />
-        <Appbar.Content
-          title="สร้างใบเสนอราคา"
-          titleStyle={{
-            fontSize: 18,
-            fontWeight: 'bold',
-            fontFamily: 'Sukhumvit Set Bold',
-          }}
-        />
-        <Button
-          loading={isPending}
-          disabled={isDisabled}
-          testID="submited-button"
-          mode="contained"
-          onPress={handleButtonPress}>
-          {'บันทึก'}
-        </Button>
-      </Appbar.Header>
-      {/* <ProgressBar progress={0.5} /> */}
-
       <FormProvider {...methods}>
+        <Appbar.Header
+          elevated
+          mode="center-aligned"
+          style={{
+            backgroundColor: 'white',
+          }}>
+          <Appbar.BackAction
+            onPress={() => {
+              Alert.alert(
+                'ปิดหน้าต่าง',
+                'ยืนยันไม่บันทึกข้อมูลและปิดหน้าต่าง',
+                [
+                  // The "No" button
+                  // Does nothing but dismiss the dialog when pressed
+                  {
+                    text: 'อยู่ต่อ',
+                    style: 'cancel',
+                  },
+                  // The "Yes" button
+                  {
+                    text: 'ปิดหน้าต่าง',
+                    onPress: () => navigation.goBack(),
+                  },
+                ],
+                {cancelable: false},
+              );
+            }}
+          />
+          <Appbar.Content
+            title="สร้างใบเสนอราคา"
+            titleStyle={{
+              fontSize: 18,
+              fontWeight: 'bold',
+              fontFamily: 'Sukhumvit Set Bold',
+            }}
+          />
+          <Button
+            loading={isPending}
+            disabled={isDisabled}
+            testID="submited-button"
+            mode="contained"
+            onPress={handleButtonPress}>
+            {'บันทึก'}
+          </Button>
+        </Appbar.Header>
+        {/* <ProgressBar progress={0.5} /> */}
+
         <View style={{flex: 1}}>
           <KeyboardAwareScrollView style={styles.container}>
             <View style={styles.subContainerHead}>
               <DatePickerButton
+              
                 label="วันที่เสนอราคา"
                 title="วันที่เสนอราคา"
                 date="today"
@@ -513,10 +587,10 @@ const Quotation = ({navigation}: Props) => {
                 <Text style={styles.signHeader}>เพิ่มทีมงานติดตั้ง</Text>
                 <Switch
                   trackColor={{false: '#767577', true: '#81b0ff'}}
-                  thumbColor={workers ? '#ffffff' : '#f4f3f4'}
+                  thumbColor={workers.length > 0 ? '#ffffff' : '#f4f3f4'}
                   ios_backgroundColor="#3e3e3e"
                   onValueChange={useWorkers}
-                  value={workers ? true : false}
+                  value={workers.length > 0 ? true : false}
                   style={Platform.select({
                     ios: {
                       transform: [{scaleX: 0.7}, {scaleY: 0.7}],
@@ -527,7 +601,7 @@ const Quotation = ({navigation}: Props) => {
                 />
               </View>
               {/* workers */}
-              {workers && workers.length > 0 && (
+              {workers.length > 0 && (
                 <View
                   style={{
                     flex: 1,
@@ -543,7 +617,7 @@ const Quotation = ({navigation}: Props) => {
                         <View style={styles.imageContainer}>
                           <TouchableOpacity onPress={openWorkerModal}>
                             <Image
-                              source={{uri: item.image}}
+                              source={{uri: item.image ? item.image : ''}}
                               style={styles.image}
                             />
                             <Text>{item.name}</Text>
@@ -628,7 +702,7 @@ const Quotation = ({navigation}: Props) => {
                     }) => (
                       <View>
                         <TextInput
-                          keyboardType="name-phone-pad"
+                          keyboardType="default"
                           style={
                             Platform.OS === 'ios'
                               ? {
@@ -644,7 +718,7 @@ const Quotation = ({navigation}: Props) => {
                           textAlignVertical="top"
                           error={!!error}
                           onChangeText={onChange}
-                          value={value}
+                          value={value as string}
                         />
                       </View>
                     )}
@@ -680,7 +754,7 @@ const Quotation = ({navigation}: Props) => {
                     }) => (
                       <View>
                         <TextInput
-                          keyboardType="name-phone-pad"
+                          keyboardType="default"
                           style={
                             Platform.OS === 'ios'
                               ? {
@@ -696,7 +770,7 @@ const Quotation = ({navigation}: Props) => {
                           textAlignVertical="top"
                           error={!!error}
                           onChangeText={onChange}
-                          value={value}
+                          value={value as string}
                         />
                       </View>
                     )}

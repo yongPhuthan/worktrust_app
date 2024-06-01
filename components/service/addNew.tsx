@@ -46,14 +46,15 @@ import {serviceValidationSchema} from '../../screens/utils/validationSchema';
 import Decimal from 'decimal.js-light';
 import ProjectModalScreen from 'components/webview/project';
 import { v4 as uuidv4 } from 'uuid';
+import { DiscountType, ServicesEmbed } from '@prisma/client';
 
 type Props = {
   quotationId: string;
-  onAddService: (data: any) => void;
-  currentValue: any;
+  onAddService: (data: ServicesEmbed) => void;
+  currentValue: ServicesEmbed  | null;
   onClose: () => void;
   visible: boolean;
-  selectService: any;
+  selectService: ServicesEmbed | null;
   resetSelectService: () => void;
   resetAddNewService: () => void;
 };
@@ -87,19 +88,22 @@ const AddProductFormModal = (props: Props) => {
     resetAddNewService();
   };
 
-  const defaultService = {
-    id: '',
-    title: null,
-    description: null,
-    unitPrice: '0',
-    qty: '1',
-    total: '0',
+  const defaultService : ServicesEmbed = {
+    id: uuidv4(),
+    title: '',
+    description: '',
+    unitPrice: 0,
+    qty: 1,
+    total: 0,
     unit: 'ชุด',
     serviceImages: [],
+    discountType: DiscountType.NONE,
+    discountValue: 0,
     standards: [],
     materials: [],
-  };
-  const methods = useForm<any>({
+    created: new Date(),
+    };
+  const methods = useForm<ServicesEmbed>({
     mode: 'onChange',
     defaultValues: currentValue
       ? currentValue
@@ -155,8 +159,6 @@ const AddProductFormModal = (props: Props) => {
   ]);
   const isButtonDisbled = useMemo(() => {
     return (
-      // materials.length > 0 &&
-      // standards?.length > 0 &&
       title &&
       unitPrice > 0 &&
       qty > 0
@@ -355,7 +357,7 @@ const AddProductFormModal = (props: Props) => {
                   control={methods.control}
                   name="unitPrice"
                   rules={{required: true}}
-                  defaultValue=""
+                  defaultValue={0}
                   render={({
                     field: {onChange, onBlur, value},
                     fieldState: {error},
@@ -413,7 +415,7 @@ const AddProductFormModal = (props: Props) => {
                               onChange(numericValue);
                             }
                           }}
-                          defaultValue={qty}
+                          defaultValue={String(qty)}
                           value={String(value)}
                           onBlur={onBlur}
                           error={!!error}

@@ -1,10 +1,11 @@
 // FilterButton.tsx
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { FilterLabels, QuotationStatusKey } from '../../../models/QuotationStatus'; // Adjust the import path as necessary
+import { FilterLabels } from '../../../models/QuotationStatus'; // Adjust the import path as necessary
+import { QuotationStatus } from '@prisma/client';
 
 type FilterButtonProps = {
-    filter: QuotationStatusKey;
+    filter: QuotationStatus;
     isActive: boolean;
     onPress: () => void;
   };
@@ -15,7 +16,7 @@ export const FilterButton: React.FC<FilterButtonProps> = ({ filter, isActive, on
       <TouchableOpacity
         style={[styles.filterButton, isActive ? styles.activeFilter : null]}
         onPress={onPress}>
-        <Text style={isActive ? { color: 'white' } : null}>{displayText}</Text>
+        <Text style={isActive ? { color: 'white' } : null}>{ displayText}</Text>
       </TouchableOpacity>
     );
   };

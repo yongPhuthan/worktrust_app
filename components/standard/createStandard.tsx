@@ -3,6 +3,7 @@ import React, {useContext, useState, useEffect} from 'react';
 import {useQueryClient, QueryClient} from '@tanstack/react-query';
 import {BACK_END_SERVER_URL} from '@env';
 import {Store} from '../../redux/store';
+import {v4 as uuidv4} from 'uuid';
 
 import {Controller, useForm} from 'react-hook-form';
 import {
@@ -26,10 +27,10 @@ import {
   TextInput,
 } from 'react-native-paper';
 import {usePickImage} from '../../hooks/utils/image/usePickImage';
-import {createStandardSchema} from '../../screens/utils/validationSchema';
 import {useUploadToFirebase} from '../../hooks/useUploadtoFirebase';
 import {useCreateToServer} from '../../hooks/useUploadToserver';
-
+import {standardSchema} from '../../screens/utils/validationSchema';
+import {StandardEmbed} from '@prisma/client';
 type Props = {
   isVisible: boolean;
   onClose: () => void;
@@ -43,13 +44,15 @@ const CreateStandard = (props: Props) => {
   }: any = useContext(Store);
   const [isError, setError] = React.useState('');
   const queryClient = useQueryClient();
-  const defaultStandard = {
+  const defaultStandard: StandardEmbed = {
+    id: uuidv4(),
     standardShowTitle: null,
-    image: null,
-    content: null,
+    image: '',
+    content: '',
     badStandardImage: null,
     badStandardEffect: null,
-    sellerId: companyID,
+    created: new Date(),
+    updated: new Date(),
   };
   const {
     register,
@@ -57,10 +60,10 @@ const CreateStandard = (props: Props) => {
     setValue,
     getValues,
     formState: {errors, isValid},
-  } = useForm<any>({
+  } = useForm<StandardEmbed>({
     mode: 'onChange',
     defaultValues: defaultStandard,
-    resolver: yupResolver(createStandardSchema),
+    resolver: yupResolver(standardSchema),
   });
   const {
     isImagePicking: isStandardImageUploading,
@@ -106,15 +109,23 @@ const CreateStandard = (props: Props) => {
     setError('');
 
     // Step 1: Start uploading both images
+    if (!getValues('image')) {
+      setError('กรุณาเลือกภาพมาตรฐานงานของคุณ');
+      return;
+    }
     const uploadPromises = [
-      uploadStandardImage(getValues('image')), // Assuming these methods don't need extra args
-      uploadBadStandardImage(getValues('badStandardImage')),
+      uploadStandardImage(getValues('image')),
+      uploadBadStandardImage(getValues('badStandardImage') || ''),
     ];
 
     const uploadedImages = await Promise.all(uploadPromises);
     // Additional validation if URLs are required
-    if (!uploadedImages) {
-      setError('Failed to upload images');
+    if (
+      !uploadedImages ||
+      !uploadedImages[0].originalUrl ||
+      !uploadedImages[1].originalUrl
+    ) {
+      setError('อัพโหลดรูปภาพไม่สำเร็จ');
       return;
     }
     try {
@@ -200,7 +211,7 @@ const CreateStandard = (props: Props) => {
                   onBlur={onBlur}
                   error={!!error}
                   placeholder="เช่น การป้องกันน้ำรั่วซึม..."
-                  value={value}
+                  value={value || ''}
                   onChangeText={onChange}
                 />
                 {error && <Text style={styles.errorText}>{error.message}</Text>}
@@ -344,7 +355,6 @@ const CreateStandard = (props: Props) => {
                       width: 200,
                       aspectRatio: 1,
                       marginVertical: 20,
-
                     }}
                     onError={e =>
                       console.log('Failed to load image:', e.nativeEvent.error)
@@ -412,7 +422,7 @@ const CreateStandard = (props: Props) => {
                       : {}
                   }
                   placeholder="อธิบายความเสี่ยงที่ลูกค้าอาจพบเจอจากงานที่ไม่ได้มาตรฐาน..."
-                  value={value}
+                  value={value || ''}
                   onChangeText={onChange}
                 />
                 {error && <Text style={styles.errorText}>{error.message}</Text>}

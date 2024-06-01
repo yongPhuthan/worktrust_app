@@ -13,8 +13,7 @@ import {
 import {Text as TextPaper, Checkbox} from 'react-native-paper';
 import RNPickerSelect from 'react-native-picker-select';
 import SmallDivider from './styles/SmallDivider';
-import {Service} from 'types/docType';
-import {TaxType} from '../models/Tax';
+import { ServicesEmbed, TaxType } from '@prisma/client';
 
 const windowWidth = Dimensions.get('window').width;
 
@@ -37,7 +36,7 @@ const Summary = ({vat7Props, taxProps, pickerTaxProps}: Props) => {
     setValue,
     watch,
     formState: {errors},
-  } = context as any;
+  } = context
 
   const onDiscountInputChange = (value: string) => {
     if (value === '') {
@@ -92,7 +91,7 @@ const Summary = ({vat7Props, taxProps, pickerTaxProps}: Props) => {
     name: 'taxValue',
   });
   useEffect(() => {
-    const sum = services.reduce((acc: number, curr: Service) => {
+    const sum = services.reduce((acc: number, curr: ServicesEmbed) => {
       const total = curr.total ? new Decimal(curr.total) : new Decimal(0);
       return new Decimal(acc).plus(total);
     }, new Decimal(0));
@@ -106,7 +105,7 @@ const Summary = ({vat7Props, taxProps, pickerTaxProps}: Props) => {
 
     const calculatedSummaryAfterDiscount = sum.minus(calculatedDiscountValue);
 
-    let taxType = TaxType.NOTAX;
+    let taxType = TaxType.NOTAX  as TaxType;
     let taxValue = new Decimal(0);
     const vat7Amount = vat7Picker
       ? calculatedSummaryAfterDiscount.times(0.07)
@@ -128,22 +127,21 @@ const Summary = ({vat7Props, taxProps, pickerTaxProps}: Props) => {
     const finalTotal = calculatedSummaryAfterDiscount
       .plus(vat7Amount)
       .minus(taxValue);
-    setValue('vat7', vat7Amount.toFixed(2), {shouldDirty: true});
+    setValue('vat7', Number(vat7Amount.toFixed(2)), {shouldDirty: true});
     setValue('taxType', taxType, {shouldDirty: true});
-    setValue('taxValue', taxValue.toFixed(2), {shouldDirty: true});
-    setValue('discountValue', calculatedDiscountValue.toFixed(2), {
+    setValue('taxValue', Number(taxValue.toFixed(2)), {shouldDirty: true});
+    setValue('discountValue', Number(calculatedDiscountValue.toFixed(2)), {
       shouldDirty: true,
     });
-    setValue('summary', sum.toFixed(2), {shouldDirty: true});
+    setValue('summary', Number(sum.toFixed(2)), {shouldDirty: true});
     setValue(
       'summaryAfterDiscount',
-      calculatedSummaryAfterDiscount.toFixed(2),
+      Number(calculatedSummaryAfterDiscount.toFixed(2)),
       {shouldDirty: true},
     );
-    setValue('allTotal', finalTotal.toFixed(2), {shouldDirty: true});
+    setValue('allTotal', Number(finalTotal.toFixed(2)), {shouldDirty: true});
   }, [services, discountPercentage, vat7Picker, pickerVisible, selectedValue]);
-  console.log('data', data);
-  console.log('selectedValue', selectedValue);
+
   return (
     <View style={styles.container}>
       <View style={styles.summary}>

@@ -1,6 +1,6 @@
+import { Company, Quotations, ServicesEmbed, User } from '@prisma/client';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {StackNavigationProp} from '@react-navigation/stack';
-import {CompanySeller, Service, Quotation, Standard, User} from './docType';
 type InstallmentParams = {
   data: {
     projectName: string;
@@ -32,7 +32,7 @@ export type ProductItem = {
   discountPercent: number;
   audits: Audit[];
 };
-type OnAddService = (service: Service) => void;
+type OnAddService = (service: ServicesEmbed) => void;
 
 export type ParamListBase = {
   Quotation: undefined;
@@ -51,7 +51,7 @@ export type ParamListBase = {
   AddProduct: {
     onAddService: OnAddService;
     quotationId: string;
-    currentValue: Service | null;
+    currentValue: ServicesEmbed | null;
   };
   ProjectViewScreen : {id: string, pdfUrl: string, fileName:string};
   PDFViewScreen: {pdfUrl: string,fileName:string};
@@ -65,10 +65,10 @@ export type ParamListBase = {
   ContractCard: undefined;
   SelectAudit: Audit;
   DefaultContract: {
-    data: Quotation;
+    data: Quotations;
   };
   EditDefaultContract: {
-    data: Quotation;
+    data: Quotations;
     quotationId: string;
   };
   DashboardQuotation: undefined;
@@ -80,10 +80,10 @@ export type ParamListBase = {
   SelectContract: {id: string};
   EditProductForm: {
     index: number;
-    currentValue: Service;
+    currentValue: ServicesEmbed;
     update: any;
   };
-  AddExistProduct: {item: Service};
+  AddExistProduct: {item: ServicesEmbed};
   EditClientForm: undefined;
   EditCustomerForm: undefined;
   SettingsScreen: undefined;
@@ -91,12 +91,12 @@ export type ParamListBase = {
   DocViewScreen: {id: any};
   ContractViewScreen: {id: string};
 
-  EditSetting: {company: CompanySeller,seller:User};
+  EditSetting: {company: Company,seller:User};
   SignUpScreen: undefined;
   LoginScreen: undefined;
   CompanyUserFormScreen: undefined;
   ExistingSignature: {
-    company: CompanySeller;
+    company: Company;
   };
   ContactInfoScreen: undefined;
   Installment: InstallmentParams;
@@ -115,17 +115,17 @@ export type ParamListBase = {
   SendWorks: undefined,
   Signature: {
     text: string;
-    data: Quotation;
+    data: Quotations;
   };
   EditQuotation: {
-    quotation: Quotation;
-    company: CompanySeller;
-    services: Service[];
+    quotation: Quotations;
+    company: Company;
+    services: ServicesEmbed[];
   };
   CreateByQuotation: {
-    quotation: Quotation;
-    company: CompanySeller;
-    services: Service[];
+    quotation: Quotations;
+    company: Company;
+    services: ServicesEmbed[];
   };
   EditQuotationScreen: {id: string};
   CreateByQuotationScreen: {id: string};

@@ -1,4 +1,4 @@
-import React, {useContext, useState} from 'react';
+import React, { useContext, useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -9,15 +9,14 @@ import {
   View,
 } from 'react-native';
 
-import {BACK_END_SERVER_URL} from '@env';
-import {useQuery} from '@tanstack/react-query';
-import {useFormContext} from 'react-hook-form';
+import { BACK_END_SERVER_URL } from '@env';
+import { MaterialEmbed } from '@prisma/client';
+import { useQuery } from '@tanstack/react-query';
+import { useFormContext } from 'react-hook-form';
 import Modal from 'react-native-modal';
-import {Appbar, Button, Checkbox, Text} from 'react-native-paper';
-import {useUser} from '../../providers/UserContext';
-import {Store} from '../../redux/store';
-import {Material, MaterialData} from '../../types/docType';
-import CreateStandard from '../../components/standard/createStandard';
+import { Appbar, Button, Checkbox, Text } from 'react-native-paper';
+import { useUser } from '../../providers/UserContext';
+import { Store } from '../../redux/store';
 import CreateMaterial from './createMaterial';
 
 interface ExistingModalProps {
@@ -34,7 +33,7 @@ const ExistingMaterials = ({
   onClose,
   serviceId,
 }: ExistingModalProps) => {
-  const [materials, setMaterials] = useState<MaterialData[]>([]);
+  const [materials, setMaterials] = useState<MaterialEmbed[]>([]);
   const [isOpenModal, setIsOpenModal] = useState(false);
   const context = useFormContext();
   const [isCreateMaterial, setIsCreateMaterial] = useState(false);
@@ -46,13 +45,13 @@ const ExistingMaterials = ({
     setValue,
     watch,
     formState: {errors},
-  } = context as any;
+  } = context
   const user = useUser();
 
   const {
     state: {code},
     dispatch,
-  }: any = useContext(Store);
+  } = useContext(Store);
 
   const fetchExistingMaterials = async () => {
     if (!user) {
@@ -71,7 +70,7 @@ const ExistingMaterials = ({
           Authorization: `Bearer ${idToken}`,
         },
       });
-      const data :MaterialData[] = await response.json();
+      const data :MaterialEmbed[] = await response.json();
 
       if (!response.ok) {
         // console.log('error', data)
@@ -95,10 +94,10 @@ const ExistingMaterials = ({
       queryFn: fetchExistingMaterials,
     },
   );
-  const handleSelectMaterial = (material: MaterialData) => {
+  const handleSelectMaterial = (material: MaterialEmbed) => {
     const currentMaterials = getValues('materials') || [];
     const materialIndex = currentMaterials.findIndex(
-      (materialData: MaterialData) => materialData.id === material.id,
+      (materialData: MaterialEmbed) => materialData.id === material.id,
     );
     if (materialIndex !== -1) {
       const updatedMaterials = [...currentMaterials];
@@ -140,7 +139,6 @@ const ExistingMaterials = ({
   const handleAddNewProduct = () => {
     setIsOpenModal(true);
   };
-console.log('materials', materials)
   return (
     <Modal isVisible={isVisible} style={styles.modal} onBackdropPress={onClose}>
       <Appbar.Header
@@ -170,7 +168,7 @@ console.log('materials', materials)
                 style={[
                   styles.card,
                   (watch('materials') || []).some(
-                    (material: MaterialData) => material.id === item.id,
+                    (material: MaterialEmbed) => material.id === item.id,
                   )
                     ? styles.cardChecked
                     : null,
@@ -179,7 +177,7 @@ console.log('materials', materials)
                 <Checkbox.Android
                   status={
                     (watch('materials') || []).some(
-                      (material: MaterialData) => material.id === item.id,
+                      (material: MaterialEmbed) => material.id === item.id,
                     )
                       ? 'checked'
                       : 'unchecked'

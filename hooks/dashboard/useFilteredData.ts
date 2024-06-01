@@ -1,9 +1,8 @@
 // useFilteredQuotationData.ts
 import { useMemo } from 'react';
-import { QuotationStatus, QuotationStatusKey } from '../../models/QuotationStatus';
-import { Quotation } from '../../types/docType';
+import { QuotationStatus, Quotations } from '@prisma/client';
 
-export const useFilteredData = (originalData: Quotation[] | null, activeFilter: QuotationStatusKey) => {
+export const useFilteredData = (originalData: Quotations[] | null, activeFilter: QuotationStatus) => {
   const filteredData = useMemo(() => {
     if (!originalData) return null;
 

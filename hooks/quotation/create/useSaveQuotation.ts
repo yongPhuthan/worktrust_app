@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Quotation } from 'types/docType';
 import { useUser } from '../../../providers/UserContext';
 import { BACK_END_SERVER_URL } from '@env';
+import { Company, Quotations } from '@prisma/client';
 export interface QuotationActions {
   setQuotationServerId: (id: string) => void;
   setPdfUrl: (url: string) => void;
@@ -18,7 +18,7 @@ const useCreateQuotation = (actions: QuotationActions) => {
     throw new Error('User is not authenticated');
   }
 
-  const createQuotation = async (data: Quotation) => {
+  const createQuotation = async (quotation: Quotations, company:Company) => {
     if (!user || !user.uid) {
       throw new Error('User is not available');
     }
@@ -30,7 +30,7 @@ const useCreateQuotation = (actions: QuotationActions) => {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({data}),
+      body: JSON.stringify({quotation,company}),
     });
 
     if (!response.ok) {
@@ -44,14 +44,17 @@ const useCreateQuotation = (actions: QuotationActions) => {
   };
 
   const { mutate, data, error, isError, isPending, isSuccess, reset } = useMutation( {
-    mutationFn: createQuotation,
+    mutationFn: async (data: { quotation: Quotations, company: Company }) => {
+      const { quotation, company } = data;
+      return createQuotation(quotation, company);
+    },
     onSuccess: (responseData:any) => {
       setQuotationServerId(responseData.quotationId);
       setPdfUrl(responseData.pdfUrl);
       openProjectModal();
       queryClient.invalidateQueries({queryKey: ['dashboardData']});
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       console.error("Mutation error:", error.message);
     }
   });

@@ -1,14 +1,11 @@
-import {BACK_END_SERVER_URL} from '@env';
-import {faCamera} from '@fortawesome/free-solid-svg-icons';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {yupResolver} from '@hookform/resolvers/yup';
-import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
-import React, {useCallback, useContext, useEffect, useState} from 'react';
-import {Controller, set, useForm, useWatch} from 'react-hook-form';
-import Marker, {Position} from 'react-native-image-marker';
-import Modal from 'react-native-modal';
+import { yupResolver } from '@hookform/resolvers/yup';
 import Slider from '@react-native-community/slider';
-import {debounce} from 'lodash';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { debounce } from 'lodash';
+import React, { useContext, useEffect, useState } from 'react';
+import { Controller, useForm, useWatch } from 'react-hook-form';
+import Marker, { Position } from 'react-native-image-marker';
+import Modal from 'react-native-modal';
 
 import {
   ActivityIndicator,
@@ -16,32 +13,30 @@ import {
   Dimensions,
   FlatList,
   Image,
-  StyleSheet,
   Platform,
+  StyleSheet,
   Text,
   TouchableOpacity,
-  ScrollView,
-  View,
+  View
 } from 'react-native';
 import {
   Appbar,
   Button,
   Checkbox,
-  IconButton,
-  Divider,
-  Switch,
   Chip,
-  RadioButton,
-  TextInput,
+  Divider,
+  IconButton,
+  Switch,
+  TextInput
 } from 'react-native-paper';
-import {imageTogallery} from '../../screens/utils/validationSchema';
+import { imageTogallery } from '../../screens/utils/validationSchema';
 
-import {v4 as uuidv4} from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 import firebase from '../../firebase';
-import {useUploadToFirebase} from '../../hooks/useUploadtoFirebase';
-import {usePickImage} from '../../hooks/utils/image/usePickImage';
-import {useUser} from '../../providers/UserContext';
-import {Store} from '../../redux/store';
+import { useUploadToFirebase } from '../../hooks/useUploadtoFirebase';
+import { usePickImage } from '../../hooks/utils/image/usePickImage';
+import { useUser } from '../../providers/UserContext';
+import { Store } from '../../redux/store';
 
 interface ExistingModalProps {
   isVisible: boolean;

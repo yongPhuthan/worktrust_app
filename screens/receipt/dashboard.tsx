@@ -19,7 +19,6 @@ import { useFilteredData } from '../../hooks/dashboard/useFilteredData';
 import { useUser } from '../../providers/UserContext';
 import * as stateAction from '../../redux/actions';
 import { Store } from '../../redux/store';
-import { CompanySeller, Customer, Quotation, Service } from '../../types/docType';
 import { DashboardScreenProps } from '../../types/navigationType';
 
 import {
@@ -39,6 +38,7 @@ import {
   QuotationStatusKey,
 } from '../../models/QuotationStatus';
 import useFetchDashboardReceipt from '../../hooks/receipt/queryInvoices';
+import { Company, CustomerEmbed, Quotations, ServicesEmbed } from '@prisma/client';
 
 const ReceiptDashboard = ({navigation}: DashboardScreenProps) => {
   const [showModal, setShowModal] = useState(true);
@@ -52,11 +52,11 @@ const ReceiptDashboard = ({navigation}: DashboardScreenProps) => {
   const [isModalSignContract, setIsModalSignContract] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null) as any;
   const [selectedIndex, setSelectedIndex] = useState(null) as any;
-  const [originalData, setOriginalData] = useState<Quotation[] | null>(null);
+  const [originalData, setOriginalData] = useState<Quotations[] | null>(null);
   const {dispatch}: any = useContext(Store);
   const filteredData = useFilteredData(originalData, activeFilter);
-  const [companyData, setCompanyData] = useState<CompanySeller | null>(null);
-  const [receiptData, setReceiptData] = useState<Quotation[] | null>(null);
+  const [companyData, setCompanyData] = useState<Company | null>(null);
+  const [receiptData, setReceiptData] = useState<Quotations[] | null>(null);
   const handleNoResponse = () => {
     setIsModalSignContract(false);
   };
@@ -111,7 +111,7 @@ const ReceiptDashboard = ({navigation}: DashboardScreenProps) => {
     }
   };
 
-  const confirmRemoveQuotation = (id: string, customer: Customer) => {
+  const confirmRemoveQuotation = (id: string, customer: CustomerEmbed) => {
     setShowModal(false);
     Alert.alert(
       'ยืนยันลบเอกสาร',
@@ -163,13 +163,13 @@ const ReceiptDashboard = ({navigation}: DashboardScreenProps) => {
     QuotationStatus.CONTRACT,
     QuotationStatus.ONPROCESS,
   ];
-  const handleSignContractModal = (item: Quotation, index: number) => {
+  const handleSignContractModal = (item: Quotations, index: number) => {
     setSelectedItem(item);
     setSelectedIndex(index);
     setShowModal(false);
     setIsModalSignContract(true);
   };
-  const handleModalOpen = (item: Quotation, index: number) => {
+  const handleModalOpen = (item: Quotations, index: number) => {
     setSelectedItem(item);
     setSelectedIndex(index);
     // handleModal(item, index);
@@ -181,7 +181,7 @@ const ReceiptDashboard = ({navigation}: DashboardScreenProps) => {
     setSelectedIndex(null);
     setShowModal(false);
   };
-  const editReveipt = async (services: Service[], quotation: Quotation) => {
+  const editReveipt = async (services: ServicesEmbed[], quotation: Quotations) => {
     setIsLoadingAction(true);
     dispatch(stateAction.get_companyID(data[0].id));
     setIsLoadingAction(false);

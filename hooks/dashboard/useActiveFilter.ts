@@ -1,11 +1,11 @@
 // useActiveFilter.ts
+import { QuotationStatus } from '@prisma/client';
 import { useState } from 'react';
-import { QuotationStatus, QuotationStatusKey } from '../../models/QuotationStatus';
 
 export const useActiveFilter = () => {
-  const [activeFilter, setActiveFilter] = useState<QuotationStatusKey>(QuotationStatus.ALL);
+  const [activeFilter, setActiveFilter] = useState<QuotationStatus>(QuotationStatus.ALL);
 
-  const updateActiveFilter = (filter: QuotationStatusKey) => {
+  const updateActiveFilter = (filter: QuotationStatus) => {
     setActiveFilter(filter);
   };
 

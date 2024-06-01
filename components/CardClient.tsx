@@ -33,10 +33,7 @@ const CardClient = (props: Props) => {
     watch,
     formState: {errors},
   } = context;
-  const {
-    state: {client_name, client_address, client_tel, client_tax},
-    dispatch,
-  }: any = useContext(Store);
+
 
   return (
     <View>

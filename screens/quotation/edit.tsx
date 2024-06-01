@@ -35,11 +35,11 @@ import SmallDivider from '../../components/styles/SmallDivider';
 import SignatureComponent from '../../components/utils/signature';
 import useThaiDateFormatter from '../../hooks/utils/useThaiDateFormatter';
 import { Store } from '../../redux/store';
-import { Service } from '../../types/docType';
 import { ParamListBase } from '../../types/navigationType';
 
 import ExistingWorkers from '../../components/workers/existing';
 import { quotationsValidationSchema } from '../utils/validationSchema';
+import { ServicesEmbed } from '@prisma/client';
 
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'EditQuotation'>;
@@ -189,7 +189,7 @@ const EditQuotation = ({navigation, route}: Props) => {
     }
   };
 
-  const handleEditService = (index: number, currentValue: Service) => {
+  const handleEditService = (index: number, currentValue: ServicesEmbed) => {
     setShowEditServiceModal(!showEditServiceModal);
     handleModalClose();
     navigation.navigate('AddProduct', {

@@ -3,6 +3,7 @@ import React, {useContext, useState, useEffect} from 'react';
 import {useQueryClient, QueryClient} from '@tanstack/react-query';
 import {BACK_END_SERVER_URL} from '@env';
 import {Store} from '../../redux/store';
+import {v4 as uuidv4} from 'uuid';
 
 import {Controller, useForm, useWatch} from 'react-hook-form';
 import {
@@ -27,12 +28,10 @@ import {
   TextInput,
 } from 'react-native-paper';
 import {usePickImage} from '../../hooks/utils/image/usePickImage';
-import {
-  createMaterialValidationSchema,
-  createStandardSchema,
-} from '../../screens/utils/validationSchema';
+import {materialSchema} from '../../screens/utils/validationSchema';
 import {useUploadToFirebase} from '../../hooks/useUploadtoFirebase';
 import {useCreateToServer} from '../../hooks/useUploadToserver';
+import {MaterialEmbed} from '@prisma/client';
 
 type Props = {
   isVisible: boolean;
@@ -43,14 +42,17 @@ type Props = {
 const CreateMaterial = (props: Props) => {
   const {isVisible, onClose, companyId} = props;
   const {
-    state: {isEmulator, code},
+    state: {code},
     dispatch,
-  }: any = useContext(Store);
+  } = useContext(Store);
 
-  const defaultMaterial = {
-    name: null,
-    image: null,
-    description: null,
+  const defaultMaterial: MaterialEmbed = {
+    id: uuidv4(),
+    name: '',
+    image: '',
+    description: '',
+    created: new Date(),
+    updated: new Date(),
   };
   const {
     register,
@@ -58,10 +60,10 @@ const CreateMaterial = (props: Props) => {
     setValue,
     getValues,
     formState: {errors, isValid},
-  } = useForm<any>({
+  } = useForm<MaterialEmbed>({
     mode: 'onChange',
     defaultValues: defaultMaterial,
-    resolver: yupResolver(createMaterialValidationSchema),
+    resolver: yupResolver(materialSchema),
   });
 
   const image = useWatch({
@@ -92,7 +94,7 @@ const CreateMaterial = (props: Props) => {
       Alert.alert('Error', 'กรุณากรอกข้อมูลให้ครบถ้วน');
       return;
     }
-    const uploadPromises = [(await uploadImage(image)).originalUrl]
+    const uploadPromises = [(await uploadImage(image)).originalUrl];
     const downloadUrl = await Promise.all(uploadPromises);
 
     if (uploadError) {
@@ -103,7 +105,11 @@ const CreateMaterial = (props: Props) => {
     }
 
     try {
-      setValue('image', downloadUrl[0]);
+      if (downloadUrl && downloadUrl[0]) {
+        setValue('image', downloadUrl[0]);
+      } else {
+        Alert.alert('Error', 'ไม่สามารถอัพโหลดรูปภาพได้');
+      }
 
       const formData = {
         ...getValues(),

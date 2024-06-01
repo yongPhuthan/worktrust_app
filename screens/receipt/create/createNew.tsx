@@ -55,9 +55,9 @@ import useThaiDateFormatter from '../../../hooks/utils/useThaiDateFormatter';
 import {TaxType} from '../../../models/Tax';
 import * as stateAction from '../../../redux/actions';
 import {Store} from '../../../redux/store';
-import {Service} from '../../../types/docType';
 import {ParamListBase} from '../../../types/navigationType';
 import {quotationsValidationSchema} from '../../utils/validationSchema';
+import { ServicesEmbed } from '@prisma/client';
 
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'CreateNewReceipt'>;
@@ -91,8 +91,8 @@ const CreateNewReceipt = ({navigation}: Props) => {
   const [value, setValue] = React.useState('');
   const [openNoteToCustomer, setOpenNoteToCustomer] = useState(false);
   const [openNoteToTeam, setOpenNoteToTeam] = useState(false);
-  const [selectService, setSelectService] = useState<Service | null>(null);
-  const [currentValue, setCurrentValue] = useState<Service | null>(null);
+  const [selectService, setSelectService] = useState<ServicesEmbed | null>(null);
+  const [currentValue, setCurrentValue] = useState<ServicesEmbed | null>(null);
   const [signature, setSignature] = useState<string | null>(null);
   const quotationId = uuidv4();
   const [dateOfferFormatted, setDateOfferFormatted] = useState<string>(
@@ -227,7 +227,7 @@ const CreateNewReceipt = ({navigation}: Props) => {
   const handleModalClose = () => {
     setVisibleModalIndex(null);
   };
-  const handleEditService = (index: number, currentValue: Service) => {
+  const handleEditService = (index: number, currentValue: ServicesEmbed) => {
     openEditServiceModal();
     handleModalClose();
     setCurrentValue(currentValue);
