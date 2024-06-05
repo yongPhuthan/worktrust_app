@@ -3,7 +3,7 @@ import {DrawerActions} from '@react-navigation/native';
 import {useQueryClient} from '@tanstack/react-query';
 import {
   QuotationStatus,
-  FilterLabels,
+  QuotationsFilterLabels,
   QuotationStatusKey,
 } from '../../models/QuotationStatus';
 import firebase from '../../firebase';
@@ -233,7 +233,7 @@ const DashboardSubmit = ({navigation}: DashboardScreenProps) => {
   };
 
   const FilterButton = ({filter, isActive, onPress}: FilterButtonProps) => {
-    const displayText = FilterLabels[filter]; // This is now safely typed
+    const displayText = QuotationsFilterLabels[filter]; // This is now safely typed
     return (
       <TouchableOpacity
         style={[styles.filterButton, isActive ? styles.activeFilter : null]}

@@ -1,35 +1,37 @@
 import React, {createContext, useReducer} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {
-  CompanySeller,
-  Contract,
-  ExsistingService,
-  Quotation,
-  SelectedAuditData,
-  Standard,
-  Warranty,
-  Worker,
-} from '../types/docType';
+
 import * as contrains from './constrains';
-import {Service} from '../types/docType';
+import {
+  Company,
+  ContractsEmbed,
+  Invoices,
+  Quotations,
+  Receipts,
+  ServicesEmbed,
+  WarrantyEmbed,
+  WorkerEmbed,
+} from '@prisma/client';
 export type StateType = {
   companyID: string;
   code: string;
-  services: any[];
-  companyState: CompanySeller | null;
-  existingServices: ExsistingService[];
-  defaultContract: Contract | null;
-  defaultWarranty: Warranty | null;
-  editQuotation : Quotation | null;
+  services: ServicesEmbed[];
+  companyState: Company | null;
+  existingServices: ServicesEmbed[];
+  defaultContract: ContractsEmbed | null;
+  defaultWarranty: WarrantyEmbed | null;
+  editQuotation: Quotations | null;
+  editInvoice: Invoices | null;
+  editReceipt: Receipts | null;
   logoSrc: string;
-  existingWorkers: Worker[];
+  existingWorkers: WorkerEmbed[];
   userSignature: string;
   sellerId: string;
 };
 
 type ActionType = {
   type: string;
-  payload: string | number | object;
+  payload: string | number | object | ServicesEmbed | ServicesEmbed[] | Company | ContractsEmbed | WarrantyEmbed | Quotations | Invoices | Receipts | null |  undefined
 };
 
 type ContextType = {
@@ -50,6 +52,8 @@ export const Store = createContext<ContextType>({
     existingWorkers: [],
     userSignature: '',
     editQuotation: null,
+    editInvoice: null,
+    editReceipt: null,
     sellerId: '',
   },
   dispatch: () => {},
@@ -67,6 +71,8 @@ const initialState: StateType = {
   existingWorkers: [],
   userSignature: '',
   editQuotation: null,
+  editInvoice: null,
+  editReceipt: null,
   sellerId: '',
 };
 
@@ -77,31 +83,38 @@ function reducer(state: StateType, action: ActionType): StateType {
     case contrains.GET_COMPANYID:
       return {...state, companyID: action.payload as string};
     case contrains.GET_COMPANY_STATE:
-      return {...state, companyState: action.payload as CompanySeller};
+      return {...state, companyState: action.payload as Company};
     case contrains.ADD_PRODUCT:
       return {
         ...state,
-        services: [...state.services, action.payload],
+        services: [...state.services, action.payload as ServicesEmbed],
       };
     case contrains.GET_EXISTING_SERVICES:
-      return {...state, existingServices: action.payload as ExsistingService[]};
+      return {...state, existingServices: action.payload as ServicesEmbed[]};
     case contrains.GET_DEFAULT_CONTRACT:
-      return {...state, defaultContract: action.payload as Contract};
+      return {...state, defaultContract: action.payload as ContractsEmbed};
     case contrains.GET_LOGO:
       return {...state, logoSrc: action.payload as string};
     case contrains.GET_DEFAULT_WARRANTY:
-      return {...state, defaultWarranty: action.payload as Warranty};
+      return {...state, defaultWarranty: action.payload as WarrantyEmbed};
     case contrains.GET_EXISTING_WORKERS:
-      return {...state, existingWorkers: action.payload as Worker[]};
+      return {...state, existingWorkers: action.payload as WorkerEmbed[]};
     case contrains.GET_USER_SIGNATURE:
       return {...state, userSignature: action.payload as string};
     case contrains.GET_EDIT_QUOTATION:
-      return {...state, editQuotation: action.payload as Quotation};
+      return {...state, editQuotation: action.payload as Quotations};
+    case contrains.GET_EDIT_INVOICE:
+      return {...state, editInvoice: action.payload as Invoices};
+    case contrains.GET_EDIT_RECEIPT:
+      return {...state, editReceipt: action.payload as Receipts};
     case contrains.GET_SELLER_ID:
-      return {...state, sellerId: action.payload as string}; 
+      return {...state, sellerId: action.payload as string};
     case contrains.RESET_EDIT_QUOTATION:
       return {...state, editQuotation: null};
-
+    case contrains.RESET_EDIT_INVOICE:
+      return {...state, editInvoice: null};
+    case contrains.RESET_EDIT_RECEIPT:
+      return {...state, editReceipt: null};
 
     default:
       return state;

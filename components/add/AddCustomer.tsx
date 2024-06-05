@@ -19,13 +19,13 @@ const AddCustomer = ({onClose}: Props) => {
     setValue,
     watch,
     formState: {errors},
-  } = context as any;
-
+  } = context 
+const customer = watch('customer');
   const onSubmit = () => {
     // setValue('customer.id', uuidv4());
     onClose();
   };
-
+console.log('customer', customer)
   return (
     <>
       <Appbar.Header

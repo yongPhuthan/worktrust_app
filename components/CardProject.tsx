@@ -5,8 +5,10 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
+import {Menu, Button} from 'react-native-paper';
+
 import Modal from 'react-native-modal';
 
 type Props = {
@@ -14,7 +16,6 @@ type Props = {
     title: string;
     description: string;
     unitPrice: number;
-    discountPercent: number;
     qty: number;
     total: number;
   };
@@ -24,7 +25,6 @@ type Props = {
   setVisibleModalIndex: () => void;
   handleModalClose: () => void;
   handleRemoveService: () => void;
-  
 };
 const windowWidth = Dimensions.get('window').width;
 
@@ -37,11 +37,14 @@ const CardProject = (props: Props) => {
     setVisibleModalIndex,
     visibleModalIndex,
     handleModalClose,
-  } = props;  
-  
+  } = props;
 
   return (
-    <View>
+    <Menu
+    visible={visibleModalIndex}
+    onDismiss={handleModalClose}
+    anchorPosition="bottom"
+    anchor={
       <TouchableOpacity
         style={styles.subContainer}
         onPress={setVisibleModalIndex}>
@@ -54,101 +57,36 @@ const CardProject = (props: Props) => {
           <Text>{serviceList.description}</Text>
           <Text></Text>
         </View>
-        <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+        <View
+          style={{flexDirection: 'row', justifyContent: 'space-between'}}>
           <View style={styles.unitPrice}>
             <Text>
-              {serviceList.unitPrice ? new Intl.NumberFormat().format(serviceList.unitPrice) : '0'}
-             
+              {serviceList.unitPrice
+                ? new Intl.NumberFormat().format(serviceList.unitPrice)
+                : '0'}
             </Text>
             <Text> x</Text>
             <Text> {serviceList.qty}</Text>
           </View>
           <Text style={styles.summaryPrice}>
-          {serviceList.total ? new Intl.NumberFormat().format(serviceList.total) : '0'}
-
-          
+            {serviceList.total
+              ? new Intl.NumberFormat().format(serviceList.total)
+              : '0'}
           </Text>
         </View>
-        {/* {serviceList?.discountPercent   ? (
-               <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-               <Text>
-                    ลด {Number(serviceList.discountPercent)
-                     } %
-                   </Text>
-       
-               </View>
-        ):('')} */}
       </TouchableOpacity>
-      {Platform.OS === 'android' ? (
-        <Modal
-        backdropTransitionOutTiming={100}
-        style={styles.modalContainer}
-        isVisible={visibleModalIndex}
-        onBackdropPress={handleModalClose}>
-        <Text style={styles.title}>
-          รายการที่{index + 1}. {serviceList.title}
-        </Text>
-        <TouchableOpacity onPress={handleEditService}>
-          <Text style={styles.closeButtonText}>แก้ไขรายการ</Text>
-        </TouchableOpacity>
-        <View
-          style={{
-            width: '100%',
-            alignSelf: 'center',
-            borderBottomWidth: 1,
-            borderBottomColor: '#cccccc',
-          }}></View>
-     
-        <TouchableOpacity onPress={handleRemoveService}>
-          <Text style={styles.deleteButtonText}>ลบ</Text>
-        </TouchableOpacity>
-        <View
-          style={{
-            width: '100%',
-            alignSelf: 'center',
-            borderBottomWidth: 1,
-            borderBottomColor: '#cccccc',
-          }}></View>
-      </Modal>
-      ) : (
-        <Modal
-          backdropTransitionOutTiming={100}
-          style={styles.modalContainer}
-          isVisible={visibleModalIndex}
-          onBackdropPress={handleModalClose}>
-          <Text style={styles.title}>
-            รายการที่{index + 1}. {serviceList.title}
-          </Text>
-          <TouchableOpacity onPress={handleEditService}>
-            <Text style={styles.closeButtonText}>แก้ไขรายการ</Text>
-          </TouchableOpacity>
-          <View
-            style={{
-              width: '100%',
-              alignSelf: 'center',
-              borderBottomWidth: 1,
-              borderBottomColor: '#cccccc',
-            }}></View>
-          <View
-            style={{
-              width: '100%',
-              alignSelf: 'center',
-              borderBottomWidth: 1,
-              borderBottomColor: '#cccccc',
-            }}></View>
-          <TouchableOpacity onPress={handleRemoveService}>
-            <Text style={styles.deleteButtonText}>ลบ</Text>
-          </TouchableOpacity>
-          <View
-            style={{
-              width: '100%',
-              alignSelf: 'center',
-              borderBottomWidth: 1,
-              borderBottomColor: '#cccccc',
-            }}></View>
-        </Modal>
-      )}
-    </View>
+    }>
+    <Menu.Item
+      leadingIcon="pencil"
+      onPress={() => handleEditService()}
+      title="แก้ไข"
+    />
+    <Menu.Item
+      leadingIcon="delete"
+      onPress={() => handleRemoveService()}
+      title="ลบ"
+    />
+  </Menu>
   );
 };
 
@@ -218,23 +156,21 @@ const styles = StyleSheet.create({
     left: 0,
   },
   closeButtonText: {
-    fontSize: 20,
+    fontSize: 18,
     borderBottomWidth: 1,
     borderColor: 'white',
     paddingBottom: 10,
     paddingTop: 10,
-    fontWeight: 'bold',
-    fontFamily: 'Sukhumvit set',
   },
   deleteButtonText: {
-    fontSize: 20,
+    fontSize: 18,
     borderBottomWidth: 1,
-    fontWeight: 'bold',
+
     textDecorationColor: 'red',
     color: 'red',
     borderColor: 'white',
     paddingBottom: 10,
-    fontFamily: 'Sukhumvit set',
+
     paddingTop: 10,
   },
   icon: {

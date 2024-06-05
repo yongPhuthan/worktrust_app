@@ -8,10 +8,8 @@ import {
   View,
 } from 'react-native';
 import {Store} from '../../redux/store';
-import {
-  QuotationStatus,
-  QuotationStatusKey,
-} from '../../models/QuotationStatus';
+import * as contrains from '../../redux/constrains';
+
 import React, {useContext, useEffect, useMemo, useState} from 'react';
 import {
   ActivityIndicator,
@@ -27,12 +25,12 @@ import {
 import {ParamListBase} from '../../types/navigationType';
 import {StackNavigationProp} from '@react-navigation/stack';
 import useFetchDashboard from '../../hooks/quotation/dashboard/useFetchDashboard';
-import {useFilteredData} from '../../hooks/dashboard/useFilteredData';
+import {useFilteredData, useFilteredInvoicesData} from '../../hooks/dashboard/useFilteredData';
 import {useActiveFilter} from '../../hooks/dashboard/useActiveFilter';
-import {Quotation, Service} from 'types/docType';
 import * as stateAction from '../../redux/actions';
 import CardDashBoard from '../../components/CardDashBoard';
 import Modal from 'react-native-modal';
+import {Invoices, Quotations, ServicesEmbed} from '@prisma/client';
 
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'Quotation'>;
@@ -44,11 +42,11 @@ const SelectDoc = ({navigation}: Props) => {
   const [isLoadingAction, setIsLoadingAction] = React.useState(false);
   const {data, isLoading, isError, error} = useFetchDashboard();
   const {activeFilter, updateActiveFilter} = useActiveFilter();
-  const {dispatch}: any = useContext(Store);
-  const [selectedItem, setSelectedItem] = useState(null) as any;
-  const [selectedIndex, setSelectedIndex] = useState(null) as any;
+  const {dispatch } : any   = useContext(Store);
+  const [selectedItem, setSelectedItem] = useState<Quotations | null>(null)
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [showModal, setShowModal] = useState(true);
-  const [originalData, setOriginalData] = React.useState<Quotation[] | null>(
+  const [originalData, setOriginalData] = React.useState<Quotations[] | null>(
     null,
   );
 
@@ -56,46 +54,35 @@ const SelectDoc = ({navigation}: Props) => {
 
   React.useEffect(() => {
     if (data) {
-      // Ensuring data[0] exists and has a property `code` before attempting to access it
-      if (!data[0]) {
+      // Ensuring dp0?: { type: string; payload: null; }p0: { type: string; payload: null; }ata[0] exists and has a property `code` before attempp0: { type: string; payload: string; }p0?: { type: string; payload: string; }p0?: { type: string; payload: string; }ting to access it
+      if (!data.company) {
         navigation.navigate('CreateCompanyScreen');
       } else {
         // If data[0] exists and has a non-null `code`, proceed with your logic
 
-        setOriginalData(data[1]);
+        setOriginalData(data.company.quotations);
       }
     }
   }, [data]);
 
-  const createNewByQuotation = async (services: Service[], quotation: Quotation) => {
-    setIsLoadingAction(true);
-    dispatch(stateAction.get_companyID(data[0].id));
-    setIsLoadingAction(false);
-
-    navigation.navigate('CreateByQuotation', {
-      quotation,
-      company: data[0],
-      services,
-    });
-  };
   const handleModalClose = () => {
     // setSelectedItem(null);
     setSelectedIndex(null);
     setShowModal(false);
   };
-  const handleModalOpen = (item: Quotation, index: number) => {
+  const handleModalOpen = (item: Quotations, index: number) => {
     setSelectedItem(item);
     setSelectedIndex(index);
     // handleModal(item, index);
     setShowModal(true);
   };
-  const renderItem = ({item, index}: any) => (
+  const renderItem = ({item, index}: {item: Quotations, index: number}) => (
     <>
       <View style={{marginTop: 10}}>
         <CardDashBoard
-          status={item.status}
-          date={item.dateOffer}
-          end={item.dateEnd}
+          status={item.status ?? ''}
+          date={item.dateOffer} // Convert Date to string
+          end={item.dateEnd} // Convert Date to string
           price={item.allTotal}
           customerName={item.customer?.name as string}
           onCardPress={() => handleModalOpen(item, index)}
@@ -129,8 +116,9 @@ const SelectDoc = ({navigation}: Props) => {
                 <List.Item
                   onPress={() => {
                     setShowModal(false);
-                    // createNewByQuotation(selectedItem.services, selectedItem);
-                    dispatch(stateAction.get_edit_quotation(selectedItem));
+                    if (selectedItem) {
+                      dispatch(stateAction.get_edit_quotation(selectedItem));
+                    }
                     navigation.navigate('CreateNewInvoice');
                   }}
                   centered={true}
@@ -179,7 +167,9 @@ const SelectDoc = ({navigation}: Props) => {
             />
             <Appbar.Action
               icon="plus"
-          onPress={() => navigation.navigate('CreateNewInvoice')}
+              onPress={() => {
+                dispatch(stateAction.reset_edit_invoice());
+                navigation.navigate('CreateNewInvoice')}}
             />
           </Appbar.Header>
           {isLoadingAction ? (
@@ -210,7 +200,7 @@ const SelectDoc = ({navigation}: Props) => {
                     สร้างใบวางบิลจากใบเสนอราคา
                   </Text>
                   <FlatList
-                    data={filteredData}
+                    data={filteredData as Quotations[]}
                     renderItem={renderItem}
                     keyExtractor={item => item.id}
                     ListEmptyComponent={
@@ -222,9 +212,7 @@ const SelectDoc = ({navigation}: Props) => {
 
                           alignItems: 'center',
                         }}>
-                        <Text style={{marginTop: 10}}>
-                          ยังไม่มีใบเสนอราคา
-                        </Text>
+                        <Text style={{marginTop: 10}}>ยังไม่มีใบเสนอราคา</Text>
                       </View>
                     }
                     contentContainerStyle={

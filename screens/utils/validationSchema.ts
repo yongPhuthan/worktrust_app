@@ -18,6 +18,7 @@ import {
   WorkerEmbed,
   WorkerStatus,
 } from '@prisma/client';
+import { first } from 'lodash';
 import * as yup from 'yup';
 type QuotationWithoutArrays = Pick<
   Quotations,
@@ -197,6 +198,10 @@ export const quotationsValidationSchema: yup.ObjectSchema<QuotationWithoutArrays
     created: yup.date().default(() => new Date()).required('ระบุวันที่สร้าง'),
     updated: yup.date().default(() => new Date()),
     discountValue: yup.number().nullable().default(null),
+    deposit : yup.object({
+      firstDeposit: yup.number().default(0),
+      finalDeposit: yup.number().default(0),  
+    }),
     allTotal: yup.number().required(),
     noteToCustomer: yup.string().nullable().default(null),
     noteToTeam: yup.string().nullable().default(null),

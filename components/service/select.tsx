@@ -11,6 +11,7 @@ import {
 import {Appbar, Button, Text} from 'react-native-paper';
 import {Store} from '../../redux/store';
 import AddProductFormModal from './addNew';
+import { ServicesEmbed } from '@prisma/client';
 
 interface Props {
   visible: boolean;
@@ -32,7 +33,7 @@ const SelectProductModal: React.FC<Props> = ({
     dispatch,
   }: any = useContext(Store);
   const [showAddNewService, setShowAddNewService] = useState(false);
-  const [selectService, setSelectService] = useState<any>(null);
+  const [selectService, setSelectService] = useState<ServicesEmbed | null>(null);
   const [addNewService, setAddNewService] = useState(false);
   return (
     <>

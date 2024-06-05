@@ -1,4 +1,4 @@
-import { Company, Quotations, ServicesEmbed, User } from '@prisma/client';
+import { Company, Invoices, Quotations, ServicesEmbed, User } from '@prisma/client';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {StackNavigationProp} from '@react-navigation/stack';
 type InstallmentParams = {
@@ -123,7 +123,7 @@ export type ParamListBase = {
     services: ServicesEmbed[];
   };
   CreateByQuotation: {
-    quotation: Quotations;
+    invoice: Invoices;
     company: Company;
     services: ServicesEmbed[];
   };

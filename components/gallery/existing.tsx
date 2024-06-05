@@ -121,7 +121,7 @@ const GalleryScreen = ({
             : false,
         };
       });
-      const tagsCollectionPath = `${code}/gallery/Tags`;
+      const tagsCollectionPath = `${code}/gallery/tags`;
       const tagsRef = firebase.firestore().collection(tagsCollectionPath);
       const tagSnapshot = await tagsRef.get();
       const fetchedTags = tagSnapshot.docs.map(doc => ({
@@ -169,7 +169,6 @@ const GalleryScreen = ({
       setGalleryImages(initialGalleryImages);
     }
   };
-  console.log('galleryImages', galleryImages.length);
   return (
     <>
       <Modal
@@ -191,8 +190,8 @@ const GalleryScreen = ({
               }}>
               <Appbar.Action icon={'close'} onPress={() => onClose()} />
               <Appbar.Content
-                title={`เลือกภาพผลงานที่เคยทำ`}
-                titleStyle={{fontSize: 16, fontFamily: 'Sukhumvit Set Bold'}}
+                title={`เลือกภาพผลงานของคุณ`}
+                titleStyle={{fontSize: 18, }}
               />
               <Appbar.Action
                 icon={'plus'}

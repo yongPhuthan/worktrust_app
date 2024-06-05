@@ -41,37 +41,25 @@ const WarrantyModal = (props: Props) => {
     state: {defaultWarranty},
   } = useContext(Store);
 
-  const initialWarranty : WarrantyEmbed = {
-    id: uuidv4(),
-    productWarantyYear: 0,
-    skillWarantyYear: 0,
-    fixDays: 0,
-    condition: '',
-    dateWaranty: null,
-    endWaranty: null,
-  } ;
-
-  const {
-    control,
-    handleSubmit,
-    getValues,
-    formState: {isValid},
-  } = useForm({
-    mode: 'onChange',
-    defaultValues: defaultWarranty ? defaultWarranty : null,
-    resolver: yupResolver(warrantySchemas),
-  });
 
   const context = useFormContext();
-  const {register, setValue, watch} = context 
 
-  const warranty = context.watch('warranty');
+  const {
+    register,
+    control,
+    getValues,
+    setValue,
+    watch,
+    
+  } = context 
+
+  const warranty = watch('warranty');
 
   function safeToString(value: string | number | null | undefined) {
     return value !== undefined && value !== null ? value.toString() : '';
   }
-console.log('defaultWarranty', defaultWarranty)
 
+const isDisbled =  warranty.productWarantyYear === 0 || warranty.skillWarantyYear === 0 || warranty.fixDays === 0 || warranty.condition === ''
 
   const renderWanranty = (
     name: string,
@@ -120,12 +108,11 @@ console.log('defaultWarranty', defaultWarranty)
               />
             </View>
           )}
-          name={name}
+          name={name as any}
         />
       </View>
     </>
   );
-
   return (
     <Modal animationType="slide" visible={visible}>
       <Appbar.Header
@@ -148,19 +135,17 @@ console.log('defaultWarranty', defaultWarranty)
           }}
         />
         <Button
-          disabled={!isValid}
-          mode="contained"
-          onPress={async () => {
-            await setValue('warranty', getValues());
-            onClose();
-          }}
+          disabled={isDisbled}
+          mode="outlined"
+          onPress={()=> onClose()
+          }
           style={{marginRight: 5}}>
           {'บันทึก'}
         </Button>
       </Appbar.Header>
 
       <KeyboardAwareScrollView contentContainerStyle={{paddingBottom: 50}}>
-        {warranty ? (
+        {defaultWarranty ? (
           <SafeAreaView style={{flex: 1}}>
             <View style={styles.containerForm}>
               <TextPaper variant="headlineSmall">การรับประกัน</TextPaper>
@@ -168,19 +153,19 @@ console.log('defaultWarranty', defaultWarranty)
 
               <View style={styles.formInput}>
                 {renderWanranty(
-                  'productWarantyYear',
+                  'warranty.productWarantyYear',
                   'รับประกันวัสดุอุปกรณ์กี่เดือน',
                   safeToString(warranty.productWarantyYear),
                   'เดือน',
                 )}
                 {renderWanranty(
-                  'skillWarantyYear',
+                  'warranty.skillWarantyYear',
                   'รับประกันงานติดตั้งกี่เดือน',
                   safeToString(warranty.skillWarantyYear),
                   'เดือน',
                 )}
                 {renderWanranty(
-                  'fixDays',
+                  'warranty.fixDays',
                   'เมื่อมีปัญหาจะแก้ไขงานให้แล้วเสร็จภายในกี่วัน',
                   safeToString(warranty.fixDays),
                   'วัน',
@@ -211,8 +196,7 @@ console.log('defaultWarranty', defaultWarranty)
                         }}
                         textAlign="center"
                         placeholder=""
-                        defaultValue='
-                        รับประกันคุณภาพตัวสินค้า ตามมาตรฐานในการใช้งานตามปกติเท่านั้น ขอสงวนสิทธ์การรับประกันที่เกิดจากการใช้งานสินค้าที่ไม่ถูกต้องหรือความเสียหายที่เกิดจากภัยธรรมชาติ หรือ การใช้งานผิดประเภทหรือปัญหาจากการกระทําของบคุคลอื่น เช่นความเสียหายที่เกิดจากการทำงานของผู้รับเหมาทีมอื่นหรือบุคคลที่สามโดยตั้งใจหรือไม่ได้ตั้งใจ'
+                        defaultValue={defaultWarranty.condition}
                         multiline
                         numberOfLines={5}
                         error={!!error}
@@ -227,7 +211,7 @@ console.log('defaultWarranty', defaultWarranty)
                       )}
                     </View>
                   )}
-                  name="condition"
+                  name="warranty.condition"
                 />
               </View>
             </View>
@@ -240,19 +224,19 @@ console.log('defaultWarranty', defaultWarranty)
 
               <View style={styles.formInput}>
                 {renderWanranty(
-                  'productWarantyYear',
+                  'warranty.productWarantyYear',
                   'รับประกันวัสดุอุปกรณ์กี่เดือน',
                   '',
                   'เดือน',
                 )}
                 {renderWanranty(
-                  'skillWarantyYear',
+                  'warranty.skillWarantyYear',
                   'รับประกันงานติดตั้งกี่เดือน',
                   '',
                   'เดือน',
                 )}
                 {renderWanranty(
-                  'fixDays',
+                  'warranty.fixDays',
                   'เมื่อมีปัญหาจะแก้ไขงานให้แล้วเสร็จภายในกี่วัน',
                   '',
                   'วัน',
@@ -282,12 +266,15 @@ console.log('defaultWarranty', defaultWarranty)
                         <Text style={styles.errorText}>{error.message}</Text>
                       )}
                       <TextInput
-                        style={{width: Dimensions.get('window').width * 0.4,
+                        style={{
+                          
+                          width: Dimensions.get('window').width * 0.9,
                         height: Dimensions.get('window').height * 0.3
                         }}
                         textAlign="center"
+                        defaultValue='
+                        รับประกันคุณภาพตัวสินค้า ตามมาตรฐานในการใช้งานตามปกติเท่านั้น ขอสงวนสิทธ์การรับประกันที่เกิดจากการใช้งานสินค้าที่ไม่ถูกต้องหรือความเสียหายที่เกิดจากภัยธรรมชาติ หรือ การใช้งานผิดประเภทหรือปัญหาจากการกระทําของบคุคลอื่น เช่นความเสียหายที่เกิดจากการทำงานของผู้รับเหมาทีมอื่นหรือบุคคลที่สามโดยตั้งใจหรือไม่ได้ตั้งใจ'
                         multiline
-                        placeholder=" 1. รับประกันสินค้า 1 ปี"
                         numberOfLines={4}
                         error={!!error}
                         mode="outlined"
@@ -298,7 +285,7 @@ console.log('defaultWarranty', defaultWarranty)
                       />
                     </View>
                   )}
-                  name="condition"
+                  name="warranty.condition"
                 />
               </View>
             </View>

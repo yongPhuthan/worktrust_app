@@ -81,19 +81,27 @@ import {
   QuotationStatus,
   ServicesEmbed,
   WorkerEmbed,
+  QuotationDeposit,
   type CustomerEmbed,
   type Quotations,
   type WarrantyEmbed,
   TaxType,
 } from '@prisma/client';
 import {JsonValue} from '@prisma/client/runtime/library';
+import {CompanyState} from 'types';
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'Quotation'>;
 }
 
 const Quotation = ({navigation}: Props) => {
   const {
-    state: {companyState, editQuotation, defaultWarranty, sellerId,existingServices},
+    state: {
+      companyState,
+      editQuotation,
+      defaultWarranty,
+      sellerId,
+      existingServices,
+    },
     dispatch,
   }: any = useContext(Store);
 
@@ -107,7 +115,7 @@ const Quotation = ({navigation}: Props) => {
 
   const thaiDateFormatter = useThaiDateFormatter();
   const [addNewService, setAddNewService] = useState(false);
-
+  const [save, setSave] = useState<boolean>(false);
   // const [customerName, setCustomerName] = useState('');
   const [signaturePicker, setSignaturePicker] = useState(false);
   const [openNoteToCustomer, setOpenNoteToCustomer] = useState(false);
@@ -118,7 +126,7 @@ const Quotation = ({navigation}: Props) => {
   const [quotationServerId, setQuotationServerId] = useState<string | null>(
     null,
   );
-  const [pdfUrl, setPdfUrl] = useState<string | null>('true');
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [viewResult, setViewResult] = React.useState('');
   const [selectService, setSelectService] = useState<ServicesEmbed | null>(
     null,
@@ -196,11 +204,11 @@ const Quotation = ({navigation}: Props) => {
   };
 
   const initialWarranty: WarrantyEmbed = {
-    id: uuidv4(),
     productWarantyYear: 0,
     skillWarantyYear: 0,
     fixDays: 0,
-    condition: '',
+    condition:
+      'รับประกันคุณภาพตัวสินค้า ตามมาตรฐานในการใช้งานตามปกติเท่านั้น ขอสงวนสิทธ์การรับประกันที่เกิดจากการใช้งานสินค้าที่ไม่ถูกต้องหรือความเสียหายที่เกิดจากภัยธรรมชาติ หรือ การใช้งานผิดประเภทหรือปัญหาจากการกระทําของบคุคลอื่น เช่นความเสียหายที่เกิดจากการทำงานของผู้รับเหมาทีมอื่นหรือบุคคลที่สามโดยตั้งใจหรือไม่ได้ตั้งใจ',
     dateWaranty: null,
     endWaranty: null,
   };
@@ -246,6 +254,7 @@ const Quotation = ({navigation}: Props) => {
     taxValue: 0,
     summary: 0,
     summaryAfterDiscount: 0,
+    deposit: null,
     sellerId,
     discountType: DiscountType.PERCENT,
     discountPercentage: 0,
@@ -259,10 +268,10 @@ const Quotation = ({navigation}: Props) => {
     workers: [],
     FCMToken: fcmToken,
     sellerSignature: '',
-    warranty: defaultWarranty ? defaultWarranty : null,
+    warranty: defaultWarranty ? defaultWarranty : initialWarranty,
     status: QuotationStatus.PENDING, // Set the status to a valid QuotationStatus value
     dateApproved: null,
-    pdfUrl: '',
+    pdfUrl: null,
     updated: new Date(),
     created: new Date(),
     reviews: [],
@@ -363,8 +372,10 @@ const Quotation = ({navigation}: Props) => {
     openEditServiceModal();
     handleModalClose();
     setCurrentValue(currentValue);
-    openAddNewServiceModal();
     setServiceIndex(index);
+    if (!visibleModalIndex) {
+      openAddNewServiceModal();
+    }
   };
 
   const actions: any = {
@@ -377,17 +388,16 @@ const Quotation = ({navigation}: Props) => {
 
   const handleButtonPress = async () => {
     const data = {
-      quotation: methods.getValues(),
-      company: companyState,
+      quotation: methods.getValues() as Quotations,
+      company: companyState as CompanyState,
     };
     mutate(data);
+    setSave(true);
   };
 
   const handleInvoiceNumberChange = (text: string) => {
     methods.setValue('docNumber', text);
   };
-
-
 
   const handleRemoveService = (index: number) => {
     setVisibleModalIndex(null);
@@ -403,16 +413,13 @@ const Quotation = ({navigation}: Props) => {
   const handleStartDateSelected = (date: Date) => {
     setDateOfferFormatted(thaiDateFormatter(date));
     methods.setValue('dateOffer', date);
-
   };
-  
+
   const handleEndDateSelected = (date: Date) => {
     setDateEndFormatted(thaiDateFormatter(date));
     methods.setValue('dateEnd', date);
   };
 
-console.log('existingServices',existingServices)
-  
   return (
     <>
       <FormProvider {...methods}>
@@ -424,34 +431,49 @@ console.log('existingServices',existingServices)
           }}>
           <Appbar.BackAction
             onPress={() => {
-              Alert.alert(
-                'ปิดหน้าต่าง',
-                'ยืนยันไม่บันทึกข้อมูลและปิดหน้าต่าง',
-                [
-                  // The "No" button
-                  // Does nothing but dismiss the dialog when pressed
-                  {
-                    text: 'อยู่ต่อ',
-                    style: 'cancel',
-                  },
-                  // The "Yes" button
-                  {
-                    text: 'ปิดหน้าต่าง',
-                    onPress: () => navigation.goBack(),
-                  },
-                ],
-                {cancelable: false},
-              );
+              if (!save) {
+                Alert.alert(
+                  'ปิดหน้าต่าง',
+                  'ยืนยันไม่บันทึกข้อมูลและปิดหน้าต่าง',
+                  [
+                    // The "No" button
+                    // Does nothing but dismiss the dialog when pressed
+                    {
+                      text: 'อยู่ต่อ',
+                      style: 'cancel',
+                    },
+                    // The "Yes" button
+                    {
+                      text: 'ปิดหน้าต่าง',
+                      onPress: () => navigation.goBack(),
+                    },
+                  ],
+                  {cancelable: false},
+                );
+              } else {
+                navigation.goBack();
+              }
             }}
           />
-          <Appbar.Content
-            title="สร้างใบเสนอราคา"
-            titleStyle={{
-              fontSize: 18,
-              fontWeight: 'bold',
-              fontFamily: 'Sukhumvit Set Bold',
-            }}
-          />
+          <Appbar.Content title="" />
+          {quotationServerId && (
+            <IconButton
+              mode="outlined"
+              icon="web"
+              iconColor="gray"
+              onPress={openProjectModal}
+            />
+          )}
+          {pdfUrl && (
+            <IconButton
+              mode="outlined"
+              icon="file-document"
+              iconColor="gray"
+              onPress={openPDFModal}
+            />
+          )}
+          <Appbar.Content title="" />
+
           <Button
             loading={isPending}
             disabled={isDisabled}
@@ -466,8 +488,8 @@ console.log('existingServices',existingServices)
         <View style={{flex: 1}}>
           <KeyboardAwareScrollView style={styles.container}>
             <View style={styles.subContainerHead}>
+              <Text style={styles.textHeader}>ใบเสนอราคา</Text>
               <DatePickerButton
-              
                 label="วันที่เสนอราคา"
                 title="วันที่เสนอราคา"
                 date="today"
@@ -513,7 +535,7 @@ console.log('existingServices',existingServices)
                 <Text style={styles.label}>บริการ-สินค้า</Text>
               </View>
               {fields.length > 0 &&
-                fields.map((field: any, index: number) => (
+                fields.map((field, index: number) => (
                   <CardProject
                     handleModalClose={handleModalClose}
                     visibleModalIndex={visibleModalIndex === index}
@@ -586,7 +608,8 @@ console.log('existingServices',existingServices)
               <View style={styles.signatureRow}>
                 <Text style={styles.signHeader}>เพิ่มทีมงานติดตั้ง</Text>
                 <Switch
-                  trackColor={{false: '#767577', true: '#81b0ff'}}
+                  trackColor={{false: '#a5d6c1', true: '#4caf82'}}
+                  // trackColor={{false: '#767577', true: '#81b0ff'}}
                   thumbColor={workers.length > 0 ? '#ffffff' : '#f4f3f4'}
                   ios_backgroundColor="#3e3e3e"
                   onValueChange={useWorkers}
@@ -649,7 +672,7 @@ console.log('existingServices',existingServices)
               <View style={styles.signatureRow}>
                 <Text style={styles.signHeader}>เพิ่มลายเซ็น</Text>
                 <Switch
-                  trackColor={{false: '#767577', true: '#81b0ff'}}
+                  trackColor={{false: '#a5d6c1', true: '#4caf82'}}
                   thumbColor={sellerSignature ? '#ffffff' : '#f4f3f4'}
                   ios_backgroundColor="#3e3e3e"
                   onValueChange={useSignature}
@@ -675,7 +698,7 @@ console.log('existingServices',existingServices)
               <View style={styles.signatureRow}>
                 <Text style={styles.signHeader}>หมายเหตุ</Text>
                 <Switch
-                  trackColor={{false: '#767577', true: '#81b0ff'}}
+                  trackColor={{false: '#a5d6c1', true: '#4caf82'}}
                   thumbColor={openNoteToCustomer ? '#ffffff' : '#f4f3f4'}
                   ios_backgroundColor="#3e3e3e"
                   onValueChange={() =>
@@ -729,7 +752,7 @@ console.log('existingServices',existingServices)
               <View style={styles.signatureRow}>
                 <Text style={styles.signHeader}>โน๊ตภายในบริษัท</Text>
                 <Switch
-                  trackColor={{false: '#767577', true: '#81b0ff'}}
+                  trackColor={{false: '#a5d6c1', true: '#4caf82'}}
                   thumbColor={openNoteToTeam ? '#ffffff' : '#f4f3f4'}
                   ios_backgroundColor="#3e3e3e"
                   onValueChange={() => setOpenNoteToTeam(!openNoteToTeam)}
@@ -829,7 +852,7 @@ console.log('existingServices',existingServices)
         <SelectProductModal
           quotationId={quotationId}
           onAddService={newProduct => append(newProduct)}
-          currentValue={null}
+          currentValue={currentValue}
           visible={showAddExistingService}
           onClose={closeAddExistingServiceModal}
         />
@@ -852,35 +875,6 @@ console.log('existingServices',existingServices)
               visible={showPDFModal}
               onClose={closePDFModal}
               pdfUrl={pdfUrl}
-            />
-
-            <SegmentedButtons
-              style={{
-                margin: 10,
-                marginHorizontal: 20,
-              }}
-              value={viewResult}
-              onValueChange={setViewResult}
-              buttons={[
-                {
-                  value: 'preview',
-                  label: 'พรีวิว',
-                  icon: 'eye',
-                  onPress: () => openProjectModal(),
-                },
-                {
-                  value: 'train',
-                  label: 'สัญญา',
-                  icon: 'file-document',
-                  onPress: () => openPDFModal(),
-                },
-                {
-                  value: 'train',
-                  label: 'แชร์',
-                  icon: 'share-variant',
-                  onPress: handleShare,
-                },
-              ]}
             />
           </>
         )}
@@ -1037,6 +1031,13 @@ const styles = StyleSheet.create({
     alignContent: 'center',
 
     gap: 20,
+  },
+  textHeader: {
+    fontSize: 24,
+    fontFamily: 'SukhumvitSet-Bold',
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#343a40',
   },
   headerContract: {
     flexDirection: 'row',

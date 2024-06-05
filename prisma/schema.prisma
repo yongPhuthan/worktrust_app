@@ -8,50 +8,6 @@ datasource db {
     url = env("DATABASE_URL")
 }
 
-
-model Quotations {
-    id                   String             @id @default(auto()) @map("_id") @db.ObjectId
-    services             ServicesEmbed[]
-    vat7                 Float
-    taxType              TaxType            @default(NOTAX)
-    taxValue             Float               @default(0)
-    summary              Float                  
-    summaryAfterDiscount Float                     
-    discountType         DiscountType?      @default(PERCENT)
-    discountPercentage   Float?              @default(0)
-    discountValue        Float?
-    allTotal             Float
-    dateOffer            DateTime
-    dateEnd              DateTime
-    docNumber            String
-    FCMToken             String?
-    sellerSignature      String?
-    noteToCustomer       String?
-    noteToTeam           String?
-    status               QuotationStatus
-    dateApproved         DateTime?
-    reviews              ReviewsEmbed[]
-    submissions          SubmissionEmbed[]
-    pdfUrl               String?
-    sellerId             String?            @db.ObjectId
-    // periodPercent        Json[]
-    // contract             ContractsEmbed?
-    // ความสัมพันธ์กับ CompanyUser
-    companyId            String             @db.ObjectId
-    company              Company?           @relation(fields: [companyId], references: [id])
-    customer             CustomerEmbed
-    customerSign         CustomerSignEmbed?
-
-    // การอ้างอิงถึง Workers (ถ้าจำเป็น)
-    workers WorkerEmbed[]
-
-    // ข้อมูลเพิ่มเติม
-    created  DateTime      @default(now())
-    updated  DateTime      @updatedAt
-    warranty WarrantyEmbed
-
-    @@map("quotations")
-}
 model Account {
     id                 String   @id @default(auto()) @map("_id") @db.ObjectId
     userId             String   @db.ObjectId
@@ -122,33 +78,75 @@ model Company {
     @@map("companies")
 }
 
-
-
-model Invoices {
-    id                   String          @id @default(auto()) @map("_id") @db.ObjectId
+model Quotations {
+    id                   String             @id @default(auto()) @map("_id") @db.ObjectId
     services             ServicesEmbed[]
     vat7                 Float
-    taxType              TaxType         @default(NOTAX)
-    taxValue             Float
+    taxType              TaxType            @default(NOTAX)
+    taxValue             Float              @default(0)
     summary              Float
     summaryAfterDiscount Float
-    discountType         DiscountType    @default(PERCENT)
-    discountPercentage   Float           @default(0)
-    discountValue        Float
+    discountType         DiscountType?      @default(PERCENT)
+    discountPercentage   Float?             @default(0)
+    discountValue        Float?
     allTotal             Float
-    dateOffer            DateTime?
-    dateEnd              DateTime?
+    dateOffer            DateTime
+    dateEnd              DateTime
     docNumber            String
     FCMToken             String?
     sellerSignature      String?
-    status               String?
+    noteToCustomer       String?
+    noteToTeam           String?
+    status               QuotationStatus
+    dateApproved         DateTime?
+    reviews              ReviewsEmbed[]
+    submissions          SubmissionEmbed[]
+    pdfUrl               String?
+    sellerId             String?            @db.ObjectId
+    deposit              QuotationDeposit?
+    // periodPercent        Json[]
+    // contract             ContractsEmbed?
+    // ความสัมพันธ์กับ CompanyUser
+    companyId            String             @db.ObjectId
+    company              Company?           @relation(fields: [companyId], references: [id])
+    customer             CustomerEmbed
+    customerSign         CustomerSignEmbed?
+
+    // การอ้างอิงถึง Workers (ถ้าจำเป็น)
+    workers WorkerEmbed[]
+
+    // ข้อมูลเพิ่มเติม
+    created  DateTime      @default(now())
+    updated  DateTime      @updatedAt
+    warranty WarrantyEmbed
+
+    @@map("quotations")
+}
+
+model Invoices {
+    id                   String             @id @default(auto()) @map("_id") @db.ObjectId
+    services             ServicesEmbed[]
+    vat7                 Float
+    taxType              TaxType            @default(NOTAX)
+    taxValue             Float
+    summary              Float
+    summaryAfterDiscount Float
+    discountType         DiscountType?      @default(PERCENT)
+    discountPercentage   Float?             @default(0)
+    discountValue        Float?
+    allTotal             Float
+    dateOffer            DateTime
+    dateEnd              DateTime
+    docNumber            String
+    FCMToken             String?
+    sellerSignature      String?
+    status               InvoiceStatus?
     dateApproved         DateTime?
     noteToCustomer       String?
     noteToTeam           String?
-    paymentStatus        String          @default("PENDING")
+    paymentStatus        String?            @default("PENDING")
     pdfUrl               String?
     sellerId             String
-    periodPercent        Json[]
     customer             CustomerEmbed
     customerSign         CustomerSignEmbed?
 
@@ -170,53 +168,45 @@ model Invoices {
 }
 
 model Receipts {
-    id                   String          @id @default(auto()) @map("_id") @db.ObjectId
+    id                   String             @id @default(auto()) @map("_id") @db.ObjectId
     services             ServicesEmbed[]
     vat7                 Float
-    taxType              TaxType         @default(NOTAX)
+    taxType              TaxType            @default(NOTAX)
     taxValue             Float
     summary              Float
     summaryAfterDiscount Float
-    discountType         String          @default("PERCENT")
-    discountPercentage   Float           @default(0)
-    discountValue        Float
+    discountType         DiscountType?      @default(PERCENT)
+    discountPercentage   Float?             @default(0)
+    discountValue        Float?
     allTotal             Float
-    dateOffer            DateTime?
-    dateEnd              DateTime?
+    dateOffer            DateTime
+    dateEnd              DateTime
     docNumber            String
     FCMToken             String?
     sellerSignature      String?
-    // ยอดมัดจำ
-    depositPaid          Boolean?        @default(false)
-    depositApplied       Float?          @default(0)
-    netAmount            Float?
-    remaining            Float?
-    status         String?
-    dateApproved   DateTime?
-    paymentDate    DateTime? @default(now())
-    amountPaid     Float?
-    paymentMethod  String? // e.g., CASH, CREDIT_CARD, BANK_TRANSFER
-    note           String?
-    paymentType    String    @default("FINAL") // New field to distinguish between "DEPOSIT" and "FINAL" payment
-    pdfUrl         String?
-    sellerId       String
-    periodPercent  Json[]
-    // contract       Contracts?
-    noteToCustomer String?
-    noteToTeam     String?
-    // ความสัมพันธ์กับ CompanyUser
-    companyId      String    @db.ObjectId
-    company        Company?  @relation(fields: [companyId], references: [id])
-
-    customer CustomerEmbed
+    status               ReceiptStatus?
+    dateApproved         DateTime?
+    noteToCustomer       String?
+    noteToTeam           String?
+    paymentStatus        String?            @default("PENDING")
+    pdfUrl               String?
+    sellerId             String
+    customer             CustomerEmbed
     customerSign         CustomerSignEmbed?
 
-    // ข้อมูลเพิ่มเติม
+    netAmount      Float?
+    remaining      Float?
+    depositPaid    Boolean? @default(false)
+    depositApplied Float?   @default(0)
+    paymentMethod  String?
+    // ความสัมพันธ์กับ CompanyUser
+    companyId      String   @db.ObjectId
+    company        Company? @relation(fields: [companyId], references: [id])
+
     created            DateTime       @default(now())
     updated            DateTime       @updatedAt
     warranty           WarrantyEmbed?
     quotationRefNumber String?
-
     @@map("receipts")
 }
 
@@ -282,8 +272,6 @@ model VerificationToken {
     @@map("verification_tokens")
 }
 
-
-
 type WorkerEmbed {
     id           String
     name         String
@@ -293,7 +281,6 @@ type WorkerEmbed {
 }
 
 type WarrantyEmbed {
-    id                 String?
     skillWarantyYear   Int       @default(0)
     productWarantyYear Int
     fixDays            Int       @default(0)
@@ -317,10 +304,12 @@ type MaterialEmbed {
     description String
     image       String
 }
+
 type ServiceImagesEmbed {
     thumbnailUrl String
     originalUrl  String
 }
+
 type ServicesEmbed {
     id            String
     title         String
@@ -334,7 +323,7 @@ type ServicesEmbed {
     standards     StandardEmbed[]
     serviceImages ServiceImagesEmbed[]
     materials     MaterialEmbed[]
-    created       DateTime?             @default(now())
+    created       DateTime?            @default(now())
 }
 
 type InvoiceDepositEmbed {
@@ -354,8 +343,8 @@ type InvoiceDepositEmbed {
     noteToCustomer  String?
     noteToTeam      String?
     pdfUrl          String?
-    created         DateTime?  @default(now())
-    updated         DateTime?  @default(now())
+    created         DateTime? @default(now())
+    updated         DateTime? @default(now())
 }
 
 type FinalInvoiceEmbed {
@@ -376,8 +365,8 @@ type FinalInvoiceEmbed {
     noteToTeam      String?
     paymentStatus   String    @default("PENDING")
     pdfUrl          String?
-    created         DateTime?  @default(now())
-    updated         DateTime?  @default(now())
+    created         DateTime? @default(now())
+    updated         DateTime? @default(now())
 }
 
 type FinalReceiptEmbed {
@@ -398,8 +387,13 @@ type FinalReceiptEmbed {
     noteToTeam      String?
     paymentStatus   String    @default("PENDING")
     pdfUrl          String?
-    created         DateTime?  @default(now())
-    updated         DateTime?  @default(now())
+    created         DateTime? @default(now())
+    updated         DateTime? @default(now())
+}
+
+type QuotationDeposit {
+    firstDeposit Float
+    finalDeposit Float
 }
 
 type ReceiptDepositEmbed {
@@ -420,18 +414,16 @@ type ReceiptDepositEmbed {
     noteToTeam      String?
     paymentStatus   String    @default("PENDING")
     pdfUrl          String?
-    created         DateTime?  @default(now())
-    updated         DateTime?  @default(now())
+    created         DateTime? @default(now())
+    updated         DateTime? @default(now())
 }
 
-
-
 type CustomerEmbed {
-    id           String?
-    name         String
-    address      String
-    customerTax  String?
-    phone        String
+    id          String?
+    name        String
+    address     String
+    customerTax String?
+    phone       String
 }
 
 type CustomerSignEmbed {
@@ -453,25 +445,25 @@ type ReviewsEmbed {
     customerImage  String?
     reviewType     ReviewType @default(OVERALL)
     periodIndex    Int?
-    createdAt      DateTime?   @default(now())
+    createdAt      DateTime?  @default(now())
     updatedAt      DateTime?
 }
 
 type SubmissionEmbed {
-    id                        String
-    address                   String
-    dateOffer                 DateTime
-    services                  ServicesEmbed[]
-    workStatus                WorkStatus
-    approvalStatus            CheckStatus     @default(WAITING)
-    description               String
-    beforeImages              String[]
-    afterImages               String[]
-    imageCustomer             String?
-    customerFeedback          String?
-    createdAt                 DateTime?        @default(now())
-    updatedAt                 DateTime?        @default(now())
-    periodIndex               Int?            @default(0)
+    id               String
+    address          String
+    dateOffer        DateTime
+    services         ServicesEmbed[]
+    workStatus       WorkStatus
+    approvalStatus   CheckStatus     @default(WAITING)
+    description      String
+    beforeImages     String[]
+    afterImages      String[]
+    imageCustomer    String?
+    customerFeedback String?
+    createdAt        DateTime?       @default(now())
+    updatedAt        DateTime?       @default(now())
+    periodIndex      Int?            @default(0)
 }
 
 type ContractsEmbed {
@@ -487,9 +479,9 @@ type ContractsEmbed {
     installingDay       Int
     finishedDay         Int
     adjustPerDay        Float
-    skillWarantyYear    Int    @default(0)
+    skillWarantyYear    Int      @default(0)
     productWarantyYear  Int
-    fixDays             Int    @default(0)
+    fixDays             Int      @default(0)
     deposit             Float
 
     contractUpdateLogs ContractUpdateLogEmbed[]
@@ -535,7 +527,7 @@ type InvoiceEmbed {
     depositPaid        Boolean?       @default(false)
     depositApplied     Float?         @default(0)
     paymentMethod      String?
-    created            DateTime?       @default(now())
+    created            DateTime?      @default(now())
     warranty           WarrantyEmbed?
     quotationRefNumber String?
 }
@@ -580,7 +572,7 @@ type ReceiptEmbed {
     customer CustomerEmbed
 
     // ข้อมูลเพิ่มเติม
-    created            DateTime?       @default(now())
+    created            DateTime?      @default(now())
     warranty           WarrantyEmbed?
     quotationRefNumber String?
 }
@@ -612,15 +604,17 @@ enum QuotationStatus {
 }
 
 enum InvoiceStatus {
+    ALL
     PENDING
     BILLED
     INVOICED
 }
 
+
 enum ReceiptStatus {
+    ALL
     PENDING
     BILLED
-    
 }
 
 enum SubmissionStatus {

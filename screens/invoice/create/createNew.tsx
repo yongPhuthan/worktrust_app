@@ -65,7 +65,6 @@ import useSelectedDates from '../../../hooks/quotation/create/useSelectDates';
 import useThaiDateFormatter from '../../../hooks/utils/useThaiDateFormatter';
 import {TaxType} from '../../../models/Tax';
 import {Store} from '../../../redux/store';
-import {CompanySeller, Service} from '../../../types/docType';
 import {ParamListBase} from '../../../types/navigationType';
 import {quotationsValidationSchema} from '../../utils/validationSchema';
 import PDFModalScreen from '../../../components/webview/pdf';
@@ -75,6 +74,8 @@ import AddProductFormModal from '../../../components/service/addNew';
 import {useModal} from '../../../hooks/quotation/create/useModal';
 import useCreateNewInvoice from '../../../hooks/invoice/useCreateInvoice';
 import * as stateAction from '../../../redux/actions';
+import { CustomerEmbed, DiscountType, InvoiceStatus, Invoices, ServicesEmbed } from '@prisma/client';
+import { CompanyState } from 'types';
 
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'CreateNewInvoice'>;
@@ -82,7 +83,7 @@ interface Props {
 
 const CreateNewInvoice = ({navigation}: Props) => {
   const {
-    state: {companyState, editQuotation},
+    state: {companyState, editQuotation,sellerId},
     dispatch,
   }: any = useContext(Store);
 
@@ -102,14 +103,15 @@ const CreateNewInvoice = ({navigation}: Props) => {
   const [contractPicker, setContractPicker] = useState(false);
 
   const [workerPicker, setWorkerpicker] = useState(false);
+  const [save, setSave] = useState<boolean>(false);
 
   const [invoiceServerId, setInvoiceServerId] = useState<string | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>('');
   const [value, setValue] = React.useState('');
   const [openNoteToCustomer, setOpenNoteToCustomer] = useState(false);
   const [openNoteToTeam, setOpenNoteToTeam] = useState(false);
-  const [selectService, setSelectService] = useState<Service | null>(null);
-  const [currentValue, setCurrentValue] = useState<Service | null>(null);
+  const [selectService, setSelectService] = useState<ServicesEmbed | null>(null);
+  const [currentValue, setCurrentValue] = useState<ServicesEmbed | null>(null);
   const [signature, setSignature] = useState<string | null>(null);
   const quotationId = uuidv4();
   const [dateOfferFormatted, setDateOfferFormatted] = useState<string>(
@@ -173,38 +175,55 @@ const CreateNewInvoice = ({navigation}: Props) => {
     null,
   );
 
-  const defalutCustomer = {
+  const defalutCustomer: CustomerEmbed = {
+    id: uuidv4(),
     name: '',
     address: '',
     customerTax: '',
     phone: '',
   };
 
-  const quotationDefaultValues = {
+  const invoiceDefaultValue: Invoices = {
+    id: uuidv4(),
     services: [],
     customer: defalutCustomer,
-    company: companyState,
+    companyId: companyState.id,
+    quotationRefNumber: '',
     vat7: 0,
     taxType: TaxType.NOTAX,
     taxValue: 0,
     summary: 0,
     summaryAfterDiscount: 0,
-    discountType: 'PERCENT',
+    paymentMethod: '',
+    paymentStatus: '',
+    depositPaid: false,
+    depositApplied:0,
+    sellerId,
+    discountType: DiscountType.PERCENT,
+    FCMToken: '',
     discountPercentage: 0,
     discountValue: 0,
-    allTotal: 0,
+    allTotal:  0,
+    netAmount: 0,
+    remaining: 0,
     dateOffer: initialDateOffer,
     noteToCustomer: '',
     noteToTeam: '',
     dateEnd: initialDateEnd,
     docNumber: `IV${initialDocnumber}`,
-    FCMToken: fcmToken,
     sellerSignature: '',
-    quotationRefNumber: '',
+    warranty: editQuotation?.warranty ? editQuotation?.warranty : null,
+    status: InvoiceStatus.PENDING, // Set the status to a valid QuotationStatus value
+    dateApproved: null,
+    pdfUrl: '',
+    updated: new Date(),
+    created: new Date(),
+
+    customerSign: null,
   };
   const methods = useForm<any>({
     mode: 'all',
-    defaultValues: editQuotation ? editQuotation : quotationDefaultValues,
+    defaultValues: invoiceDefaultValue,
     resolver: yupResolver(quotationsValidationSchema),
   });
   const {fields, append, remove, update} = useFieldArray({
@@ -248,7 +267,7 @@ const CreateNewInvoice = ({navigation}: Props) => {
   const handleModalClose = () => {
     setVisibleModalIndex(null);
   };
-  const handleEditService = (index: number, currentValue: Service) => {
+  const handleEditService = (index: number, currentValue: ServicesEmbed) => {
     openEditServiceModal();
     handleModalClose();
     setCurrentValue(currentValue);
@@ -265,7 +284,13 @@ const CreateNewInvoice = ({navigation}: Props) => {
   const {mutate, isPending} = useCreateNewInvoice(actions);
 
   const handleButtonPress = async () => {
-    await mutate(methods.getValues());
+    const data = {
+      invoice: methods.getValues() as Invoices, // Add the missing 'invoice' property
+      quotation: methods.getValues() as Invoices,
+      company: companyState as CompanyState,
+    };
+    mutate(data);
+    //  mutate(methods.getValues());
   };
 
   const handleInvoiceNumberChange = (text: string) => {
@@ -305,7 +330,6 @@ const CreateNewInvoice = ({navigation}: Props) => {
       methods.setValue('docNumber', `IV${initialDocnumber}`);
     }
   }, [openNoteToCustomer, openNoteToTeam]);
-  console.log('editQuotation', editQuotation);
   return (
     <>
       <Appbar.Header
@@ -315,38 +339,37 @@ const CreateNewInvoice = ({navigation}: Props) => {
           backgroundColor: 'white',
         }}>
         <Appbar.BackAction
-          onPress={() => {
-            Alert.alert(
-              'ปิดหน้าต่าง',
-              'ยืนยันไม่บันทึกข้อมูลและปิดหน้าต่าง',
-              [
-                // The "No" button
-                // Does nothing but dismiss the dialog when pressed
-                {
-                  text: 'อยู่ต่อ',
-                  style: 'cancel',
-                },
-                // The "Yes" button
-                {
-                  text: 'ปิดหน้าต่าง',
-                  onPress: () => {
-                    dispatch(stateAction.get_edit_quotation(null));
-                    navigation.goBack();
-                  },
-                },
-              ],
-              {cancelable: false},
-            );
-          }}
+             onPress={() => {
+              if (!save) {
+                Alert.alert(
+                  'ปิดหน้าต่าง',
+                  'ยืนยันไม่บันทึกข้อมูลและปิดหน้าต่าง',
+                  [
+                    // The "No" button
+                    // Does nothing but dismiss the dialog when pressed
+                    {
+                      text: 'อยู่ต่อ',
+                      style: 'cancel',
+                    },
+                    // The "Yes" button
+                    {
+                      text: 'ปิดหน้าต่าง',
+                      onPress: () => navigation.goBack(),
+                    },
+                  ],
+                  {cancelable: false},
+                );
+              } else {
+                () => navigation.goBack();
+              }
+            }}
         />
-        <Appbar.Content
-          title="สร้างใบวางบิล"
-          titleStyle={{
-            fontSize: 18,
-            fontWeight: 'bold',
-            fontFamily: 'Sukhumvit Set Bold',
-          }}
-        />
+         <Appbar.Content title="" />
+
+          {pdfUrl && (
+        <IconButton mode='outlined' icon="file-document" iconColor='gray' onPress={openPDFModal} />
+          )}
+          <Appbar.Content title=""  />
         <Button
           loading={isPending}
           disabled={isDisabled}
@@ -360,6 +383,8 @@ const CreateNewInvoice = ({navigation}: Props) => {
         <View style={{flex: 1}}>
           <KeyboardAwareScrollView style={styles.container}>
             <View style={styles.subContainerHead}>
+            <Text style={styles.textHeader}>ใบวางบิล</Text>
+
               <DatePickerButton
                 label="วันที่"
                 title="วันที่"
@@ -442,8 +467,8 @@ const CreateNewInvoice = ({navigation}: Props) => {
               <View style={styles.signatureRow}>
                 <Text style={styles.signHeader}>เพิ่มลายเซ็น</Text>
                 <Switch
-                  trackColor={{false: '#767577', true: '#81b0ff'}}
-                  thumbColor={sellerSignature ? '#ffffff' : '#f4f3f4'}
+                trackColor={{false: '#a5d6c1', true: '#4caf82'}}
+                thumbColor={sellerSignature ? '#ffffff' : '#f4f3f4'}
                   ios_backgroundColor="#3e3e3e"
                   onValueChange={useSignature}
                   value={sellerSignature ? true : false}
@@ -468,8 +493,8 @@ const CreateNewInvoice = ({navigation}: Props) => {
               <View style={styles.signatureRow}>
                 <Text style={styles.signHeader}>หมายเหตุ</Text>
                 <Switch
-                  trackColor={{false: '#767577', true: '#81b0ff'}}
-                  thumbColor={openNoteToCustomer ? '#ffffff' : '#f4f3f4'}
+                trackColor={{false: '#a5d6c1', true: '#4caf82'}}
+                thumbColor={openNoteToCustomer ? '#ffffff' : '#f4f3f4'}
                   ios_backgroundColor="#3e3e3e"
                   onValueChange={() =>
                     setOpenNoteToCustomer(!openNoteToCustomer)
@@ -522,8 +547,8 @@ const CreateNewInvoice = ({navigation}: Props) => {
               <View style={styles.signatureRow}>
                 <Text style={styles.signHeader}>โน๊ตภายในบริษัท</Text>
                 <Switch
-                  trackColor={{false: '#767577', true: '#81b0ff'}}
-                  thumbColor={openNoteToTeam ? '#ffffff' : '#f4f3f4'}
+                trackColor={{false: '#a5d6c1', true: '#4caf82'}}
+                thumbColor={openNoteToTeam ? '#ffffff' : '#f4f3f4'}
                   ios_backgroundColor="#3e3e3e"
                   onValueChange={() => setOpenNoteToTeam(!openNoteToTeam)}
                   value={openNoteToTeam ? true : false}
@@ -640,34 +665,7 @@ const CreateNewInvoice = ({navigation}: Props) => {
               pdfUrl={pdfUrl}
             />
 
-            <SegmentedButtons
-              style={{
-                margin: 10,
-                marginHorizontal: 20,
-              }}
-              value={value}
-              onValueChange={setValue}
-              buttons={[
-                {
-                  value: 'preview',
-                  label: 'พรีวิว',
-                  icon: 'eye',
-                  onPress: () => openProjectModal(),
-                },
-                {
-                  value: 'train',
-                  label: 'สัญญา',
-                  icon: 'file-document',
-                  onPress: () => openPDFModal(),
-                },
-                {
-                  value: 'train',
-                  label: 'แชร์',
-                  icon: 'share-variant',
-                  onPress: handleShare,
-                },
-              ]}
-            />
+           
           </>
         )}
         {showAddNewService && (
@@ -917,6 +915,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 10,
     marginBottom: 10,
+  },
+  textHeader: {
+    fontSize: 24,
+    fontFamily: 'SukhumvitSet-Bold',
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#343a40',
   },
   pickerAndroidContainer: {
     borderWidth: 0.2,

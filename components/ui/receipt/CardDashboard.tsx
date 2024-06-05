@@ -1,4 +1,4 @@
-import { InvoiceStatus, QuotationStatus } from '@prisma/client';
+import { ReceiptStatus } from '@prisma/client';
 import React from 'react';
 import {
   Dimensions,
@@ -49,14 +49,11 @@ const CardDashBoard = (props: Props) => {
             <View
             style={{
               backgroundColor:
-                props.status === QuotationStatus.PENDING 
+                props.status ===  ReceiptStatus.PENDING
                   ? '#ccc'
-                  : props.status === QuotationStatus.APPROVED  
+                  : props.status === ReceiptStatus.BILLED 
                   ? '#43a047'
-                  : props.status === QuotationStatus.INVOICE_DEPOSIT || props.status === QuotationStatus.RECEIPT_DEPOSIT 
-                  ? '#1079ae'
-                  : props.status === QuotationStatus.SUBMITTED
-                  ? 'orange'
+                
                   : '#ccc',
               borderRadius: 4,
               paddingHorizontal: 8,
@@ -66,23 +63,15 @@ const CardDashBoard = (props: Props) => {
             }}>
             <Text
               style={{
-                color: props.status === QuotationStatus.PENDING ? '#000' : '#fff',
+                color: props.status === ReceiptStatus.PENDING ? '#000' : '#fff',
                 fontSize: 12,
                 fontWeight: 'bold',
                 textTransform: 'uppercase',
               }}>
-              {props.status === QuotationStatus.PENDING
-                ? 'รออนุมัติ'
-                : props.status === QuotationStatus.APPROVED
-                ? 'อนุมัติแล้ว'
-
-                : props.status === QuotationStatus.INVOICE_DEPOSIT
-                ? 'มัดจำใบวางบิล'
-                : props.status === QuotationStatus.RECEIPT_DEPOSIT
-                ? 'มัดจำใบเสร็จ'
-                : props.status === QuotationStatus.SUBMITTED
-                ? 'แจ้งส่งงานแล้ว'
-    
+              {props.status === ReceiptStatus.PENDING 
+                ? 'รอวางบิล'
+                : props.status === ReceiptStatus.BILLED
+                ? 'วางบิลแล้ว'
                 :''
                 }
             </Text>

@@ -1,10 +1,10 @@
-import { yupResolver } from '@hookform/resolvers/yup';
+import {yupResolver} from '@hookform/resolvers/yup';
 import Slider from '@react-native-community/slider';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { debounce } from 'lodash';
-import React, { useContext, useEffect, useState } from 'react';
-import { Controller, useForm, useWatch } from 'react-hook-form';
-import Marker, { Position } from 'react-native-image-marker';
+import {useQuery, useQueryClient} from '@tanstack/react-query';
+import {debounce, set} from 'lodash';
+import React, {useContext, useEffect, useState} from 'react';
+import {Controller, useForm, useWatch} from 'react-hook-form';
+import Marker, {Position} from 'react-native-image-marker';
 import Modal from 'react-native-modal';
 
 import {
@@ -17,7 +17,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
 import {
   Appbar,
@@ -27,16 +27,16 @@ import {
   Divider,
   IconButton,
   Switch,
-  TextInput
+  TextInput,
 } from 'react-native-paper';
-import { imageTogallery } from '../../screens/utils/validationSchema';
+import {imageTogallery} from '../../screens/utils/validationSchema';
 
-import { v4 as uuidv4 } from 'uuid';
+import {v4 as uuidv4} from 'uuid';
 import firebase from '../../firebase';
-import { useUploadToFirebase } from '../../hooks/useUploadtoFirebase';
-import { usePickImage } from '../../hooks/utils/image/usePickImage';
-import { useUser } from '../../providers/UserContext';
-import { Store } from '../../redux/store';
+import {useUploadToFirebase} from '../../hooks/useUploadtoFirebase';
+import {usePickImage} from '../../hooks/utils/image/usePickImage';
+import {useUser} from '../../providers/UserContext';
+import {Store} from '../../redux/store';
 
 interface ExistingModalProps {
   isVisible: boolean;
@@ -88,15 +88,16 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
   const [addNewTag, setAddNewTag] = useState(false);
   const [addWatermark, setAddWatermark] = useState(false);
   const [originalImage, setOriginalImage] = useState<string | null>(null);
-  const user = useUser();
+
   const imageId = uuidv4();
   const [inputValue, setInputValue] = useState<string>('');
   const [inputNewTag, setInputNewTag] = useState<string>('');
   const [tags, setTags] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [applyTrigger, setApplyTrigger] = useState(false);
+  const [brightness, setBrightness] = useState(1);
 
-  const [checked, setChecked] = React.useState('first');
+  const [checked, setChecked] = React.useState<string | null>(null);
 
   const [watermarkPosition, setWatermarkPosition] =
     useState<string>('Bottom Right');
@@ -327,6 +328,17 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
       </View>
     );
   }
+  const clearWatermark = () => {
+    setChecked(null);
+    setValue('image', originalImage ?? '', {shouldDirty: true}); // Reset to original image
+  };
+
+  const handleSwitchChange = (value: boolean) => {
+    setAddWatermark(value);
+    if (!value) {
+      clearWatermark();
+    }
+  };
 
   const applyWatermark = async () => {
     if (!originalImage) return;
@@ -345,6 +357,7 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
           position: {
             position: getPositionBasedOn(watermarkPosition),
           },
+          alpha: brightness,
         },
       ],
       scale: 1,
@@ -395,9 +408,7 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
         <Appbar.Content
           title={`เพิ่มรูปภาพใหม่`}
           titleStyle={{
-            fontSize: 16,
-            fontFamily: 'Sukhumvit Set Bold',
-            lineHeight: 24,
+            fontSize: 18,
           }}
         />
         <Button
@@ -414,9 +425,10 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
         style={styles.container}
         data={[{key: 'main'}]}
         renderItem={() => (
-          <View style={{
-            marginBottom: 80,
-          }}>
+          <View
+            style={{
+              marginBottom: 80,
+            }}>
             <Controller
               control={control}
               name="image"
@@ -445,7 +457,7 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
                 </TouchableOpacity>
               )}
             />
-                          <Divider style={{marginVertical: 10}} />
+            <Divider style={{marginVertical: 10}} />
 
             <View>
               {tags.length > 0 && (
@@ -455,7 +467,6 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
                     alignContent: 'center',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-              
                   }}>
                   <Text style={styles.label}>เลือกหมวดหมู่</Text>
                   <Button
@@ -504,10 +515,10 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
             <View style={styles.row}>
               <Text style={styles.signHeader}>เพิ่มโลโก้</Text>
               <Switch
-                trackColor={{false: '#767577', true: '#81b0ff'}}
+                trackColor={{false: '#a5d6c1', true: '#4caf82'}}
                 thumbColor={addWatermark ? '#ffffff' : '#f4f3f4'}
                 ios_backgroundColor="#3e3e3e"
-                onValueChange={() => setAddWatermark(!addWatermark)}
+                onValueChange={handleSwitchChange}
                 value={addWatermark ? true : false}
                 style={Platform.select({
                   ios: {
@@ -523,7 +534,6 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
                 <FlatList
                   data={WatermarkPositions}
                   horizontal={true}
-               
                   ItemSeparatorComponent={() => <View style={{width: 10}} />}
                   keyExtractor={(item, index) => index.toString()}
                   renderItem={({item}) => (
@@ -539,24 +549,43 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
                     </View>
                   )}
                 />
-                <View style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  marginTop: 10,
-                }}>
-                <Text style={styles.signHeader}>
-                </Text>
-                <Slider
-                  style={{width: '50%', height: 40}}
-                  minimumValue={0.1}
-                  maximumValue={0.3}
-                  value={logoScale}
-                  onValueChange={value => setLogoScale(value)}
-                  onSlidingComplete={debounce(applyWatermark, 1000)}
-                  minimumTrackTintColor="#1EB1FC"
-                  maximumTrackTintColor="#8e8e93"
-                  thumbTintColor="#1EB1FC"
-                />
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    marginTop: 10,
+                  }}>
+                  <Text style={styles.signHeader}>ปรับขนาด</Text>
+                  <Slider
+                    style={{width: '50%', height: 40}}
+                    minimumValue={0.1}
+                    maximumValue={0.3}
+                    value={logoScale}
+                    onValueChange={value => setLogoScale(value)}
+                    onSlidingComplete={debounce(applyWatermark, 1000)}
+                    minimumTrackTintColor="#4caf82"
+                    maximumTrackTintColor="#a5d6c1"
+                    thumbTintColor="#4caf82"
+                  />
+                </View>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    marginTop: 10,
+                  }}>
+                  <Text style={styles.signHeader}>ความสว่าง</Text>
+                  <Slider
+                    style={{width: '50%', height: 40}}
+                    minimumValue={0.1}
+                    maximumValue={1}
+                    value={brightness}
+                    onValueChange={value => setBrightness(value)}
+                    onSlidingComplete={debounce(applyWatermark, 1000)}
+                    minimumTrackTintColor="#4caf82"
+                    maximumTrackTintColor="#a5d6c1"
+                    thumbTintColor="#4caf82"
+                  />
                 </View>
               </>
             )}

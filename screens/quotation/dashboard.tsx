@@ -14,10 +14,13 @@ import {
   View,
 } from 'react-native';
 import Modal from 'react-native-modal';
-import {FilterButton} from '../../components/ui/Dashboard/FilterButton'; // Adjust the import path as necessary
+import {QuotationsFilterButton} from '../../components/ui/Dashboard/FilterButton'; // Adjust the import path as necessary
 import firebase from '../../firebase';
 import {useActiveFilter} from '../../hooks/dashboard/useActiveFilter';
-import {useFilteredData} from '../../hooks/dashboard/useFilteredData';
+import {
+  useFilteredData,
+  useFilteredInvoicesData,
+} from '../../hooks/dashboard/useFilteredData';
 import CardDashBoard from '../../components/CardDashBoard';
 import {useUser} from '../../providers/UserContext';
 import * as stateAction from '../../redux/actions';
@@ -49,6 +52,8 @@ import {
   Quotations,
   ServicesEmbed,
 } from '@prisma/client';
+import {CompanyState} from 'types';
+import useResetQuotation from '../../hooks/quotation/update/resetStatus';
 interface ErrorResponse {
   message: string;
   action: 'logout' | 'redirectToCreateCompany' | 'contactSupport' | 'retry';
@@ -76,14 +81,14 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   const [isLoadingAction, setIsLoadingAction] = useState(false);
   const queryClient = useQueryClient();
   const [isModalSignContract, setIsModalSignContract] = useState(false);
-  const [selectedItem, setSelectedItem] = useState(null) as any;
-  const [selectedIndex, setSelectedIndex] = useState(null) as any;
+  const [selectedItem, setSelectedItem] = useState<Quotations | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [originalData, setOriginalData] = useState<Quotations[] | null>(null);
   const filteredData = useFilteredData(
     originalData,
     activeFilter as QuotationStatus,
   );
-  const [companyData, setCompanyData] = useState<Company | null>(null);
+  const [companyData, setCompanyData] = useState<CompanyState | null>(null);
   const [quotationData, setQuotationData] = useState<Quotations[] | null>(null);
   const handleLogout = async () => {
     try {
@@ -183,6 +188,25 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
       {cancelable: false},
     );
   };
+
+  const {mutate: resetStatus, isPending: isReseting} = useResetQuotation();
+  const confirmResetQuotation = (id: string, customerName: string) => {
+    setShowModal(false);
+    Alert.alert(
+      'ยืนยันการรีเซ็ตสถานะ',
+      `ลูกค้า ${customerName}`,
+      [
+        {
+          text: 'ยกเลิก',
+          onPress: () => console.log('Cancel Pressed'),
+          style: 'cancel',
+        },
+        {text: 'รีเซ็ต', onPress: () => resetStatus(id)},
+      ],
+      {cancelable: false},
+    );
+  };
+
   useEffect(() => {
     if (data) {
       // If data[0] exists and has a non-null `code`, proceed with your logic
@@ -231,8 +255,12 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     QuotationStatus.SUBMITTED,
   ];
   const handleCreateContract = (index: number) => {
-    if (companyData && quotationData && quotationData.length > 0) {
-      console.log('quotationSelected', selectedItem);
+    if (
+      companyData &&
+      quotationData &&
+      quotationData.length > 0 &&
+      selectedItem
+    ) {
       navigation.navigate('ContractOptions', {
         id: selectedItem.id,
         sellerId: selectedItem.id,
@@ -242,6 +270,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     }
     setIsModalSignContract(false);
   };
+
   const handleSignContractModal = (item: Quotations, index: number) => {
     setSelectedItem(item);
     setSelectedIndex(index);
@@ -265,7 +294,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     quotation: Quotations,
   ) => {
     setIsLoadingAction(true);
-    dispatch(stateAction.get_companyID(data[0].id));
+    dispatch(stateAction.get_companyID(data?.company?.id as string));
     dispatch(stateAction.get_edit_quotation(quotation));
     setIsLoadingAction(false);
     handleModalClose();
@@ -281,6 +310,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   if (isError && error) {
     handleErrorResponse(error);
   }
+
   const renderItem = ({item, index}: any) => (
     <>
       <View style={{marginTop: 10}}>
@@ -295,7 +325,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
         />
       </View>
 
-      {selectedIndex === index && (
+      {selectedItem && selectedIndex === index && (
         <>
           <Portal>
             <PaperProvider>
@@ -413,18 +443,24 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                       />
                     </>
                   )}
-                  {selectedItem?.status !== QuotationStatus.INVOICE_DEPOSIT && (
+                  {selectedItem?.status === QuotationStatus.INVOICE_DEPOSIT && (
                     <>
                       <Divider />
                       <List.Item
-                        onPress={() => {}}
+                        onPress={() => {
+                          dispatch(
+                            stateAction.get_edit_quotation(selectedItem),
+                          );
+                          setShowModal(false);
+                          navigation.navigate('InvoiceDepositScreen');
+                        }}
                         centered={true}
                         title="วางบิลส่วนที่เหลือ"
                         titleStyle={{textAlign: 'center', color: 'black'}}
                       />
                     </>
                   )}
-                  {selectedItem?.status !== QuotationStatus.RECEIPT_DEPOSIT && (
+                  {selectedItem?.status === QuotationStatus.RECEIPT_DEPOSIT && (
                     <>
                       <Divider />
                       <List.Item
@@ -437,7 +473,12 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                   )}
                   <Divider />
                   <List.Item
-                    onPress={() => {}}
+                    onPress={() =>
+                      confirmResetQuotation(
+                        item.id,
+                        selectedItem?.customer?.name,
+                      )
+                    }
                     centered={true}
                     title="รีเซ็ต"
                     titleStyle={{textAlign: 'center', color: 'black'}}
@@ -459,10 +500,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                   <Divider />
                   <List.Item
                     onPress={() =>
-                      confirmRemoveQuotation(
-                        item.id,
-                        selectedItem?.customer?.name,
-                      )
+                      confirmRemoveQuotation(item.id, item?.customer?.name)
                     }
                     title="ลบ"
                     titleStyle={{textAlign: 'center', color: 'red'}}
@@ -504,7 +542,6 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
               titleStyle={{
                 fontSize: 18,
                 fontWeight: 'bold',
-                fontFamily: 'Sukhumvit Set Bold',
               }}
             />
             <Appbar.Action
@@ -514,7 +551,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
               // }}
             />
           </Appbar.Header>
-          {isLoadingAction ? (
+          {isLoadingAction  ? (
             <View
               style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
               <ActivityIndicator color="primary" />
@@ -527,7 +564,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                   showsHorizontalScrollIndicator={false}
                   data={filtersToShow}
                   renderItem={({item}) => (
-                    <FilterButton
+                    <QuotationsFilterButton
                       filter={item}
                       isActive={item === activeFilter}
                       onPress={() => {
@@ -538,9 +575,9 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                   keyExtractor={item => item}
                 />
               </View>
-              {isLoading || isLoadingAction ? (
+              {isLoading || isLoadingAction || isReseting ? (
                 <View style={styles.loadingContainer}>
-                  <ActivityIndicator size={'large'} />
+                  <ActivityIndicator color='#00674a' size={'large'} />
                 </View>
               ) : (
                 <View
@@ -645,11 +682,16 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                 <Text style={styles.modalText}>
                   คุณได้นัดเข้าดูพื้นที่หน้างานโครงการนี้เรียบร้อยแล้วหรือไม่ ?
                 </Text>
-                <TouchableOpacity
-                  style={styles.button}
-                  onPress={() => handleCreateContract(selectedIndex)}>
-                  <Text style={styles.whiteText}> ดูหน้างานแล้ว</Text>
-                </TouchableOpacity>
+                {selectedIndex !== null && (
+                  <TouchableOpacity
+                    style={styles.button}
+                    onPress={() => {
+                      handleCreateContract(selectedIndex);
+                    }}>
+                    <Text style={styles.whiteText}> ดูหน้างานแล้ว</Text>
+                  </TouchableOpacity>
+                )}
+
                 <TouchableOpacity
                   style={styles.button}
                   onPress={handleNoResponse}>

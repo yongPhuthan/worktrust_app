@@ -1,13 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Quotation } from 'types/docType';
 import { useUser } from '../../../providers/UserContext';
 import { BACK_END_SERVER_URL } from '@env';
-export interface InvoiceActions {
+import { Invoices, Receipts } from '@prisma/client';
+import { CompanyState } from 'types';
+import { Alert } from 'react-native';
+export interface ReceiptActions {
   setPdfUrl: (url: string) => void;
   openPDFModal: () => void;
 }
 // Pass actions via props
-const useCreateNewDepositInvoice = (actions: InvoiceActions) => {
+const useCreateNewDepositReceipt = (actions: ReceiptActions) => {
   const {  setPdfUrl, openPDFModal } = actions;
   const queryClient = useQueryClient();
   const user = useUser();
@@ -17,11 +19,10 @@ const useCreateNewDepositInvoice = (actions: InvoiceActions) => {
     throw new Error('User is not authenticated');
   }
 
-  const createDepositInvoice = async (data:any) => {
+  const createDepositReceipt = async (receipt: Receipts, company:CompanyState, quotationId:string) => {
     if (!user || !user.uid) {
       throw new Error('User is not available');
     }
-
     const token = await user.getIdToken(true);
     const response = await fetch(`${BACK_END_SERVER_URL}/api/invoice/createDepositInvoice`, {
       method: 'POST',
@@ -29,7 +30,7 @@ const useCreateNewDepositInvoice = (actions: InvoiceActions) => {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({data}),
+      body: JSON.stringify({receipt, company, quotationId}),
     });
 
     if (!response.ok) {
@@ -43,18 +44,22 @@ const useCreateNewDepositInvoice = (actions: InvoiceActions) => {
   };
 
   const { mutate, data, error, isError, isPending, isSuccess, reset } = useMutation( {
-    mutationFn: createDepositInvoice,
-    onSuccess: (responseData:any) => {
+    mutationFn: async (data: { receipt: Receipts, company: CompanyState,quotationId:string }) => {
+      const { receipt, company,quotationId } = data;
+      return createDepositReceipt(receipt, company,quotationId);
+    },
+    onSuccess: (responseData) => {
       setPdfUrl(responseData.pdfUrl);
       openPDFModal();
-      queryClient.invalidateQueries({queryKey: ['dashboardInvoice']});
+      queryClient.invalidateQueries({queryKey: ['dashboardData']});
     },
-    onError: (error: any) => {
+    onError: (error) => {
       console.error("Mutation error:", error.message);
+      Alert.alert('เกิดข้อผิดพลาด', error.message);
     }
   });
 
   return { mutate, data, error, isError, isPending, isSuccess, reset };
 };
 
-export default useCreateNewDepositInvoice;
+export default useCreateNewDepositReceipt;

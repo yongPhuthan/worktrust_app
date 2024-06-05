@@ -307,7 +307,7 @@ const CreateNewReceipt = ({navigation}: Props) => {
                 {
                   text: 'ปิดหน้าต่าง',
                   onPress: () => {
-                    dispatch(stateAction.get_edit_quotation(null));
+                    dispatch(stateAction.reset_edit_quotation());
 
                     navigation.goBack();
                   },

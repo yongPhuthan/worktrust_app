@@ -1,17 +1,51 @@
 // FilterButton.tsx
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { FilterLabels } from '../../../models/QuotationStatus'; // Adjust the import path as necessary
-import { QuotationStatus } from '@prisma/client';
+import { InvoicesFilterLabels, QuotationsFilterLabels, ReceiptsFilterLabels } from '../../../models/QuotationStatus'; // Adjust the import path as necessary
+import { InvoiceStatus, QuotationStatus, ReceiptStatus } from '@prisma/client';
 
-type FilterButtonProps = {
-    filter: QuotationStatus;
+type QuotationsFilterButtonProps = {
+    filter: QuotationStatus
+    isActive: boolean;
+    onPress: () => void;
+  };
+  type InvoicesFilterButtonProps = {
+    filter: InvoiceStatus
     isActive: boolean;
     onPress: () => void;
   };
 
-export const FilterButton: React.FC<FilterButtonProps> = ({ filter, isActive, onPress }) => {
-    const displayText = FilterLabels[filter];
+  type ReceiptsFilterButtonProps = {
+    filter: ReceiptStatus
+    isActive: boolean;
+    onPress: () => void;
+  };
+
+
+
+export const QuotationsFilterButton: React.FC<QuotationsFilterButtonProps> = ({ filter, isActive, onPress }) => {
+    const displayText = QuotationsFilterLabels[filter as keyof typeof QuotationsFilterLabels];
+    return (
+      <TouchableOpacity
+        style={[styles.filterButton, isActive ? styles.activeFilter : null]}
+        onPress={onPress}>
+        <Text style={isActive ? { color: 'white' } : null}>{ displayText}</Text>
+      </TouchableOpacity>
+    );
+  };
+  export const InvoicesFilterButton: React.FC<InvoicesFilterButtonProps> = ({ filter, isActive, onPress }) => {
+    const displayText = InvoicesFilterLabels[filter as keyof typeof InvoicesFilterLabels];
+    return (
+      <TouchableOpacity
+        style={[styles.filterButton, isActive ? styles.activeFilter : null]}
+        onPress={onPress}>
+        <Text style={isActive ? { color: 'white' } : null}>{ displayText}</Text>
+      </TouchableOpacity>
+    );
+  };
+
+  export const ReceiptsFilterButton: React.FC<ReceiptsFilterButtonProps> = ({ filter, isActive, onPress }) => {
+    const displayText = ReceiptsFilterLabels[filter as keyof typeof ReceiptsFilterLabels];
     return (
       <TouchableOpacity
         style={[styles.filterButton, isActive ? styles.activeFilter : null]}

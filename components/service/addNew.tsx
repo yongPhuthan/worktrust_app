@@ -204,13 +204,12 @@ const AddProductFormModal = (props: Props) => {
           title="เพิ่มสินค้า-บริการ"
           titleStyle={{
             fontSize: 18,
-            fontFamily: 'Sukhumvit Set Bold',
             fontWeight: 'bold',
           }}
         />
         <Button
           disabled={!isButtonDisbled}
-          mode="contained"
+          mode="outlined"
           onPress={handleDone}>
           {'บันทึก'}
         </Button>

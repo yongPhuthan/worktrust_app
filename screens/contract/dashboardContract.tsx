@@ -13,10 +13,10 @@ import {
   View
 } from 'react-native';
 import Modal from 'react-native-modal';
-import { FilterButton } from '../../components/ui/Dashboard/FilterButton'; // Adjust the import path as necessary
+import { QuotationsFilterButton } from '../../components/ui/Dashboard/FilterButton'; // Adjust the import path as necessary
 import firebase from '../../firebase';
 import { useActiveFilter } from '../../hooks/dashboard/useActiveFilter';
-import { useFilteredData } from '../../hooks/dashboard/useFilteredData';
+import { useFilteredInvoicesData } from '../../hooks/dashboard/useFilteredData';
 import {
   QuotationStatus,
   QuotationStatusKey
@@ -55,7 +55,7 @@ const DashboardContract = ({navigation}: DashboardScreenProps) => {
   const [originalData, setOriginalData] = useState<Quotation[] | null>(null);
   const {activeFilter, updateActiveFilter} = useActiveFilter();
 
-  const filteredData = useFilteredData(originalData, activeFilter);
+  const filteredData = useFilteredInvoicesData(originalData, activeFilter);
 
   const {dispatch}: any = useContext(Store);
 
@@ -362,7 +362,7 @@ const DashboardContract = ({navigation}: DashboardScreenProps) => {
                   showsHorizontalScrollIndicator={false}
                   data={filtersToShow}
                   renderItem={({item}) => (
-                    <FilterButton
+                    <QuotationsFilterButton
                       filter={item as QuotationStatusKey}
                       isActive={item === activeFilter}
                       onPress={() => {

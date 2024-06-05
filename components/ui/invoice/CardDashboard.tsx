@@ -49,14 +49,13 @@ const CardDashBoard = (props: Props) => {
             <View
             style={{
               backgroundColor:
-                props.status === QuotationStatus.PENDING 
+                props.status ===  InvoiceStatus.PENDING
                   ? '#ccc'
-                  : props.status === QuotationStatus.APPROVED  
+                  : props.status === InvoiceStatus.BILLED 
                   ? '#43a047'
-                  : props.status === QuotationStatus.INVOICE_DEPOSIT || props.status === QuotationStatus.RECEIPT_DEPOSIT 
+                  : props.status ===  InvoiceStatus.INVOICED
                   ? '#1079ae'
-                  : props.status === QuotationStatus.SUBMITTED
-                  ? 'orange'
+                
                   : '#ccc',
               borderRadius: 4,
               paddingHorizontal: 8,
@@ -66,23 +65,17 @@ const CardDashBoard = (props: Props) => {
             }}>
             <Text
               style={{
-                color: props.status === QuotationStatus.PENDING ? '#000' : '#fff',
+                color: props.status === InvoiceStatus.PENDING ? '#000' : '#fff',
                 fontSize: 12,
                 fontWeight: 'bold',
                 textTransform: 'uppercase',
               }}>
-              {props.status === QuotationStatus.PENDING
-                ? 'รออนุมัติ'
-                : props.status === QuotationStatus.APPROVED
-                ? 'อนุมัติแล้ว'
-
-                : props.status === QuotationStatus.INVOICE_DEPOSIT
-                ? 'มัดจำใบวางบิล'
-                : props.status === QuotationStatus.RECEIPT_DEPOSIT
-                ? 'มัดจำใบเสร็จ'
-                : props.status === QuotationStatus.SUBMITTED
-                ? 'แจ้งส่งงานแล้ว'
-    
+              {props.status === InvoiceStatus.PENDING 
+                ? 'รอวางบิล'
+                : props.status === InvoiceStatus.BILLED
+                ? 'วางบิลแล้ว'
+                : props.status === InvoiceStatus.INVOICED
+                ? 'เปิดบิลแล้ว'
                 :''
                 }
             </Text>

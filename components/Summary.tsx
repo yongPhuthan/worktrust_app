@@ -195,7 +195,7 @@ const Summary = ({vat7Props, taxProps, pickerTaxProps}: Props) => {
       <View style={styles.summary}>
         <Text style={styles.summaryTaxVat}>หัก ณ ที่จ่าย</Text>
         <Switch
-          trackColor={{false: '#767577', true: '#81b0ff'}}
+                trackColor={{false: '#a5d6c1', true: '#4caf82'}}
           thumbColor={pickerVisible ? '#ffffff' : '#f4f3f4'}
           ios_backgroundColor="#3e3e3e"
           onValueChange={() => setPickerVisible(!pickerVisible)}
@@ -231,8 +231,8 @@ const Summary = ({vat7Props, taxProps, pickerTaxProps}: Props) => {
       <View style={styles.summary}>
         <Text style={[styles.summaryTaxVat]}>ภาษีมูลค่าเพิ่ม </Text>
         <Switch
-          trackColor={{false: '#767577', true: '#81b0ff'}}
-          thumbColor={pickerVisible ? '#ffffff' : '#f4f3f4'}
+                trackColor={{false: '#a5d6c1', true: '#4caf82'}}
+                thumbColor={pickerVisible ? '#ffffff' : '#f4f3f4'}
           ios_backgroundColor="#3e3e3e"
           onValueChange={() => setVat7Picker(!vat7Picker)}
           value={vat7Picker}

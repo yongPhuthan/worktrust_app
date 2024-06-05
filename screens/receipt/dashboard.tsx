@@ -1,25 +1,36 @@
-import { BACK_END_SERVER_URL } from '@env';
+import {BACK_END_SERVER_URL} from '@env';
 import messaging from '@react-native-firebase/messaging';
-import { DrawerActions } from '@react-navigation/native';
-import { useQueryClient } from '@tanstack/react-query';
-import React, { useContext, useEffect, useState } from 'react';
+import {DrawerActions} from '@react-navigation/native';
+import {useQueryClient} from '@tanstack/react-query';
+
+import React, {useContext, useEffect, useState} from 'react';
 import {
   Alert,
   Dimensions,
   FlatList,
   StyleSheet,
   Text,
-  View
+  View,
 } from 'react-native';
 import Modal from 'react-native-modal';
-import CardDashBoard from '../../components/CardDashBoard';
-import { FilterButton } from '../../components/ui/Dashboard/FilterButton'; // Adjust the import path as necessary
-import { useActiveFilter } from '../../hooks/dashboard/useActiveFilter';
-import { useFilteredData } from '../../hooks/dashboard/useFilteredData';
-import { useUser } from '../../providers/UserContext';
+import CardDashBoard from '../../components/ui/invoice/CardDashboard';
+import {
+  
+  QuotationsFilterButton,
+  ReceiptsFilterButton,
+} from '../../components/ui/Dashboard/FilterButton'; // Adjust the import path as necessary
+import firebase from '../../firebase';
+import {
+  useActiveFilter,
+  useActiveInvoiceFilter,
+  useActiveReceiptFilter,
+} from '../../hooks/dashboard/useActiveFilter';
+import {useFilteredInvoicesData} from '../../hooks/dashboard/useFilteredData';
+import {useUser} from '../../providers/UserContext';
 import * as stateAction from '../../redux/actions';
-import { Store } from '../../redux/store';
-import { DashboardScreenProps } from '../../types/navigationType';
+import {Store} from '../../redux/store';
+
+import {DashboardScreenProps} from '../../types/navigationType';
 
 import {
   ActivityIndicator,
@@ -29,34 +40,81 @@ import {
   Icon,
   List,
   PaperProvider,
-  Portal
+  Portal,
 } from 'react-native-paper';
-import { requestNotifications } from 'react-native-permissions';
-import useFetchDashboardInvoice from '../../hooks/invoice/queryInvoices';
-import {
-  QuotationStatus,
-  QuotationStatusKey,
-} from '../../models/QuotationStatus';
-import useFetchDashboardReceipt from '../../hooks/receipt/queryInvoices';
-import { Company, CustomerEmbed, Quotations, ServicesEmbed } from '@prisma/client';
+import {requestNotifications} from 'react-native-permissions';
 
-const ReceiptDashboard = ({navigation}: DashboardScreenProps) => {
+import {
+  Company,
+  CustomerEmbed,
+  ReceiptStatus,
+  Receipts,
+  ServicesEmbed,
+} from '@prisma/client';
+import useFetchDashboardInvoice from '../../hooks/invoice/queryInvoices';
+import {useModal} from '../../hooks/quotation/create/useModal';
+interface ErrorResponse {
+  message: string;
+  action: 'logout' | 'redirectToCreateCompany' | 'contactSupport' | 'retry';
+}
+
+const Dashboard = ({navigation}: DashboardScreenProps) => {
   const [showModal, setShowModal] = useState(true);
   const user = useUser();
-  const {data, isLoading, isError, error} = useFetchDashboardReceipt();
-  const {activeFilter, updateActiveFilter} = useActiveFilter();
+  const {
+    openModal: openPDFModal,
+    closeModal: closePDFModal,
+    isVisible: showPDFModal,
+  } = useModal();
+  const {
+    openModal: openProjectModal,
+    closeModal: closeProjectModal,
+    isVisible: showProjectModal,
+  } = useModal();
+  const {dispatch}: any = useContext(Store);
+  const {data, isLoading, isError, error} = useFetchDashboardInvoice();
+  const {activeFilter, updateActiveFilter} = useActiveReceiptFilter();
   const {width, height} = Dimensions.get('window');
   const [isLoadingAction, setIsLoadingAction] = useState(false);
   const queryClient = useQueryClient();
-  const [visible, setVisible] = useState(false);
   const [isModalSignContract, setIsModalSignContract] = useState(false);
-  const [selectedItem, setSelectedItem] = useState(null) as any;
-  const [selectedIndex, setSelectedIndex] = useState(null) as any;
-  const [originalData, setOriginalData] = useState<Quotations[] | null>(null);
-  const {dispatch}: any = useContext(Store);
-  const filteredData = useFilteredData(originalData, activeFilter);
+  const [selectedItem, setSelectedItem] = useState<Receipts | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [originalData, setOriginalData] = useState<Receipts[] | null>(null);
+  const filteredData = useFilteredInvoicesData(
+    originalData,
+    activeFilter as ReceiptStatus,
+  );
   const [companyData, setCompanyData] = useState<Company | null>(null);
-  const [receiptData, setReceiptData] = useState<Quotations[] | null>(null);
+  const [invoicesData, setReceiptsData] = useState<Receipts[] | null>(null);
+  const handleLogout = async () => {
+    try {
+      await firebase.auth().signOut();
+      navigation.reset({
+        index: 0,
+        routes: [{name: 'FirstAppScreen'}],
+      });
+    } catch (error) {
+      console.error('Failed to sign out: ', error);
+    }
+  };
+  const handleErrorResponse = (error: ErrorResponse) => {
+    switch (error.message) {
+      case 'logout':
+        handleLogout();
+        break;
+      case 'redirectToCreateCompany':
+        navigation.navigate('CreateCompanyScreen');
+        break;
+      case 'retry':
+        console.log('Retrying...');
+        // Implement retry logic here if necessary
+        break;
+      default:
+        console.error('Unhandled error action:', error.message);
+    }
+  };
+
   const handleNoResponse = () => {
     setIsModalSignContract(false);
   };
@@ -79,9 +137,9 @@ const ReceiptDashboard = ({navigation}: DashboardScreenProps) => {
     try {
       const token = await user.getIdToken(true);
       const response = await fetch(
-        `${BACK_END_SERVER_URL}/api/documents/removeQuotation?id=${encodeURIComponent(
+        `${BACK_END_SERVER_URL}/api/invoice/deleteInvoice?id=${encodeURIComponent(
           id,
-        )}}`,
+        )}`,
         {
           method: 'DELETE',
           headers: {
@@ -93,25 +151,25 @@ const ReceiptDashboard = ({navigation}: DashboardScreenProps) => {
 
       if (response.ok) {
         queryClient.invalidateQueries({
-          queryKey: ['dashboardQuotation'],
+          queryKey: ['dashboardInvoices'],
         });
         setIsLoadingAction(false);
       } else {
         // It's good practice to handle HTTP error statuses
         const errorResponse = await response.text(); // or response.json() if the server responds with JSON
-        console.error('Failed to delete quotation:', errorResponse);
+        console.error('Failed to delete invoice:', errorResponse);
         setIsLoadingAction(false);
         // Display a more specific error message if possible
-        Alert.alert('Error', 'Failed to delete quotation. Please try again.');
+        Alert.alert('Error', 'Failed to delete invoice. Please try again.');
       }
     } catch (err) {
       console.error('An error occurred:', err);
       setIsLoadingAction(false);
-      Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถลบใบเสนอราคาได้');
+      Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถลบเอกสารได้');
     }
   };
 
-  const confirmRemoveQuotation = (id: string, customer: CustomerEmbed) => {
+  const confirmRemoveReceipt = (id: string, customer: CustomerEmbed) => {
     setShowModal(false);
     Alert.alert(
       'ยืนยันลบเอกสาร',
@@ -129,15 +187,21 @@ const ReceiptDashboard = ({navigation}: DashboardScreenProps) => {
   };
   useEffect(() => {
     if (data) {
-      // Ensuring data[0] exists and has a property `code` before attempting to access it
-      if (!data[0]) {
-        navigation.navigate('CreateCompanyScreen');
-      } else {
-        // If data[0] exists and has a non-null `code`, proceed with your logic
-        setCompanyData(data[0]);
-        setReceiptData(data[1]);
-        setOriginalData(data[1]);
+      // If data[0] exists and has a non-null `code`, proceed with your logic
+      const onlyCompany = {
+        ...data.company,
+        receipts: [],
+      };
+      setCompanyData(onlyCompany);
+      if (
+        !data.company ||
+        !data.company.receipts ||
+        data.company.receipts.length === 0
+      ) {
+        return;
       }
+      setReceiptsData(data.company.receipts);
+      setOriginalData(data.company.receipts);
     }
   }, [data]);
 
@@ -156,20 +220,34 @@ const ReceiptDashboard = ({navigation}: DashboardScreenProps) => {
     }
   }, [user]);
 
-  const filtersToShow: QuotationStatusKey[] = [
-    QuotationStatus.ALL,
-    QuotationStatus.PENDING,
-    QuotationStatus.APPROVED,
-    QuotationStatus.CONTRACT,
-    QuotationStatus.ONPROCESS,
+  useEffect(() => {
+    // ใช้ useEffect เพื่อตรวจสอบการเปลี่ยนแปลงของ showProjectModal และ showPDFModal
+    // และทำการเปลี่ยนแปลงค่าของ showModal ให้เป็น false เพื่อปิด Modal
+    // ที่เปิดอยู่ก่อนหน้านี้
+    if (showProjectModal || showPDFModal) {
+      setShowModal(false);
+    }
+  }, [showProjectModal, showPDFModal]);
+
+  const filtersToShow = [
+    ReceiptStatus.ALL,
+    ReceiptStatus.PENDING,
+    ReceiptStatus.BILLED,
   ];
-  const handleSignContractModal = (item: Quotations, index: number) => {
-    setSelectedItem(item);
-    setSelectedIndex(index);
-    setShowModal(false);
-    setIsModalSignContract(true);
-  };
-  const handleModalOpen = (item: Quotations, index: number) => {
+  // const handleCreateContract = (index: number) => {
+  //   if (companyData && invoicesData && invoicesData.length > 0) {
+  //     console.log('quotationSelected', selectedItem);
+  //     navigation.navigate('ContractOptions', {
+  //       id: selectedItem.id,
+  //       sellerId: selectedItem.id,
+  //       allTotal: selectedItem.allTotal,
+  //       customerName: selectedItem.customer?.name as string,
+  //     });
+  //   }
+  //   setIsModalSignContract(false);
+  // };
+
+  const handleModalOpen = (item: Receipts, index: number) => {
     setSelectedItem(item);
     setSelectedIndex(index);
     // handleModal(item, index);
@@ -181,17 +259,24 @@ const ReceiptDashboard = ({navigation}: DashboardScreenProps) => {
     setSelectedIndex(null);
     setShowModal(false);
   };
-  const editReveipt = async (services: ServicesEmbed[], quotation: Quotations) => {
+  const editInvoice = async (services: ServicesEmbed[], invoice: Receipts) => {
     setIsLoadingAction(true);
-    dispatch(stateAction.get_companyID(data[0].id));
+    dispatch(stateAction.get_companyID(invoice.companyId));
+    dispatch(stateAction.get_edit_invoice(invoice));
     setIsLoadingAction(false);
     handleModalClose();
-    navigation.navigate('EditQuotation', {
-      quotation,
-      company: data[0],
-      services,
-    });
+    navigation.navigate('CreateNewInvoice');
+
+    // navigation.navigate('EditQuotation', {
+    //   quotation,
+    //   company: data[0],
+    //   services,
+    // });
   };
+
+  if (isError && error) {
+    handleErrorResponse(error);
+  }
   const renderItem = ({item, index}: any) => (
     <>
       <View style={{marginTop: 10}}>
@@ -206,85 +291,84 @@ const ReceiptDashboard = ({navigation}: DashboardScreenProps) => {
         />
       </View>
 
-      {selectedIndex === index && (
-        <Portal>
-          <PaperProvider>
-            <Modal
-              backdropOpacity={0.1}
-              backdropTransitionOutTiming={100}
-              onBackdropPress={handleModalClose}
-              isVisible={showModal}
-              style={styles.modalContainer}
-              onDismiss={handleModalClose}>
-              <List.Section
-                style={{
-                  width: '100%',
-                }}>
-                <List.Subheader
+      {selectedIndex === index && selectedItem && (
+        <>
+          <Portal>
+            <PaperProvider>
+              <Modal
+                backdropOpacity={0.1}
+                backdropTransitionOutTiming={100}
+                onBackdropPress={handleModalClose}
+                isVisible={showModal}
+                style={styles.modalContainer}
+                onDismiss={handleModalClose}>
+                <List.Section
                   style={{
-                    textAlign: 'center',
-                    fontWeight: 'bold',
-                    fontFamily: 'Sukhumvit Set Bold',
-                    color: 'gray',
+                    width: '100%',
                   }}>
-                  {item.customer?.name}
-                </List.Subheader>
-                <Divider />
-                <List.Item
-                  onPress={() => {
-                    handleModalClose();
-                    navigation.navigate('DocViewScreen', {id: item.id});
-                  }}
-                  centered={true}
-                  title="พรีวิวเอกสาร"
-                  titleStyle={{textAlign: 'center', color: 'black'}} // จัดให้ข้อความอยู่ตรงกลาง
-                />
+                  <List.Subheader
+                    style={{
+                      textAlign: 'center',
+                      fontWeight: 'bold',
+                      fontFamily: 'Sukhumvit Set Bold',
+                      color: 'gray',
+                    }}>
+                    {item.customer?.name}
+                  </List.Subheader>
+                  <Divider />
 
-                <Divider />
+                  {selectedItem?.status === ReceiptStatus.PENDING && (
+                    <>
+                      <List.Item
+                        onPress={() => {
+                          setShowModal(false);
+                          editInvoice(selectedItem.services, selectedItem);
+                        }}
+                        title="แก้ไข"
+                        titleStyle={{textAlign: 'center', color: 'black'}}
+                      />
 
-                {selectedItem?.status === QuotationStatus.PENDING && (
-                  <>
-                    <List.Item
-                      onPress={() => {
-                        setShowModal(false);
-                        editReveipt(selectedItem.services, selectedItem);
-                      }}
-                      title="แก้ไขเอกสาร"
-                      titleStyle={{textAlign: 'center', color: 'black'}} // จัดให้ข้อความอยู่ตรงกลาง
-                    />
+                      <Divider />
+                 
+                      <List.Item
+                        onPress={() => {
+                          dispatch(stateAction.get_edit_invoice(selectedItem));
+                          setShowModal(false);
+                          navigation.navigate('ReceiptDepositScreen');
+                        }}
+                        title="เปิดบิลแล้ว"
+                        titleStyle={{textAlign: 'center'}}
+                      />
+          
+                    </>
+                  )}
+                
+                  {selectedItem?.status === ReceiptStatus.BILLED && (
+                    <>
+                      <Divider />
+                      <List.Item
+                        onPress={() => {}}
+                        centered={true}
+                        title="รีเซ็ต"
+                        titleStyle={{textAlign: 'center', color: 'black'}}
+                      />
+                    </>
+                  )}
 
-                    <Divider />
-                    <List.Item
-                      onPress={() =>
-                        confirmRemoveQuotation(
-                          item.id,
-                          selectedItem?.customer?.name,
-                        )
-                      }
-                      title="ลบเอกสาร"
-                      titleStyle={{textAlign: 'center', color: 'red'}} // จัดให้ข้อความอยู่ตรงกลาง
-                    />
+                  <Divider />
 
-                    <Divider />
-                  </>
-                )}
-                {selectedItem?.status !== QuotationStatus.APPROVED && (
-                  <>
-                    <Divider />
-                    <List.Item
-                      onPress={() => {
-                        handleSignContractModal(selectedItem, index);
-                      }}
-                      centered={true}
-                      title="เริ่มทำสัญญา"
-                      titleStyle={{textAlign: 'center', color: 'black'}} // จัดให้ข้อความอยู่ตรงกลาง
-                    />
-                  </>
-                )}
-              </List.Section>
-            </Modal>
-          </PaperProvider>
-        </Portal>
+                  <List.Item
+                    onPress={() =>
+                      confirmRemoveReceipt(item.id, item.customer.name)
+                    }
+                    title="ลบ"
+                    titleStyle={{textAlign: 'center', color: 'red'}}
+                  />
+                </List.Section>
+              </Modal>
+            </PaperProvider>
+          </Portal>
+        </>
       )}
     </>
   );
@@ -293,8 +377,7 @@ const ReceiptDashboard = ({navigation}: DashboardScreenProps) => {
     if (!companyData) {
       navigation.navigate('CreateCompanyScreen');
     }
-    navigation.navigate('CreateNewReceipt')
-    // navigation.navigate('SelectDoc');
+    navigation.navigate('CreateNewReceipt');
   };
   if (isError) {
     return (
@@ -320,23 +403,10 @@ const ReceiptDashboard = ({navigation}: DashboardScreenProps) => {
               }}
             />
             <Appbar.Content
-              title={
-                activeFilter == QuotationStatus.ALL
-                  ? 'ใบเสร็จรับเงิน'
-                  : activeFilter === QuotationStatus.PENDING
-                  ? 'รายการรออนุมัติ'
-                  : activeFilter === QuotationStatus.APPROVED
-                  ? 'รายการรอทำสัญญา'
-                  : activeFilter === QuotationStatus.CONTRACT
-                  ? 'รายการทำสัญญาแล้ว'
-                  : activeFilter === QuotationStatus.ONPROCESS
-                  ? 'รายการกำลังดำเนินการ'
-                  : ''
-              }
+              title={'ใบเสร็จรับเงิน'}
               titleStyle={{
                 fontSize: 18,
                 fontWeight: 'bold',
-                fontFamily: 'Sukhumvit Set Bold',
               }}
             />
             <Appbar.Action
@@ -346,110 +416,89 @@ const ReceiptDashboard = ({navigation}: DashboardScreenProps) => {
               // }}
             />
           </Appbar.Header>
-          <>
-            <View>
-              <FlatList
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                data={filtersToShow}
-                renderItem={({item}) => (
-                  <FilterButton
-                    filter={item}
-                    isActive={item === activeFilter}
-                    onPress={() => {
-                      updateActiveFilter(item);
-                    }}
-                  />
-                )}
-                keyExtractor={item => item}
-              />
+          {isLoadingAction ? (
+            <View
+              style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+              <ActivityIndicator />
             </View>
-            {isLoading || isLoadingAction ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator color='primary'/>
-              </View>
-            ) : (
-              <View
-                style={{
-                  flex: 1,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  backgroundColor: '#f5f5f5',
-                }}>
+          ) : (
+            <>
+              <View>
                 <FlatList
-                  data={filteredData}
-                  renderItem={renderItem}
-                  keyExtractor={item => item.id}
-                  ListEmptyComponent={
-                    <View
-                      style={{
-                        flex: 1,
-                        justifyContent: 'flex-start',
-                        height: height,
-
-                        alignItems: 'center',
-                        marginTop: height * 0.2,
-                      }}>
-                      <Icon source="inbox" color={'gray'} size={80} />
-                      <Text style={{marginTop: 10, color: 'gray'}}>
-                        ยังไม่มีเอกสาร
-                      </Text>
-                      <Text style={{marginTop: 10, color: 'gray'}}>
-                        กดปุ่ม + ด้านล่างเพื่อสร้างใบเสร็จรับเงิน
-                      </Text>
-                    </View>
-                  }
-                  contentContainerStyle={receiptData?.length === 0 && {flex: 1}}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  data={filtersToShow}
+                  renderItem={({item}) => (
+                    <ReceiptsFilterButton
+                      filter={item}
+                      isActive={item === activeFilter}
+                      onPress={() => {
+                        updateActiveFilter(item);
+                      }}
+                    />
+                  )}
+                  keyExtractor={item => item}
                 />
               </View>
-            )}
-            <FAB
-              style={styles.fabStyle}
-              icon="plus"
-              // onPress={()=>testConnection()}
-              onPress={() => createNewReceipt()}
-              color="white"
-            />
+              {isLoading || isLoadingAction ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size={'large'} />
+                </View>
+              ) : (
+                <View
+                  style={{
+                    flex: 1,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: '#f5f5f5',
+                  }}>
+                  <FlatList
+                    data={filteredData}
+                    renderItem={renderItem}
+                    keyExtractor={item => item.id}
+                    ListEmptyComponent={
+                      <View
+                        style={{
+                          flex: 1,
+                          justifyContent: 'flex-start',
+                          height: height,
+                          width: width,
 
-            {/* <FAB.Group
-                open={open}
-                visible
+                          alignItems: 'center',
+                          marginTop: height * 0.2,
+                        }}>
+                        <Icon source="inbox" color={'gray'} size={80} />
+                        <Text style={{marginTop: 10, color: 'gray'}}>
+                          ยังไม่มีใบเสร็จรับเงิน
+                        </Text>
+                      </View>
+                    }
+                    contentContainerStyle={
+                      invoicesData?.length === 0 && {flex: 1}
+                    }
+                  />
+                </View>
+              )}
+              <FAB
+                variant="primary"
+                mode="elevated"
+                style={styles.fabStyle}
+                icon="plus"
+                // onPress={()=>testConnection()}
+                onPress={() => createNewReceipt()}
                 color="white"
-                fabStyle={{
-                  backgroundColor: '#1b52a7',
-                }}
-                icon={open ? 'minus' : 'plus'}
-                actions={[
-                  {
-                    icon: 'plus',
-                    size: "medium",
-                    label: 'สร้างใบเสนอราคา',
+              />
 
-                    onPress: () => createNewQuotation(),
-                  },
-                  {
-                    icon: 'file-document-edit-outline',
-                    size: "medium",
-
-                    label: 'ทำสัญญา',
-                    onPress: () => setActiveFilter('APPROVED'),
-                  },
-                ]}
-                onStateChange={onStateChange}
-                onPress={() => {
-                  if (open) {
-                    // do something if the speed dial is open
-                  }
-                }}
-              /> */}
-          </>
+            </>
+          )}
+          
         </Portal>
       </PaperProvider>
     </>
   );
 };
 
-export default ReceiptDashboard;
+export default Dashboard;
 const {width, height} = Dimensions.get('window');
 
 const styles = StyleSheet.create({
@@ -460,14 +509,17 @@ const styles = StyleSheet.create({
     bottom: height * 0.1,
     right: width * 0.05,
     position: 'absolute',
-    backgroundColor: '#1b52a7',
+    // backgroundColor: '#1b52a7',
+    backgroundColor: '#00674a',
+    // backgroundColor: '#009995',
   },
   fab: {
     position: 'absolute',
     margin: 16,
     right: 0,
     bottom: 10,
-    backgroundColor: '#1b52a7',
+    backgroundColor: '#00674a',
+    // backgroundColor: '#1b52a7',
     borderRadius: 28,
     height: 56,
     width: 56,

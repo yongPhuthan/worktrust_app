@@ -11,15 +11,15 @@ import {useUser} from '../../../providers/UserContext';
 import * as stateAction from '../../../redux/actions';
 import {Store} from '../../../redux/store';
 import {Company, Quotations} from '@prisma/client';
+import { CompanyQuery } from 'types';
 
 interface ErrorResponse {
   message: string;
   action: 'logout' | 'redirectToCreateCompany' | 'contactSupport' | 'retry';
 }
 
-type DashboardData = any;
 
-const useFetchDashboard = (): UseQueryResult<DashboardData, ErrorResponse> => {
+const useFetchDashboard = (): UseQueryResult<CompanyQuery, ErrorResponse> => {
   const user = useUser();
   const queryClient = useQueryClient();
   const {
@@ -27,7 +27,7 @@ const useFetchDashboard = (): UseQueryResult<DashboardData, ErrorResponse> => {
     state: {code},
   } = useContext(Store);
 
-  const fetchDashboard = async (): Promise<DashboardData> => {
+  const fetchDashboard = async (): Promise<CompanyQuery> => {
     if (!user) {
       throw new Error('User not authenticated.');
     }
@@ -77,7 +77,7 @@ console.log(services);
 
   const queryKey: QueryKey = ['dashboardData'];
 
-  const queryOptions: UseQueryOptions<DashboardData, ErrorResponse> = {
+  const queryOptions: UseQueryOptions<CompanyQuery, ErrorResponse> = {
     queryKey: queryKey,
     queryFn: fetchDashboard,
     retry: 3,
@@ -85,7 +85,7 @@ console.log(services);
     enabled: !!user,
   };
 
-  return useQuery<DashboardData, ErrorResponse>(queryOptions);
+  return useQuery<CompanyQuery, ErrorResponse>(queryOptions);
 };
 
 export default useFetchDashboard;
