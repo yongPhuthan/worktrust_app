@@ -15,6 +15,7 @@ import DashboardSubmit from '../screens/submit/dashboard';
 import {BRAND_NAME} from '@env';
 import InvoiceDashboard from '../screens/invoice/dashboard';
 import ReceiptDashboard from '../screens/receipt/dashboard';
+import DashboardWarranty from '../screens/warranty/dashboard';
 const Drawer = createDrawerNavigator<ParamListBase>();
 const commonScreenOptions = {
   headerTitleStyle: {
@@ -58,12 +59,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
             },
           }}
         />
-        {/* <PaperDrawer.Item
-          label="สัญญา"
-          icon="file-sign"
-          active={props.state.index === 1}
-          onPress={() => props.navigation.navigate('DashboardContract')}
-        /> */}
+
         <PaperDrawer.Item
           label="ใบวางบิล"
           icon="clipboard-file-outline"
@@ -78,6 +74,18 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
           onPress={() => props.navigation.navigate('DashboardReceipt')}
 
         />
+                <PaperDrawer.Item
+          label="ใบรับประกัน"
+          icon="file-sign"
+          active={props.state.index === 1}
+          onPress={() => props.navigation.navigate('DashboardWarranty')}
+        />
+                        {/* <PaperDrawer.Item
+          label="ส่งงาน"
+          icon="file-sign"
+          active={props.state.index === 1}
+          onPress={() => props.navigation.navigate('DashboardContract')}
+        /> */}
       </PaperDrawer.Section>
       <PaperDrawer.Section style={{marginTop: 'auto'}} showDivider={false}>
         <PaperDrawer.Item
@@ -117,13 +125,13 @@ function DashboardDrawer() {
           // ... other common options ...
         }}
       />
-      {/* <Drawer.Screen
-        name="DashboardContract"
-        component={DashboardContract}
+      <Drawer.Screen
+        name="DashboardWarranty"
+        component={DashboardWarranty}
         options={{
           ...commonScreenOptions,
           headerShown: false,
-          title: 'สัญญา',
+          title: 'ใบรับประกัน', 
           headerRight: () => (
             <TouchableOpacity
               style={{marginRight: 10}}
@@ -133,7 +141,7 @@ function DashboardDrawer() {
             </TouchableOpacity>
           ),
         }}
-      /> */}
+      />
             <Drawer.Screen
         name="DashboardInvoice"
         component={InvoiceDashboard}

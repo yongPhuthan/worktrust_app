@@ -1,4 +1,4 @@
-import { InvoiceStatus, QuotationStatus } from '@prisma/client';
+import {InvoiceStatus, QuotationStatus} from '@prisma/client';
 import React from 'react';
 import {
   Dimensions,
@@ -10,14 +10,14 @@ import {
 type Props = {
   customerName: string;
   price: number;
-  date: Date
+  date: Date;
   end: Date;
   status: string;
   onCardPress?: () => void;
 };
 
 const windowWidth = Dimensions.get('window').width;
-function convertDateToDDMMYYYY(dateString :string) {
+function convertDateToDDMMYYYY(dateString: string) {
   const date = new Date(dateString);
 
   // Get the day, month, and year from the date object
@@ -46,53 +46,63 @@ const CardDashBoard = (props: Props) => {
         {/* <FontAwesomeIcon icon={faChevronRight} size={24} color="#19232e" /> */}
       </View>
       {props.status?.length > 0 && (
-            <View
-            style={{
-              backgroundColor:
-                props.status === QuotationStatus.PENDING 
-                  ? '#ccc'
-                  : props.status === QuotationStatus.APPROVED  
-                  ? '#43a047'
-                  : props.status === QuotationStatus.INVOICE_DEPOSIT || props.status === QuotationStatus.RECEIPT_DEPOSIT 
-                  ? '#1079ae'
-                  : props.status === QuotationStatus.SUBMITTED
-                  ? 'orange'
-                  : '#ccc',
-              borderRadius: 4,
-              paddingHorizontal: 8,
-              paddingVertical: 4,
-              marginTop: 8,
-              alignSelf: 'flex-start',
-            }}>
-            <Text
-              style={{
-                color: props.status === QuotationStatus.PENDING ? '#000' : '#fff',
-                fontSize: 12,
-                fontWeight: 'bold',
-                textTransform: 'uppercase',
-              }}>
-              {props.status === QuotationStatus.PENDING
-                ? 'รออนุมัติ'
-                : props.status === QuotationStatus.APPROVED
-                ? 'อนุมัติแล้ว'
-
-                : props.status === QuotationStatus.INVOICE_DEPOSIT
-                ? 'มัดจำใบวางบิล'
-                : props.status === QuotationStatus.RECEIPT_DEPOSIT
-                ? 'มัดจำใบเสร็จ'
+        <View
+          style={{
+            backgroundColor:
+              props.status === QuotationStatus.PENDING ||
+              props.status === QuotationStatus.CUSTOMER_REJECTED
+                ? '#ccc'
+                : props.status === QuotationStatus.APPROVED ||
+                  props.status === QuotationStatus.CUSTOMER_REVIEWED
+                ? '#43a047'
+                : props.status === QuotationStatus.INVOICE_DEPOSIT ||
+                  props.status === QuotationStatus.RECEIPT_DEPOSIT ||
+                  props.status === QuotationStatus.CUSTOMER_APPROVED
+                ? '#1079ae'
                 : props.status === QuotationStatus.SUBMITTED
-                ? 'แจ้งส่งงานแล้ว'
-    
-                :''
-                }
-            </Text>
-          </View>
+                ? 'orange'
+                : '#ccc',
+            borderRadius: 4,
+            paddingHorizontal: 8,
+            paddingVertical: 4,
+            marginTop: 8,
+            alignSelf: 'flex-start',
+          }}>
+          <Text
+            style={{
+              color: props.status === QuotationStatus.PENDING ? '#000' : '#fff',
+              fontSize: 12,
+              fontWeight: 'bold',
+              textTransform: 'uppercase',
+            }}>
+            {props.status === QuotationStatus.PENDING
+              ? 'รออนุมัติ'
+              : props.status === QuotationStatus.APPROVED
+              ? 'อนุมัติแล้ว'
+              : props.status === QuotationStatus.INVOICE_DEPOSIT
+              ? 'มัดจำใบวางบิล'
+              : props.status === QuotationStatus.RECEIPT_DEPOSIT
+              ? 'มัดจำใบเสร็จ'
+              : props.status === QuotationStatus.SUBMITTED
+              ? 'แจ้งส่งงานแล้ว'
+              : props.status === QuotationStatus.CUSTOMER_REJECTED
+              ? 'แก้ไขงานอีกครั้ง'
+              : props.status === QuotationStatus.CUSTOMER_REVIEWED
+              ? 'ลูกค้ารีวิวแล้ว'
+              : props.status === QuotationStatus.CUSTOMER_APPROVED
+              ? 'ลูกค้าอนุมัติแล้ว'
+              : ''}
+          </Text>
+        </View>
       )}
-  
 
       <View style={styles.telAndTax}>
-        <Text style={styles.summaryPrice}>วันที่ {convertDateToDDMMYYYY(props.date.toString())}</Text>
-        <Text style={styles.summaryPrice}>สิ้นสุด {convertDateToDDMMYYYY(props.end.toString())}</Text>
+        <Text style={styles.summaryPrice}>
+          วันที่ {convertDateToDDMMYYYY(props.date.toString())}
+        </Text>
+        <Text style={styles.summaryPrice}>
+          สิ้นสุด {convertDateToDDMMYYYY(props.end.toString())}
+        </Text>
       </View>
     </TouchableOpacity>
   );

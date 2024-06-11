@@ -27,6 +27,7 @@ export type StateType = {
   existingWorkers: WorkerEmbed[];
   userSignature: string;
   sellerId: string;
+  fcmToken: string;
 };
 
 type ActionType = {
@@ -55,6 +56,7 @@ export const Store = createContext<ContextType>({
     editInvoice: null,
     editReceipt: null,
     sellerId: '',
+    fcmToken:'',
   },
   dispatch: () => {},
 });
@@ -74,6 +76,7 @@ const initialState: StateType = {
   editInvoice: null,
   editReceipt: null,
   sellerId: '',
+  fcmToken:'',
 };
 
 function reducer(state: StateType, action: ActionType): StateType {
@@ -109,6 +112,8 @@ function reducer(state: StateType, action: ActionType): StateType {
       return {...state, editReceipt: action.payload as Receipts};
     case contrains.GET_SELLER_ID:
       return {...state, sellerId: action.payload as string};
+    case contrains.GET_FCM_TOKEN:
+      return {...state, fcmToken: action.payload as string};
     case contrains.RESET_EDIT_QUOTATION:
       return {...state, editQuotation: null};
     case contrains.RESET_EDIT_INVOICE:

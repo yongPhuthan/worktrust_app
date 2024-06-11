@@ -6,7 +6,7 @@ export const useFilteredData = (originalData: Quotations[] | Invoices[]| null, a
   const filteredData = useMemo(() => {
     if (!originalData) return null;
 
-    return activeFilter === QuotationStatus.ALL || InvoiceStatus.ALL
+    return activeFilter === QuotationStatus.ALL
       ? originalData
       : originalData.filter(q => q.status === activeFilter);
   }, [originalData, activeFilter]);

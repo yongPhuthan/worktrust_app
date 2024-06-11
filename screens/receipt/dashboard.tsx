@@ -115,9 +115,6 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     }
   };
 
-  const handleNoResponse = () => {
-    setIsModalSignContract(false);
-  };
   const requestNotificationPermission = async () => {
     try {
       const {status} = await requestNotifications(['alert', 'badge', 'sound']);
@@ -137,7 +134,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     try {
       const token = await user.getIdToken(true);
       const response = await fetch(
-        `${BACK_END_SERVER_URL}/api/invoice/deleteInvoice?id=${encodeURIComponent(
+        `${BACK_END_SERVER_URL}/api/receipt/deleteReceipt?id=${encodeURIComponent(
           id,
         )}`,
         {
@@ -151,16 +148,16 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
 
       if (response.ok) {
         queryClient.invalidateQueries({
-          queryKey: ['dashboardInvoices'],
+          queryKey: ['dashboardReceipt'],
         });
         setIsLoadingAction(false);
       } else {
         // It's good practice to handle HTTP error statuses
         const errorResponse = await response.text(); // or response.json() if the server responds with JSON
-        console.error('Failed to delete invoice:', errorResponse);
+        console.error('Failed to delete receipt:', errorResponse);
         setIsLoadingAction(false);
         // Display a more specific error message if possible
-        Alert.alert('Error', 'Failed to delete invoice. Please try again.');
+        Alert.alert('Error', 'Failed to delete receipt. Please try again.');
       }
     } catch (err) {
       console.error('An error occurred:', err);
@@ -234,18 +231,6 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     ReceiptStatus.PENDING,
     ReceiptStatus.BILLED,
   ];
-  // const handleCreateContract = (index: number) => {
-  //   if (companyData && invoicesData && invoicesData.length > 0) {
-  //     console.log('quotationSelected', selectedItem);
-  //     navigation.navigate('ContractOptions', {
-  //       id: selectedItem.id,
-  //       sellerId: selectedItem.id,
-  //       allTotal: selectedItem.allTotal,
-  //       customerName: selectedItem.customer?.name as string,
-  //     });
-  //   }
-  //   setIsModalSignContract(false);
-  // };
 
   const handleModalOpen = (item: Receipts, index: number) => {
     setSelectedItem(item);
@@ -259,19 +244,13 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     setSelectedIndex(null);
     setShowModal(false);
   };
-  const editInvoice = async (services: ServicesEmbed[], invoice: Receipts) => {
+  const editReceipt = async (services: ServicesEmbed[], receipt: Receipts) => {
     setIsLoadingAction(true);
-    dispatch(stateAction.get_companyID(invoice.companyId));
-    dispatch(stateAction.get_edit_invoice(invoice));
+    dispatch(stateAction.get_companyID(receipt.companyId));
+    dispatch(stateAction.get_edit_invoice(receipt));
     setIsLoadingAction(false);
     handleModalClose();
     navigation.navigate('CreateNewInvoice');
-
-    // navigation.navigate('EditQuotation', {
-    //   quotation,
-    //   company: data[0],
-    //   services,
-    // });
   };
 
   if (isError && error) {
@@ -322,7 +301,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                       <List.Item
                         onPress={() => {
                           setShowModal(false);
-                          editInvoice(selectedItem.services, selectedItem);
+                          editReceipt(selectedItem.services, selectedItem);
                         }}
                         title="แก้ไข"
                         titleStyle={{textAlign: 'center', color: 'black'}}
@@ -419,7 +398,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
           {isLoadingAction ? (
             <View
               style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-              <ActivityIndicator />
+             <ActivityIndicator size={'large'} color='#00674a' />
             </View>
           ) : (
             <>

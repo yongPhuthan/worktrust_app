@@ -6,7 +6,7 @@ import {TextInput, Portal, Modal, Dialog} from 'react-native-paper';
 type DatePickerButtonProps = {
   label: string;
   onDateSelected: (date: Date) => void;
-  date: string;
+  date: Date;
   title: string;
 };
 
@@ -35,10 +35,7 @@ const DatePickerButton: React.FC<DatePickerButtonProps> = ({
       onDateSelected(date);
     }
   };
-  const today = new Date();
-  const sevenDaysFromNow = new Date(
-    new Date().setDate(new Date().getDate() + 7),
-  );
+
 
   return (
     <View>
@@ -48,13 +45,9 @@ const DatePickerButton: React.FC<DatePickerButtonProps> = ({
           <Text style={styles.date}>
             {thaiDateFormatter.format(selectedDate)}
           </Text>
-        ) : date == 'today' ? (
-          <Text style={styles.date}>{thaiDateFormatter.format(today)}</Text>
-        ) : (
-          <Text style={styles.date}>
-            {thaiDateFormatter.format(sevenDaysFromNow)}
-          </Text>
-        )}
+        ) :  (
+          <Text style={styles.date}>{thaiDateFormatter.format(date)}</Text>
+        ) }
       </TouchableOpacity>
       {showPicker &&
         (Platform.OS === 'ios' ? (
@@ -66,7 +59,7 @@ const DatePickerButton: React.FC<DatePickerButtonProps> = ({
               <Dialog.Title>{title}</Dialog.Title>
               <DateTimePicker
                 locale="th-TH"
-                value={selectedDate ? selectedDate : new Date()}
+                value={selectedDate ? selectedDate : new Date(date)}
                 mode="date"
                 display={Platform.OS === 'ios' ? 'inline' : 'calendar'}
                 style={{backgroundColor: 'white'}}
@@ -77,7 +70,7 @@ const DatePickerButton: React.FC<DatePickerButtonProps> = ({
         ) : (
           <DateTimePicker
             locale="th-TH"
-            value={selectedDate ? selectedDate : new Date()}
+            value={selectedDate ? selectedDate : new Date(date)}
             mode="date"
             display="default"
             style={{backgroundColor: 'white'}}
@@ -91,8 +84,9 @@ const DatePickerButton: React.FC<DatePickerButtonProps> = ({
 const styles = StyleSheet.create({
   button: {
     padding: 10,
-    borderWidth: 1,
-    borderColor: '#ccc',
+    borderWidth: 0.5,
+    // borderColor:"#00674a",
+    // borderColor: '#2196F3',
     backgroundColor: 'white',
     borderRadius: 5,
     flexDirection: 'row',

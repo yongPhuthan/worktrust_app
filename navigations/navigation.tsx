@@ -38,6 +38,7 @@ import PDFViewScreen from '../screens/preview/pdf';
 import CreateNewReceipt from '../screens/receipt/create/createNew';
 import InvoiceDepositScreen from '../screens/deposit/invoiceDeposit';
 import ReceiptDepositScreen from '../screens/deposit/receiptDeposit';
+import CreateWarranty from '../screens/warranty/create';
 
 const Theme = {
   ...DefaultTheme,
@@ -160,6 +161,20 @@ const Navigation = ({initialRouteName}: any) => {
         <Stack.Screen
           name="SelectWorks"
           component={Selectworks}
+          options={{
+            ...commonScreenOptions,
+            headerShown: false,
+            title: 'แจ้งส่งงานลูกค้า',
+            headerBackTitleVisible: false,
+            headerStyle: {
+              backgroundColor: '#ffffff',
+            },
+            headerTintColor: 'black',
+          }}
+        />
+             <Stack.Screen
+          name="CreateWarranty"
+          component={CreateWarranty}
           options={{
             ...commonScreenOptions,
             headerShown: false,

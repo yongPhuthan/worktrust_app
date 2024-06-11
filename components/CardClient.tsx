@@ -122,7 +122,8 @@ const styles = StyleSheet.create({
   },
   editButtonText: {
     fontSize: 14,
-    color: '#19232e',
+    color:'#108a00 ',
+    // color: '#19232e',
     marginLeft: 4,
   },
   icon: {
@@ -132,7 +133,8 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    color: '#19232e',
+    color:'#108a00 ',
+    // color: '#19232e',
     fontWeight: 'bold',
   },
   labelContainer: {

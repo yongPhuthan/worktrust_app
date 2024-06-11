@@ -24,7 +24,7 @@ const useCreateNewDepositReceipt = (actions: ReceiptActions) => {
       throw new Error('User is not available');
     }
     const token = await user.getIdToken(true);
-    const response = await fetch(`${BACK_END_SERVER_URL}/api/invoice/createDepositInvoice`, {
+    const response = await fetch(`${BACK_END_SERVER_URL}/api/receipt/createDepositReceipt`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

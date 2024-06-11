@@ -108,7 +108,7 @@ const PDFModalScreen = (props: Props) => {
           .catch(err => console.error('Error deleting file', err));
       })
       .catch(error => {
-        console.error('Error sharing', error);
+        console.log('Error sharing', error);
       });
   };
 

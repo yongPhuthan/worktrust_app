@@ -221,10 +221,9 @@ const CreateNewInvoice = ({navigation}: Props) => {
 
     customerSign: null,
   };
-  const methods = useForm<any>({
+  const methods = useForm<Invoices>({
     mode: 'all',
     defaultValues: invoiceDefaultValue,
-    resolver: yupResolver(quotationsValidationSchema),
   });
   const {fields, append, remove, update} = useFieldArray({
     control: methods.control,
@@ -243,6 +242,13 @@ const CreateNewInvoice = ({navigation}: Props) => {
     control: methods.control,
     name: 'sellerSignature',
   });
+
+  const dateOffer = useWatch({
+    control: methods.control,
+    name: 'dateOffer',
+  });
+
+
 
   const isCustomerDisabled = useMemo(() => {
     return customer.name === '' && customer.address === '';
@@ -290,8 +296,7 @@ const CreateNewInvoice = ({navigation}: Props) => {
       company: companyState as CompanyState,
     };
     mutate(data);
-    //  mutate(methods.getValues());
-  };
+    setSave(true);};
 
   const handleInvoiceNumberChange = (text: string) => {
     methods.setValue('docNumber', text);
@@ -388,7 +393,7 @@ const CreateNewInvoice = ({navigation}: Props) => {
               <DatePickerButton
                 label="วันที่"
                 title="วันที่"
-                date="today"
+                date={new Date(dateOffer)}
                 onDateSelected={handleStartDateSelected}
               />
               <DocNumber
@@ -399,7 +404,7 @@ const CreateNewInvoice = ({navigation}: Props) => {
               <DocNumber
                 label="อ้างอิงใบเสนอราคาเลขที่"
                 onChange={handleQuotationRefNumberChange}
-                value={methods.watch('quotationRefNumber')}
+                value={methods.watch('quotationRefNumber') || ''}
               />
             </View>
             <View style={styles.subContainer}>
@@ -536,7 +541,7 @@ const CreateNewInvoice = ({navigation}: Props) => {
                           textAlignVertical="top"
                           error={!!error}
                           onChangeText={onChange}
-                          value={value}
+                          value={value || ''}
                         />
                       </View>
                     )}
@@ -588,7 +593,7 @@ const CreateNewInvoice = ({navigation}: Props) => {
                           textAlignVertical="top"
                           error={!!error}
                           onChangeText={onChange}
-                          value={value}
+                          value={value || ''}
                         />
                       </View>
                     )}
@@ -605,19 +610,7 @@ const CreateNewInvoice = ({navigation}: Props) => {
             <AddCustomer onClose={() => closeAddCustomerModal()} />
           </Modal>
 
-          <Modal
-            visible={workerModal}
-            animationType="slide"
-            onDismiss={() => closeWorkerModal()}
-            style={styles.modal}>
-            <ExistingWorkers
-              onClose={() => {
-                setWorkerpicker(!workerPicker);
-                closeWorkerModal();
-              }}
-              isVisible={workerModal}
-            />
-          </Modal>
+
         </View>
         <Modal
           visible={signatureModal}

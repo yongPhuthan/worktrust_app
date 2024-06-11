@@ -1,13 +1,12 @@
 import React, {useCallback, useContext, useState} from 'react';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-
 import {BACK_END_SERVER_URL} from '@env';
 import {faClose, faPlus} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {RouteProp} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {useMutation, useQueryClient} from '@tanstack/react-query';
-import {Controller, useForm, useWatch, set} from 'react-hook-form';
+import {Controller, useForm, useWatch, FormProvider} from 'react-hook-form';
 import {
   Alert,
   Dimensions,
@@ -18,6 +17,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  ActivityIndicator,
   View,
 } from 'react-native';
 import {
@@ -26,9 +26,12 @@ import {
   Divider,
   IconButton,
   SegmentedButtons,
+  Avatar,
   Snackbar,
   TextInput,
 } from 'react-native-paper';
+import Modal from 'react-native-modal';
+
 import {v4 as uuidv4} from 'uuid';
 import DatePickerButton from '../../components/styles/DatePicker';
 import SmallDivider from '../../components/styles/SmallDivider';
@@ -37,7 +40,7 @@ import {useSlugify} from '../../hooks/utils/useSlugify';
 import {useUser} from '../../providers/UserContext';
 import {Store} from '../../redux/store';
 import Clipboard from '@react-native-clipboard/clipboard';
-
+import * as yup from 'yup';
 import {useUploadToFirebase} from '../../hooks/submission/useUploadToFirebase';
 import {usePickImage} from '../../hooks/utils/image/usePickImage';
 import {ParamListBase} from '../../types/navigationType';
@@ -45,35 +48,43 @@ import useCreateSubmission from '../../hooks/submission/useSaveSubmission';
 import {useModal} from '../../hooks/quotation/create/useModal';
 import ProjectModalScreen from '../../components/webview/project';
 import useShare from '../../hooks/webview/useShare';
+import {
+  ServicesEmbed,
+  SubmissionStatus,
+  Submissions,
+  WorkStatus,
+  WorkerEmbed,
+} from '@prisma/client';
+import {submissionValidationSchema} from 'screens/utils/validationSchema';
+import AddNewImage from '../../components/submission/after/addNew';
+import AddNewBeforeImage from '../../components/submission/before/addNew';
 type Props = {
   navigation: StackNavigationProp<ParamListBase>;
   route: RouteProp<ParamListBase, 'SendWorks'>;
 };
-type FormValues = {
-  id: string;
-  address: string;
-  description: string;
-  quotationId: string;
-  dateOffer: Date;
-  services: any; // Adjust the type according to your actual services structure
-  beforeImages: string[];
-  afterImages: string[];
-  workStatus: string;
+type LoadingStatus = {
+  [index: number]: boolean;
 };
-
+type BeforeImageLoadingStatus = {
+  [index: number]: boolean;
+};
 const SendWorks = (props: Props) => {
   const {route, navigation} = props;
   const {
-    initialDocnumber,
     initialDateOfferFormatted,
-    initialDateEndFormatted,
-    initialDateEnd,
+
     initialDateOffer,
   } = useSelectedDates();
   const {
-    state: {code, editQuotation},
+    state: {code, editQuotation, companyState, fcmToken},
     dispatch,
-  }: any = useContext(Store);
+  } = useContext(Store);
+
+  if (!editQuotation || !companyState || !editQuotation.customer) {
+    Alert.alert('ไม่พบข้อมูลใบเสนอราคา');
+    navigation.goBack();
+    return null;
+  }
   const [dateOfferFormatted, setDateOfferFormatted] = useState<string>(
     initialDateOfferFormatted,
   );
@@ -90,7 +101,7 @@ const SendWorks = (props: Props) => {
     closeModal: closeProjectModal,
     isVisible: showProjectModal,
   } = useModal();
-  const url = `https://www.worktrust.co/submissions/${editQuotation.id}?${submissionServerId}`;
+  const url = `https://www.worktrust.co/submissions/${editQuotation?.id}?${submissionServerId}`;
 
   const [opneSubmissionModal, setOpenSubmissionModal] =
     useState<boolean>(false);
@@ -99,13 +110,7 @@ const SendWorks = (props: Props) => {
     title: `ส่งงานลูกค้า ${editQuotation.customer.name}`,
   });
 
-  const {
-    control,
-    getValues,
-    setValue,
-    watch,
-    formState: {isValid, errors},
-  } = useForm<FormValues>({
+  const methods = useForm<Submissions>({
     mode: 'all',
     defaultValues: {
       id: uuidv4(),
@@ -115,50 +120,63 @@ const SendWorks = (props: Props) => {
       services: editQuotation.services,
       beforeImages: [],
       afterImages: [],
-      workStatus: '',
+      workStatus: WorkStatus?.ALL,
+      FCMToken: fcmToken,
+      quotationRefNumber: editQuotation.docNumber,
+      companyId: companyState.id,
+      customer: editQuotation.customer,
+      companyCode: code,
       quotationId: editQuotation.id,
-    },
+      status: SubmissionStatus?.PENDING,
+      createdAt: new Date(),
+      companyName: companyState?.bizName ?? '',
+      workers: editQuotation.workers ? editQuotation.workers : [],
+      updatedAt: new Date(),
+    } as unknown as Submissions,
   });
-
-  const beforeImages = useWatch({control, name: 'beforeImages'});
-  const afterImages = useWatch({control, name: 'afterImages'});
+  const beforeImages = useWatch({
+    control: methods.control,
+    name: 'beforeImages',
+  });
+  const dateOffer = useWatch({control: methods.control, name: 'dateOffer'});
+  const afterImages = useWatch({control: methods.control, name: 'afterImages'});
   const [viewResult, setViewResult] = React.useState('');
-
   const beforeImagesStoragePath = `${code}/submission/${editQuotation.docNumber}/beforeImages/${imageRandomId}`;
   const afterImagesStoragePath = `${code}/submission/${editQuotation.docNumber}/afterImages/${imageRandomId}`;
-  const {
-    isUploading,
-    error,
-    uploadImages,
-  } = useUploadToFirebase();
-  
-  const {isImagePicking: pickingBeforeImage, pickImage: pickBeforeImage} =
-    usePickImage((uri: string) => {
-      setValue('beforeImages', [...beforeImages, uri], {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
-    });
+  const {isUploading, error, uploadImages} = useUploadToFirebase();
+  const [isOpenModal, setIsOpenModal] = useState(false);
+  const [isBeforeImage, setIsBeforeImage] = useState(false);
+  const [checkLoading, setCheckLoading] = useState(false);
 
-  const {isImagePicking: pickingAfterImage, pickImage: pickAfterImage} =
-    usePickImage((uri: string) => {
-      setValue('afterImages', [...afterImages, uri], {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
-    });
-  const services = useWatch({control, name: 'services'});
+  // const {isImagePicking: pickingBeforeImage, pickImage: pickBeforeImage} =
+  //   usePickImage((uri: string) => {
+  //     setValue('beforeImages', [...beforeImages, uri], {
+  //       shouldDirty: true,
+  //       shouldValidate: true,
+  //     });
+  //   });
+
+  // const {isImagePicking: pickingAfterImage, pickImage: pickAfterImage} =
+  //   usePickImage((uri: string) => {
+  //     setValue('afterImages', [...afterImages, uri], {
+  //       shouldDirty: true,
+  //       shouldValidate: true,
+  //     });
+  //   });
+  const services = useWatch({control: methods.control, name: 'services'});
 
   const actions: any = {
     setSubmissionServerId,
     openProjectModal,
   };
+  const [loadingStatus, setLoadingStatus] = useState<LoadingStatus>({});
+  const [loadingBeforeImageStatus, setLoadingBeforeImageStatus] = useState< BeforeImageLoadingStatus>({});
 
   const {mutate, isPending} = useCreateSubmission(actions);
 
   const removeService = (index: number) => {
     const updatedServices = services.filter((_: any, i: number) => i !== index);
-    setValue('services', updatedServices, {
+    methods.setValue('services', updatedServices, {
       shouldDirty: true,
       shouldValidate: true,
     });
@@ -167,38 +185,47 @@ const SendWorks = (props: Props) => {
   const removeBeforeImage = useCallback(
     (uri: string) => {
       // Filter out the image URI from the current state
-      const updatedImages = beforeImages.filter(image => image !== uri);
+      const updatedImages = beforeImages.filter(
+        image => image.thumbnailUrl !== uri,
+      );
 
       // Update the form state to reflect the change and optionally re-validate
-      setValue('beforeImages', updatedImages, {shouldValidate: true});
+      methods.setValue('beforeImages', updatedImages, {shouldValidate: true});
     },
-    [beforeImages, setValue],
+    [beforeImages, methods.setValue],
   );
   const removeAfterImage = useCallback(
     (uri: string) => {
       // Filter out the image URI from the current state
-      const updatedImages = afterImages.filter(image => image !== uri);
+      const updatedImages = afterImages.filter(
+        image => image.thumbnailUrl !== uri,
+      );
 
       // Update the form state to reflect the change and optionally re-validate
-      setValue('afterImages', updatedImages, {shouldValidate: true});
+      methods.setValue('afterImages', updatedImages, {shouldValidate: true});
     },
-    [afterImages, setValue],
+    [afterImages, methods.setValue],
   );
 
   const handleDone = useCallback(async () => {
-
-
-    const uploadedBeforeImageUrls = await uploadImages(beforeImages, beforeImagesStoragePath);
-    const uploadedAfterImageUrls = await uploadImages(afterImages, afterImagesStoragePath);
+    // const uploadedBeforeImageUrls = await uploadImages(
+    //   beforeImages,
+    //   beforeImagesStoragePath,
+    // );
+    // const uploadedAfterImageUrls = await uploadImages(
+    //   afterImages,
+    //   afterImagesStoragePath,
+    // );
     mutate({
-      ...getValues(),
-      beforeImages: uploadedBeforeImageUrls,
-      afterImages: uploadedAfterImageUrls,
+      ...methods.getValues(),
+      // beforeImages: uploadedBeforeImageUrls,
+      // afterImages: uploadedAfterImageUrls,
+      quotationId: editQuotation.id,
     });
-  }, [beforeImages, afterImages, editQuotation, getValues, mutate]);
+  }, [beforeImages, afterImages, editQuotation, methods.getValues, mutate]);
 
   const handleStartDateSelected = (date: Date) => {
-    setValue('dateOffer', date);
+    methods.setValue('dateOffer', date);
   };
 
   const copyLinkToClipboard = () => {
@@ -210,354 +237,416 @@ const SendWorks = (props: Props) => {
     }, 2000);
   };
   React.useEffect(() => {
-    if (services.lenght !== editQuotation.services.length) {
-      setValue('workStatus', 'PERIOD', {
+    if (services.length !== editQuotation.services.length) {
+      methods.setValue('workStatus', WorkStatus.PERIOD, {
         shouldDirty: true,
         shouldValidate: true,
       });
-    }else {
-      setValue('workStatus', 'ALL', {
+    } else {
+      methods.setValue('workStatus', WorkStatus.ALL, {
         shouldDirty: true,
         shouldValidate: true,
       });
     }
   }, [services]);
 
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      afterImages.forEach(async (image, index) => {
+        // ตรวจสอบสถานะของรูปภาพจาก Firebase functions หรือ URL
+        if (image.thumbnailUrl && !loadingStatus[index]) {
+          try {
+            const response = await fetch(image.thumbnailUrl);
+            if (response.ok) {
+              setLoadingStatus(prev => ({...prev, [index]: false}));
+            }
+          } catch (error) {
+            console.error('Error checking image:', error);
+          }
+        }
+      });
+    }, 1500);
 
+    return () => clearInterval(interval);
+  }, [afterImages, loadingStatus]);
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      beforeImages.forEach(async (image, index) => {
+        // ตรวจสอบสถานะของรูปภาพจาก Firebase functions หรือ URL
+        if (image.thumbnailUrl && !loadingBeforeImageStatus[index]) {
+          try {
+            const response = await fetch(image.thumbnailUrl);
+            if (response.ok) {
+              setLoadingBeforeImageStatus(prev => ({...prev, [index]: false}));
+            }
+          } catch (error) {
+            console.error('Error checking image:', error);
+          }
+        }
+      });
+    }, 1500);
+
+    return () => clearInterval(interval);
+  }, [beforeImages, loadingBeforeImageStatus]);
 
   return (
     <>
-      <Appbar.Header
-        elevated
-        mode="center-aligned"
-        style={{
-          backgroundColor: 'white',
-        }}>
-        <Appbar.BackAction
-          onPress={() => {
-            navigation.goBack();
-          }}
-        />
-        <Appbar.Content
-          title="หนังสือส่งงาน"
-          titleStyle={{
-            fontSize: 18,
-            fontWeight: 'bold',
-            fontFamily: 'Sukhumvit Set Bold',
-          }}
-        />
-        <Button
-          loading={
-           isUploading || isPending
-          }
-          disabled={!isValid || isUploading || isPending}
-          mode="contained"
-          // buttonColor={'#1b72e8'}
-          onPress={handleDone}>
-          {'บันทึก'}
-        </Button>
-      </Appbar.Header>
-      <KeyboardAwareScrollView>
-        <ScrollView
+      <FormProvider {...methods}>
+        <Appbar.Header
+          elevated
+          mode="center-aligned"
           style={{
-            backgroundColor: '#FFFFFF',
-            marginBottom: 100,
-            paddingHorizontal: 20,
+            backgroundColor: 'white',
           }}>
-          <View style={styles.card}>
+          <Appbar.BackAction
+            onPress={() => {
+              navigation.goBack();
+            }}
+          />
+          <Appbar.Content title="" />
+          {submissionServerId && (
+            <IconButton
+              mode="outlined"
+              icon="web"
+              iconColor="gray"
+              onPress={openProjectModal}
+            />
+          )}
+          <Appbar.Content title="" />
+
+          <Button
+            loading={isUploading || isPending}
+            disabled={!methods.formState.isValid || isUploading || isPending}
+            mode="contained"
+            // buttonColor={'#1b72e8'}
+            onPress={handleDone}>
+            {'บันทึก'}
+          </Button>
+        </Appbar.Header>
+        <KeyboardAwareScrollView>
+          <ScrollView
+            style={{
+              backgroundColor: '#FFFFFF',
+              marginBottom: 100,
+              paddingHorizontal: 20,
+            }}>
+            <View style={styles.card}>
+              <Text style={styles.textHeader}>แจ้งส่งงาน</Text>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+
+                  marginVertical: 15,
+                  alignContent: 'center',
+                }}>
+                <Text style={styles.title}> ใบเสนอราคาเลขที่ </Text>
+                <Text>{editQuotation.docNumber}</Text>
+              </View>
+              <Divider />
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+
+                  marginVertical: 15,
+                  alignContent: 'center',
+                }}>
+                <Text style={styles.title}>ลูกค้า </Text>
+                <Text>{editQuotation.customer.name}</Text>
+              </View>
+            </View>
+
+            <View style={styles.stepContainer} />
+            <Divider />
+
             <View
               style={{
                 flexDirection: 'row',
                 justifyContent: 'space-between',
-
-                marginVertical: 15,
-                alignContent: 'center',
               }}>
-              <Text style={styles.title}>ลูกค้า </Text>
-              <Text>{editQuotation.customer.name}</Text>
-            </View>
-          </View>
-
-          <View style={styles.stepContainer} />
-          <SmallDivider />
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-            }}>
-            <Text style={styles.titleDate}>วันที่ส่งงาน</Text>
-            <View style={{marginTop: 10, marginLeft: 10}}>
-              <DatePickerButton
-                title="วันที่ส่งงาน"
-                label=""
-                date="today"
-                onDateSelected={handleStartDateSelected}
-              />
-            </View>
-          </View>
-
-          <SmallDivider />
-          <View style={{alignSelf: 'flex-start', marginVertical: 10}}>
-            <Text style={styles.title}>หนังสือส่งงานทำขึ้นที่</Text>
-            <Controller
-              control={control}
-              name="address"
-              rules={{required: true}}
-              render={({
-                field: {onChange, onBlur, value},
-                fieldState: {error},
-              }) => (
-                <View>
-                  <TextInput
-                    multiline
-                    style={styles.input}
-                    error={!!error}
-                    mode="outlined"
-                    numberOfLines={4}
-                    placeholder="สถาณที่ติดตั้งงาน เลขที่ ถนน ตำบล อำเภอ จังหวัด...."
-                    placeholderTextColor={'#A6A6A6'}
-                    keyboardType="default"
-                    onChangeText={onChange}
-                    textAlignVertical="top"
-                    value={value}
-                  />
-                  {error && (
-                    <Text style={{color: 'red', marginTop: 5}}>
-                      {error.message}
-                    </Text>
-                  )}
-                </View>
-              )}
-            />
-          </View>
-          <Divider style={{marginBottom: 20}} />
-
-          <View>
-            <Text style={styles.title}>งานที่แจ้งส่ง</Text>
-            {services.map((service: any, index: number) => (
-              <View
-                style={{flexDirection: 'row', justifyContent: 'space-between'}}
-                key={index}>
-                <View>
-                  <Text style={styles.listTitle}>
-                    {index + 1}. {service.title}
-                  </Text>
-                  <Text style={styles.listDescription}>
-                    {service.description}
-                  </Text>
-                </View>
-
-                <IconButton
-                  icon="delete"
-                  size={20}
-                  iconColor="gray"
-                  onPress={() => removeService(index)}
+              <Text style={styles.titleDate}>วันที่ส่งงาน</Text>
+              <View style={{marginTop: 10, marginLeft: 10}}>
+                <DatePickerButton
+                  title="วันที่ส่งงาน"
+                  label=""
+                  date={new Date(dateOffer)}
+                  onDateSelected={handleStartDateSelected}
                 />
               </View>
-            ))}
-          </View>
+            </View>
 
-          <Divider style={{marginVertical: 20}} />
-          <View>
-            <Text style={styles.title}>รูปก่อนติดตั้ง</Text>
-            {editQuotation.services.map((service: any, index: number) => (
-              <FlatList
-                key={service.id}
-                data={beforeImages}
-                horizontal={true}
-                renderItem={({item, index}) => {
-                  return (
-                    <View key={index} style={styles.imageContainer}>
-                      <Image source={{uri: item}} style={styles.image} />
-                      <TouchableOpacity
-                        style={styles.closeIcon}
-                        onPress={() => removeBeforeImage(item)}>
-                        <FontAwesomeIcon
-                          icon={faClose}
-                          size={15}
-                          color="white"
-                        />
-                      </TouchableOpacity>
-                    </View>
-                  );
-                }}
-                keyExtractor={(item, index) => index.toString()}
-                ListFooterComponent={
-                  beforeImages.length > 0 ? (
-                    <IconButton
-                      icon={'plus'}
-                      loading={pickingBeforeImage}
-                      style={styles.addButtonContainer}
-                      onPress={() => {
-                        pickBeforeImage();
-
-                        // handleUploadMoreImages();
-                      }}></IconButton>
-                  ) : null
-                }
-                ListEmptyComponent={
-                  <IconButton
-                    icon={'plus'}
-                    loading={pickingBeforeImage}
-                    style={styles.addButtonContainer}
-                    onPress={() => {
-                      pickBeforeImage();
-
-                      // handleUploadMoreImages();
-                    }}></IconButton>
-                }
+            <Divider />
+            <View style={{alignSelf: 'flex-start', marginVertical: 15}}>
+              <Text style={styles.title}>หนังสือส่งงานทำขึ้นที่</Text>
+              <Controller
+                control={methods.control}
+                name="address"
+                rules={{required: true}}
+                render={({
+                  field: {onChange, onBlur, value},
+                  fieldState: {error},
+                }) => (
+                  <View>
+                    <TextInput
+                      multiline
+                      style={styles.input}
+                      error={!!error}
+                      mode="outlined"
+                      numberOfLines={4}
+                      placeholder="สถาณที่ติดตั้งงาน เลขที่ ถนน ตำบล อำเภอ จังหวัด...."
+                      placeholderTextColor={'#A6A6A6'}
+                      keyboardType="default"
+                      onChangeText={onChange}
+                      textAlignVertical="top"
+                      value={value}
+                    />
+                    {error && (
+                      <Text style={{color: 'red', marginTop: 5}}>
+                        {error.message}
+                      </Text>
+                    )}
+                  </View>
+                )}
               />
-            ))}
-          </View>
-          <Divider style={{marginVertical: 10}} />
-          <View>
-            <Text style={styles.title}>รูปหลังติดตั้ง</Text>
-            {editQuotation.services.map((service: any, index: number) => (
-              <FlatList
-                key={service.id}
-                data={afterImages}
-                horizontal={true}
-                renderItem={({item, index}) => {
-                  return (
-                    <View key={index} style={styles.imageContainer}>
-                      <Image source={{uri: item}} style={styles.image} />
-                      <TouchableOpacity
-                        style={styles.closeIcon}
-                        onPress={() => removeAfterImage(item)}>
-                        <FontAwesomeIcon
-                          icon={faClose}
-                          size={15}
-                          color="white"
-                        />
-                      </TouchableOpacity>
-                    </View>
-                  );
-                }}
-                keyExtractor={(item, index) => index.toString()}
-                ListFooterComponent={
-                  afterImages.length > 0 ? (
-                    <IconButton
-                      icon={'plus'}
-                      loading={pickingAfterImage}
-                      style={styles.addButtonContainer}
-                      onPress={() => {
-                        pickAfterImage();
-                        // handleUploadMoreImages();
-                      }}></IconButton>
-                  ) : null
-                }
-                ListEmptyComponent={
-                  <IconButton
-                    icon={'plus'}
-                    loading={pickingAfterImage}
-                    style={styles.addButtonContainer}
-                    onPress={() => {
-                      pickAfterImage();
-                      // handleUploadMoreImages();
-                    }}></IconButton>
-                }
-              />
-            ))}
-          </View>
-          <Divider style={{marginVertical: 10}} />
+            </View>
+            <Divider style={{marginBottom: 20}} />
 
-          <View style={{alignSelf: 'flex-start', marginVertical: 10}}>
-            <Text style={styles.title}>รายละเอียดงานที่ส่ง</Text>
-            <Controller
-              control={control}
-              rules={{required: true}}
-              name="description"
-              render={({
-                field: {onChange, onBlur, value},
-                fieldState: {error},
-              }) => (
-                <TextInput
-                  error={!!error}
-                  style={styles.input}
-                  multiline
-                  numberOfLines={4}
-                  mode="outlined"
-                  placeholder="อธิบายภาพรวมของงานที่ส่งมอบ เช่นคุณได้ทำอะไรบ้างในงวดงานนี้.."
-                  onBlur={onBlur}
-                  keyboardType="default"
-                  onChangeText={onChange}
-                  value={value}
-                  placeholderTextColor={'#A6A6A6'}
-                />
+            <View>
+              <Text style={styles.title}>งานที่แจ้งส่ง</Text>
+              {services.map((service: ServicesEmbed, index: number) => (
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                  }}
+                  key={index}>
+                  <View>
+                    <Text style={styles.listTitle}>
+                      {index + 1}. {service.title}
+                    </Text>
+                    <Text style={styles.listDescription}>
+                      {service.description}
+                    </Text>
+                  </View>
+
+                  <IconButton
+                    icon="delete"
+                    size={20}
+                    iconColor="gray"
+                    onPress={() => removeService(index)}
+                  />
+                </View>
+              ))}
+            </View>
+
+            <Divider style={{marginVertical: 20}} />
+
+            <View>
+              {editQuotation.workers && editQuotation.workers.length >0 && (
+                <View>
+                  <Text style={styles.title}>พนักงานติดตั้ง</Text>
+                  <FlatList
+                      data={editQuotation.workers}
+                      horizontal={true}
+                      renderItem={({item, index}) => {
+                        return (
+                          <View style={styles.workers}>
+                            <Avatar.Image size={100} source={{uri: item.image ? item.image : ''}} />
+                          
+                            <Text>{item.name}</Text>
+                          </View>
+                        );
+                      }}
+                      keyExtractor={(item, index) => index.toString()}
+                    />
+                </View>
               )}
+            </View>
+            <Divider style={{marginVertical: 20}} />
+            <View>
+              <Text style={styles.title}>รูปก่อนทำงาน</Text>
+              {editQuotation.services.map(
+                (service: ServicesEmbed, index: number) => (
+                  <FlatList
+                    key={service.id}
+                    data={beforeImages}
+                    horizontal={true}
+                    renderItem={({item, index}) => (
+                      <View key={index} style={styles.imageContainer}>
+                        {loadingBeforeImageStatus[index] !== false ? (
+                          <View
+                            style={{
+                              flex: 1,
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                            }}>
+                            <ActivityIndicator />
+                          </View>
+                        ) : (
+                          <Image
+                            source={{uri: item.thumbnailUrl}}
+                            style={styles.image}
+                          />
+                        )}
+                        <TouchableOpacity
+                          style={styles.closeIcon}
+                          onPress={() => removeBeforeImage(item.thumbnailUrl)}>
+                          <FontAwesomeIcon
+                            icon={faClose}
+                            size={15}
+                            color="white"
+                          />
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                    keyExtractor={(item, index) => index.toString()}
+                    ListFooterComponent={
+                      beforeImages.length > 0 ? (
+                        <IconButton
+                          icon={'plus'}
+                          // loading={pickingBeforeImage}
+                          style={styles.addButtonContainer}
+                          onPress={() => {
+                            setIsBeforeImage(true);
+
+                          }}></IconButton>
+                      ) : null
+                    }
+                    ListEmptyComponent={
+                      <IconButton
+                        icon={'plus'}
+                        // loading={pickingBeforeImage}
+                        style={styles.addButtonContainer}
+                        onPress={() => {
+                          setCheckLoading(true);
+
+                          setIsBeforeImage(true);
+                        }}></IconButton>
+                    }
+                  />
+                ),
+              )}
+            </View>
+            <Divider style={{marginVertical: 10}} />
+            <View>
+              <Text style={styles.title}>รูปหลังทำงาน</Text>
+              {editQuotation.services.map(
+                (service: ServicesEmbed, index: number) => (
+                  <FlatList
+                    key={service.id}
+                    data={afterImages}
+                    horizontal={true}
+                    renderItem={({item, index}) => (
+                      <View key={index} style={styles.imageContainer}>
+                        {loadingStatus[index] !== false ? (
+                          <View
+                            style={{
+                              flex: 1,
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                            }}>
+                            <ActivityIndicator />
+                          </View>
+                        ) : (
+                          <Image
+                            source={{uri: item.thumbnailUrl}}
+                            style={styles.image}
+                          />
+                        )}
+                        <TouchableOpacity
+                          style={styles.closeIcon}
+                          onPress={() => removeAfterImage(item.thumbnailUrl)}>
+                          <FontAwesomeIcon
+                            icon={faClose}
+                            size={15}
+                            color="white"
+                          />
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                    keyExtractor={(item, index) => index.toString()}
+                    ListFooterComponent={
+                      afterImages.length > 0 ? (
+                        <IconButton
+                          icon={'plus'}
+                          // loading={pickingAfterImage}
+                          style={styles.addButtonContainer}
+                          onPress={() => setIsOpenModal(true)}></IconButton>
+                      ) : null
+                    }
+                    ListEmptyComponent={
+                      <IconButton
+                        icon={'plus'}
+                        
+                        // loading={pickingAfterImage}
+                        style={styles.addButtonContainer}
+                        onPress={() => setIsOpenModal(true)}></IconButton>
+                    }
+                  />
+                ),
+              )}
+            </View>
+            <Divider style={{marginVertical: 10}} />
+
+            <View style={{alignSelf: 'flex-start', marginVertical: 10}}>
+              <Text style={styles.title}>รายละเอียดงานที่ส่ง</Text>
+              <Controller
+                control={methods.control}
+                rules={{required: true}}
+                name="description"
+                render={({
+                  field: {onChange, onBlur, value},
+                  fieldState: {error},
+                }) => (
+                  <TextInput
+                    error={!!error}
+                    style={styles.input}
+                    multiline
+                    numberOfLines={4}
+                    mode="outlined"
+                    placeholder="อธิบายภาพรวมของงานที่ส่งมอบ เช่นคุณได้ทำอะไรบ้างในงวดงานนี้.."
+                    onBlur={onBlur}
+                    keyboardType="default"
+                    onChangeText={onChange}
+                    value={value}
+                    placeholderTextColor={'#A6A6A6'}
+                  />
+                )}
+              />
+            </View>
+          </ScrollView>
+        </KeyboardAwareScrollView>
+        {submissionServerId && (
+          <>
+            <ProjectModalScreen
+              fileName={editQuotation.customer.name}
+              visible={showProjectModal}
+              onClose={closeProjectModal}
+              quotationId={submissionServerId}
             />
-          </View>
-          {/* <Divider style={{marginVertical: 20}} />
-            <View
-              style={{
-                width: '100%',
-                marginTop: 40,
-                alignSelf: 'center',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-              <SaveButton onPress={handleDone} disabled={false} />
-            </View> */}
-        </ScrollView>
-      </KeyboardAwareScrollView>
-      <Snackbar
-        style={{backgroundColor: 'lightgreen'}}
-        duration={20000}
-        visible={opneSubmissionModal}
-        onDismiss={() => setOpenSubmissionModal(false)}
-        action={{
-          label: 'คัดลอก',
-          labelStyle: {color: 'black'},
-          onPress: () => {
-            copyLinkToClipboard();
-          },
-        }}>
-        <Text>ใบส่งงานลูกค้า {editQuotation.customer.name} </Text>
-      </Snackbar>
-
-      <Snackbar
-        visible={copied}
-        style={{
-          backgroundColor: 'lightgreen',
-        }}
-        onDismiss={() => setCopied(false)}>
-        <Text>คัดลอกสำเร็จ!</Text>
-      </Snackbar>
-
-      {submissionServerId && (
-        <>
-          <ProjectModalScreen
-            fileName={editQuotation.customer.name}
-            visible={showProjectModal}
-            onClose={closeProjectModal}
-            quotationId={submissionServerId}
+          </>
+        )}
+        <Modal
+          isVisible={isOpenModal}
+          style={styles.modal}
+          onBackdropPress={() => setIsOpenModal(false)}>
+          <AddNewImage
+            isVisible={isOpenModal}
+            onClose={() => setIsOpenModal(false)}
           />
-
-          <SegmentedButtons
-            style={{
-              margin: 10,
-              marginHorizontal: 20,
-            }}
-            value={viewResult}
-            onValueChange={setViewResult}
-            buttons={[
-              {
-                value: 'preview',
-                label: 'พรีวิว',
-                icon: 'eye',
-                onPress: () => openProjectModal(),
-              },
-
-              {
-                value: 'train',
-                label: 'แชร์',
-                icon: 'share-variant',
-                onPress: handleShare,
-              },
-            ]}
+        </Modal>
+        <Modal
+          isVisible={isBeforeImage}
+          style={styles.modal}
+          onBackdropPress={() => setIsOpenModal(false)}>
+          <AddNewBeforeImage
+            isVisible={isBeforeImage}
+            onClose={() => setIsBeforeImage(false)}
           />
-        </>
-      )}
+        </Modal>
+        
+      </FormProvider>
     </>
   );
 };
@@ -585,6 +674,11 @@ const styles = StyleSheet.create({
     fontFamily: 'sukhumvit set',
     fontSize: 20,
     fontWeight: 'bold',
+  },
+  modal: {
+    margin: 0,
+    justifyContent: 'flex-start',
+    alignItems: 'center',
   },
   formInput: {
     flex: 1,
@@ -677,12 +771,20 @@ const styles = StyleSheet.create({
   imageContainer: {
     width: width / 3 - 10,
     position: 'relative',
-    borderWidth: 1,
+
     marginTop: 20,
-    borderColor: '#ccc',
+
     flexDirection: 'column',
     margin: 5,
   },
+  workers: {
+    flexDirection: 'column',
+    marginTop: 20,
+    gap: 10,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    alignContent: 'flex-start',
+     },
   closeIcon: {
     position: 'absolute',
     top: -5,
@@ -768,6 +870,13 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     borderRadius: 0,
     resizeMode: 'cover',
+  },
+  textHeader: {
+    fontSize: 24,
+    fontFamily: 'SukhumvitSet-Bold',
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#343a40',
   },
   card: {
     backgroundColor: '#ffffff',

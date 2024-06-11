@@ -46,7 +46,7 @@ const useCreateSubmission = (actions: SubmissionActions) => {
     onSuccess: (responseData:any) => {
       setSubmissionServerId(responseData.submissionId);
       openProjectModal();
-      queryClient.invalidateQueries({queryKey: ['submiisionData']});
+      queryClient.invalidateQueries({queryKey: ['dashboardData']});
     },
     onError: (error: any) => {
       console.error("Mutation error:", error.message);

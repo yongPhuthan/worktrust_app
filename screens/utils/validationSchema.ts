@@ -1,17 +1,21 @@
 import {
-  CheckStatus,
+ 
   CustomerEmbed,
   CustomerSignEmbed,
   DiscountType,
+  InspectorEmbed,
   MaterialEmbed,
+  Provider,
   QuotationStatus,
   Quotations,
-  ReviewType,
+  RejectEmbed,
+
   ReviewsEmbed,
   ServiceImagesEmbed,
   ServicesEmbed,
   StandardEmbed,
-  SubmissionEmbed,
+  SubmissionStatus,
+  Submissions,
   TaxType,
   WarrantyEmbed,
   WorkStatus,
@@ -33,6 +37,40 @@ export const customerSchemas: yup.ObjectSchema<CustomerEmbed> = yup.object({
   customerTax: yup.string().nullable().default(null),
   phone: yup.string().required('ระบุเบอร์โทรศัพท์'),
 });
+
+export const inspectorValidationSchema: yup.ObjectSchema<InspectorEmbed> = yup.object().shape({
+  name: yup.string().required('ระบุชื่อผู้ตรวจสอบ'),
+  image: yup.string().required('ระบุรูปภาพของผู้ตรวจสอบ'),
+  provider: yup.string().required('ระบุผู้ให้บริการ'),
+  providerAccountId: yup.string().required('ระบุ Provider Account ID'),
+  email: yup.string().email('รูปแบบอีเมลไม่ถูกต้อง').required('ระบุอีเมล'),
+});
+
+export const rejectValidationSchema: yup.ObjectSchema<RejectEmbed> = yup.object().shape({
+  images: yup
+    .array()
+    .of(yup.string().required('รูปภาพแต่ละรูปเป็นสิ่งจำเป็น'))
+    .required('ระบุรูปภาพการปฏิเสธ'),
+  comment: yup.string().required('ระบุความคิดเห็นการปฏิเสธ'),
+});
+export const reviewValidationSchema: yup.ObjectSchema<any> = yup.object().shape({
+  id: yup.string().required('ID เป็นสิ่งจำเป็น'),
+  overallRating: yup.number().required('คะแนนรวมเป็นสิ่งจำเป็น').min(0).max(5),
+  qualityRating: yup.number().required('คะแนนคุณภาพเป็นสิ่งจำเป็น').min(0).max(5),
+  materialRating: yup.number().required('คะแนนวัสดุเป็นสิ่งจำเป็น').min(0).max(5),
+  timelinessRating: yup.number().required('คะแนนตรงต่อเวลาเป็นสิ่งจำเป็น').min(0).max(5),
+  communicationRating: yup.number().required('คะแนนการสื่อสารเป็นสิ่งจำเป็น').min(0).max(5),
+  comment: yup.string().nullable(),
+  socialProvider: yup.mixed<Provider>()
+  .oneOf(['LINE', 'FACEBOOK', 'GOOGLE','PHONE', 'EMAIL'])
+    .default('LINE'),  
+  inspectorName: yup.string().nullable(),
+  inspectorImage: yup.string().nullable(),
+  inspectorEmail: yup.string().email('รูปแบบอีเมลไม่ถูกต้อง').nullable(),
+  periodIndex: yup.number().nullable(),
+  createdAt: yup.date().default(() => new Date()),
+});
+
 export const imageTogallery = yup.object().shape({
   selectedTags: yup.array().of(yup.string().required()).required('เลือกแท็กอย่างน้อย 1 รายการ'),
   image : yup.string().required('เลือกรูปภาพผลงานของคุณ'),
@@ -82,20 +120,6 @@ export const servicesSchema = yup.object({
   materials: yup.array().of(materialSchema),
 });
 
-export const reviewsValidationSchema: yup.ObjectSchema<ReviewsEmbed> =
-  yup.object({
-    id: yup.string().required(),
-    rating: yup.number().required(),
-    comment: yup.string().nullable().default(null),
-    socialProvider: yup.string().nullable().default(null),
-    customerImage: yup.string().nullable().default(null),
-    reviewType: yup
-      .string()
-      .default(ReviewType.OVERALL) as unknown as yup.Schema<ReviewType>,
-    periodIndex: yup.number().nullable().default(null),
-    createdAt: yup.date().default(() => new Date()),
-    updatedAt: yup.date().nullable().default(null),
-  });
 
 export const serviceValidationSchema: yup.ObjectSchema<ServicesEmbed> =
   yup.object({
@@ -133,38 +157,7 @@ export const warrantySchemas: yup.ObjectSchema<WarrantyEmbed> = yup.object({
   endWaranty: yup.date().nullable().default(null),
 });
 
-export const submissionSchemas: yup.ObjectSchema<SubmissionEmbed> = yup.object({
-  id: yup.string().required('ระบุ ID'),
-  address: yup.string().required('ระบุที่อยู่'),
-  dateOffer: yup.date().required('ระบุวันที่ส่งงาน'),
-  services: yup
-    .array()
-    .of(serviceValidationSchema)
-    .required('เลือกงานที่ต้องการส่ง'),
-  workStatus: yup
-    .string()
-    .required('ระบุสถานะงาน')
-    .oneOf(Object.values(WorkStatus)),
-  approvalStatus: yup
-    .string()
-    .required('ระบุสถานะการอนุมัติ')
-    .oneOf(Object.values(CheckStatus))
-    .default(CheckStatus.WAITING),
-  description: yup.string().required('ระบุรายละเอียดงาน'),
-  beforeImages: yup
-    .array()
-    .of(yup.string().required())
-    .required('ระบุภาพก่อนทำงาน'),
-  afterImages: yup
-    .array()
-    .of(yup.string().required())
-    .required('ระบุภาพหลังทำงาน'),
-  imageCustomer: yup.string().nullable().default(null),
-  customerFeedback: yup.string().nullable().default(null),
-  createdAt: yup.date().default(() => new Date()),
-  updatedAt: yup.date().default(() => new Date()),
-  periodIndex: yup.number().nullable().default(0),
-});
+
 
 export const customerSignSchema: yup.ObjectSchema<CustomerSignEmbed> = yup.object({
   id: yup.string().nullable().required(),
@@ -225,7 +218,50 @@ export const quotationsValidationSchema: yup.ObjectSchema<QuotationWithoutArrays
       .min(1, 'ต้องเลือกบริการอย่างน้อย 1 รายการ'),
   });
 
-
+export const submissionValidationSchema: yup.ObjectSchema<Submissions> = yup.object().shape({
+  
+  id: yup.string().required('ระบุ ID'),
+  address: yup.string().required('ระบุที่อยู่'),
+  dateOffer: yup.date().required('ระบุวันที่เสนอราคา'),
+  customer: customerSchemas.required(),
+  inspector: inspectorValidationSchema.nullable().default(null),
+  services: yup
+    .array()
+    .of(serviceValidationSchema)
+    .required('เลือกงานที่ต้องการส่ง'),
+  workStatus: yup
+    .string()
+    .required('ระบุสถานะงาน')
+    .oneOf(Object.values(WorkStatus)),
+  description: yup.string().required('ระบุรายละเอียดงาน'),
+  beforeImages: yup
+    .array()
+    .of(yup.string().required('ภาพก่อนทำงานแต่ละภาพเป็นสิ่งจำเป็น'))
+    .required('ระบุภาพก่อนทำงาน'),
+  afterImages: yup
+    .array()
+    .of(yup.string().required('ภาพหลังทำงานแต่ละภาพเป็นสิ่งจำเป็น'))
+    .required('ระบุภาพหลังทำงาน'),
+    reject: rejectValidationSchema.nullable().default(null),
+    FCMToken: yup.string().nullable().default(null),
+  workers: yup.array().of(workerSchema).required(),
+  status: yup
+    .string()
+    .required('ระบุสถานะการอนุมัติ')
+    .oneOf(Object.values(SubmissionStatus))
+    .default(SubmissionStatus.PENDING),
+    reviews: yup
+    .array()
+    .of(reviewValidationSchema)
+    .required('ระบุความคิดเห็น'),
+  companyName: yup.string().required('ระบุชื่อบริษัท'),
+  companyCode: yup.string().required('ระบุรหัสบริษัท'),
+  quotationRefNumber: yup.string().required('ระบุหมายเลขใบเสนอราคา'),
+  createdAt: yup.date().default(() => new Date()),
+  updatedAt: yup.date().default(() => new Date()),
+  companyId: yup.string().required('ระบุรหัสบริษัท'),
+  company: yup.object().nullable().default(null),
+});
 
 export const signupMobilevalidationSchema = yup.object().shape({
   phoneNumber: yup

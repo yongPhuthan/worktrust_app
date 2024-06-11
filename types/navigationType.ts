@@ -36,11 +36,10 @@ type OnAddService = (service: ServicesEmbed) => void;
 
 export type ParamListBase = {
   Quotation: undefined;
-  
+  CreateWarranty : undefined;
   CreateNewInvoice: undefined;
   InvoiceDepositScreen  : undefined;
   ReceiptDepositScreen  : undefined;
-
   CreateNewReceipt: undefined;
   RegisterScreen: undefined;
   SignupMobileScreen  : undefined;
@@ -62,6 +61,7 @@ export type ParamListBase = {
   HomeScreen: undefined;
   CreateQuotation: undefined;
   Dashboard: undefined;
+  DashboardWarranty: undefined;
   ContractCard: undefined;
   SelectAudit: Audit;
   DefaultContract: {

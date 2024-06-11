@@ -100,6 +100,11 @@ export const get_seller_id = (payload: string) => ({
   payload,
 });
 
+export const get_fcm_token = (payload: string) => ({
+  type: contrains.GET_FCM_TOKEN,
+  payload,
+});
+
 // COMPONENTS  => ACTION
 export const codeCompany = (payload: string) => {
   return (dispatch: (arg0: {type: string; payload: string}) => void) => {
@@ -209,5 +214,11 @@ export const resetEditReceipt = () => {
 export const getSellerId = (payload: string) => {
   return (dispatch: (arg0: {type: string; payload: string}) => void) => {
     dispatch(get_seller_id(payload));
+  };
+};
+
+export const getFcmToken = (payload: string) => {
+  return (dispatch: (arg0: {type: string; payload: string}) => void) => {
+    dispatch(get_fcm_token(payload));
   };
 };

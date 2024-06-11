@@ -1,13 +1,7 @@
+import {BACK_END_SERVER_URL} from '@env';
 import messaging from '@react-native-firebase/messaging';
 import {DrawerActions} from '@react-navigation/native';
 import {useQueryClient} from '@tanstack/react-query';
-import {
-  QuotationStatus,
-  QuotationsFilterLabels,
-  QuotationStatusKey,
-} from '../../models/QuotationStatus';
-import firebase from '../../firebase';
-import useFetchDashboard from '../../hooks/submit/dashboard/useFetchDashboard'; // adjust the path as needed
 
 import React, {useContext, useEffect, useMemo, useState} from 'react';
 import {
@@ -20,12 +14,18 @@ import {
   View,
 } from 'react-native';
 import Modal from 'react-native-modal';
-
+import {QuotationsFilterButton} from '../../components/ui/Dashboard/FilterButton'; // Adjust the import path as necessary
+import firebase from '../../firebase';
+import {useActiveFilter} from '../../hooks/dashboard/useActiveFilter';
+import {
+  useFilteredData,
+  useFilteredInvoicesData,
+} from '../../hooks/dashboard/useFilteredData';
 import CardDashBoard from '../../components/CardDashBoard';
 import {useUser} from '../../providers/UserContext';
 import * as stateAction from '../../redux/actions';
 import {Store} from '../../redux/store';
-import {CompanySeller, Quotation} from '../../types/docType';
+
 import {DashboardScreenProps} from '../../types/navigationType';
 
 import {
@@ -33,41 +33,90 @@ import {
   Appbar,
   Dialog,
   Divider,
+  FAB,
   List,
   PaperProvider,
+  Icon,
   Portal,
 } from 'react-native-paper';
+import {requestNotifications} from 'react-native-permissions';
+import useFetchDashboard from '../../hooks/submission/useFetchDashboard'; // adjust the path as needed
+
+import ProjectModalScreen from '../../components/webview/project';
+import {useModal} from '../../hooks/quotation/create/useModal';
+import PDFModalScreen from '../../components/webview/pdf';
 import {
-  checkNotifications,
-  requestNotifications,
-} from 'react-native-permissions';
-type FilterButtonProps = {
-  filter: QuotationStatusKey;
-  isActive: boolean;
-  onPress: () => void;
-};
-const DashboardSubmit = ({navigation}: DashboardScreenProps) => {
+  Company,
+  CustomerEmbed,
+  QuotationStatus,
+  Quotations,
+  ServicesEmbed,
+} from '@prisma/client';
+import {CompanyState} from 'types';
+import useResetQuotation from '../../hooks/quotation/update/resetStatus';
+interface ErrorResponse {
+  message: string;
+  action: 'logout' | 'redirectToCreateCompany' | 'contactSupport' | 'retry';
+}
+const Dashboard = ({navigation}: DashboardScreenProps) => {
   const [showModal, setShowModal] = useState(true);
   const user = useUser();
+  const {
+    openModal: openPDFModal,
+    closeModal: closePDFModal,
+    isVisible: showPDFModal,
+  } = useModal();
+  const {
+    openModal: openProjectModal,
+    closeModal: closeProjectModal,
+    isVisible: showProjectModal,
+  } = useModal();
+  const {
+    dispatch,
+    state: {code},
+  }: any = useContext(Store);
+  const {data, isLoading, isError, error} = useFetchDashboard();
+  const {activeFilter, updateActiveFilter} = useActiveFilter();
   const {width, height} = Dimensions.get('window');
   const [isLoadingAction, setIsLoadingAction] = useState(false);
   const queryClient = useQueryClient();
-  const email = user?.email;
-  const [visible, setVisible] = useState(false);
   const [isModalSignContract, setIsModalSignContract] = useState(false);
-  const [selectedItem, setSelectedItem] = useState(null) as any;
-  const [selectedIndex, setSelectedIndex] = useState(null) as any;
-  const [originalDashboardData, setOriginalQuotationData] = useState<
-    Quotation[] | null
-  >(null);
-  const [state, setState] = React.useState({open: false});
-  const {data, isLoading, isError, error} = useFetchDashboard();
-  console.log('data SUbmit', data);
-  const onStateChange = ({open}: any) => setState({open});
-
-  const {open} = state;
-
-  const {dispatch}: any = useContext(Store);
+  const [selectedItem, setSelectedItem] = useState<Quotations | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [originalData, setOriginalData] = useState<Quotations[] | null>(null);
+  const filteredData = useFilteredData(
+    originalData,
+    activeFilter as QuotationStatus,
+  );
+  const [companyData, setCompanyData] = useState<CompanyState | null>(null);
+  const [quotationData, setQuotationData] = useState<Quotations[] | null>(null);
+  const handleLogout = async () => {
+    try {
+      await firebase.auth().signOut();
+      navigation.reset({
+        index: 0,
+        routes: [{name: 'FirstAppScreen'}],
+      });
+    } catch (error) {
+      console.error('Failed to sign out: ', error);
+    }
+  };
+  const handleErrorResponse = (error: ErrorResponse) => {
+    switch (error.message) {
+      case 'logout':
+        handleLogout();
+        break;
+      case 'redirectToCreateCompany':
+        navigation.navigate('CreateCompanyScreen');
+        break;
+      case 'retry':
+        console.log('Retrying...');
+        // Implement retry logic here if necessary
+        break;
+      default:
+        console.error('Unhandled error action:', error.message);
+    }
+  };
 
   const requestNotificationPermission = async () => {
     try {
@@ -78,86 +127,103 @@ const DashboardSubmit = ({navigation}: DashboardScreenProps) => {
     }
   };
 
-  const checkNotificationPermission = async () => {
-    const {status, settings} = await checkNotifications();
-    console.log('Notification permission status:', status);
-    console.log('Notification settings:', settings);
-  };
-  const filtersToShow: QuotationStatusKey[] = [
-    QuotationStatus.ALL,
-    QuotationStatus.ONPROCESS,
-    QuotationStatus.WAITING_FOR_CUSTOMER_APPROVAL,
-    QuotationStatus.CUSTOMER_APPROVAL_SOMECOMPLETED,
-    QuotationStatus.CUSTOMER_NOTAPPROVAL,
-    QuotationStatus.CUSTOMER_APPROVAL_ALLCOMPLETED,
+  const removeQuotation = async (id: string) => {
+    handleModalClose();
+    setIsLoadingAction(true);
+    if (!user || !user.uid) {
+      console.error('User or user email is not available');
+      return;
+    }
+    try {
+      const token = await user.getIdToken(true);
+      const response = await fetch(
+        `${BACK_END_SERVER_URL}/api/docs/deleteQuotation?id=${encodeURIComponent(
+          id,
+        )}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
 
-  ];
-  const [companyData, setCompanyData] = useState<CompanySeller | null>(null);
-  const [quotationData, setQuotationData] = useState<Quotation[] | null>(null);
-
-  const approvedQuotation = useMemo(() => {
-    return quotationData?.filter(
-      quotation => quotation.status === QuotationStatus.APPROVED,
-    );
-  }, [quotationData]);
-
-
-  const handleNoResponse = () => {
-    setIsModalSignContract(false);
-  };
-
-  const [activeFilter, setActiveFilter] = useState<
-    keyof typeof QuotationStatus
-  >(QuotationStatus.ALL);
-  const filteredDashboardData = useMemo(() => {
-    if (!originalDashboardData) return null;
-
-    if (activeFilter === QuotationStatus.ALL) return originalDashboardData;
-
-    return originalDashboardData.filter(
-      (q: Quotation) => q.status === activeFilter,
-    );
-  }, [originalDashboardData, activeFilter]);
-
-  const updateContractData = (filter: keyof typeof QuotationStatus) => {
-    setActiveFilter(filter);
-    if (quotationData) {
-      let filteredData = quotationData;
-
-      if (filter !== QuotationStatus.ALL) {
-        filteredData = quotationData.filter(
-          (quotation: Quotation) => quotation.status === filter,
-          setQuotationData(filteredData),
-        );
+      if (response.ok) {
+        queryClient.invalidateQueries({
+          queryKey: ['dashboardData'],
+        });
+        setIsLoadingAction(false);
       } else {
-        console.log('FILTER', filter);
-        filteredData = quotationData;
-        setQuotationData(filteredData);
+        // It's good practice to handle HTTP error statuses
+        const errorResponse = await response.text(); // or response.json() if the server responds with JSON
+        console.error('Failed to delete quotation:', errorResponse);
+        setIsLoadingAction(false);
+        // Display a more specific error message if possible
+        Alert.alert('Error', 'Failed to delete quotation. Please try again.');
       }
+    } catch (err) {
+      console.error('An error occurred:', err);
+      setIsLoadingAction(false);
+      Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถลบใบเสนอราคาได้');
     }
   };
-  const handleSelectWork = (quotationId: string) => {
-    navigation.navigate('SelectWorks', {quotationId});
+
+  const confirmRemoveQuotation = (id: string, customer: CustomerEmbed) => {
+    setShowModal(false);
+    Alert.alert(
+      'ยืนยันลบเอกสาร',
+      `ลูกค้า ${customer}`,
+      [
+        {
+          text: 'ยกเลิก',
+          onPress: () => console.log('Cancel Pressed'),
+          style: 'cancel',
+        },
+        {text: 'ลบเอกสาร', onPress: () => removeQuotation(id)},
+      ],
+      {cancelable: false},
+    );
+  };
+
+  const {mutate: resetStatus, isPending: isReseting} = useResetQuotation();
+  const confirmResetQuotation = (id: string, customerName: string) => {
+    setShowModal(false);
+    Alert.alert(
+      'ยืนยันการรีเซ็ตสถานะ',
+      `ลูกค้า ${customerName}`,
+      [
+        {
+          text: 'ยกเลิก',
+          onPress: () => console.log('Cancel Pressed'),
+          style: 'cancel',
+        },
+        {text: 'รีเซ็ต', onPress: () => resetStatus(id)},
+      ],
+      {cancelable: false},
+    );
   };
 
   useEffect(() => {
     if (data) {
-      setCompanyData(data[0]);
-      setQuotationData(data[1]);
-      setOriginalQuotationData(data[1]);
-      dispatch(stateAction.code_company(data[0].code));
-      if (user) {
-        if (data[0] === null) {
-          navigation.navigate('CreateCompanyScreen');
-        }
-      }
+      // If data[0] exists and has a non-null `code`, proceed with your logic
+      const companyWithoutQuotations = {
+        ...data.company,
+        quotations: [],
+      };
+      setCompanyData(companyWithoutQuotations);
+      setQuotationData(data.company.quotations);
+      setOriginalData(data.company.quotations);
     }
   }, [data]);
+
   useEffect(() => {
     requestNotificationPermission();
   }, []);
   useEffect(() => {
     if (user) {
+      console.log('User:', user);
+
       const unsubscribe = messaging().setBackgroundMessageHandler(
         async remoteMessage => {
           console.log('Message handled in the background!', remoteMessage);
@@ -168,58 +234,23 @@ const DashboardSubmit = ({navigation}: DashboardScreenProps) => {
     }
   }, [user]);
 
-  if (isLoading || isLoadingAction) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size={'large'} />
-      </View>
-    );
-  }
-
-  if (error instanceof Error) {
-    {
-      Alert.alert('seesion หมดอายุ', 'ลงทะเบียนเข้าใช้งานใหม่อีกครั้ง', [
-        {
-          text: 'ตกลง',
-          onPress: async () => {
-            await firebase
-              .auth()
-              .signOut()
-              .then(() => {
-                navigation.reset({
-                  index: 0,
-                  routes: [{name: 'FirstAppScreen'}],
-                });
-              })
-              .catch(signOutError => {
-                console.error('Sign out error: ', signOutError);
-              });
-          },
-        },
-      ]);
+  useEffect(() => {
+    // ใช้ useEffect เพื่อตรวจสอบการเปลี่ยนแปลงของ showProjectModal และ showPDFModal
+    // และทำการเปลี่ยนแปลงค่าของ showModal ให้เป็น false เพื่อปิด Modal
+    // ที่เปิดอยู่ก่อนหน้านี้
+    if (showProjectModal || showPDFModal) {
+      setShowModal(false);
     }
-  }
+  }, [showProjectModal, showPDFModal]);
 
-  const handleCreateContract = (index: number) => {
-    if (companyData && quotationData && quotationData.length > 0) {
-      console.log('quotationSelected', selectedItem);
-      navigation.navigate('ContractOptions', {
-        id: selectedItem.id,
-        sellerId: selectedItem.id,
-        allTotal: selectedItem.allTotal,
-        customerName: selectedItem.customer?.name as string,
-      });
-    }
-    setIsModalSignContract(false);
-  };
-
-  const handleSignContractModal = (item: Quotation, index: number) => {
-    setSelectedItem(item);
-    setSelectedIndex(index);
-    setShowModal(false);
-    setIsModalSignContract(true);
-  };
-  const handleModalOpen = (item: Quotation, index: number) => {
+  const filtersToShow = [
+    QuotationStatus.ALL,
+    QuotationStatus.SUBMITTED,
+    QuotationStatus.CUSTOMER_APPROVED,
+    QuotationStatus.CUSTOMER_REJECTED,
+    QuotationStatus.CUSTOMER_REVIEWED,
+  ];
+  const handleModalOpen = (item: Quotations, index: number) => {
     setSelectedItem(item);
     setSelectedIndex(index);
     // handleModal(item, index);
@@ -231,17 +262,28 @@ const DashboardSubmit = ({navigation}: DashboardScreenProps) => {
     setSelectedIndex(null);
     setShowModal(false);
   };
+  const editQuotation = async (
+    services: ServicesEmbed[],
+    quotation: Quotations,
+  ) => {
+    setIsLoadingAction(true);
+    dispatch(stateAction.get_companyID(data?.company?.id as string));
+    dispatch(stateAction.get_edit_quotation(quotation));
+    setIsLoadingAction(false);
+    handleModalClose();
+    navigation.navigate('CreateQuotation');
 
-  const FilterButton = ({filter, isActive, onPress}: FilterButtonProps) => {
-    const displayText = QuotationsFilterLabels[filter]; // This is now safely typed
-    return (
-      <TouchableOpacity
-        style={[styles.filterButton, isActive ? styles.activeFilter : null]}
-        onPress={onPress}>
-        <Text style={isActive ? {color: 'white'} : null}>{displayText}</Text>
-      </TouchableOpacity>
-    );
+    // navigation.navigate('EditQuotation', {
+    //   quotation,
+    //   company: data[0],
+    //   services,
+    // });
   };
+
+  if (isError && error) {
+    handleErrorResponse(error);
+  }
+
   const renderItem = ({item, index}: any) => (
     <>
       <View style={{marginTop: 10}}>
@@ -256,64 +298,162 @@ const DashboardSubmit = ({navigation}: DashboardScreenProps) => {
         />
       </View>
 
-      {selectedIndex === index && (
-        <Portal>
-          <PaperProvider>
-            <Modal
-              backdropOpacity={0.1}
-              backdropTransitionOutTiming={100}
-              onBackdropPress={handleModalClose}
-              isVisible={showModal}
-              style={styles.modalContainer}
-              onDismiss={handleModalClose}>
-              <List.Section
-                style={{
-                  width: '100%',
-                }}>
-                <List.Subheader
+      {selectedItem && selectedIndex === index && (
+        <>
+          <Portal>
+            <PaperProvider>
+              <Modal
+                backdropOpacity={0.1}
+                backdropTransitionOutTiming={100}
+                onBackdropPress={handleModalClose}
+                isVisible={showModal}
+                style={styles.modalContainer}
+                onDismiss={handleModalClose}>
+                <List.Section
                   style={{
-                    textAlign: 'center',
-                    fontWeight: 'bold',
-                    fontFamily: 'Sukhumvit Set Bold',
-                    color: 'gray',
+                    width: '100%',
                   }}>
-                  {item.customer?.name}
-                </List.Subheader>
-                <Divider />
-                {selectedItem?.status === QuotationStatus.ONPROCESS && (
-                  <>
+                  <List.Subheader
+                    style={{
+                      textAlign: 'center',
+                      fontWeight: 'bold',
+                      fontFamily: 'Sukhumvit Set Bold',
+                      color: 'gray',
+                    }}>
+                    {item.customer?.name}
+                  </List.Subheader>
+                  <Divider />
+                  {/* <List.Item
+                    onPress={() => {
+                      handleModalClose();
+                      navigation.navigate('ProjectViewScreen', {
+                        id: item.id,
+                        pdfUrl: item.pdfUrl,
+
+                        fileName: `ใบเสนอราคา ${item.customer.name}.pdf`,
+                      });
+                    }}
+                    centered={true}
+                    title="พรีวิวเอกสาร"
+                    titleStyle={{textAlign: 'center', color: 'black'}}
+                  />
+
+                  <Divider /> */}
+                  {/* <List.Item
+                    onPress={() => {
+                      handleModalClose();
+                      navigation.navigate('PDFViewScreen', {
+                        pdfUrl: item.pdfUrl,
+
+                        fileName: `ใบเสนอราคา ${item.customer.name}.pdf`,
+                      });
+                    }}
+                    title="เอกสาร PDF"
+                    titleStyle={{textAlign: 'center'}}
+                  />
+
+                  <Divider /> */}
+
+                  {selectedItem?.status === QuotationStatus.SUBMITTED && (
+                    <>
+                      <List.Item
+                        onPress={() => {
+                          setShowModal(false);
+                          editQuotation(selectedItem.services, selectedItem);
+                        }}
+                        title="แก้ไข"
+                        titleStyle={{textAlign: 'center', color: 'black'}}
+                      />
+                    </>
+                  )}
+
+                  {selectedItem?.status ===
+                    QuotationStatus.CUSTOMER_REJECTED && (
+                    <>
+                      <Divider />
+                      <List.Item
+                        onPress={() => {}}
+                        centered={true}
+                        title="ดูรายละเอียด"
+                        titleStyle={{textAlign: 'center', color: 'black'}}
+                      />
+                    </>
+                  )}
+                  {selectedItem?.status ===
+                    QuotationStatus.CUSTOMER_REVIEWED && (
+                    <>
+                      <Divider />
+                      <List.Item
+                        onPress={() => {}}
+                        centered={true}
+                        title="ดูความคิดเห็น"
+                        titleStyle={{textAlign: 'center', color: 'black'}}
+                      />
+                    </>
+                  )}
+                  {selectedItem?.status === QuotationStatus.CUSTOMER_APPROVED &&
+                    QuotationStatus.CUSTOMER_REVIEWED && (
+                      <>
+                        <Divider />
+                        <List.Item
+                          onPress={() => {}}
+                          centered={true}
+                          title="ส่งใบรับประกัน"
+                          titleStyle={{textAlign: 'center', color: 'black'}}
+                        />
+                        <Divider />
+                        <List.Item
+                          onPress={() => {}}
+                          centered={true}
+                          title="ส่งใบเสร็จรับเงิน"
+                          titleStyle={{textAlign: 'center', color: 'black'}}
+                        />
+                      </>
+                    )}
+                  <Divider />
+                  <List.Item
+                    onPress={() =>
+                      confirmResetQuotation(
+                        item.id,
+                        selectedItem?.customer?.name,
+                      )
+                    }
+                    centered={true}
+                    title="รีเซ็ต"
+                    titleStyle={{textAlign: 'center', color: 'black'}}
+                  />
+                  <Divider />
+                  <List.Item
+                    onPress={() => {
+                      dispatch(stateAction.get_edit_quotation(selectedItem));
+                      setShowModal(false);
+                      navigation.navigate('SendWorks');
+                    }}
+                    title={
+                      selectedItem?.status === QuotationStatus.SUBMITTED
+                        ? 'ส่งงานอีกครั้ง'
+                        : 'แจ้งส่งงาน'
+                    }
+                    titleStyle={{textAlign: 'center'}}
+                  />
+                  <Divider />
+                  {QuotationStatus.SUBMITTED && (
                     <List.Item
-                      onPress={() => {
-                        handleModalClose();
-
-                        handleSelectWork(selectedItem.id);
-                      }}
-                      centered={true}
-                      title="แจ้งส่งงาน"
-                      titleStyle={{textAlign: 'center', color: 'black'}} // จัดให้ข้อความอยู่ตรงกลาง
+                      onPress={() =>
+                        confirmRemoveQuotation(item.id, item?.customer?.name)
+                      }
+                      title="ลบ"
+                      titleStyle={{textAlign: 'center', color: 'red'}}
                     />
-                    <Divider />
-                  </>
-                )}
-                <List.Item
-                  onPress={() => {
-                    handleModalClose();
-                    navigation.navigate('DocViewScreen', {id: item.id});
-                  }}
-                  centered={true}
-                  title="พรีวิวเอกสาร"
-                  titleStyle={{textAlign: 'center', color: 'black'}} // จัดให้ข้อความอยู่ตรงกลาง
-                />
-
-                <Divider />
-              </List.Section>
-            </Modal>
-          </PaperProvider>
-        </Portal>
+                  )}
+                </List.Section>
+              </Modal>
+            </PaperProvider>
+          </Portal>
+        </>
       )}
     </>
   );
-
   return (
     <>
       <PaperProvider>
@@ -331,40 +471,17 @@ const DashboardSubmit = ({navigation}: DashboardScreenProps) => {
               }}
             />
             <Appbar.Content
-              title={
-                activeFilter == QuotationStatus.ALL
-                  ? 'รายการทั้งหมด'
-                  : activeFilter === QuotationStatus.ONPROCESS
-                  ? 'กำลังทำงาน'
-                  : activeFilter === QuotationStatus.WAITING_FOR_CUSTOMER_APPROVAL
-                  ? 'รอตรวจงาน'
-                  : activeFilter === QuotationStatus.CUSTOMER_APPROVAL_SOMECOMPLETED
-                  ? 'รายการที่ต้องแก้ไขบางส่วน'
-                  : activeFilter ===
-                    QuotationStatus.CUSTOMER_APPROVAL_ALLCOMPLETED
-                  ? 'รายการที่แล้วเสร็จทั้งหมด'
-                  : activeFilter === QuotationStatus.REJECTED || activeFilter === QuotationStatus.CUSTOMER_NOTAPPROVAL
-                  ? 'รายการที่ต้องแก้ไขทั้งหมด'
-                  : ''
-              }
+              title={'งานที่แจ้งส่ง '}
               titleStyle={{
                 fontSize: 18,
                 fontWeight: 'bold',
-                fontFamily: 'Sukhumvit Set Bold',
               }}
-            />
-
-            <Appbar.Action
-              icon="bell-outline"
-              // onPress={() => {
-              //   navigation.navigate('SearchScreen');
-              // }}
             />
           </Appbar.Header>
           {isLoadingAction ? (
             <View
               style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-              <ActivityIndicator size="large" />
+              <ActivityIndicator color="primary" />
             </View>
           ) : (
             <>
@@ -374,18 +491,22 @@ const DashboardSubmit = ({navigation}: DashboardScreenProps) => {
                   showsHorizontalScrollIndicator={false}
                   data={filtersToShow}
                   renderItem={({item}) => (
-                    <FilterButton
+                    <QuotationsFilterButton
                       filter={item}
                       isActive={item === activeFilter}
                       onPress={() => {
-                        updateContractData(item);
+                        updateActiveFilter(item);
                       }}
                     />
                   )}
                   keyExtractor={item => item}
                 />
               </View>
-              {companyData && (
+              {isLoading || isLoadingAction || isReseting ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator color="#00674a" size={'large'} />
+                </View>
+              ) : (
                 <View
                   style={{
                     flex: 1,
@@ -394,20 +515,23 @@ const DashboardSubmit = ({navigation}: DashboardScreenProps) => {
                     backgroundColor: '#f5f5f5',
                   }}>
                   <FlatList
-                    data={filteredDashboardData}
+                    data={filteredData}
                     renderItem={renderItem}
                     keyExtractor={item => item.id}
                     ListEmptyComponent={
                       <View
                         style={{
                           flex: 1,
-                          justifyContent: 'center',
-                          height: height * 0.5,
+                          justifyContent: 'flex-start',
+                          height: height,
+                          width: width,
 
                           alignItems: 'center',
+                          marginTop: height * 0.2,
                         }}>
-                        <Text style={{marginTop: 10}}>
-                          ลูกค้าอนุมัติสัญญาก่อนเริ่มแจ้งส่งงาน
+                        <Icon source="inbox" color={'gray'} size={80} />
+                        <Text style={{marginTop: 10, color: 'gray'}}>
+                          ยังไม่มีงานแจ้งส่ง
                         </Text>
                       </View>
                     }
@@ -419,51 +543,13 @@ const DashboardSubmit = ({navigation}: DashboardScreenProps) => {
               )}
             </>
           )}
-
-          {/* modal popup */}
-          <Dialog
-            style={styles.modalContainer}
-            // backdropTransitionOutTiming={100}
-            onDismiss={handleNoResponse}
-            visible={isModalSignContract}>
-            <Dialog.Content>
-              <View
-                style={{
-                  flex: 1,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}>
-                <Text>เริ่มทำสัญญากับลูกค้า</Text>
-                <Text style={styles.selectedQuotationText}>
-                  {selectedItem?.customer?.name}
-                </Text>
-                <Text style={styles.modalText}>
-                  คุณได้นัดเข้าดูพื้นที่หน้างานโครงการนี้เรียบร้อยแล้วหรือไม่ ?
-                </Text>
-                <TouchableOpacity
-                  style={styles.button}
-                  onPress={() => handleCreateContract(selectedIndex)}>
-                  <Text style={styles.whiteText}> ดูหน้างานแล้ว</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.button}
-                  onPress={handleNoResponse}>
-                  <Text style={styles.whiteText}>ยังไม่ได้ดูหน้างาน</Text>
-                </TouchableOpacity>
-                <Text style={styles.RedText}>
-                  {' '}
-                  *จำเป็นต้องดูหน้างานก่อนเริ่มทำสัญญา
-                </Text>
-              </View>
-            </Dialog.Content>
-          </Dialog>
         </Portal>
       </PaperProvider>
     </>
   );
 };
 
-export default DashboardSubmit;
+export default Dashboard;
 const {width, height} = Dimensions.get('window');
 
 const styles = StyleSheet.create({
@@ -474,14 +560,17 @@ const styles = StyleSheet.create({
     bottom: height * 0.1,
     right: width * 0.05,
     position: 'absolute',
-    backgroundColor: '#1b52a7',
+    // backgroundColor: '#1b52a7',
+    backgroundColor: '#00674a',
+    // backgroundColor: '#009995',
   },
   fab: {
     position: 'absolute',
     margin: 16,
     right: 0,
     bottom: 10,
-    backgroundColor: '#1b52a7',
+    backgroundColor: '#00674a',
+    // backgroundColor: '#1b52a7',
     borderRadius: 28,
     height: 56,
     width: 56,

@@ -28,6 +28,7 @@ import {
   Appbar,
   Button,
   Divider,
+  IconButton,
   SegmentedButtons,
   Switch,
   TextInput,
@@ -50,14 +51,15 @@ import PDFModalScreen from '../../../components/webview/pdf';
 import ExistingWorkers from '../../../components/workers/existing';
 import {useModal} from '../../../hooks/quotation/create/useModal';
 import useSelectedDates from '../../../hooks/quotation/create/useSelectDates';
-import useCreateNewReceipt from '../../../hooks/receipt/useCreateInvoice';
+import useCreateNewReceipt from '../../../hooks/receipt/useCreateReceipt';
 import useThaiDateFormatter from '../../../hooks/utils/useThaiDateFormatter';
 import {TaxType} from '../../../models/Tax';
 import * as stateAction from '../../../redux/actions';
 import {Store} from '../../../redux/store';
 import {ParamListBase} from '../../../types/navigationType';
 import {quotationsValidationSchema} from '../../utils/validationSchema';
-import { ServicesEmbed } from '@prisma/client';
+import { CustomerEmbed, DiscountType, ReceiptStatus, Receipts, ServicesEmbed } from '@prisma/client';
+import { CompanyState } from 'types';
 
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'CreateNewReceipt'>;
@@ -65,7 +67,7 @@ interface Props {
 
 const CreateNewReceipt = ({navigation}: Props) => {
   const {
-    state: {companyState, editQuotation, defaultWarranty},
+    state: {companyState, editQuotation, sellerId},
     dispatch,
   }: any = useContext(Store);
 
@@ -83,6 +85,7 @@ const CreateNewReceipt = ({navigation}: Props) => {
   // const [customerName, setCustomerName] = useState('');
   const [signaturePicker, setSignaturePicker] = useState(false);
   const [contractPicker, setContractPicker] = useState(false);
+  const [save, setSave] = useState<boolean>(false);
 
   const [workerPicker, setWorkerpicker] = useState(false);
 
@@ -154,39 +157,55 @@ const CreateNewReceipt = ({navigation}: Props) => {
     null,
   );
 
-  const defalutCustomer = {
+
+  const defalutCustomer: CustomerEmbed = {
+    id: uuidv4(),
     name: '',
     address: '',
     customerTax: '',
     phone: '',
   };
-
-  const quotationDefaultValues = {
+  const receiptDefaultValue: Receipts = {
+    id: uuidv4(),
     services: [],
     customer: defalutCustomer,
-    company: companyState,
+    companyId: companyState.id,
+    quotationRefNumber: '',
     vat7: 0,
     taxType: TaxType.NOTAX,
     taxValue: 0,
     summary: 0,
     summaryAfterDiscount: 0,
-    discountType: 'PERCENT',
+    paymentMethod: '',
+    paymentStatus: '',
+    depositPaid: false,
+    depositApplied:0,
+    sellerId,
+    discountType: DiscountType.PERCENT,
+    FCMToken: '',
     discountPercentage: 0,
     discountValue: 0,
-    allTotal: 0,
+    allTotal:  0,
+    netAmount: 0,
+    remaining: 0,
     dateOffer: initialDateOffer,
     noteToCustomer: '',
     noteToTeam: '',
     dateEnd: initialDateEnd,
-    docNumber: `RC${initialDocnumber}`,
-    FCMToken: fcmToken,
+    docNumber: `IV${initialDocnumber}`,
     sellerSignature: '',
-    quotationRefNumber: '',
+    warranty: editQuotation?.warranty ? editQuotation?.warranty : null,
+    status: ReceiptStatus.PENDING, // Set the status to a valid QuotationStatus value
+    dateApproved: null,
+    pdfUrl: '',
+    updated: new Date(),
+    created: new Date(),
+
+    customerSign: null,
   };
-  const methods = useForm<any>({
+  const methods = useForm<Receipts>({
     mode: 'all',
-    defaultValues: editQuotation ? editQuotation : quotationDefaultValues,
-    resolver: yupResolver(quotationsValidationSchema),
+    defaultValues: editQuotation ? editQuotation : receiptDefaultValue,
   });
   const {fields, append, remove, update} = useFieldArray({
     control: methods.control,
@@ -243,7 +262,13 @@ const CreateNewReceipt = ({navigation}: Props) => {
   const {mutate, isPending} = useCreateNewReceipt(actions);
 
   const handleButtonPress = async () => {
-    await mutate(methods.getValues());
+    const data = {
+      receipt: methods.getValues() as Receipts, // Add the missing 'invoice' property
+      quotation: methods.getValues() as Receipts,
+      company: companyState as CompanyState,
+    };
+    mutate(data);
+    setSave(true)
   };
 
   const handleInvoiceNumberChange = (text: string) => {
@@ -292,39 +317,37 @@ const CreateNewReceipt = ({navigation}: Props) => {
           backgroundColor: 'white',
         }}>
         <Appbar.BackAction
-          onPress={() => {
-            Alert.alert(
-              'ปิดหน้าต่าง',
-              'ยืนยันไม่บันทึกข้อมูลและปิดหน้าต่าง',
-              [
-                // The "No" button
-                // Does nothing but dismiss the dialog when pressed
-                {
-                  text: 'อยู่ต่อ',
-                  style: 'cancel',
-                },
-                // The "Yes" button
-                {
-                  text: 'ปิดหน้าต่าง',
-                  onPress: () => {
-                    dispatch(stateAction.reset_edit_quotation());
+             onPress={() => {
+              if (!save) {
+                Alert.alert(
+                  'ปิดหน้าต่าง',
+                  'ยืนยันไม่บันทึกข้อมูลและปิดหน้าต่าง',
+                  [
+                    // The "No" button
+                    // Does nothing but dismiss the dialog when pressed
+                    {
+                      text: 'อยู่ต่อ',
+                      style: 'cancel',
+                    },
+                    // The "Yes" button
+                    {
+                      text: 'ปิดหน้าต่าง',
+                      onPress: () => navigation.goBack(),
+                    },
+                  ],
+                  {cancelable: false},
+                );
+              } else {
+                () => navigation.goBack();
+              }
+            }}
+        />
+         <Appbar.Content title="" />
 
-                    navigation.goBack();
-                  },
-                },
-              ],
-              {cancelable: false},
-            );
-          }}
-        />
-        <Appbar.Content
-          title="สร้างใบเสร็จรับเงิน"
-          titleStyle={{
-            fontSize: 18,
-            fontWeight: 'bold',
-            fontFamily: 'Sukhumvit Set Bold',
-          }}
-        />
+          {pdfUrl && (
+        <IconButton mode='outlined' icon="file-document" iconColor='gray' onPress={openPDFModal} />
+          )}
+          <Appbar.Content title=""  />
         <Button
           loading={isPending}
           disabled={isDisabled}
@@ -337,11 +360,14 @@ const CreateNewReceipt = ({navigation}: Props) => {
       <FormProvider {...methods}>
         <View style={{flex: 1}}>
           <KeyboardAwareScrollView style={styles.container}>
+
             <View style={styles.subContainerHead}>
+            <Text style={styles.textHeader}>ใบเสร็จรับเงิน</Text>
+
               <DatePickerButton
                 label="วันที่"
                 title="วันที่"
-                date="today"
+                date={new Date(methods.watch('dateOffer'))}
                 onDateSelected={handleStartDateSelected}
               />
               <DocNumber
@@ -352,7 +378,7 @@ const CreateNewReceipt = ({navigation}: Props) => {
               <DocNumber
                 label="อ้างอิงใบเสนอราคาเลขที่"
                 onChange={handleQuotationRefNumberChange}
-                value={methods.watch('quotationRefNumber')}
+                value={methods.watch('quotationRefNumber') || ''}
               />
             </View>
             <View style={styles.subContainer}>
@@ -420,8 +446,8 @@ const CreateNewReceipt = ({navigation}: Props) => {
               <View style={styles.signatureRow}>
                 <Text style={styles.signHeader}>เพิ่มลายเซ็น</Text>
                 <Switch
-                  trackColor={{false: '#767577', true: '#81b0ff'}}
-                  thumbColor={sellerSignature ? '#ffffff' : '#f4f3f4'}
+                trackColor={{false: '#a5d6c1', true: '#4caf82'}}
+                thumbColor={sellerSignature ? '#ffffff' : '#f4f3f4'}
                   ios_backgroundColor="#3e3e3e"
                   onValueChange={useSignature}
                   value={sellerSignature ? true : false}
@@ -446,8 +472,8 @@ const CreateNewReceipt = ({navigation}: Props) => {
               <View style={styles.signatureRow}>
                 <Text style={styles.signHeader}>หมายเหตุ</Text>
                 <Switch
-                  trackColor={{false: '#767577', true: '#81b0ff'}}
-                  thumbColor={openNoteToCustomer ? '#ffffff' : '#f4f3f4'}
+                trackColor={{false: '#a5d6c1', true: '#4caf82'}}
+                thumbColor={openNoteToCustomer ? '#ffffff' : '#f4f3f4'}
                   ios_backgroundColor="#3e3e3e"
                   onValueChange={() =>
                     setOpenNoteToCustomer(!openNoteToCustomer)
@@ -489,7 +515,7 @@ const CreateNewReceipt = ({navigation}: Props) => {
                           textAlignVertical="top"
                           error={!!error}
                           onChangeText={onChange}
-                          value={value}
+                          value={value ?? ''}
                         />
                       </View>
                     )}
@@ -500,8 +526,8 @@ const CreateNewReceipt = ({navigation}: Props) => {
               <View style={styles.signatureRow}>
                 <Text style={styles.signHeader}>โน๊ตภายในบริษัท</Text>
                 <Switch
-                  trackColor={{false: '#767577', true: '#81b0ff'}}
-                  thumbColor={openNoteToTeam ? '#ffffff' : '#f4f3f4'}
+                trackColor={{false: '#a5d6c1', true: '#4caf82'}}
+                thumbColor={openNoteToTeam ? '#ffffff' : '#f4f3f4'}
                   ios_backgroundColor="#3e3e3e"
                   onValueChange={() => setOpenNoteToTeam(!openNoteToTeam)}
                   value={openNoteToTeam ? true : false}
@@ -541,7 +567,7 @@ const CreateNewReceipt = ({navigation}: Props) => {
                           textAlignVertical="top"
                           error={!!error}
                           onChangeText={onChange}
-                          value={value}
+                            value={value ?? ''}
                         />
                       </View>
                     )}
@@ -556,20 +582,6 @@ const CreateNewReceipt = ({navigation}: Props) => {
             style={styles.modalFull}
             onDismiss={closeAddCustomerModal}>
             <AddCustomer onClose={() => closeAddCustomerModal()} />
-          </Modal>
-
-          <Modal
-            visible={workerModal}
-            animationType="slide"
-            onDismiss={() => closeWorkerModal()}
-            style={styles.modal}>
-            <ExistingWorkers
-              onClose={() => {
-                setWorkerpicker(!workerPicker);
-                closeWorkerModal();
-              }}
-              isVisible={workerModal}
-            />
           </Modal>
         </View>
         <Modal
@@ -604,11 +616,6 @@ const CreateNewReceipt = ({navigation}: Props) => {
           visible={showAddExistingService}
           onClose={closeAddExistingServiceModal}
         />
-        {/* <ContractModal
-          visible={contractModal}
-          onClose={() => setContractModal(false)}
-        /> */}
-
         {pdfUrl && (
           <>
             <PDFModalScreen
@@ -618,28 +625,7 @@ const CreateNewReceipt = ({navigation}: Props) => {
               pdfUrl={pdfUrl}
             />
 
-            <SegmentedButtons
-              style={{
-                margin: 10,
-                marginHorizontal: 20,
-              }}
-              value={value}
-              onValueChange={setValue}
-              buttons={[
-                {
-                  value: 'preview',
-                  label: 'พรีวิว',
-                  icon: 'eye',
-                  onPress: () => openProjectModal(),
-                },
-                {
-                  value: 'train',
-                  label: 'สัญญา',
-                  icon: 'file-document',
-                  onPress: () => openPDFModal(),
-                },
-              ]}
-            />
+           
           </>
         )}
         {showAddNewService && (
@@ -716,6 +702,13 @@ const styles = StyleSheet.create({
     bottom: 0,
     // bottom: '40%',
     left: 0,
+  },
+  textHeader: {
+    fontSize: 24,
+    fontFamily: 'SukhumvitSet-Bold',
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#343a40',
   },
   closeButtonText: {
     fontSize: 20,

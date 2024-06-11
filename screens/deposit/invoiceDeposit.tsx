@@ -132,6 +132,11 @@ const InvoiceDepositScreen = ({navigation}: Props) => {
     name: 'netAmount',
   });
 
+  const dateOffer = useWatch({
+    control: methods.control,
+    name: 'dateOffer',
+  });
+
   const remaining = useWatch({
     control: methods.control,
     name: 'remaining',
@@ -278,7 +283,7 @@ const InvoiceDepositScreen = ({navigation}: Props) => {
           <DatePickerButton
             label="วันที่"
             title="วันที่"
-            date="today"
+            date={dateOffer}
             onDateSelected={handleStartDateSelected}
           />
           <DocNumber

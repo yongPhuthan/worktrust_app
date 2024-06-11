@@ -44,6 +44,7 @@ import {
   Divider,
   IconButton,
   TextInput,
+  Avatar,
   SegmentedButtons,
   Icon,
 } from 'react-native-paper';
@@ -100,6 +101,7 @@ const Quotation = ({navigation}: Props) => {
       editQuotation,
       defaultWarranty,
       sellerId,
+      fcmToken,
       existingServices,
     },
     dispatch,
@@ -141,7 +143,6 @@ const Quotation = ({navigation}: Props) => {
     initialDateEndFormatted,
   );
   const [serviceIndex, setServiceIndex] = useState<number>(0);
-  const [fcmToken, setFtmToken] = useState('');
 
   const url = `https://www.worktrust.co/preview/${quotationServerId}`;
 
@@ -211,6 +212,7 @@ const Quotation = ({navigation}: Props) => {
       'รับประกันคุณภาพตัวสินค้า ตามมาตรฐานในการใช้งานตามปกติเท่านั้น ขอสงวนสิทธ์การรับประกันที่เกิดจากการใช้งานสินค้าที่ไม่ถูกต้องหรือความเสียหายที่เกิดจากภัยธรรมชาติ หรือ การใช้งานผิดประเภทหรือปัญหาจากการกระทําของบคุคลอื่น เช่นความเสียหายที่เกิดจากการทำงานของผู้รับเหมาทีมอื่นหรือบุคคลที่สามโดยตั้งใจหรือไม่ได้ตั้งใจ',
     dateWaranty: null,
     endWaranty: null,
+    pdfUrl: null,
   };
 
   // Custom resolver
@@ -274,13 +276,11 @@ const Quotation = ({navigation}: Props) => {
     pdfUrl: null,
     updated: new Date(),
     created: new Date(),
-    reviews: [],
-    submissions: [],
     customerSign: null,
   };
 
   const methods = useForm<Quotations>({
-    mode: 'onBlur',
+    mode: 'onChange',
     defaultValues: editQuotation ? editQuotation : quotationDefaultValues,
     resolver,
   });
@@ -300,6 +300,15 @@ const Quotation = ({navigation}: Props) => {
   const warranty = useWatch({
     control: methods.control,
     name: 'warranty',
+  });
+
+  const dateOffer = useWatch({
+    control: methods.control,
+    name: 'dateOffer',
+  });
+  const dateEnd = useWatch({
+    control: methods.control,
+    name: 'dateEnd',
   });
 
   const workers = useWatch({
@@ -492,14 +501,14 @@ const Quotation = ({navigation}: Props) => {
               <DatePickerButton
                 label="วันที่เสนอราคา"
                 title="วันที่เสนอราคา"
-                date="today"
+                date={new Date(dateOffer)}
                 onDateSelected={handleStartDateSelected}
               />
 
               <DatePickerButton
                 label="ยืนราคาถึงวันที่ี"
                 title="ยืนราคาถึงวันที่ี"
-                date="sevenDaysFromNow"
+                date={new Date(dateEnd)}
                 onDateSelected={handleEndDateSelected}
               />
               <DocNumber
@@ -625,48 +634,39 @@ const Quotation = ({navigation}: Props) => {
               </View>
               {/* workers */}
               {workers.length > 0 && (
-                <View
-                  style={{
-                    flex: 1,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    paddingVertical: 10,
-                  }}>
-                  <FlatList
-                    data={workers}
-                    horizontal={true}
-                    renderItem={({item, index}) => {
-                      return (
-                        <View style={styles.imageContainer}>
-                          <TouchableOpacity onPress={openWorkerModal}>
-                            <Image
-                              source={{uri: item.image ? item.image : ''}}
-                              style={styles.image}
-                            />
-                            <Text>{item.name}</Text>
-                          </TouchableOpacity>
-                        </View>
-                      );
-                    }}
-                    keyExtractor={(item, index) => index.toString()}
-                    ListFooterComponent={
-                      workers.length > 0 ? (
-                        <TouchableOpacity
-                          style={styles.addButtonContainer}
-                          onPress={() => {
-                            openWorkerModal();
-                            // navigation.navigate('GalleryScreen', {code});
-                          }}>
-                          <FontAwesomeIcon
-                            icon={faPlus}
-                            size={32}
-                            color="#0073BA"
-                          />
-                        </TouchableOpacity>
-                      ) : null
-                    }
-                  />
-                </View>
+                <FlatList
+                  data={workers}
+                  horizontal={true}
+                  renderItem={({item, index}) => {
+                    return (
+                      <View style={styles.workers}>
+                        <Avatar.Image
+                          size={100}
+                          source={{uri: item.image ? item.image : ''}}
+                        />
+
+                        <Text>{item.name}</Text>
+                      </View>
+                    );
+                  }}
+                  keyExtractor={(item, index) => index.toString()}
+                  ListFooterComponent={
+                    workers.length > 0 ? (
+                      <TouchableOpacity
+                        style={styles.addButtonContainer}
+                        onPress={() => {
+                          openWorkerModal();
+                          // navigation.navigate('GalleryScreen', {code});
+                        }}>
+                        <FontAwesomeIcon
+                          icon={faPlus}
+                          size={20}
+                          color="#0073BA"
+                        />
+                      </TouchableOpacity>
+                    ) : null
+                  }
+                />
               )}
               <SmallDivider />
               <View style={styles.signatureRow}>
@@ -912,7 +912,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#e9f7ff',
     height: 'auto',
     flexDirection: 'column',
-    gap: 10,
+    gap: 15,
   },
   modalFull: {
     margin: 0,
@@ -1010,6 +1010,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
+  workers: {
+    flexDirection: 'column',
+    marginVertical: 20,
+    gap: 10,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    alignContent: 'flex-start',
+  },
   icon: {
     width: 24,
     height: 24,
@@ -1036,7 +1044,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontFamily: 'SukhumvitSet-Bold',
     fontWeight: 'bold',
-    marginBottom: 10,
     color: '#343a40',
   },
   headerContract: {
@@ -1203,9 +1210,11 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
   addButtonContainer: {
-    width: 100,
+    width: 70,
     margin: 5,
-    height: 110,
+    marginTop: 30,
+    marginLeft:20,
+    height: 70,
     justifyContent: 'center',
     alignItems: 'center',
     borderColor: '#0073BA',

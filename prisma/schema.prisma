@@ -74,6 +74,7 @@ model Company {
     receipts         Receipts[]
     defaultContracts ContractsEmbed?
     defaultWarranty  WarrantyEmbed?
+    submissions      Submissions[]
 
     @@map("companies")
 }
@@ -99,8 +100,6 @@ model Quotations {
     noteToTeam           String?
     status               QuotationStatus
     dateApproved         DateTime?
-    reviews              ReviewsEmbed[]
-    submissions          SubmissionEmbed[]
     pdfUrl               String?
     sellerId             String?            @db.ObjectId
     deposit              QuotationDeposit?
@@ -207,6 +206,7 @@ model Receipts {
     updated            DateTime       @updatedAt
     warranty           WarrantyEmbed?
     quotationRefNumber String?
+
     @@map("receipts")
 }
 
@@ -272,12 +272,47 @@ model VerificationToken {
     @@map("verification_tokens")
 }
 
+model Submissions {
+    id                 String           @id @default(auto()) @map("_id") @db.ObjectId
+    address            String
+    dateOffer          DateTime
+    services           ServicesEmbed[]
+    workStatus         WorkStatus
+    description        String
+    beforeImages       ServiceImagesEmbed[]
+    afterImages        ServiceImagesEmbed[]
+    reject           RejectEmbed?
+    FCMToken           String?
+    workers            WorkerEmbed[]
+    customer           CustomerEmbed
+    inspector          InspectorEmbed?
+    status             SubmissionStatus @default(PENDING)
+    reviews            ReviewsEmbed[]
+    companyName        String
+    companyCode        String
+    quotationRefNumber String
+    createdAt          DateTime         @default(now())
+    updatedAt          DateTime         @updatedAt
+    companyId          String           @db.ObjectId
+    company            Company?         @relation(fields: [companyId], references: [id])
+
+    @@map("submissions")
+}
+
 type WorkerEmbed {
     id           String
     name         String
     mainSkill    String
     workerStatus WorkerStatus
     image        String
+}
+
+type InspectorEmbed {
+    name              String
+    image             String
+    provider          String
+    providerAccountId String
+    email             String
 }
 
 type WarrantyEmbed {
@@ -287,6 +322,8 @@ type WarrantyEmbed {
     dateWaranty        DateTime?
     endWaranty         DateTime?
     condition          String
+    pdfUrl             String?
+
 }
 
 type StandardEmbed {
@@ -438,15 +475,19 @@ type CustomerSignEmbed {
 }
 
 type ReviewsEmbed {
-    id             String
-    rating         Int
-    comment        String?
-    socialProvider String?
-    customerImage  String?
-    reviewType     ReviewType @default(OVERALL)
-    periodIndex    Int?
-    createdAt      DateTime?  @default(now())
-    updatedAt      DateTime?
+    id                  String
+    overallRating       Float
+    qualityRating       Float
+    materialRating      Float
+    timelinessRating    Float
+    communicationRating Float
+    comment             String?
+    socialProvider      Provider? @default(LINE)
+    inspectorName       String?
+    inspectorImage      String?
+    inspectorEmail      String?
+    periodIndex         Int?
+    createdAt           DateTime  @default(now())
 }
 
 type SubmissionEmbed {
@@ -464,6 +505,11 @@ type SubmissionEmbed {
     createdAt        DateTime?       @default(now())
     updatedAt        DateTime?       @default(now())
     periodIndex      Int?            @default(0)
+}
+
+type RejectEmbed {
+    images  String[]
+    comment String
 }
 
 type ContractsEmbed {
@@ -601,6 +647,9 @@ enum QuotationStatus {
     INVOICE_DEPOSIT
     RECEIPT_DEPOSIT
     SUBMITTED
+    CUSTOMER_APPROVED
+    CUSTOMER_REJECTED
+    CUSTOMER_REVIEWED
 }
 
 enum InvoiceStatus {
@@ -610,7 +659,6 @@ enum InvoiceStatus {
     INVOICED
 }
 
-
 enum ReceiptStatus {
     ALL
     PENDING
@@ -618,6 +666,7 @@ enum ReceiptStatus {
 }
 
 enum SubmissionStatus {
+    ALL
     PENDING
     APPROVED
     REJECTED

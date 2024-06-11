@@ -1,5 +1,4 @@
-import {yupResolver} from '@hookform/resolvers/yup';
-import React, {useContext, useState} from 'react';
+import React, { useContext } from 'react';
 import {
   Dimensions,
   Modal,
@@ -9,25 +8,17 @@ import {
   Text,
   View,
 } from 'react-native';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import {
   Appbar,
   Button,
   Divider,
-  ProgressBar,
   TextInput,
-  Text as TextPaper,
+  Text as TextPaper
 } from 'react-native-paper';
-import {Store} from '../../redux/store';
-import {
-  
-  warrantySchemas,
-} from '../../screens/utils/validationSchema';
-import {v4 as uuidv4} from 'uuid';
+import { Store } from '../../redux/store';
 
-import {Controller, useForm, useFormContext, useWatch} from 'react-hook-form';
-import {useUser} from '../../providers/UserContext';
-import { WarrantyEmbed } from '@prisma/client';
+import { Controller, useFormContext } from 'react-hook-form';
 
 type Props = {
   onClose: () => void;

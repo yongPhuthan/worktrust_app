@@ -1,9 +1,9 @@
-import {BACK_END_SERVER_URL} from '@env';
+import { BACK_END_SERVER_URL } from '@env';
 import messaging from '@react-native-firebase/messaging';
-import {DrawerActions} from '@react-navigation/native';
-import {useQueryClient} from '@tanstack/react-query';
+import { DrawerActions } from '@react-navigation/native';
+import { useQueryClient } from '@tanstack/react-query';
 
-import React, {useContext, useEffect, useMemo, useState} from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import {
   Alert,
   Dimensions,
@@ -11,22 +11,23 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+
+
   View,
 } from 'react-native';
 import Modal from 'react-native-modal';
-import {QuotationsFilterButton} from '../../components/ui/Dashboard/FilterButton'; // Adjust the import path as necessary
-import firebase from '../../firebase';
-import {useActiveFilter} from '../../hooks/dashboard/useActiveFilter';
-import {
-  useFilteredData,
-  useFilteredInvoicesData,
-} from '../../hooks/dashboard/useFilteredData';
 import CardDashBoard from '../../components/CardDashBoard';
-import {useUser} from '../../providers/UserContext';
+import { QuotationsFilterButton } from '../../components/ui/Dashboard/FilterButton'; // Adjust the import path as necessary
+import firebase from '../../firebase';
+import { useActiveFilter } from '../../hooks/dashboard/useActiveFilter';
+import {
+  useFilteredData
+} from '../../hooks/dashboard/useFilteredData';
+import { useUser } from '../../providers/UserContext';
 import * as stateAction from '../../redux/actions';
-import {Store} from '../../redux/store';
+import { Store } from '../../redux/store';
 
-import {DashboardScreenProps} from '../../types/navigationType';
+import { DashboardScreenProps } from '../../types/navigationType';
 
 import {
   ActivityIndicator,
@@ -34,25 +35,23 @@ import {
   Dialog,
   Divider,
   FAB,
+  Icon,
   List,
   PaperProvider,
-  Icon,
   Portal,
+  Menu,
 } from 'react-native-paper';
-import {requestNotifications} from 'react-native-permissions';
+import { requestNotifications } from 'react-native-permissions';
 import useFetchDashboard from '../../hooks/quotation/dashboard/useFetchDashboard'; // adjust the path as needed
 
-import ProjectModalScreen from '../../components/webview/project';
-import {useModal} from '../../hooks/quotation/create/useModal';
-import PDFModalScreen from '../../components/webview/pdf';
 import {
-  Company,
   CustomerEmbed,
   QuotationStatus,
   Quotations,
-  ServicesEmbed,
+  ServicesEmbed
 } from '@prisma/client';
-import {CompanyState} from 'types';
+import { CompanyState } from 'types';
+import { useModal } from '../../hooks/quotation/create/useModal';
 import useResetQuotation from '../../hooks/quotation/update/resetStatus';
 interface ErrorResponse {
   message: string;
@@ -114,7 +113,9 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
         // Implement retry logic here if necessary
         break;
       default:
-        console.error('Unhandled error action:', error.message);
+        console.log('Unhandled error action:', error.message);
+        handleLogout();
+        
     }
   };
 
@@ -215,8 +216,8 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
         quotations: [],
       };
       setCompanyData(companyWithoutQuotations);
-      setQuotationData(data.company.quotations);
-      setOriginalData(data.company.quotations);
+      setQuotationData(data.company?.quotations);
+      setOriginalData(data.company?.quotations);
     }
   }, [data]);
 

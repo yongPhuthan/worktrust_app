@@ -108,9 +108,6 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     }
   };
 
-  const handleNoResponse = () => {
-    setIsModalSignContract(false);
-  };
   const requestNotificationPermission = async () => {
     try {
       const {status} = await requestNotifications(['alert', 'badge', 'sound']);
@@ -454,7 +451,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
           {isLoadingAction ? (
             <View
               style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-              <ActivityIndicator color='#00674a' />
+              <ActivityIndicator size={'large'} color='#00674a' />
             </View>
           ) : (
             <>

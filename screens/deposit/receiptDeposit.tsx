@@ -149,6 +149,11 @@ const ReceiptDepositScreen = ({navigation}: Props) => {
     name: 'taxValue',
   });
 
+  const dateOffer = useWatch({
+    control: methods.control,
+    name: 'dateOffer',
+  });
+
   const handleStartDateSelected = (date: Date) => {
     setDateOfferFormatted(thaiDateFormatter(date));
     methods.setValue('dateOffer', date);
@@ -277,7 +282,7 @@ const ReceiptDepositScreen = ({navigation}: Props) => {
           <DatePickerButton
             label="วันที่"
             title="วันที่"
-            date="today"
+            date={dateOffer}
             onDateSelected={handleStartDateSelected}
           />
           <DocNumber
