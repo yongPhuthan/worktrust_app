@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import React, {useState, useContext, useEffect, useRef} from 'react';
 import {Store} from '../redux/store';
-import {useForm, Controller, useFormContext, set} from 'react-hook-form';
+import {useForm, Controller, useFormContext, useWatch} from 'react-hook-form';
 
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
@@ -33,7 +33,7 @@ const CardClient = (props: Props) => {
     watch,
     formState: {errors},
   } = context;
-
+  const customerPhone = useWatch({control, name: 'customer.phone'});
 
   return (
     <View>
@@ -42,9 +42,10 @@ const CardClient = (props: Props) => {
           <FontAwesomeIcon icon={faUser} color="#19232e" size={20} />
           <Text style={styles.label}>ลูกค้า</Text>
         </View>
-
       </View>
-      <TouchableOpacity onPress={() => props.handleEditClient()} style={styles.subContainer}>
+      <TouchableOpacity
+        onPress={() => props.handleEditClient()}
+        style={styles.subContainer}>
         <View style={styles.summary}>
           <Text style={styles.summaryText}>{watch('customer.name')}</Text>
           <Text style={styles.summaryPrice}></Text>
@@ -53,9 +54,11 @@ const CardClient = (props: Props) => {
           <Text>{watch('customer.address')}</Text>
         </View>
         <View style={styles.telAndTax}>
-          <Text>โทร.{watch('customer.phone')}</Text>
-          <Text>{watch('customer.companyId')}</Text>
-        </View>
+            {customerPhone && (
+              <Text>โทร. {customerPhone}</Text>
+            )}
+            <Text>{watch('customer.companyId')}</Text>
+          </View>
       </TouchableOpacity>
     </View>
   );
@@ -122,7 +125,7 @@ const styles = StyleSheet.create({
   },
   editButtonText: {
     fontSize: 14,
-    color:'#108a00 ',
+    color: '#108a00 ',
     // color: '#19232e',
     marginLeft: 4,
   },
@@ -133,7 +136,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    color:'#108a00 ',
+    color: '#108a00 ',
     // color: '#19232e',
     fontWeight: 'bold',
   },

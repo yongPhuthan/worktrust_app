@@ -5,12 +5,12 @@ import {
   Dimensions,
   Platform,
   StyleSheet,
-  Switch,
+
   Text,
   TextInput,
   View,
 } from 'react-native';
-import {Text as TextPaper, Checkbox} from 'react-native-paper';
+import {Text as TextPaper,   Switch,} from 'react-native-paper';
 import RNPickerSelect from 'react-native-picker-select';
 import SmallDivider from './styles/SmallDivider';
 import { ServicesEmbed, TaxType } from '@prisma/client';
@@ -195,8 +195,7 @@ const Summary = ({vat7Props, taxProps, pickerTaxProps}: Props) => {
       <View style={styles.summary}>
         <Text style={styles.summaryTaxVat}>หัก ณ ที่จ่าย</Text>
         <Switch
-                trackColor={{false: '#a5d6c1', true: '#4caf82'}}
-          thumbColor={pickerVisible ? '#ffffff' : '#f4f3f4'}
+
           ios_backgroundColor="#3e3e3e"
           onValueChange={() => setPickerVisible(!pickerVisible)}
           value={pickerVisible}
@@ -231,8 +230,6 @@ const Summary = ({vat7Props, taxProps, pickerTaxProps}: Props) => {
       <View style={styles.summary}>
         <Text style={[styles.summaryTaxVat]}>ภาษีมูลค่าเพิ่ม </Text>
         <Switch
-                trackColor={{false: '#a5d6c1', true: '#4caf82'}}
-                thumbColor={pickerVisible ? '#ffffff' : '#f4f3f4'}
           ios_backgroundColor="#3e3e3e"
           onValueChange={() => setVat7Picker(!vat7Picker)}
           value={vat7Picker}

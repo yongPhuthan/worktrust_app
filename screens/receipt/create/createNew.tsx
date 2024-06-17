@@ -46,7 +46,7 @@ import DatePickerButton from '../../../components/styles/DatePicker';
 import AddProductFormModal from '../../../components/service/addNew';
 import SmallDivider from '../../../components/styles/SmallDivider';
 import AddCard from '../../../components/ui/Button/AddCard';
-import SignatureComponent from '../../../components/utils/signature';
+import SignatureComponent from '../../../components/utils/signature/create';
 import PDFModalScreen from '../../../components/webview/pdf';
 import ExistingWorkers from '../../../components/workers/existing';
 import {useModal} from '../../../hooks/quotation/create/useModal';
@@ -60,6 +60,7 @@ import {ParamListBase} from '../../../types/navigationType';
 import {quotationsValidationSchema} from '../../utils/validationSchema';
 import { CustomerEmbed, DiscountType, ReceiptStatus, Receipts, ServicesEmbed } from '@prisma/client';
 import { CompanyState } from 'types';
+import ShowSignature from '../../../components/utils/signature/view';
 
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'CreateNewReceipt'>;
@@ -88,6 +89,7 @@ const CreateNewReceipt = ({navigation}: Props) => {
   const [save, setSave] = useState<boolean>(false);
 
   const [workerPicker, setWorkerpicker] = useState(false);
+  const [isLoadingWebP, setIsLoadingWebP] = useState(false);
 
   const [invoiceServerId, setInvoiceServerId] = useState<string | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>('true');
@@ -461,19 +463,18 @@ const CreateNewReceipt = ({navigation}: Props) => {
                 />
               </View>
               {sellerSignature && (
-                <View>
-                  <Image
-                    source={{uri: sellerSignature}}
-                    style={styles.signatureImage}
-                  />
-                </View>
+                <ShowSignature
+                  sellerSignature={sellerSignature}
+                  isLoadingWebP={isLoadingWebP}
+                  setIsLoadingWebP={setIsLoadingWebP}
+                />
               )}
               <SmallDivider />
               <View style={styles.signatureRow}>
                 <Text style={styles.signHeader}>หมายเหตุ</Text>
                 <Switch
-                trackColor={{false: '#a5d6c1', true: '#4caf82'}}
-                thumbColor={openNoteToCustomer ? '#ffffff' : '#f4f3f4'}
+                  trackColor={{false: '#767577', true: '#81b0ff'}}
+                  thumbColor={openNoteToCustomer ? '#ffffff' : '#f4f3f4'}
                   ios_backgroundColor="#3e3e3e"
                   onValueChange={() =>
                     setOpenNoteToCustomer(!openNoteToCustomer)
@@ -526,8 +527,8 @@ const CreateNewReceipt = ({navigation}: Props) => {
               <View style={styles.signatureRow}>
                 <Text style={styles.signHeader}>โน๊ตภายในบริษัท</Text>
                 <Switch
-                trackColor={{false: '#a5d6c1', true: '#4caf82'}}
-                thumbColor={openNoteToTeam ? '#ffffff' : '#f4f3f4'}
+                  trackColor={{false: '#767577', true: '#81b0ff'}}
+                  thumbColor={openNoteToTeam ? '#ffffff' : '#f4f3f4'}
                   ios_backgroundColor="#3e3e3e"
                   onValueChange={() => setOpenNoteToTeam(!openNoteToTeam)}
                   value={openNoteToTeam ? true : false}
@@ -603,6 +604,7 @@ const CreateNewReceipt = ({navigation}: Props) => {
           </Appbar.Header>
           <SafeAreaView style={styles.containerModal}>
             <SignatureComponent
+            setLoadingWebP={setIsLoadingWebP}
               onClose={closeSignatureModal}
               setSignatureUrl={setSignature}
               onSignatureSuccess={closeSignatureModal}
@@ -619,6 +621,7 @@ const CreateNewReceipt = ({navigation}: Props) => {
         {pdfUrl && (
           <>
             <PDFModalScreen
+            fileType='RC'
               fileName={customer.name}
               visible={showPDFModal}
               onClose={closePDFModal}
@@ -654,12 +657,16 @@ const styles = StyleSheet.create({
   container: {
     // backgroundColor:'#f3f8f3',
 
-    backgroundColor: '#e9f7ff',
+    // backgroundColor: '#e9f7ff',
+    backgroundColor: '#eaf9f9',
+
   },
   subContainerHead: {
     padding: 30,
     // backgroundColor:'#f3f8f3',
-    backgroundColor: '#e9f7ff',
+    // backgroundColor: '#e9f7ff',
+    backgroundColor: '#eaf9f9',
+
     height: 'auto',
     flexDirection: 'column',
     gap: 10,

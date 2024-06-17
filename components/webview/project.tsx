@@ -8,16 +8,14 @@ import PDFModalScreen from './pdf';
 import useShare from '../../hooks/webview/useShare';
 
 type Props = {
-  quotationId: string;  
   fileName: string;
   onClose: () => void;
   visible: boolean;
+  url : string;
 };
 const ProjectModalScreen = (props: Props) => {
-  const {quotationId,fileName, onClose, visible} = props;
-  const [url, setUrl] = useState(
-    `https://www.worktrust.co/preview/${quotationId}`,
-  );
+  const {fileName, onClose, visible, url} = props;
+
   const [showPdf, setShowPdf] = useState(false);
   const handleShare = useShare({url, title: `ใบเสนอราคา ${fileName}`});
 

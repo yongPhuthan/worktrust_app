@@ -34,15 +34,13 @@ import SaveButton from '../ui/Button/SaveButton';
 import {useUploadToFirebase} from '../../hooks/useUploadtoFirebase';
 import {useCreateToServer} from '../../hooks/useUploadToserver';
 import { useUploadMedium } from '../../hooks/useUploadMedium';
+import { WorkerStatus } from '@prisma/client';
 
 interface ExistingModalProps {
   setRefetch: () => void
   onClose: () => void;
 }
-enum WorkerStatus {
-  MAINWORKER = 'MAINWORKER',
-  OUTSOURCE = 'OUTSOURCE',
-}
+
 
 const AddNewWorker = ({setRefetch, onClose}: ExistingModalProps) => {
   const [title, setTitle] = useState<string>('');
@@ -54,7 +52,7 @@ const AddNewWorker = ({setRefetch, onClose}: ExistingModalProps) => {
   const {
     state: {code},
     dispatch,
-  }: any = useContext(Store);
+  } = useContext(Store);
   const {
     register,
     handleSubmit,
@@ -253,9 +251,9 @@ const AddNewWorker = ({setRefetch, onClose}: ExistingModalProps) => {
             <View style={{flexDirection: 'row', alignItems: 'center'}}>
               <Checkbox.Android
                 status={
-                  value === WorkerStatus.OUTSOURCE ? 'checked' : 'unchecked'
+                  value !== WorkerStatus.MAINWORKER ? 'checked' : 'unchecked'
                 }
-                onPress={() => onChange(WorkerStatus.OUTSOURCE)}
+                onPress={() => onChange(WorkerStatus.OUTSOUCRE)}
               />
               <Text style={{fontSize: 16}}>ช่างทั่วไป</Text>
             </View>

@@ -12,12 +12,12 @@ const useShare = ({ url, title }: UseShareOptions) => {
       await Share.open({
         message: `${url}`,  // Use the URL passed to the hook
         url,
-        title: `Share Link ${title} ${url}`,  // Customizable title with URL
+        title: `${title} ${url}`,  // Customizable title with URL
       });
       // Optional: Add logic here if you need to handle the success scenario
     } catch (error) {
-      console.error(error);
-      Alert.alert('Error', 'Unable to share');
+      console.log(error);
+      // Alert.alert('Error', 'Unable to share');
     }
   };
 

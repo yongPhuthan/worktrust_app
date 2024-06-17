@@ -5,7 +5,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { useQuery } from '@tanstack/react-query';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import Modal from 'react-native-modal';
-import SignatureComponent from '../../components/utils/signature';
+import SignatureComponent from '../../components/utils/signature/create';
 
 import React, { useEffect, useState } from 'react';
 import { Controller, FormProvider, useForm, useWatch } from 'react-hook-form';

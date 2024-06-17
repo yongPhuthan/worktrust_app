@@ -52,6 +52,7 @@ const useCreateQuotation = (actions: QuotationActions) => {
     onSuccess: (responseData:any) => {
       setQuotationServerId(responseData.quotationId);
       setPdfUrl(responseData.pdfUrl);
+      
       openProjectModal();
       queryClient.invalidateQueries({queryKey: ['dashboardData']});
     },

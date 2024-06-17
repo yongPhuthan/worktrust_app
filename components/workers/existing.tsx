@@ -6,7 +6,7 @@ import {
   Appbar,
   Button,
   ProgressBar,
-  ActivityIndicator,
+
   Text,
 } from 'react-native-paper';
 import {useFormContext, useWatch} from 'react-hook-form';
@@ -16,14 +16,15 @@ import {
   Image,
   StyleSheet,
   TouchableOpacity,
+  ActivityIndicator,
   View,
 } from 'react-native';
 import Modal from 'react-native-modal';
 import {Checkbox} from 'react-native-paper';
 import {useUser} from '../../providers/UserContext';
 import {Store} from '../../redux/store';
-import {Worker} from '../../types/docType';
 import AddNewWorker from './addNew';
+import {WorkerEmbed, Workers} from '@prisma/client';
 interface ExistingModalProps {
   isVisible: boolean;
   onClose: () => void;
@@ -33,10 +34,10 @@ const {width, height} = Dimensions.get('window');
 const imageContainerWidth = width / 3 - 10;
 const ExistingWorkers = ({isVisible, onClose}: ExistingModalProps) => {
   const {
-    state: {existingWorkers, code, serviceImages},
+    state: {existingWorkers, code},
     dispatch,
-  }: any = useContext(Store);
-  const [workers, setWorkers] = useState<Worker[]>(existingWorkers);
+  } = useContext(Store);
+  const [workers, setWorkers] = useState<Workers[]>(existingWorkers);
   const [isOpenModal, setIsOpenModal] = useState(false);
   const [refetch, setRefetch] = useState(false);
   const context = useFormContext();
@@ -87,35 +88,26 @@ const ExistingWorkers = ({isVisible, onClose}: ExistingModalProps) => {
     name: 'workers',
   });
 
-  const handleSelectWorker = (worker: Worker) => {
+  const handleSelectWorker = (worker: Workers) => {
     // Ensure currentWorkers is an array; use an empty array if it's null or undefined
     const safeWorkers = currentWorkers || [];
 
     // Find the index of the worker in the array
     const workerIndex = safeWorkers.findIndex(
-      (existingWorker: Worker) => existingWorker.id === worker.id
+      (existingWorker: Workers) => existingWorker.id === worker.id,
     );
 
     if (workerIndex !== -1) {
-        // If the worker is found, remove the worker from the array
-        const updatedWorkers = [...safeWorkers];
-        updatedWorkers.splice(workerIndex, 1);
-        setValue('workers', updatedWorkers, { shouldDirty: true });
+      // If the worker is found, remove the worker from the array
+      const updatedWorkers = [...safeWorkers];
+      updatedWorkers.splice(workerIndex, 1);
+      setValue('workers', updatedWorkers, {shouldDirty: true});
     } else {
-        // If the worker is not found, add the worker to the array
-        const updatedWorkers = [...safeWorkers, worker];
-        setValue('workers', updatedWorkers, { shouldDirty: true });
+      // If the worker is not found, add the worker to the array
+      const updatedWorkers = [...safeWorkers, worker];
+      setValue('workers', updatedWorkers, {shouldDirty: true});
     }
-};
-
-
-  if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator />
-      </View>
-    );
-  }
+  };
 
   if (isError) {
     console.log('error', error);
@@ -128,7 +120,6 @@ const ExistingWorkers = ({isVisible, onClose}: ExistingModalProps) => {
   const handleAddNewProduct = () => {
     setIsOpenModal(true);
   };
-  console.log('Current Workers', currentWorkers)
   return (
     <>
       <Appbar.Header
@@ -145,21 +136,33 @@ const ExistingWorkers = ({isVisible, onClose}: ExistingModalProps) => {
         <Appbar.Action icon={'plus'} onPress={handleAddNewProduct} />
       </Appbar.Header>
       <View style={styles.container}>
-        <FlatList
+        {isLoading ? (
+          <View
+            style={{
+              flex: 1,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
+            <ActivityIndicator />
+          </View>
+        ) :(
+          <FlatList
           data={workers}
           renderItem={({item, index}) => (
             <>
               <TouchableOpacity
                 style={[
                   styles.card,
-                  currentWorkers?.some((m: any) => m.id === item.id)
+                  currentWorkers?.some((m: Workers) => m.id === item.id)
                     ? styles.cardChecked
                     : null,
                 ]}
                 onPress={() => handleSelectWorker(item)}>
                 <Checkbox.Android
                   status={
-                    currentWorkers?.some((worker: any) => worker.id === item.id)
+                    currentWorkers?.some(
+                      (worker: Workers) => worker.id === item.id,
+                    )
                       ? 'checked'
                       : 'unchecked'
                   }
@@ -167,11 +170,11 @@ const ExistingWorkers = ({isVisible, onClose}: ExistingModalProps) => {
                   style={styles.checkboxContainer}
                 />
                 <View style={styles.textContainer}>
-                  <Text style={styles.productTitle}>{item?.name}</Text>
-                  <Text style={styles.description}>{item?.mainSkill}</Text>
+                  <Text style={styles.productTitle}>{item.name}</Text>
+                  <Text style={styles.description}>{item.mainSkill}</Text>
                 </View>
                 <Image
-                  source={{uri: item?.image}}
+                  source={{uri: item.image || undefined}}
                   style={styles.productImage}
                 />
               </TouchableOpacity>
@@ -200,6 +203,8 @@ const ExistingWorkers = ({isVisible, onClose}: ExistingModalProps) => {
           }
           keyExtractor={item => item.id}
         />
+        ) }
+   
 
         {currentWorkers?.length > 0 && (
           <Button
@@ -215,11 +220,6 @@ const ExistingWorkers = ({isVisible, onClose}: ExistingModalProps) => {
             }}>
             บันทึก {currentWorkers.length} รายการ
           </Button>
-          // <TouchableOpacity onPress={handleDonePress} style={styles.saveButton}>
-          //   <Text style={styles.saveText}>
-          //     {`บันทึก ${currentWorkers.length} รายการ`}{' '}
-          //   </Text>
-          // </TouchableOpacity>
         )}
       </View>
       <Modal

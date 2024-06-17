@@ -19,14 +19,19 @@ const theme = {
   colors: {
     ...DefaultTheme.colors,
     // primary: '#1b72e8',
-    // primary:'#0363d3',
-    primary: '#00674a',
+    // primary: '#0067a3',
+    
+    // primary: '#00674a',
     secondaryContainer: '#e3fcf7', // This is a lighter shade of the primary color
 
     // primary:'#f79020'
     // primary :'#173799'
     // primary : '#009995'
     // primary : '#0b65c2',
+    primary:'#047e6e' // grammaly
+    
+    // primary:'#027f6f'
+    
   },
 };
 

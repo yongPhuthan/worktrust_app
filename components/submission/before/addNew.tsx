@@ -417,12 +417,17 @@ const AddNewBeforeImage = ({ onClose}: ExistingModalProps) => {
                   style={styles.imageView}>
                   {value ? (
                     isImagePicking ? (
+                      <View style={styles.imageUploader}>
                       <ActivityIndicator />
+         </View>
                     ) : (
                       <Image source={{uri: value}} style={styles.image} />
                     )
                   ) : isImagePicking ? (
-                    <ActivityIndicator />
+                    <View style={styles.imageUploader}>
+                                 <ActivityIndicator />
+                    </View>
+         
                   ) : (
                     <View style={styles.imageUploader}>
                       <IconButton

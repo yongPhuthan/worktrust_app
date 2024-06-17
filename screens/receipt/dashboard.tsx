@@ -11,6 +11,7 @@ import {
   StyleSheet,
   Text,
   View,
+  ActivityIndicator
 } from 'react-native';
 import Modal from 'react-native-modal';
 import CardDashBoard from '../../components/ui/invoice/CardDashboard';
@@ -33,7 +34,6 @@ import {Store} from '../../redux/store';
 import {DashboardScreenProps} from '../../types/navigationType';
 
 import {
-  ActivityIndicator,
   Appbar,
   Divider,
   FAB,
@@ -53,6 +53,7 @@ import {
 } from '@prisma/client';
 import useFetchDashboardInvoice from '../../hooks/invoice/queryInvoices';
 import {useModal} from '../../hooks/quotation/create/useModal';
+import FABButton from '../../components/ui/Button/FAB';
 interface ErrorResponse {
   message: string;
   action: 'logout' | 'redirectToCreateCompany' | 'contactSupport' | 'retry';
@@ -396,10 +397,10 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
             />
           </Appbar.Header>
           {isLoadingAction ? (
-            <View
-              style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-             <ActivityIndicator size={'large'} color='#00674a' />
-            </View>
+             <View
+             style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+             <ActivityIndicator size={"large"} />
+           </View>
           ) : (
             <>
               <View>
@@ -421,7 +422,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
               </View>
               {isLoading || isLoadingAction ? (
                 <View style={styles.loadingContainer}>
-                  <ActivityIndicator size={'large'} />
+                  <ActivityIndicator color='primary' size={'large'} />
                 </View>
               ) : (
                 <View
@@ -458,16 +459,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                   />
                 </View>
               )}
-              <FAB
-                variant="primary"
-                mode="elevated"
-                style={styles.fabStyle}
-                icon="plus"
-                // onPress={()=>testConnection()}
-                onPress={() => createNewReceipt()}
-                color="white"
-              />
-
+             <FABButton createNewFunction={createNewReceipt} />
             </>
           )}
           
@@ -488,8 +480,8 @@ const styles = StyleSheet.create({
     bottom: height * 0.1,
     right: width * 0.05,
     position: 'absolute',
-    // backgroundColor: '#1b52a7',
-    backgroundColor: '#00674a',
+    backgroundColor: '#1b52a7',
+    // backgroundColor: '#00674a',
     // backgroundColor: '#009995',
   },
   fab: {

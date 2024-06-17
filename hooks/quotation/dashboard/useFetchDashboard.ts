@@ -56,8 +56,6 @@ const useFetchDashboard = (): UseQueryResult<CompanyQuery, ErrorResponse> => {
 const company = data.company;
 const quotations = company.quotations;
 const services = quotations.flatMap((quotation : Quotations) => quotation.services.slice(0, 10));
-console.log(services);
-
     dispatch(stateAction.code_company(data.company.code));
     dispatch(stateAction.get_companyID(data.company.id));
     dispatch(stateAction.get_logo(data.company.logo));
@@ -67,10 +65,8 @@ console.log(services);
     dispatch(stateAction.get_default_warranty(data.company.defaultWarranty));
     dispatch(stateAction.get_existing_workers(data.company.workers));
     dispatch(stateAction.get_existing_services(services));
-    if (data[1] && data[2]) {
-      dispatch(stateAction.get_user_signature(data.userSignature));
-      dispatch(stateAction.get_seller_id(data.sellerId));
-    }
+    dispatch(stateAction.get_user_signature(data.userSignature));
+    dispatch(stateAction.get_seller_id(data.sellerId));
 
     return data;
   };

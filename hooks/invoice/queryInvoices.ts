@@ -52,24 +52,18 @@ const useFetchDashboard = (): UseQueryResult<CompanyQuery, ErrorResponse> => {
     }
 
     const data = await response.json();
-console.log('data', data)
-    const company = data.company;
-    const invoices = company.invoices;
-    const services = invoices.flatMap((invoice: Invoices) =>
-      invoice.services.slice(0, 10),
-    );
 
-    dispatch(stateAction.code_company(data.company.code));
-    dispatch(stateAction.get_companyID(data.company.id));
-    dispatch(stateAction.get_logo(data.company.logo));
-    dispatch(stateAction.get_company_state(data.company));
+    // dispatch(stateAction.code_company(data.company.code));
+    // dispatch(stateAction.get_companyID(data.company.id));
+    // dispatch(stateAction.get_logo(data.company.logo));
+    // dispatch(stateAction.get_company_state(data.company));
 
-    dispatch(stateAction.get_default_contract(data.company.defaultContract));
-    dispatch(stateAction.get_default_warranty(data.company.defaultWarranty));
-    dispatch(stateAction.get_existing_workers(data.company.workers));
-    dispatch(stateAction.get_existing_services(services));
-    dispatch(stateAction.get_user_signature(data.userSignature));
-    dispatch(stateAction.get_seller_id(data.sellerId));
+    // dispatch(stateAction.get_default_contract(data.company.defaultContract));
+    // dispatch(stateAction.get_default_warranty(data.company.defaultWarranty));
+    // dispatch(stateAction.get_existing_workers(data.company.workers));
+    // dispatch(stateAction.get_existing_services(services));
+    // dispatch(stateAction.get_user_signature(data.userSignature));
+    // dispatch(stateAction.get_seller_id(data.sellerId));
 
     return data;
   };

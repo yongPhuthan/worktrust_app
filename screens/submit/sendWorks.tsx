@@ -1,13 +1,12 @@
-import React, {useCallback, useContext, useState} from 'react';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-import {BACK_END_SERVER_URL} from '@env';
-import {faClose, faPlus} from '@fortawesome/free-solid-svg-icons';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {RouteProp} from '@react-navigation/native';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {useMutation, useQueryClient} from '@tanstack/react-query';
-import {Controller, useForm, useWatch, FormProvider} from 'react-hook-form';
+import { faClose } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { RouteProp } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { useQueryClient } from '@tanstack/react-query';
+import React, { useCallback, useContext, useState } from 'react';
+import { Controller, FormProvider, useForm, useWatch } from 'react-hook-form';
 import {
+  ActivityIndicator,
   Alert,
   Dimensions,
   FlatList,
@@ -17,47 +16,39 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  ActivityIndicator,
   View,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import Modal from 'react-native-modal';
 import {
   Appbar,
+  Avatar,
   Button,
   Divider,
   IconButton,
-  SegmentedButtons,
-  Avatar,
-  Snackbar,
-  TextInput,
+  TextInput
 } from 'react-native-paper';
-import Modal from 'react-native-modal';
 
-import {v4 as uuidv4} from 'uuid';
-import DatePickerButton from '../../components/styles/DatePicker';
-import SmallDivider from '../../components/styles/SmallDivider';
-import useSelectedDates from '../../hooks/quotation/create/useSelectDates';
-import {useSlugify} from '../../hooks/utils/useSlugify';
-import {useUser} from '../../providers/UserContext';
-import {Store} from '../../redux/store';
-import Clipboard from '@react-native-clipboard/clipboard';
-import * as yup from 'yup';
-import {useUploadToFirebase} from '../../hooks/submission/useUploadToFirebase';
-import {usePickImage} from '../../hooks/utils/image/usePickImage';
-import {ParamListBase} from '../../types/navigationType';
-import useCreateSubmission from '../../hooks/submission/useSaveSubmission';
-import {useModal} from '../../hooks/quotation/create/useModal';
-import ProjectModalScreen from '../../components/webview/project';
-import useShare from '../../hooks/webview/useShare';
 import {
   ServicesEmbed,
   SubmissionStatus,
   Submissions,
-  WorkStatus,
-  WorkerEmbed,
+  WorkStatus
 } from '@prisma/client';
-import {submissionValidationSchema} from 'screens/utils/validationSchema';
+import Clipboard from '@react-native-clipboard/clipboard';
+import { v4 as uuidv4 } from 'uuid';
+import DatePickerButton from '../../components/styles/DatePicker';
 import AddNewImage from '../../components/submission/after/addNew';
 import AddNewBeforeImage from '../../components/submission/before/addNew';
+import ProjectModalScreen from '../../components/webview/project';
+import { useModal } from '../../hooks/quotation/create/useModal';
+import useSelectedDates from '../../hooks/quotation/create/useSelectDates';
+import useCreateSubmission from '../../hooks/submission/useSaveSubmission';
+import { useUploadToFirebase } from '../../hooks/submission/useUploadToFirebase';
+import useShare from '../../hooks/webview/useShare';
+import { useUser } from '../../providers/UserContext';
+import { Store } from '../../redux/store';
+import { ParamListBase } from '../../types/navigationType';
 type Props = {
   navigation: StackNavigationProp<ParamListBase>;
   route: RouteProp<ParamListBase, 'SendWorks'>;
@@ -68,6 +59,9 @@ type LoadingStatus = {
 type BeforeImageLoadingStatus = {
   [index: number]: boolean;
 };
+
+const width = Dimensions.get('window').width;
+
 const SendWorks = (props: Props) => {
   const {route, navigation} = props;
   const {
@@ -101,7 +95,7 @@ const SendWorks = (props: Props) => {
     closeModal: closeProjectModal,
     isVisible: showProjectModal,
   } = useModal();
-  const url = `https://www.worktrust.co/submissions/${editQuotation?.id}?${submissionServerId}`;
+  const url = `https://www.worktrust.co/submission/${submissionServerId}`;
 
   const [opneSubmissionModal, setOpenSubmissionModal] =
     useState<boolean>(false);
@@ -170,7 +164,8 @@ const SendWorks = (props: Props) => {
     openProjectModal,
   };
   const [loadingStatus, setLoadingStatus] = useState<LoadingStatus>({});
-  const [loadingBeforeImageStatus, setLoadingBeforeImageStatus] = useState< BeforeImageLoadingStatus>({});
+  const [loadingBeforeImageStatus, setLoadingBeforeImageStatus] =
+    useState<BeforeImageLoadingStatus>({});
 
   const {mutate, isPending} = useCreateSubmission(actions);
 
@@ -418,7 +413,10 @@ const SendWorks = (props: Props) => {
                 <View
                   style={{
                     flexDirection: 'row',
+                    flex: 1,
                     justifyContent: 'space-between',
+                    maxWidth: width *0.75,
+                    gap: 10,
                   }}
                   key={index}>
                   <View>
@@ -443,149 +441,132 @@ const SendWorks = (props: Props) => {
             <Divider style={{marginVertical: 20}} />
 
             <View>
-              {editQuotation.workers && editQuotation.workers.length >0 && (
+              {editQuotation.workers && editQuotation.workers.length > 0 && (
                 <View>
                   <Text style={styles.title}>พนักงานติดตั้ง</Text>
                   <FlatList
-                      data={editQuotation.workers}
-                      horizontal={true}
-                      renderItem={({item, index}) => {
-                        return (
-                          <View style={styles.workers}>
-                            <Avatar.Image size={100} source={{uri: item.image ? item.image : ''}} />
-                          
-                            <Text>{item.name}</Text>
-                          </View>
-                        );
-                      }}
-                      keyExtractor={(item, index) => index.toString()}
-                    />
+                    data={editQuotation.workers}
+                    horizontal={true}
+                    renderItem={({item, index}) => {
+                      return (
+                        <View style={styles.workers}>
+                          <Avatar.Image
+                            size={100}
+                            source={{uri: item.image ? item.image : ''}}
+                          />
+
+                          <Text>{item.name}</Text>
+                        </View>
+                      );
+                    }}
+                    keyExtractor={(item, index) => index.toString()}
+                  />
                 </View>
               )}
             </View>
             <Divider style={{marginVertical: 20}} />
             <View>
               <Text style={styles.title}>รูปก่อนทำงาน</Text>
-              {editQuotation.services.map(
-                (service: ServicesEmbed, index: number) => (
-                  <FlatList
-                    key={service.id}
-                    data={beforeImages}
-                    horizontal={true}
-                    renderItem={({item, index}) => (
-                      <View key={index} style={styles.imageContainer}>
-                        {loadingBeforeImageStatus[index] !== false ? (
-                          <View
-                            style={{
-                              flex: 1,
-                              justifyContent: 'center',
-                              alignItems: 'center',
-                            }}>
-                            <ActivityIndicator />
-                          </View>
-                        ) : (
-                          <Image
-                            source={{uri: item.thumbnailUrl}}
-                            style={styles.image}
-                          />
-                        )}
-                        <TouchableOpacity
-                          style={styles.closeIcon}
-                          onPress={() => removeBeforeImage(item.thumbnailUrl)}>
-                          <FontAwesomeIcon
-                            icon={faClose}
-                            size={15}
-                            color="white"
-                          />
-                        </TouchableOpacity>
+              <FlatList
+                data={beforeImages}
+                horizontal={true}
+                renderItem={({item, index}) => (
+                  <View key={index} style={styles.imageContainer}>
+                    {loadingBeforeImageStatus[index] !== false ? (
+                      <View
+                        style={{
+                          flex: 1,
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                        }}>
+                        <ActivityIndicator />
                       </View>
+                    ) : (
+                      <Image
+                        source={{uri: item.thumbnailUrl}}
+                        style={styles.image}
+                      />
                     )}
-                    keyExtractor={(item, index) => index.toString()}
-                    ListFooterComponent={
-                      beforeImages.length > 0 ? (
-                        <IconButton
-                          icon={'plus'}
-                          // loading={pickingBeforeImage}
-                          style={styles.addButtonContainer}
-                          onPress={() => {
-                            setIsBeforeImage(true);
+                    <TouchableOpacity
+                      style={styles.closeIcon}
+                      onPress={() => removeBeforeImage(item.thumbnailUrl)}>
+                      <FontAwesomeIcon icon={faClose} size={15} color="white" />
+                    </TouchableOpacity>
+                  </View>
+                )}
+                keyExtractor={(item, index) => index.toString()}
+                ListFooterComponent={
+                  beforeImages.length > 0 ? (
+                    <IconButton
+                      icon={'plus'}
+                      // loading={pickingBeforeImage}
+                      style={styles.addButtonContainer}
+                      onPress={() => {
+                        setIsBeforeImage(true);
+                      }}></IconButton>
+                  ) : null
+                }
+                ListEmptyComponent={
+                  <IconButton
+                    icon={'plus'}
+                    // loading={pickingBeforeImage}
+                    style={styles.addButtonContainer}
+                    onPress={() => {
+                      setCheckLoading(true);
 
-                          }}></IconButton>
-                      ) : null
-                    }
-                    ListEmptyComponent={
-                      <IconButton
-                        icon={'plus'}
-                        // loading={pickingBeforeImage}
-                        style={styles.addButtonContainer}
-                        onPress={() => {
-                          setCheckLoading(true);
-
-                          setIsBeforeImage(true);
-                        }}></IconButton>
-                    }
-                  />
-                ),
-              )}
+                      setIsBeforeImage(true);
+                    }}></IconButton>
+                }
+              />
             </View>
             <Divider style={{marginVertical: 10}} />
             <View>
               <Text style={styles.title}>รูปหลังทำงาน</Text>
-              {editQuotation.services.map(
-                (service: ServicesEmbed, index: number) => (
-                  <FlatList
-                    key={service.id}
-                    data={afterImages}
-                    horizontal={true}
-                    renderItem={({item, index}) => (
-                      <View key={index} style={styles.imageContainer}>
-                        {loadingStatus[index] !== false ? (
-                          <View
-                            style={{
-                              flex: 1,
-                              justifyContent: 'center',
-                              alignItems: 'center',
-                            }}>
-                            <ActivityIndicator />
-                          </View>
-                        ) : (
-                          <Image
-                            source={{uri: item.thumbnailUrl}}
-                            style={styles.image}
-                          />
-                        )}
-                        <TouchableOpacity
-                          style={styles.closeIcon}
-                          onPress={() => removeAfterImage(item.thumbnailUrl)}>
-                          <FontAwesomeIcon
-                            icon={faClose}
-                            size={15}
-                            color="white"
-                          />
-                        </TouchableOpacity>
+              <FlatList
+                data={afterImages}
+                horizontal={true}
+                renderItem={({item, index}) => (
+                  <View key={index} style={styles.imageContainer}>
+                    {loadingStatus[index] !== false ? (
+                      <View
+                        style={{
+                          flex: 1,
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                        }}>
+                        <ActivityIndicator />
                       </View>
+                    ) : (
+                      <Image
+                        source={{uri: item.thumbnailUrl}}
+                        style={styles.image}
+                      />
                     )}
-                    keyExtractor={(item, index) => index.toString()}
-                    ListFooterComponent={
-                      afterImages.length > 0 ? (
-                        <IconButton
-                          icon={'plus'}
-                          // loading={pickingAfterImage}
-                          style={styles.addButtonContainer}
-                          onPress={() => setIsOpenModal(true)}></IconButton>
-                      ) : null
-                    }
-                    ListEmptyComponent={
-                      <IconButton
-                        icon={'plus'}
-                        
-                        // loading={pickingAfterImage}
-                        style={styles.addButtonContainer}
-                        onPress={() => setIsOpenModal(true)}></IconButton>
-                    }
-                  />
-                ),
-              )}
+                    <TouchableOpacity
+                      style={styles.closeIcon}
+                      onPress={() => removeAfterImage(item.thumbnailUrl)}>
+                      <FontAwesomeIcon icon={faClose} size={15} color="white" />
+                    </TouchableOpacity>
+                  </View>
+                )}
+                keyExtractor={(item, index) => index.toString()}
+                ListFooterComponent={
+                  afterImages.length > 0 ? (
+                    <IconButton
+                      icon={'plus'}
+                      // loading={pickingAfterImage}
+                      style={styles.addButtonContainer}
+                      onPress={() => setIsOpenModal(true)}></IconButton>
+                  ) : null
+                }
+                ListEmptyComponent={
+                  <IconButton
+                    icon={'plus'}
+                    // loading={pickingAfterImage}
+                    style={styles.addButtonContainer}
+                    onPress={() => setIsOpenModal(true)}></IconButton>
+                }
+              />
             </View>
             <Divider style={{marginVertical: 10}} />
 
@@ -623,7 +604,7 @@ const SendWorks = (props: Props) => {
               fileName={editQuotation.customer.name}
               visible={showProjectModal}
               onClose={closeProjectModal}
-              quotationId={submissionServerId}
+              url = {url}
             />
           </>
         )}
@@ -645,7 +626,6 @@ const SendWorks = (props: Props) => {
             onClose={() => setIsBeforeImage(false)}
           />
         </Modal>
-        
       </FormProvider>
     </>
   );
@@ -653,7 +633,6 @@ const SendWorks = (props: Props) => {
 
 export default SendWorks;
 
-const {width} = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   containerForm: {
@@ -784,7 +763,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-start',
     alignContent: 'flex-start',
-     },
+  },
   closeIcon: {
     position: 'absolute',
     top: -5,
@@ -919,13 +898,11 @@ const styles = StyleSheet.create({
     color: '#19232e',
   },
   listTitle: {
-    fontSize: 16,
+    fontSize: 14,
     marginTop: 20,
   },
   listDescription: {
-    fontSize: 14,
-
-    marginLeft: 10,
+    fontSize: 12,
   },
   addButtonContainer: {
     width: 100,

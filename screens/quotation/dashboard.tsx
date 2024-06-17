@@ -11,7 +11,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-
+  ActivityIndicator,
 
   View,
 } from 'react-native';
@@ -30,7 +30,6 @@ import { Store } from '../../redux/store';
 import { DashboardScreenProps } from '../../types/navigationType';
 
 import {
-  ActivityIndicator,
   Appbar,
   Dialog,
   Divider,
@@ -53,6 +52,7 @@ import {
 import { CompanyState } from 'types';
 import { useModal } from '../../hooks/quotation/create/useModal';
 import useResetQuotation from '../../hooks/quotation/update/resetStatus';
+import FABButton from '../../components/ui/Button/FAB';
 interface ErrorResponse {
   message: string;
   action: 'logout' | 'redirectToCreateCompany' | 'contactSupport' | 'retry';
@@ -216,10 +216,19 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
         quotations: [],
       };
       setCompanyData(companyWithoutQuotations);
-      setQuotationData(data.company?.quotations);
-      setOriginalData(data.company?.quotations);
+  
+      // Sort the quotations by the most recently updated date
+      const sortedQuotations = data.company?.quotations.sort((a, b) => {
+        const dateA = new Date(a.updated);
+        const dateB = new Date(b.updated);
+        return dateB.getTime() - dateA.getTime();
+      });
+  
+      setQuotationData(sortedQuotations);
+      setOriginalData(sortedQuotations);
     }
   }, [data]);
+  
 
   useEffect(() => {
     requestNotificationPermission();
@@ -300,12 +309,6 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     setIsLoadingAction(false);
     handleModalClose();
     navigation.navigate('CreateQuotation');
-
-    // navigation.navigate('EditQuotation', {
-    //   quotation,
-    //   company: data[0],
-    //   services,
-    // });
   };
 
   if (isError && error) {
@@ -563,6 +566,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                 <FlatList
                   horizontal
                   showsHorizontalScrollIndicator={false}
+                  
                   data={filtersToShow}
                   renderItem={({item}) => (
                     <QuotationsFilterButton
@@ -578,7 +582,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
               </View>
               {isLoading || isLoadingAction || isReseting ? (
                 <View style={styles.loadingContainer}>
-                  <ActivityIndicator color='#00674a' size={'large'} />
+                  <ActivityIndicator   size={'large'} />
                 </View>
               ) : (
                 <View
@@ -618,50 +622,14 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                   />
                 </View>
               )}
-              <FAB
-                variant="primary"
-                mode="elevated"
-                style={styles.fabStyle}
-                icon="plus"
-                // onPress={()=>testConnection()}
-                onPress={() => createNewQuotation()}
-                color="white"
-              />
+             <FABButton 
+             createNewFunction={createNewQuotation}
+             />
 
-              {/* <FAB.Group
-                open={open}
-                visible
-                color="white"
-                fabStyle={{
-                  backgroundColor: '#1b52a7',
-                }}
-                icon={open ? 'minus' : 'plus'}
-                actions={[
-                  {
-                    icon: 'plus',
-                    size: "medium",
-                    label: 'สร้างใบเสนอราคา',
-
-                    onPress: () => createNewQuotation(),
-                  },
-                  {
-                    icon: 'file-document-edit-outline',
-                    size: "medium",
-
-                    label: 'ทำสัญญา',
-                    onPress: () => setActiveFilter('APPROVED'),
-                  },
-                ]}
-                onStateChange={onStateChange}
-                onPress={() => {
-                  if (open) {
-                    // do something if the speed dial is open
-                  }
-                }}
-              /> */}
+             
             </>
           )}
-          {/* modal popup */}
+
           <Dialog
             style={styles.modalContainer}
             // backdropTransitionOutTiming={100}
@@ -722,8 +690,9 @@ const styles = StyleSheet.create({
     bottom: height * 0.1,
     right: width * 0.05,
     position: 'absolute',
+    backgroundColor:'#027f6f',
     // backgroundColor: '#1b52a7',
-    backgroundColor: '#00674a',
+    // backgroundColor: '#00674a',
     // backgroundColor: '#009995',
   },
   fab: {

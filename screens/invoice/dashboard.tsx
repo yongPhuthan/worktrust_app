@@ -10,13 +10,20 @@ import {
   FlatList,
   StyleSheet,
   Text,
+  ActivityIndicator,
   View,
 } from 'react-native';
 import Modal from 'react-native-modal';
 import CardDashBoard from '../../components/ui/invoice/CardDashboard';
-import {InvoicesFilterButton, QuotationsFilterButton} from '../../components/ui/Dashboard/FilterButton'; // Adjust the import path as necessary
+import {
+  InvoicesFilterButton,
+  QuotationsFilterButton,
+} from '../../components/ui/Dashboard/FilterButton'; // Adjust the import path as necessary
 import firebase from '../../firebase';
-import {useActiveFilter, useActiveInvoiceFilter} from '../../hooks/dashboard/useActiveFilter';
+import {
+  useActiveFilter,
+  useActiveInvoiceFilter,
+} from '../../hooks/dashboard/useActiveFilter';
 import {useFilteredInvoicesData} from '../../hooks/dashboard/useFilteredData';
 import {useUser} from '../../providers/UserContext';
 import * as stateAction from '../../redux/actions';
@@ -25,7 +32,6 @@ import {Store} from '../../redux/store';
 import {DashboardScreenProps} from '../../types/navigationType';
 
 import {
-  ActivityIndicator,
   Appbar,
   Divider,
   FAB,
@@ -41,11 +47,11 @@ import {
   CustomerEmbed,
   InvoiceStatus,
   Invoices,
-  
   ServicesEmbed,
 } from '@prisma/client';
 import useFetchDashboardInvoice from '../../hooks/invoice/queryInvoices';
 import {useModal} from '../../hooks/quotation/create/useModal';
+import FABButton from '../../components/ui/Button/FAB';
 interface ErrorResponse {
   message: string;
   action: 'logout' | 'redirectToCreateCompany' | 'contactSupport' | 'retry';
@@ -222,7 +228,6 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     InvoiceStatus.PENDING,
     InvoiceStatus.BILLED,
     InvoiceStatus.INVOICED,
-
   ];
   // const handleCreateContract = (index: number) => {
   //   if (companyData && invoicesData && invoicesData.length > 0) {
@@ -450,9 +455,9 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
           </Appbar.Header>
           {isLoadingAction ? (
             <View
-              style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-              <ActivityIndicator size={'large'} color='#00674a' />
-            </View>
+            style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+            <ActivityIndicator size={"large"} />
+          </View>
           ) : (
             <>
               <View>
@@ -473,9 +478,9 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                 />
               </View>
               {isLoading || isLoadingAction ? (
-                <View style={styles.loadingContainer}>
-                  <ActivityIndicator color='#00674a'  />
-                </View>
+               <View style={styles.loadingContainer}>
+               <ActivityIndicator  size={'large'} />
+             </View>
               ) : (
                 <View
                   style={{
@@ -511,88 +516,10 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                   />
                 </View>
               )}
-              <FAB
-                variant="primary"
-                mode="elevated"
-                style={styles.fabStyle}
-                icon="plus"
-                // onPress={()=>testConnection()}
-                onPress={() => createNewInvoice()}
-                color="white"
-              />
-
-              {/* <FAB.Group
-                open={open}
-                visible
-                color="white"
-                fabStyle={{
-                  backgroundColor: '#1b52a7',
-                }}
-                icon={open ? 'minus' : 'plus'}
-                actions={[
-                  {
-                    icon: 'plus',
-                    size: "medium",
-                    label: 'สร้างใบเสนอราคา',
-
-                    onPress: () => createNewQuotation(),
-                  },
-                  {
-                    icon: 'file-document-edit-outline',
-                    size: "medium",
-
-                    label: 'ทำสัญญา',
-                    onPress: () => setActiveFilter('APPROVED'),
-                  },
-                ]}
-                onStateChange={onStateChange}
-                onPress={() => {
-                  if (open) {
-                    // do something if the speed dial is open
-                  }
-                }}
-              /> */}
+              <FABButton createNewFunction={createNewInvoice} />
             </>
           )}
           {/* modal popup */}
-          {/* <Dialog
-            style={styles.modalContainer}
-            // backdropTransitionOutTiming={100}
-            onDismiss={handleNoResponse}
-            visible={isModalSignContract}>
-            <Dialog.Content>
-              <View
-                style={{
-                  flex: 1,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}>
-                <Text style={styles.selectedQuotationText}>
-                  ทำสัญญากับลูกค้า
-                </Text>
-                <Text style={styles.selectedQuotationText}>
-                  {selectedItem?.customer?.name}
-                </Text>
-                <Text style={styles.modalText}>
-                  คุณได้นัดเข้าดูพื้นที่หน้างานโครงการนี้เรียบร้อยแล้วหรือไม่ ?
-                </Text>
-                <TouchableOpacity
-                  style={styles.button}
-                  onPress={() => handleCreateContract(selectedIndex)}>
-                  <Text style={styles.whiteText}> ดูหน้างานแล้ว</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.button}
-                  onPress={handleNoResponse}>
-                  <Text style={styles.whiteText}>ยังไม่ได้ดูหน้างาน</Text>
-                </TouchableOpacity>
-                <Text style={styles.RedText}>
-                  {' '}
-                  *จำเป็นต้องดูหน้างานก่อนเริ่มทำสัญญา
-                </Text>
-              </View>
-            </Dialog.Content>
-          </Dialog> */}
         </Portal>
       </PaperProvider>
     </>
@@ -610,8 +537,8 @@ const styles = StyleSheet.create({
     bottom: height * 0.1,
     right: width * 0.05,
     position: 'absolute',
-    // backgroundColor: '#1b52a7',
-    backgroundColor: '#00674a',
+    backgroundColor: '#1b52a7',
+    // backgroundColor: '#00674a',
     // backgroundColor: '#009995',
   },
   fab: {

@@ -57,7 +57,7 @@ import DatePickerButton from '../../../components/styles/DatePicker';
 // import Divider from '../../components/styles/Divider';
 import SmallDivider from '../../../components/styles/SmallDivider';
 import AddCard from '../../../components/ui/Button/AddCard';
-import SignatureComponent from '../../../components/utils/signature';
+import SignatureComponent from '../../../components/utils/signature/create';
 import ProjectModalScreen from '../../../components/webview/project';
 import ExistingWorkers from '../../../components/workers/existing';
 import useCreateQuotation from '../../../hooks/quotation/create/useSaveQuotation';
@@ -74,8 +74,15 @@ import AddProductFormModal from '../../../components/service/addNew';
 import {useModal} from '../../../hooks/quotation/create/useModal';
 import useCreateNewInvoice from '../../../hooks/invoice/useCreateInvoice';
 import * as stateAction from '../../../redux/actions';
-import { CustomerEmbed, DiscountType, InvoiceStatus, Invoices, ServicesEmbed } from '@prisma/client';
-import { CompanyState } from 'types';
+import {
+  CustomerEmbed,
+  DiscountType,
+  InvoiceStatus,
+  Invoices,
+  ServicesEmbed,
+} from '@prisma/client';
+import {CompanyState} from 'types';
+import ShowSignature from '../../../components/utils/signature/view';
 
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'CreateNewInvoice'>;
@@ -83,7 +90,7 @@ interface Props {
 
 const CreateNewInvoice = ({navigation}: Props) => {
   const {
-    state: {companyState, editQuotation,sellerId},
+    state: {companyState, editQuotation, sellerId},
     dispatch,
   }: any = useContext(Store);
 
@@ -101,16 +108,20 @@ const CreateNewInvoice = ({navigation}: Props) => {
   // const [customerName, setCustomerName] = useState('');
   const [signaturePicker, setSignaturePicker] = useState(false);
   const [contractPicker, setContractPicker] = useState(false);
+  const [isNewInvoice, setIsNewInvoice] = useState(true);
+  const [savedInvoiceData, setSavedInvoiceData] = useState<any>(null);
 
   const [workerPicker, setWorkerpicker] = useState(false);
   const [save, setSave] = useState<boolean>(false);
-
+  const [isLoadingWebP, setIsLoadingWebP] = useState(false);
   const [invoiceServerId, setInvoiceServerId] = useState<string | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>('');
   const [value, setValue] = React.useState('');
   const [openNoteToCustomer, setOpenNoteToCustomer] = useState(false);
   const [openNoteToTeam, setOpenNoteToTeam] = useState(false);
-  const [selectService, setSelectService] = useState<ServicesEmbed | null>(null);
+  const [selectService, setSelectService] = useState<ServicesEmbed | null>(
+    null,
+  );
   const [currentValue, setCurrentValue] = useState<ServicesEmbed | null>(null);
   const [signature, setSignature] = useState<string | null>(null);
   const quotationId = uuidv4();
@@ -197,13 +208,13 @@ const CreateNewInvoice = ({navigation}: Props) => {
     paymentMethod: '',
     paymentStatus: '',
     depositPaid: false,
-    depositApplied:0,
+    depositApplied: 0,
     sellerId,
     discountType: DiscountType.PERCENT,
     FCMToken: '',
     discountPercentage: 0,
     discountValue: 0,
-    allTotal:  0,
+    allTotal: 0,
     netAmount: 0,
     remaining: 0,
     dateOffer: initialDateOffer,
@@ -247,8 +258,6 @@ const CreateNewInvoice = ({navigation}: Props) => {
     control: methods.control,
     name: 'dateOffer',
   });
-
-
 
   const isCustomerDisabled = useMemo(() => {
     return customer.name === '' && customer.address === '';
@@ -296,7 +305,8 @@ const CreateNewInvoice = ({navigation}: Props) => {
       company: companyState as CompanyState,
     };
     mutate(data);
-    setSave(true);};
+    setSave(true);
+  };
 
   const handleInvoiceNumberChange = (text: string) => {
     methods.setValue('docNumber', text);
@@ -344,37 +354,42 @@ const CreateNewInvoice = ({navigation}: Props) => {
           backgroundColor: 'white',
         }}>
         <Appbar.BackAction
-             onPress={() => {
-              if (!save) {
-                Alert.alert(
-                  'ปิดหน้าต่าง',
-                  'ยืนยันไม่บันทึกข้อมูลและปิดหน้าต่าง',
-                  [
-                    // The "No" button
-                    // Does nothing but dismiss the dialog when pressed
-                    {
-                      text: 'อยู่ต่อ',
-                      style: 'cancel',
-                    },
-                    // The "Yes" button
-                    {
-                      text: 'ปิดหน้าต่าง',
-                      onPress: () => navigation.goBack(),
-                    },
-                  ],
-                  {cancelable: false},
-                );
-              } else {
-                () => navigation.goBack();
-              }
-            }}
+          onPress={() => {
+            if (!save) {
+              Alert.alert(
+                'ปิดหน้าต่าง',
+                'ยืนยันไม่บันทึกข้อมูลและปิดหน้าต่าง',
+                [
+                  // The "No" button
+                  // Does nothing but dismiss the dialog when pressed
+                  {
+                    text: 'อยู่ต่อ',
+                    style: 'cancel',
+                  },
+                  // The "Yes" button
+                  {
+                    text: 'ปิดหน้าต่าง',
+                    onPress: () => navigation.goBack(),
+                  },
+                ],
+                {cancelable: false},
+              );
+            } else {
+              () => navigation.goBack();
+            }
+          }}
         />
-         <Appbar.Content title="" />
+        <Appbar.Content title="" />
 
-          {pdfUrl && (
-        <IconButton mode='outlined' icon="file-document" iconColor='gray' onPress={openPDFModal} />
-          )}
-          <Appbar.Content title=""  />
+        {pdfUrl && (
+          <IconButton
+            mode="outlined"
+            icon="file-document"
+            iconColor="gray"
+            onPress={openPDFModal}
+          />
+        )}
+        <Appbar.Content title="" />
         <Button
           loading={isPending}
           disabled={isDisabled}
@@ -388,7 +403,7 @@ const CreateNewInvoice = ({navigation}: Props) => {
         <View style={{flex: 1}}>
           <KeyboardAwareScrollView style={styles.container}>
             <View style={styles.subContainerHead}>
-            <Text style={styles.textHeader}>ใบวางบิล</Text>
+              <Text style={styles.textHeader}>ใบวางบิล</Text>
 
               <DatePickerButton
                 label="วันที่"
@@ -472,8 +487,8 @@ const CreateNewInvoice = ({navigation}: Props) => {
               <View style={styles.signatureRow}>
                 <Text style={styles.signHeader}>เพิ่มลายเซ็น</Text>
                 <Switch
-                trackColor={{false: '#a5d6c1', true: '#4caf82'}}
-                thumbColor={sellerSignature ? '#ffffff' : '#f4f3f4'}
+                  trackColor={{false: '#a5d6c1', true: '#4caf82'}}
+                  thumbColor={sellerSignature ? '#ffffff' : '#f4f3f4'}
                   ios_backgroundColor="#3e3e3e"
                   onValueChange={useSignature}
                   value={sellerSignature ? true : false}
@@ -487,19 +502,18 @@ const CreateNewInvoice = ({navigation}: Props) => {
                 />
               </View>
               {sellerSignature && (
-                <View>
-                  <Image
-                    source={{uri: sellerSignature}}
-                    style={styles.signatureImage}
-                  />
-                </View>
+                <ShowSignature
+                  sellerSignature={sellerSignature}
+                  isLoadingWebP={isLoadingWebP}
+                  setIsLoadingWebP={setIsLoadingWebP}
+                />
               )}
               <SmallDivider />
               <View style={styles.signatureRow}>
                 <Text style={styles.signHeader}>หมายเหตุ</Text>
                 <Switch
-                trackColor={{false: '#a5d6c1', true: '#4caf82'}}
-                thumbColor={openNoteToCustomer ? '#ffffff' : '#f4f3f4'}
+                  trackColor={{false: '#a5d6c1', true: '#4caf82'}}
+                  thumbColor={openNoteToCustomer ? '#ffffff' : '#f4f3f4'}
                   ios_backgroundColor="#3e3e3e"
                   onValueChange={() =>
                     setOpenNoteToCustomer(!openNoteToCustomer)
@@ -552,8 +566,8 @@ const CreateNewInvoice = ({navigation}: Props) => {
               <View style={styles.signatureRow}>
                 <Text style={styles.signHeader}>โน๊ตภายในบริษัท</Text>
                 <Switch
-                trackColor={{false: '#a5d6c1', true: '#4caf82'}}
-                thumbColor={openNoteToTeam ? '#ffffff' : '#f4f3f4'}
+                  trackColor={{false: '#a5d6c1', true: '#4caf82'}}
+                  thumbColor={openNoteToTeam ? '#ffffff' : '#f4f3f4'}
                   ios_backgroundColor="#3e3e3e"
                   onValueChange={() => setOpenNoteToTeam(!openNoteToTeam)}
                   value={openNoteToTeam ? true : false}
@@ -609,8 +623,6 @@ const CreateNewInvoice = ({navigation}: Props) => {
             onDismiss={closeAddCustomerModal}>
             <AddCustomer onClose={() => closeAddCustomerModal()} />
           </Modal>
-
-
         </View>
         <Modal
           visible={signatureModal}
@@ -631,6 +643,7 @@ const CreateNewInvoice = ({navigation}: Props) => {
           </Appbar.Header>
           <SafeAreaView style={styles.containerModal}>
             <SignatureComponent
+              setLoadingWebP={setIsLoadingWebP}
               onClose={closeSignatureModal}
               setSignatureUrl={setSignature}
               onSignatureSuccess={closeSignatureModal}
@@ -652,13 +665,12 @@ const CreateNewInvoice = ({navigation}: Props) => {
         {pdfUrl && (
           <>
             <PDFModalScreen
+              fileType="IV"
               fileName={customer.name}
               visible={showPDFModal}
               onClose={closePDFModal}
               pdfUrl={pdfUrl}
             />
-
-           
           </>
         )}
         {showAddNewService && (
@@ -687,12 +699,15 @@ const styles = StyleSheet.create({
   container: {
     // backgroundColor:'#f3f8f3',
 
-    backgroundColor: '#e9f7ff',
+    // backgroundColor: '#e9f7ff',
+    backgroundColor: '#eaf9f9',
   },
   subContainerHead: {
     padding: 30,
     // backgroundColor:'#f3f8f3',
-    backgroundColor: '#e9f7ff',
+    // backgroundColor: '#e9f7ff',
+    backgroundColor: '#eaf9f9',
+
     height: 'auto',
     flexDirection: 'column',
     gap: 10,

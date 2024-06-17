@@ -417,12 +417,16 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
                   style={styles.imageView}>
                   {value ? (
                     isImagePicking ? (
+                      <View style={styles.imageUploader}>
                       <ActivityIndicator />
+                      </View>
                     ) : (
                       <Image source={{uri: value}} style={styles.image} />
                     )
                   ) : isImagePicking ? (
+                    <View style={styles.imageUploader}>
                     <ActivityIndicator />
+                    </View>
                   ) : (
                     <View style={styles.imageUploader}>
                       <IconButton

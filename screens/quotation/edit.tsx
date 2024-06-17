@@ -32,7 +32,7 @@ import SelectProductModal from '../../components/service/select';
 import DatePickerButton from '../../components/styles/DatePicker';
 import Divider from '../../components/styles/Divider';
 import SmallDivider from '../../components/styles/SmallDivider';
-import SignatureComponent from '../../components/utils/signature';
+import SignatureComponent from '../../components/utils/signature/create';
 import useThaiDateFormatter from '../../hooks/utils/useThaiDateFormatter';
 import { Store } from '../../redux/store';
 import { ParamListBase } from '../../types/navigationType';

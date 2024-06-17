@@ -32,6 +32,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  ActivityIndicator,
   Modal,
   View,
 } from 'react-native';
@@ -61,7 +62,7 @@ import DatePickerButton from '../../components/styles/DatePicker';
 // import Divider from '../../components/styles/Divider';
 import SmallDivider from '../../components/styles/SmallDivider';
 import AddCard from '../../components/ui/Button/AddCard';
-import SignatureComponent from '../../components/utils/signature';
+import SignatureComponent from '../../components/utils/signature/create';
 import ProjectModalScreen from '../../components/webview/project';
 import ExistingWorkers from '../../components/workers/existing';
 import useCreateQuotation from '../../hooks/quotation/create/useSaveQuotation';
@@ -90,6 +91,8 @@ import {
 } from '@prisma/client';
 import {JsonValue} from '@prisma/client/runtime/library';
 import {CompanyState} from 'types';
+import ShowSignature from '../../components/utils/signature/view';
+import useUpdateQuotation from '../../hooks/quotation/update/useUpdateQuotations';
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'Quotation'>;
 }
@@ -105,7 +108,7 @@ const Quotation = ({navigation}: Props) => {
       existingServices,
     },
     dispatch,
-  }: any = useContext(Store);
+  } = useContext(Store);
 
   const {
     initialDocnumber,
@@ -126,13 +129,14 @@ const Quotation = ({navigation}: Props) => {
   const [showDateOffer, setShowDateOffer] = useState(false);
   const [showDateEnd, setShowDateEnd] = useState(false);
   const [quotationServerId, setQuotationServerId] = useState<string | null>(
-    null,
+    editQuotation? editQuotation.id : null,
   );
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [viewResult, setViewResult] = React.useState('');
   const [selectService, setSelectService] = useState<ServicesEmbed | null>(
     null,
   );
+  const [isLoadingWebP, setIsLoadingWebP] = useState(false);
   const [currentValue, setCurrentValue] = useState<ServicesEmbed | null>(null);
   const [signature, setSignature] = useState<string | null>(null);
   const quotationId = uuidv4();
@@ -142,6 +146,9 @@ const Quotation = ({navigation}: Props) => {
   const [dateEndFormatted, setDateEndFormatted] = useState<string>(
     initialDateEndFormatted,
   );
+  const [isNewInvoice, setIsNewInvoice] = useState(editQuotation ? false : true);
+  const [savedInvoiceData, setSavedInvoiceData] = useState<any>(null);
+
   const [serviceIndex, setServiceIndex] = useState<number>(0);
 
   const url = `https://www.worktrust.co/preview/${quotationServerId}`;
@@ -250,7 +257,7 @@ const Quotation = ({navigation}: Props) => {
     id: uuidv4(),
     services: [],
     customer: defalutCustomer,
-    companyId: companyState.id,
+    companyId: companyState ? companyState?.id : '',
     vat7: 0,
     taxType: TaxType.NOTAX,
     taxValue: 0,
@@ -394,16 +401,44 @@ const Quotation = ({navigation}: Props) => {
   };
 
   const {mutate, isPending} = useCreateQuotation(actions);
+  const {mutate: updateQuotation, isPending: isUpdatePending} = useUpdateQuotation(actions)
 
+  // const handleButtonPress = async () => {
+  //   const data = {
+  //     quotation: methods.getValues() as Quotations,
+  //     company: companyState as CompanyState,
+  //   };
+  //   mutate(data);
+  //   setSave(true);
+
+  // };
   const handleButtonPress = async () => {
     const data = {
       quotation: methods.getValues() as Quotations,
       company: companyState as CompanyState,
     };
-    mutate(data);
+    if (isNewInvoice) {
+      mutate(data, {
+        onSuccess: (response) => {
+          setIsNewInvoice(false);
+          setSavedInvoiceData(data); // เก็บค่าที่บันทึก
+        },
+      });
+    } else {
+      console.log('update',quotationServerId);
+      const existingData = {
+        ...methods.getValues(),
+        id: quotationServerId,
+      };
+      const data = {
+        quotation: existingData as Quotations,
+        company: companyState as CompanyState,
+      };
+      updateQuotation(data);
+      setSave(true);
+    }
     setSave(true);
   };
-
   const handleInvoiceNumberChange = (text: string) => {
     methods.setValue('docNumber', text);
   };
@@ -428,6 +463,24 @@ const Quotation = ({navigation}: Props) => {
     setDateEndFormatted(thaiDateFormatter(date));
     methods.setValue('dateEnd', date);
   };
+
+  React.useEffect(() => {
+    const interval = setInterval(async () => {
+      if (sellerSignature && isLoadingWebP) {
+        try {
+          const response = await fetch(sellerSignature);
+          if (response.ok) {
+            setIsLoadingWebP(false);
+          }
+        } catch (error) {
+          console.error('Error checking SignatureImage:', error);
+        }
+      }
+    }, 1500);
+
+    return () => clearInterval(interval);
+  }, [sellerSignature, isLoadingWebP]);
+  console.log('quotationServerId',quotationServerId);
 
   return (
     <>
@@ -465,27 +518,27 @@ const Quotation = ({navigation}: Props) => {
             }}
           />
           <Appbar.Content title="" />
-          {quotationServerId && (
-            <IconButton
-              mode="outlined"
-              icon="web"
-              iconColor="gray"
-              onPress={openProjectModal}
-            />
-          )}
-          {pdfUrl && (
-            <IconButton
-              mode="outlined"
-              icon="file-document"
-              iconColor="gray"
-              onPress={openPDFModal}
-            />
-          )}
+          <IconButton
+           
+            disabled={!quotationServerId}
+            icon="web"
+            iconColor="gray"
+            onPress={openProjectModal}
+          />
+
+          <IconButton
+           
+
+            disabled={!pdfUrl && !editQuotation?.pdfUrl}
+            icon="file-document"
+            iconColor="gray"
+            onPress={openPDFModal}
+          />
           <Appbar.Content title="" />
 
           <Button
-            loading={isPending}
-            disabled={isDisabled}
+            loading={isPending || isUpdatePending}
+            disabled={isDisabled || isPending || isUpdatePending}
             testID="submited-button"
             mode="contained"
             onPress={handleButtonPress}>
@@ -617,9 +670,6 @@ const Quotation = ({navigation}: Props) => {
               <View style={styles.signatureRow}>
                 <Text style={styles.signHeader}>เพิ่มทีมงานติดตั้ง</Text>
                 <Switch
-                  trackColor={{false: '#a5d6c1', true: '#4caf82'}}
-                  // trackColor={{false: '#767577', true: '#81b0ff'}}
-                  thumbColor={workers.length > 0 ? '#ffffff' : '#f4f3f4'}
                   ios_backgroundColor="#3e3e3e"
                   onValueChange={useWorkers}
                   value={workers.length > 0 ? true : false}
@@ -672,8 +722,6 @@ const Quotation = ({navigation}: Props) => {
               <View style={styles.signatureRow}>
                 <Text style={styles.signHeader}>เพิ่มลายเซ็น</Text>
                 <Switch
-                  trackColor={{false: '#a5d6c1', true: '#4caf82'}}
-                  thumbColor={sellerSignature ? '#ffffff' : '#f4f3f4'}
                   ios_backgroundColor="#3e3e3e"
                   onValueChange={useSignature}
                   value={sellerSignature ? true : false}
@@ -687,19 +735,17 @@ const Quotation = ({navigation}: Props) => {
                 />
               </View>
               {sellerSignature && (
-                <View>
-                  <Image
-                    source={{uri: sellerSignature}}
-                    style={styles.signatureImage}
-                  />
-                </View>
+                <ShowSignature
+                  sellerSignature={sellerSignature}
+                  isLoadingWebP={isLoadingWebP}
+                  setIsLoadingWebP={setIsLoadingWebP}
+                />
               )}
+
               <SmallDivider />
               <View style={styles.signatureRow}>
                 <Text style={styles.signHeader}>หมายเหตุ</Text>
                 <Switch
-                  trackColor={{false: '#a5d6c1', true: '#4caf82'}}
-                  thumbColor={openNoteToCustomer ? '#ffffff' : '#f4f3f4'}
                   ios_backgroundColor="#3e3e3e"
                   onValueChange={() =>
                     setOpenNoteToCustomer(!openNoteToCustomer)
@@ -752,8 +798,6 @@ const Quotation = ({navigation}: Props) => {
               <View style={styles.signatureRow}>
                 <Text style={styles.signHeader}>โน๊ตภายในบริษัท</Text>
                 <Switch
-                  trackColor={{false: '#a5d6c1', true: '#4caf82'}}
-                  thumbColor={openNoteToTeam ? '#ffffff' : '#f4f3f4'}
                   ios_backgroundColor="#3e3e3e"
                   onValueChange={() => setOpenNoteToTeam(!openNoteToTeam)}
                   value={openNoteToTeam ? true : false}
@@ -843,6 +887,7 @@ const Quotation = ({navigation}: Props) => {
           </Appbar.Header>
           <SafeAreaView style={styles.containerModal}>
             <SignatureComponent
+              setLoadingWebP={setIsLoadingWebP}
               onClose={closeSignatureModal}
               setSignatureUrl={setSignature}
               onSignatureSuccess={closeSignatureModal}
@@ -862,22 +907,19 @@ const Quotation = ({navigation}: Props) => {
         /> */}
         <WarrantyModal visible={contractModal} onClose={closeContractModal} />
 
-        {quotationServerId && pdfUrl && (
-          <>
-            <ProjectModalScreen
+        <ProjectModalScreen
               fileName={customer.name}
               visible={showProjectModal}
               onClose={closeProjectModal}
-              quotationId={quotationServerId}
+              url={url}
             />
             <PDFModalScreen
+            fileType='QT'
               fileName={customer.name}
               visible={showPDFModal}
               onClose={closePDFModal}
-              pdfUrl={pdfUrl}
+              pdfUrl={pdfUrl ? pdfUrl : editQuotation?.pdfUrl || ''}
             />
-          </>
-        )}
         {showAddNewService && (
           <AddProductFormModal
             resetSelectService={() => setSelectService(null)}
@@ -904,12 +946,15 @@ const styles = StyleSheet.create({
   container: {
     // backgroundColor:'#f3f8f3',
 
-    backgroundColor: '#e9f7ff',
+    // backgroundColor: '#e9f7ff',
+    backgroundColor: '#eaf9f9',
+
   },
   subContainerHead: {
     padding: 30,
+    backgroundColor: '#eaf9f9',
     // backgroundColor:'#f3f8f3',
-    backgroundColor: '#e9f7ff',
+    // backgroundColor: '#e9f7ff',
     height: 'auto',
     flexDirection: 'column',
     gap: 15,
@@ -1213,7 +1258,7 @@ const styles = StyleSheet.create({
     width: 70,
     margin: 5,
     marginTop: 30,
-    marginLeft:20,
+    marginLeft: 20,
     height: 70,
     justifyContent: 'center',
     alignItems: 'center',

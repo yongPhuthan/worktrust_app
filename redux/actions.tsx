@@ -13,6 +13,7 @@ import {
   User,
   WarrantyEmbed,
   WorkerEmbed,
+  Workers,
 } from '@prisma/client';
 import * as contrains from './constrains';
 
@@ -58,7 +59,7 @@ export const get_default_warranty = (payload: WarrantyEmbed) => ({
   payload,
 });
 
-export const get_existing_workers = (payload: WorkerEmbed[]) => ({
+export const get_existing_workers = (payload: Workers[]) => ({
   type: contrains.GET_EXISTING_WORKERS,
   payload,
 });
@@ -161,8 +162,8 @@ export const getDefaultWarranty = (payload: WarrantyEmbed) => {
   };
 };
 
-export const getExistingWorkers = (payload: WorkerEmbed[]) => {
-  return (dispatch: (arg0: {type: string; payload: WorkerEmbed[]}) => void) => {
+export const getExistingWorkers = (payload: Workers[]) => {
+  return (dispatch: (arg0: {type: string; payload: Workers[]}) => void) => {
     dispatch(get_existing_workers(payload));
   };
 };

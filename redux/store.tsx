@@ -11,6 +11,7 @@ import {
   ServicesEmbed,
   WarrantyEmbed,
   WorkerEmbed,
+  Workers,
 } from '@prisma/client';
 export type StateType = {
   companyID: string;
@@ -24,7 +25,7 @@ export type StateType = {
   editInvoice: Invoices | null;
   editReceipt: Receipts | null;
   logoSrc: string;
-  existingWorkers: WorkerEmbed[];
+  existingWorkers: Workers[];
   userSignature: string;
   sellerId: string;
   fcmToken: string;
@@ -101,7 +102,7 @@ function reducer(state: StateType, action: ActionType): StateType {
     case contrains.GET_DEFAULT_WARRANTY:
       return {...state, defaultWarranty: action.payload as WarrantyEmbed};
     case contrains.GET_EXISTING_WORKERS:
-      return {...state, existingWorkers: action.payload as WorkerEmbed[]};
+      return {...state, existingWorkers: action.payload as Workers[]};
     case contrains.GET_USER_SIGNATURE:
       return {...state, userSignature: action.payload as string};
     case contrains.GET_EDIT_QUOTATION:
