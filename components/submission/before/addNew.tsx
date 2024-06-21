@@ -498,8 +498,7 @@ const AddNewBeforeImage = ({ onClose}: ExistingModalProps) => {
             <View style={styles.row}>
               <Text style={styles.signHeader}>เพิ่มโลโก้</Text>
               <Switch
-                trackColor={{false: '#a5d6c1', true: '#4caf82'}}
-                thumbColor={addWatermark ? '#ffffff' : '#f4f3f4'}
+    
                 ios_backgroundColor="#3e3e3e"
                 onValueChange={handleSwitchChange}
                 value={addWatermark ? true : false}
@@ -512,11 +511,22 @@ const AddNewBeforeImage = ({ onClose}: ExistingModalProps) => {
                 })}
               />
             </View>
+     
             {addWatermark && (
               <>
-                <FlatList
+                     <View
+                  style={{
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    marginTop: 10,
+                  }}>
+                    <Text style={styles.signHeader}>ตำแหน่ง</Text>
+                    <FlatList
                   data={WatermarkPositions}
-                  horizontal={true}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  
+          
                   ItemSeparatorComponent={() => <View style={{width: 10}} />}
                   keyExtractor={(item, index) => index.toString()}
                   renderItem={({item}) => (
@@ -532,6 +542,8 @@ const AddNewBeforeImage = ({ onClose}: ExistingModalProps) => {
                     </View>
                   )}
                 />
+                    </View>
+               
                 <View
                   style={{
                     flexDirection: 'row',
@@ -546,9 +558,9 @@ const AddNewBeforeImage = ({ onClose}: ExistingModalProps) => {
                     value={logoScale}
                     onValueChange={value => setLogoScale(value)}
                     onSlidingComplete={debounce(applyWatermark, 1000)}
-                    minimumTrackTintColor="#4caf82"
+                    minimumTrackTintColor="#047e6e"
                     maximumTrackTintColor="#a5d6c1"
-                    thumbTintColor="#4caf82"
+                    thumbTintColor="#047e6e"
                   />
                 </View>
                 <View
@@ -565,9 +577,9 @@ const AddNewBeforeImage = ({ onClose}: ExistingModalProps) => {
                     value={brightness}
                     onValueChange={value => setBrightness(value)}
                     onSlidingComplete={debounce(applyWatermark, 1000)}
-                    minimumTrackTintColor="#4caf82"
+                    minimumTrackTintColor="#047e6e"
                     maximumTrackTintColor="#a5d6c1"
-                    thumbTintColor="#4caf82"
+                    thumbTintColor="#047e6e"
                   />
                 </View>
               </>

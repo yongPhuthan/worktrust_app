@@ -16,10 +16,11 @@ import {BRAND_NAME} from '@env';
 import InvoiceDashboard from '../screens/invoice/dashboard';
 import ReceiptDashboard from '../screens/receipt/dashboard';
 import DashboardWarranty from '../screens/warranty/dashboard';
+import SettingsScreen from '../screens/setting/setting';
 const Drawer = createDrawerNavigator<ParamListBase>();
 const commonScreenOptions = {
   headerTitleStyle: {
-    fontFamily: 'Sukhumvit Set Bold',
+    // fontFamily: 'Sukhumvit Set Bold',
     fontSize: 18,
   },
   headerStyle: {
@@ -63,35 +64,55 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
         <PaperDrawer.Item
           label="ใบวางบิล"
           icon="clipboard-file-outline"
-          active={props.state.index === 2}
+          active={props.state.index === 1}
           onPress={() => props.navigation.navigate('DashboardInvoice')}
+          theme={{
+            colors: {
+              text: props.state.index === 1 ? 'white' : inactiveTintColor,
+            },
+          }}
 
         />
         <PaperDrawer.Item
           label="ใบเสร็จรับเงิน"
           icon="clipboard-file-outline"
-          active={props.state.index === 3}
+          active={props.state.index === 2}
           onPress={() => props.navigation.navigate('DashboardReceipt')}
+          theme={{
+            colors: {
+              text: props.state.index === 2 ? 'white' : inactiveTintColor,
+            },
+          }}
 
         />
                 <PaperDrawer.Item
           label="ใบรับประกัน"
           icon="file-sign"
-          active={props.state.index === 1}
+          active={props.state.index === 3}
           onPress={() => props.navigation.navigate('DashboardWarranty')}
+          theme={{
+            colors: {
+              text: props.state.index === 3 ? 'white' : inactiveTintColor,
+            },
+          }}
         />
-                        {/* <PaperDrawer.Item
-          label="ส่งงาน"
+       <PaperDrawer.Item
+          label="ส่งงานทั้งหมด"
           icon="file-sign"
-          active={props.state.index === 1}
-          onPress={() => props.navigation.navigate('DashboardContract')}
-        /> */}
+          active={props.state.index === 4}
+          onPress={() => props.navigation.navigate('DashboardSubmit')}
+          theme={{
+            colors: {
+              text: props.state.index === 4 ? 'white' : inactiveTintColor,
+            },
+          }}
+        />
       </PaperDrawer.Section>
       <PaperDrawer.Section style={{marginTop: 'auto'}} showDivider={false}>
         <PaperDrawer.Item
           label="ตั้งค่า"
           icon="cog"
-          active={props.state.index === 4}
+          active={props.state.index === 5}
           onPress={() => props.navigation.navigate('SettingsScreen')}
         />
       </PaperDrawer.Section>
@@ -125,23 +146,7 @@ function DashboardDrawer() {
           // ... other common options ...
         }}
       />
-      <Drawer.Screen
-        name="DashboardWarranty"
-        component={DashboardWarranty}
-        options={{
-          ...commonScreenOptions,
-          headerShown: false,
-          title: 'ใบรับประกัน', 
-          headerRight: () => (
-            <TouchableOpacity
-              style={{marginRight: 10}}
-              onPress={() => {
-              }}>
-              <FontAwesomeIcon icon={faBell} color="#1f303cff" size={22} />
-            </TouchableOpacity>
-          ),
-        }}
-      />
+    
             <Drawer.Screen
         name="DashboardInvoice"
         component={InvoiceDashboard}
@@ -180,7 +185,24 @@ function DashboardDrawer() {
           // ... other common options ...
         }}
       />
-      {/* <Drawer.Screen
+        <Drawer.Screen
+        name="DashboardWarranty"
+        component={DashboardWarranty}
+        options={{
+          ...commonScreenOptions,
+          headerShown: false,
+          title: 'ใบรับประกัน', 
+          headerRight: () => (
+            <TouchableOpacity
+              style={{marginRight: 10}}
+              onPress={() => {
+              }}>
+              <FontAwesomeIcon icon={faBell} color="#1f303cff" size={22} />
+            </TouchableOpacity>
+          ),
+        }}
+      />
+      <Drawer.Screen
         name="DashboardSubmit"
         component={DashboardSubmit}
         options={{
@@ -197,7 +219,25 @@ function DashboardDrawer() {
             </TouchableOpacity>
           ),
         }}
-      /> */}
+      />
+       <Drawer.Screen
+        name="SettingsScreen"
+        component={SettingsScreen}
+        options={{
+          ...commonScreenOptions,
+          headerShown: false,
+          title: 'ตั้งค่า',
+          headerRight: () => (
+            <TouchableOpacity
+              style={{marginRight: 10}}
+              onPress={() => {
+  
+              }}>
+              <FontAwesomeIcon icon={faBell} color="#1f303cff" size={22} />
+            </TouchableOpacity>
+          ),
+        }}
+      />
 
       {/* ... other screens ... */}
     </Drawer.Navigator>

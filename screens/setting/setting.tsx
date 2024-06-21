@@ -12,7 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {Divider, ActivityIndicator} from 'react-native-paper';
+import {Divider, ActivityIndicator,Appbar} from 'react-native-paper';
 import firebase from '../../firebase';
 import {ParamListBase} from '../../types/navigationType';
 import {Store} from '../../redux/store';
@@ -20,14 +20,16 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import {useQuery} from '@tanstack/react-query';
 import {launchImageLibrary, MediaType} from 'react-native-image-picker';
 import {useUser} from '../../providers/UserContext';
-import {CompanySeller, User} from '../../types/docType';
+import { CompanyState } from 'types';
+import { User } from '@prisma/client';
+import {DrawerActions} from '@react-navigation/native';
 
 interface SettingScreenProps {
   navigation: StackNavigationProp<ParamListBase, 'TopUpScreen'>;
 }
 
 const SettingsScreen = ({navigation}: SettingScreenProps) => {
-  const [company, setCompany] = useState<CompanySeller>();
+  const [company, setCompany] = useState<CompanyState>();
   const user = useUser();
   const [seller, setSeller] = useState<User>();
   const {
@@ -170,11 +172,30 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
   if (!isAuthenticated) {
     return null;
   }
-  console.log('company', company);
-  console.log('logo', logo);
 
   return (
     <>
+              <Appbar.Header
+            // elevated
+            mode="center-aligned"
+            style={{
+              backgroundColor: 'white',
+            }}>
+            <Appbar.Action
+              icon={'menu'}
+              onPress={() => {
+                navigation.dispatch(DrawerActions.openDrawer());
+              }}
+            />
+            <Appbar.Content
+              title={'ตั้งค่า'}
+              titleStyle={{
+                fontSize: 18,
+                fontWeight: 'bold',
+              }}
+            />
+          
+          </Appbar.Header>
       {company && seller && (
         <ScrollView style={{flex: 1, backgroundColor: '#f5f5f5'}}>
           {/* Business Details */}
@@ -340,45 +361,15 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
                   justifyContent: 'space-between',
                 }}>
                 <Text style={{fontSize: 15, fontWeight: '600', color: '#333'}}>
-                  แก้ไขข้อมูลธุรกิจ
+                  แก้ไขธุรกิจ
                 </Text>
                 <FontAwesomeIcon icon={faChevronRight} size={18} color="#aaa" />
               </View>
             </TouchableOpacity>
             <Divider />
-            <TouchableOpacity
-              style={{paddingVertical: 15, paddingHorizontal: 24}}
-              onPress={() => navigation.navigate('ExistingContract')}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}>
-                <Text style={{fontSize: 15, fontWeight: '600', color: '#333'}}>
-                  แก้ไขสัญญา
-                </Text>
-                <FontAwesomeIcon icon={faChevronRight} size={18} color="#aaa" />
-              </View>
-            </TouchableOpacity>
-            <Divider />
-            {/* <TouchableOpacity
-              style={{paddingVertical: 15, paddingHorizontal: 24}}
-              onPress={() => navigation.navigate('ExistingSignature',{company} )}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}>
-                <Text style={{fontSize: 15, fontWeight: '600', color: '#333'}}>
-                  ลายเซ็น
-                </Text>
-                <FontAwesomeIcon icon={faChevronRight} size={18} color="#aaa" />
-              </View>
-            </TouchableOpacity> */}
            
             <TouchableOpacity
+            onPress={() => navigation.navigate('EditWorkers')}
               style={{paddingVertical: 15, paddingHorizontal: 24}}
               >
               <View
@@ -388,14 +379,53 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
                   justifyContent: 'space-between',
                 }}>
                 <Text style={{fontSize: 15, fontWeight: '600', color: '#333'}}>
-                  บัญชีธนาคาร
+                  ทีมงาน
                 </Text>
                 <FontAwesomeIcon icon={faChevronRight} size={18} color="#aaa" />
               </View>
             </TouchableOpacity>
             <Divider />
             <TouchableOpacity
+            onPress={() => navigation.navigate('EditMaterials')}
               style={{paddingVertical: 15, paddingHorizontal: 24}}
+              >
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}>
+                <Text style={{fontSize: 15, fontWeight: '600', color: '#333'}}>
+                  วัสดุอุปกรณ์
+                </Text>
+                <FontAwesomeIcon icon={faChevronRight} size={18} color="#aaa" />
+              </View>
+              
+            </TouchableOpacity>
+            <Divider />
+            <TouchableOpacity
+            onPress={() => navigation.navigate('EditGallery')}
+              style={{paddingVertical: 15, paddingHorizontal: 24}}
+              >
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}>
+                <Text style={{fontSize: 15, fontWeight: '600', color: '#333'}}>
+                  รูปภาพ
+                </Text>
+                <FontAwesomeIcon icon={faChevronRight} size={18} color="#aaa" />
+              </View>
+              
+            </TouchableOpacity>
+            <Divider />
+            <Divider style={{
+marginTop:50
+            }} />
+            <TouchableOpacity
+              style={{paddingVertical: 15, paddingHorizontal: 24, }}
               onPress={() => toggleLogoutModal()}>
               <View
                 style={{
@@ -406,7 +436,7 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
                 <Text style={{fontSize: 15, fontWeight: '600', color: '#333'}}>
                   ออกจากระบบ
                 </Text>
-                <FontAwesomeIcon icon={faChevronRight} size={18} color="#aaa" />
+                {/* <FontAwesomeIcon icon={faChevronRight} size={18} color="#aaa" /> */}
               </View>
             </TouchableOpacity>
  

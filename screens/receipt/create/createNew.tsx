@@ -58,9 +58,16 @@ import * as stateAction from '../../../redux/actions';
 import {Store} from '../../../redux/store';
 import {ParamListBase} from '../../../types/navigationType';
 import {quotationsValidationSchema} from '../../utils/validationSchema';
-import { CustomerEmbed, DiscountType, ReceiptStatus, Receipts, ServicesEmbed } from '@prisma/client';
-import { CompanyState } from 'types';
+import {
+  CustomerEmbed,
+  DiscountType,
+  ReceiptStatus,
+  Receipts,
+  ServicesEmbed,
+} from '@prisma/client';
+import {CompanyState} from 'types';
 import ShowSignature from '../../../components/utils/signature/view';
+import useUpdateReceipt from '../../../hooks/receipt/update/useUpdateReceipt';
 
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'CreateNewReceipt'>;
@@ -68,9 +75,16 @@ interface Props {
 
 const CreateNewReceipt = ({navigation}: Props) => {
   const {
-    state: {companyState, editQuotation, sellerId},
+    state: {
+      companyState,
+      sellerId,
+      editReceipt,
+      defaultWarranty,
+      quotationRefNumber,
+      quotationId,
+    },
     dispatch,
-  }: any = useContext(Store);
+  } = useContext(Store);
 
   const {
     initialDocnumber,
@@ -85,21 +99,22 @@ const CreateNewReceipt = ({navigation}: Props) => {
 
   // const [customerName, setCustomerName] = useState('');
   const [signaturePicker, setSignaturePicker] = useState(false);
-  const [contractPicker, setContractPicker] = useState(false);
   const [save, setSave] = useState<boolean>(false);
 
-  const [workerPicker, setWorkerpicker] = useState(false);
   const [isLoadingWebP, setIsLoadingWebP] = useState(false);
 
-  const [invoiceServerId, setInvoiceServerId] = useState<string | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>('true');
   const [value, setValue] = React.useState('');
+  const [isNewReceipt, setIsNewReceipt] = useState(editReceipt ? false : true);
+
   const [openNoteToCustomer, setOpenNoteToCustomer] = useState(false);
   const [openNoteToTeam, setOpenNoteToTeam] = useState(false);
-  const [selectService, setSelectService] = useState<ServicesEmbed | null>(null);
+  const [selectService, setSelectService] = useState<ServicesEmbed | null>(
+    null,
+  );
   const [currentValue, setCurrentValue] = useState<ServicesEmbed | null>(null);
   const [signature, setSignature] = useState<string | null>(null);
-  const quotationId = uuidv4();
+
   const [dateOfferFormatted, setDateOfferFormatted] = useState<string>(
     initialDateOfferFormatted,
   );
@@ -108,7 +123,9 @@ const CreateNewReceipt = ({navigation}: Props) => {
   );
   const [serviceIndex, setServiceIndex] = useState<number>(0);
   const [fcmToken, setFtmToken] = useState('');
-
+  const [receiptServerId, setReceiptServerId] = useState<string | null>(
+    editReceipt ? editReceipt.id : null,
+  );
   const {
     openModal: openAddCustomerModal,
     closeModal: closeAddCustomerModal,
@@ -159,7 +176,6 @@ const CreateNewReceipt = ({navigation}: Props) => {
     null,
   );
 
-
   const defalutCustomer: CustomerEmbed = {
     id: uuidv4(),
     name: '',
@@ -171,8 +187,8 @@ const CreateNewReceipt = ({navigation}: Props) => {
     id: uuidv4(),
     services: [],
     customer: defalutCustomer,
-    companyId: companyState.id,
-    quotationRefNumber: '',
+    companyId: companyState ? companyState.id : '',
+    quotationRefNumber: quotationRefNumber ? quotationRefNumber : '',
     vat7: 0,
     taxType: TaxType.NOTAX,
     taxValue: 0,
@@ -181,22 +197,20 @@ const CreateNewReceipt = ({navigation}: Props) => {
     paymentMethod: '',
     paymentStatus: '',
     depositPaid: false,
-    depositApplied:0,
+    depositApplied: 0,
     sellerId,
     discountType: DiscountType.PERCENT,
     FCMToken: '',
     discountPercentage: 0,
     discountValue: 0,
-    allTotal:  0,
+    allTotal: 0,
     netAmount: 0,
     remaining: 0,
     dateOffer: initialDateOffer,
     noteToCustomer: '',
     noteToTeam: '',
-    dateEnd: initialDateEnd,
     docNumber: `IV${initialDocnumber}`,
     sellerSignature: '',
-    warranty: editQuotation?.warranty ? editQuotation?.warranty : null,
     status: ReceiptStatus.PENDING, // Set the status to a valid QuotationStatus value
     dateApproved: null,
     pdfUrl: '',
@@ -207,7 +221,7 @@ const CreateNewReceipt = ({navigation}: Props) => {
   };
   const methods = useForm<Receipts>({
     mode: 'all',
-    defaultValues: editQuotation ? editQuotation : receiptDefaultValue,
+    defaultValues: editReceipt ? editReceipt : receiptDefaultValue,
   });
   const {fields, append, remove, update} = useFieldArray({
     control: methods.control,
@@ -259,19 +273,49 @@ const CreateNewReceipt = ({navigation}: Props) => {
   const actions: any = {
     setPdfUrl,
     openPDFModal,
+    setReceiptServerId,
   };
 
   const {mutate, isPending} = useCreateNewReceipt(actions);
-
+  const {mutate: updateReceipt, isUpdating: isUpdatePending} =
+    useUpdateReceipt(actions);
   const handleButtonPress = async () => {
     const data = {
-      receipt: methods.getValues() as Receipts, // Add the missing 'invoice' property
-      quotation: methods.getValues() as Receipts,
+      receipt: methods.getValues() as Receipts,
       company: companyState as CompanyState,
+      quotationId,
     };
-    mutate(data);
-    setSave(true)
+    if (isNewReceipt) {
+      mutate(data, {
+        onSuccess: response => {
+          setIsNewReceipt(false);
+        },
+      });
+    } else {
+      const existingData = {
+        ...methods.getValues(),
+        id: receiptServerId,
+      };
+      const data = {
+        receipt: existingData as Receipts,
+        company: companyState as CompanyState,
+        quotationId,
+      };
+      updateReceipt(data);
+      setSave(true);
+    }
+    setSave(true);
   };
+  // const handleButtonPress = async () => {
+  //   const data = {
+  //     receipt: methods.getValues() as Receipts, // Add the missing 'invoice' property
+  //     company: companyState as CompanyState,
+  //     quotationId,
+
+  //   };
+  //   mutate(data);
+  //   setSave(true)
+  // };
 
   const handleInvoiceNumberChange = (text: string) => {
     methods.setValue('docNumber', text);
@@ -284,10 +328,6 @@ const CreateNewReceipt = ({navigation}: Props) => {
   const handleStartDateSelected = (date: Date) => {
     setDateOfferFormatted(thaiDateFormatter(date));
     methods.setValue('dateOffer', date);
-  };
-  const handleEndDateSelected = (date: Date) => {
-    setDateEndFormatted(thaiDateFormatter(date));
-    methods.setValue('dateEnd', date);
   };
 
   const handleRemoveService = (index: number) => {
@@ -305,8 +345,13 @@ const CreateNewReceipt = ({navigation}: Props) => {
       methods.setValue('noteToCustomer', '', {shouldDirty: true});
       methods.setValue('noteToTeam', '', {shouldDirty: true});
     }
-    if (editQuotation) {
-      methods.setValue('quotationRefNumber', editQuotation.docNumber);
+    if (editReceipt) {
+      methods.setValue(
+        'quotationRefNumber',
+        editReceipt.quotationRefNumber
+          ? editReceipt.quotationRefNumber
+          : quotationRefNumber,
+      );
       methods.setValue('docNumber', `IV${initialDocnumber}`);
     }
   }, [openNoteToCustomer, openNoteToTeam]);
@@ -318,41 +363,21 @@ const CreateNewReceipt = ({navigation}: Props) => {
         style={{
           backgroundColor: 'white',
         }}>
-        <Appbar.BackAction
-             onPress={() => {
-              if (!save) {
-                Alert.alert(
-                  'ปิดหน้าต่าง',
-                  'ยืนยันไม่บันทึกข้อมูลและปิดหน้าต่าง',
-                  [
-                    // The "No" button
-                    // Does nothing but dismiss the dialog when pressed
-                    {
-                      text: 'อยู่ต่อ',
-                      style: 'cancel',
-                    },
-                    // The "Yes" button
-                    {
-                      text: 'ปิดหน้าต่าง',
-                      onPress: () => navigation.goBack(),
-                    },
-                  ],
-                  {cancelable: false},
-                );
-              } else {
-                () => navigation.goBack();
-              }
-            }}
-        />
-         <Appbar.Content title="" />
+        <Appbar.BackAction onPress={() => navigation.goBack()} />
+        <Appbar.Content title="" />
 
-          {pdfUrl && (
-        <IconButton mode='outlined' icon="file-document" iconColor='gray' onPress={openPDFModal} />
-          )}
-          <Appbar.Content title=""  />
+        <IconButton
+          disabled={editReceipt ? !editReceipt.pdfUrl : !pdfUrl}
+
+          mode="outlined"
+          icon="file-document"
+          onPress={openPDFModal}
+        />
+
+        <Appbar.Content title="" />
         <Button
-          loading={isPending}
-          disabled={isDisabled}
+          loading={isPending || isUpdatePending}
+          disabled={isDisabled || isUpdatePending}
           testID="submited-button"
           mode="contained"
           onPress={handleButtonPress}>
@@ -362,9 +387,8 @@ const CreateNewReceipt = ({navigation}: Props) => {
       <FormProvider {...methods}>
         <View style={{flex: 1}}>
           <KeyboardAwareScrollView style={styles.container}>
-
             <View style={styles.subContainerHead}>
-            <Text style={styles.textHeader}>ใบเสร็จรับเงิน</Text>
+              <Text style={styles.textHeader}>ใบเสร็จรับเงิน</Text>
 
               <DatePickerButton
                 label="วันที่"
@@ -378,7 +402,7 @@ const CreateNewReceipt = ({navigation}: Props) => {
                 value={methods.watch('docNumber')}
               />
               <DocNumber
-                label="อ้างอิงใบเสนอราคาเลขที่"
+                label="อ้างอิง"
                 onChange={handleQuotationRefNumberChange}
                 value={methods.watch('quotationRefNumber') || ''}
               />
@@ -448,8 +472,8 @@ const CreateNewReceipt = ({navigation}: Props) => {
               <View style={styles.signatureRow}>
                 <Text style={styles.signHeader}>เพิ่มลายเซ็น</Text>
                 <Switch
-                trackColor={{false: '#a5d6c1', true: '#4caf82'}}
-                thumbColor={sellerSignature ? '#ffffff' : '#f4f3f4'}
+                  trackColor={{false: '#a5d6c1', true: '#4caf82'}}
+                  thumbColor={sellerSignature ? '#ffffff' : '#f4f3f4'}
                   ios_backgroundColor="#3e3e3e"
                   onValueChange={useSignature}
                   value={sellerSignature ? true : false}
@@ -568,7 +592,7 @@ const CreateNewReceipt = ({navigation}: Props) => {
                           textAlignVertical="top"
                           error={!!error}
                           onChangeText={onChange}
-                            value={value ?? ''}
+                          value={value ?? ''}
                         />
                       </View>
                     )}
@@ -604,7 +628,7 @@ const CreateNewReceipt = ({navigation}: Props) => {
           </Appbar.Header>
           <SafeAreaView style={styles.containerModal}>
             <SignatureComponent
-            setLoadingWebP={setIsLoadingWebP}
+              setLoadingWebP={setIsLoadingWebP}
               onClose={closeSignatureModal}
               setSignatureUrl={setSignature}
               onSignatureSuccess={closeSignatureModal}
@@ -612,31 +636,29 @@ const CreateNewReceipt = ({navigation}: Props) => {
           </SafeAreaView>
         </Modal>
         <SelectProductModal
-          quotationId={quotationId}
           onAddService={newProduct => append(newProduct)}
           currentValue={null}
           visible={showAddExistingService}
           onClose={closeAddExistingServiceModal}
         />
-        {pdfUrl && (
-          <>
-            <PDFModalScreen
-            fileType='RC'
-              fileName={customer.name}
-              visible={showPDFModal}
-              onClose={closePDFModal}
-              pdfUrl={pdfUrl}
-            />
-
-           
-          </>
-        )}
+      <PDFModalScreen
+                fileType="IV"
+                fileName={customer.name}
+                visible={showPDFModal}
+                onClose={closePDFModal}
+                pdfUrl={
+                  editReceipt
+                    ? editReceipt.pdfUrl
+                      ? editReceipt.pdfUrl
+                      : ''
+                    : pdfUrl || ''
+                }
+              />
         {showAddNewService && (
           <AddProductFormModal
             resetSelectService={() => setSelectService(null)}
             selectService={selectService}
             resetAddNewService={() => setAddNewService(false)}
-            quotationId={quotationId}
             onAddService={newProduct => update(serviceIndex, newProduct)}
             currentValue={currentValue}
             visible={showAddNewService}
@@ -659,7 +681,6 @@ const styles = StyleSheet.create({
 
     // backgroundColor: '#e9f7ff',
     backgroundColor: '#eaf9f9',
-
   },
   subContainerHead: {
     padding: 30,

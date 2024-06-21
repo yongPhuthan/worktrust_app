@@ -79,7 +79,7 @@ const ExistingWorkers = ({isVisible, onClose}: ExistingModalProps) => {
   };
 
   const {data, isLoading, isError, error} = useQuery({
-    queryKey: ['workers', code],
+    queryKey: ['Workers'],
     queryFn: fetchExistingWorkers,
   });
 

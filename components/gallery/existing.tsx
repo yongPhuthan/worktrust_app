@@ -1,5 +1,5 @@
 import {useQuery, useQueryClient} from '@tanstack/react-query';
-import React, {useContext, useState} from 'react';
+import React, {useContext, useState, useCallback, useEffect} from 'react';
 import {
   Dimensions,
   FlatList,
@@ -23,12 +23,12 @@ import {useUriToBlob} from '../../hooks/utils/image/useUriToBlob';
 import {useSlugify} from '../../hooks/utils/useSlugify';
 import {Store} from '../../redux/store';
 import AddNewImage from './addNew';
+import {ServiceImagesEmbed} from '@prisma/client';
 
 interface ImageModalProps {
   isVisible: boolean;
   onClose: () => void;
-  serviceImages: string[];
-  setServiceImages: any;
+  serviceImages: ServiceImagesEmbed[];
 }
 
 interface Tag {
@@ -58,7 +58,6 @@ const GalleryScreen = ({
   isVisible,
   onClose,
   serviceImages,
-  setServiceImages,
 }: ImageModalProps) => {
   const [isImageUpload, setIsImageUpload] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
@@ -75,6 +74,8 @@ const GalleryScreen = ({
   const [initialGalleryImages, setInitialGalleryImages] = useState<ImageData[]>(
     [],
   );
+  const [isLoadingWebP, setIsLoadingWebP] = useState<boolean>(false);
+
   const [galleryImages, setGalleryImages] = useState<ImageData[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const context = useFormContext();
@@ -87,9 +88,9 @@ const GalleryScreen = ({
     formState: {errors},
   } = context as any;
   const {
-    state: {serviceList, code},
+    state: {code},
     dispatch,
-  }: any = useContext(Store);
+  } = useContext(Store);
   const handleCheckbox = (id: string) => {
     const updatedData = galleryImages.map(img => {
       if (img.id === id) {
@@ -110,27 +111,44 @@ const GalleryScreen = ({
 
     try {
       const imageSnapshot = await imagesRef.get();
+      const serviceImageUrls = new Set(
+        serviceImages.map(img => img.thumbnailUrl),
+      );
+
       const images = imageSnapshot.docs.map(doc => {
         const data = doc.data();
         return {
           id: doc.id,
           url: data.url,
           tags: data.tags || [],
-          defaultChecked: serviceImages.includes(data.url.thumbnailUrl)
-            ? true
-            : false,
+          defaultChecked: serviceImageUrls.has(data.url.thumbnailUrl),
+          created: data.created ? data.created.toDate() : null,
         };
       });
+
       const tagsCollectionPath = `${code}/gallery/tags`;
       const tagsRef = firebase.firestore().collection(tagsCollectionPath);
       const tagSnapshot = await tagsRef.get();
       const fetchedTags = tagSnapshot.docs.map(doc => ({
         id: doc.id,
         name: doc.data().name,
+        created: doc.data().created ? doc.data().created.toDate() : null,
       }));
-      setGalleryImages(images);
-      setInitialGalleryImages(images);
 
+      images.sort((a, b) => {
+        if (a.created && b.created) {
+          return b.created.getTime() - a.created.getTime();
+        }
+        if (a.created && !b.created) {
+          return -1;
+        }
+        if (!a.created && b.created) {
+          return 1;
+        }
+        return 0;
+      });
+
+      setGalleryImages(images);
       setTags(fetchedTags); // Assuming setTags updates the state containing all tags
 
       return images; // Return images array, even if it's empty
@@ -145,13 +163,6 @@ const GalleryScreen = ({
     queryFn: getGallery,
   });
 
-  if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator />
-      </View>
-    );
-  }
   const handleSelectTag = (id: string): void => {
     const newSelectedTags = selectedTags.includes(id)
       ? selectedTags.filter(tagId => tagId !== id) // Toggle off if already selected
@@ -191,127 +202,122 @@ const GalleryScreen = ({
               <Appbar.Action icon={'close'} onPress={() => onClose()} />
               <Appbar.Content
                 title={`เลือกภาพผลงานของคุณ`}
-                titleStyle={{fontSize: 18, }}
+                titleStyle={{fontSize: 18}}
               />
               <Appbar.Action
                 icon={'plus'}
                 onPress={() => setIsOpenModal(true)}
               />
             </Appbar.Header>
-
-            <SafeAreaView style={styles.container}>
-              <View
-                style={{
-                  flexDirection: 'column',
-                  gap: 20,
-                  paddingBottom: '35%',
-                }}>
-                <FlatList
-                  data={tags}
-                  keyExtractor={item => item.id.toString()}
-                  renderItem={({item}) => (
-                    <View style={styles.tagItem}>
-                      <Checkbox.Android
-                        status={
-                          selectedTags.includes(item.id)
-                            ? 'checked'
-                            : 'unchecked'
-                        }
-                        onPress={() => handleSelectTag(item.id)}
-                      />
-                      <Text style={styles.tagText}>{item.name}</Text>
-                    </View>
-                  )}
-                  numColumns={2}
-                />
-
-                <FlatList
-                  data={galleryImages}
-                  numColumns={3}
-                  ListEmptyComponent={<Text style={{
-                    textAlign: 'center',
-                    color: 'gray',
-                    fontSize: 16,
-                    fontFamily: 'Sukhumvit Set',
-                  
-                  }}>ยังไม่มีรูปภาพ กด+เพิ่มรูปภาพ</Text>}
-                  renderItem={({item}) => (
-                    <View
-                      style={[
-                        styles.imageContainer,
-                        item.defaultChecked && styles.selected,
-                      ]}>
-                      <Image
-                        source={{uri: item.url.thumbnailUrl}}
-                        style={styles.image}
-                      />
-                      <View style={styles.checkboxContainer}>
-                        <CustomCheckbox
-                          checked={item.defaultChecked}
-                          onPress={() => {
-                            handleCheckbox(item.id);
-                          }}
-                        />
-                      </View>
-                      {/* <TouchableOpacity
-                        style={styles.expandButton}
-                        onPress={() => {
-                          setSelectedImage(item.url.thumbnailUrl);
-                          setModalVisible(true);
-                        }}>
-                        <FontAwesomeIcon
-                          icon={faExpand}
-                          style={{marginVertical: 5}}
-                          color="white"
-                        />
-                      </TouchableOpacity> */}
-                    </View>
-                  )}
-                  keyExtractor={item => item.id.toString()}
-                />
-                  {galleryImages.length > 0 && (
-                <View style={{
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-         
-                
-                }}>
-                  <Button
-                    mode="contained"
-                    style={{
-                      width: '80%',
-                    }}
-                    onPress={() => {
-                      if (serviceImages) onClose();
-                    }}
-                    disabled={
-                      !watch('serviceImages') ||
-                      watch('serviceImages').length === 0
-                    }>
-                    บันทึก {watch('serviceImages').length} รูป
-                  </Button>
-                </View>
-              )}
+            {isLoading || isLoadingWebP ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator color="#047e6e" size={'large'} />
               </View>
-
-            
-              <Modal
-                isVisible={modalVisible}
-                onBackdropPress={() => setModalVisible(false)}>
-                <View style={styles.modalContainer}>
-                  <Image
-                    source={{uri: selectedImage}}
-                    style={styles.modalImage}
+            ) : (
+              <SafeAreaView style={styles.container}>
+                <View
+                  style={{
+                    flexDirection: 'column',
+                    gap: 20,
+                    paddingBottom: '35%',
+                  }}>
+                  <FlatList
+                    data={tags}
+                    keyExtractor={item => item.id.toString()}
+                    renderItem={({item}) => (
+                      <View style={styles.tagItem}>
+                        <Checkbox.Android
+                          status={
+                            selectedTags.includes(item.id)
+                              ? 'checked'
+                              : 'unchecked'
+                          }
+                          onPress={() => handleSelectTag(item.id)}
+                        />
+                        <Text style={styles.tagText}>{item.name}</Text>
+                      </View>
+                    )}
+                    numColumns={2}
                   />
-                  <TouchableOpacity
-                    style={styles.closeButton}
-                    onPress={() => setModalVisible(false)}>
-                    <Text>Close</Text>
-                  </TouchableOpacity>
+
+                  <FlatList
+                    data={galleryImages}
+                    numColumns={3}
+                    ListEmptyComponent={
+                      <Text
+                        style={{
+                          textAlign: 'center',
+                          color: 'gray',
+                          fontSize: 16,
+                          fontFamily: 'Sukhumvit Set',
+                        }}>
+                        ยังไม่มีรูปภาพ กด+เพิ่มรูปภาพ
+                      </Text>
+                    }
+                    renderItem={({item}) => (
+                      <View
+                        style={[
+                          styles.imageContainer,
+                          item.defaultChecked && styles.selected,
+                        ]}>
+                        <Image
+                          source={{uri: item.url.thumbnailUrl}}
+                          style={styles.image}
+                        />
+                        <View style={styles.checkboxContainer}>
+                          <CustomCheckbox
+                            checked={item.defaultChecked}
+                            onPress={() => {
+                              handleCheckbox(item.id);
+                            }}
+                          />
+                        </View>
+                      </View>
+                    )}
+                    keyExtractor={item => item.id.toString()}
+                  />
+                  {galleryImages.length > 0 && (
+                    <View
+                      style={{
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                      <Button
+                        mode="contained"
+                        style={{
+                          width: '80%',
+                        }}
+                        onPress={() => {
+                          if (serviceImages) onClose();
+                        }}
+                        disabled={
+                          !watch('serviceImages') ||
+                          watch('serviceImages').length === 0
+                        }>
+                        บันทึก {watch('serviceImages').length} รูป
+                      </Button>
+                    </View>
+                  )}
                 </View>
-              </Modal>
-            </SafeAreaView>
+
+                <Modal
+                  isVisible={modalVisible}
+                  onBackdropPress={() => setModalVisible(false)}>
+                  <View style={styles.modalContainer}>
+                    <Image
+                      source={{uri: selectedImage}}
+                      style={styles.modalImage}
+                    />
+                    <TouchableOpacity
+                      style={styles.closeButton}
+                      onPress={() => setModalVisible(false)}>
+                      <Text>Close</Text>
+                    </TouchableOpacity>
+                  </View>
+                </Modal>
+              </SafeAreaView>
+            )}
           </>
         )}
         <Modal
@@ -320,11 +326,13 @@ const GalleryScreen = ({
           onBackdropPress={() => setIsOpenModal(false)}>
           <AddNewImage
             isVisible={isOpenModal}
-            onClose={() => setIsOpenModal(false)}
+            onClose={() => {
+              setIsOpenModal(false);
+
+            }}
           />
         </Modal>
       </Modal>
-      
     </>
   );
 };

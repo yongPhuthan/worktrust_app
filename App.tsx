@@ -29,7 +29,6 @@ const theme = {
     // primary : '#009995'
     // primary : '#0b65c2',
     primary:'#047e6e' // grammaly
-    
     // primary:'#027f6f'
     
   },

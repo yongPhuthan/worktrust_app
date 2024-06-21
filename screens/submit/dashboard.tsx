@@ -14,12 +14,16 @@ import {
   View,
 } from 'react-native';
 import Modal from 'react-native-modal';
-import {QuotationsFilterButton} from '../../components/ui/Dashboard/FilterButton'; // Adjust the import path as necessary
+import {SubmissionFilterButton} from '../../components/ui/Dashboard/FilterButton'; // Adjust the import path as necessary
 import firebase from '../../firebase';
-import {useActiveFilter} from '../../hooks/dashboard/useActiveFilter';
+import {
+  useActiveFilter,
+  useActiveSubmissionFilter,
+} from '../../hooks/dashboard/useActiveFilter';
 import {
   useFilteredData,
   useFilteredInvoicesData,
+  useFilteredSubmissionsData,
 } from '../../hooks/dashboard/useFilteredData';
 import CardDashBoard from '../../components/CardDashBoard';
 import {useUser} from '../../providers/UserContext';
@@ -40,7 +44,7 @@ import {
   Portal,
 } from 'react-native-paper';
 import {requestNotifications} from 'react-native-permissions';
-import useFetchDashboard from '../../hooks/submission/useFetchDashboard'; // adjust the path as needed
+import useFetchSubmissions from '../../hooks/submission/useFetchDashboard'; // adjust the path as needed
 
 import ProjectModalScreen from '../../components/webview/project';
 import {useModal} from '../../hooks/quotation/create/useModal';
@@ -48,12 +52,13 @@ import PDFModalScreen from '../../components/webview/pdf';
 import {
   Company,
   CustomerEmbed,
-  QuotationStatus,
-  Quotations,
   ServicesEmbed,
+  SubmissionStatus,
+  Submissions,
 } from '@prisma/client';
 import {CompanyState} from 'types';
 import useResetQuotation from '../../hooks/quotation/update/resetStatus';
+import CardDashBoardSubmission from '../../components/ui/submission/CardDashboard';
 interface ErrorResponse {
   message: string;
   action: 'logout' | 'redirectToCreateCompany' | 'contactSupport' | 'retry';
@@ -71,25 +76,22 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     closeModal: closeProjectModal,
     isVisible: showProjectModal,
   } = useModal();
-  const {
-    dispatch,
-    state: {code},
-  }: any = useContext(Store);
-  const {data, isLoading, isError, error} = useFetchDashboard();
-  const {activeFilter, updateActiveFilter} = useActiveFilter();
+  const {dispatch}: any = useContext(Store);
+  const {data, isLoading, isError, error} = useFetchSubmissions();
+  const {activeFilter, updateActiveFilter} = useActiveSubmissionFilter();
   const {width, height} = Dimensions.get('window');
   const [isLoadingAction, setIsLoadingAction] = useState(false);
   const queryClient = useQueryClient();
-  const [isModalSignContract, setIsModalSignContract] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<Quotations | null>(null);
+  const [selectedItem, setSelectedItem] = useState<Submissions | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  const [originalData, setOriginalData] = useState<Quotations[] | null>(null);
-  const filteredData = useFilteredData(
+  const [originalData, setOriginalData] = useState<Submissions[] | null>(null);
+  const filteredData = useFilteredSubmissionsData(
     originalData,
-    activeFilter as QuotationStatus,
+    activeFilter as SubmissionStatus,
   );
-  const [companyData, setCompanyData] = useState<CompanyState | null>(null);
-  const [quotationData, setQuotationData] = useState<Quotations[] | null>(null);
+  const [submissionsData, setSubmissionsData] = useState<Submissions[] | null>(
+    null,
+  );
   const handleLogout = async () => {
     try {
       await firebase.auth().signOut();
@@ -127,7 +129,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     }
   };
 
-  const removeQuotation = async (id: string) => {
+  const removeSubmission = async (id: string) => {
     handleModalClose();
     setIsLoadingAction(true);
     if (!user || !user.uid) {
@@ -137,7 +139,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     try {
       const token = await user.getIdToken(true);
       const response = await fetch(
-        `${BACK_END_SERVER_URL}/api/docs/deleteQuotation?id=${encodeURIComponent(
+        `${BACK_END_SERVER_URL}/api/submission/deleteSubmission?id=${encodeURIComponent(
           id,
         )}`,
         {
@@ -151,7 +153,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
 
       if (response.ok) {
         queryClient.invalidateQueries({
-          queryKey: ['dashboardData'],
+          queryKey: ['submissionsDashboard'],
         });
         setIsLoadingAction(false);
       } else {
@@ -169,18 +171,18 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     }
   };
 
-  const confirmRemoveQuotation = (id: string, customer: CustomerEmbed) => {
+  const confirmRemoveSubmission = (id: string, customerName: string) => {
     setShowModal(false);
     Alert.alert(
-      'ยืนยันลบเอกสาร',
-      `ลูกค้า ${customer}`,
+      'ยืนยันลบใบส่งงาน',
+      `ลูกค้า ${customerName}`,
       [
         {
           text: 'ยกเลิก',
           onPress: () => console.log('Cancel Pressed'),
           style: 'cancel',
         },
-        {text: 'ลบเอกสาร', onPress: () => removeQuotation(id)},
+        {text: 'ลบเอกสาร', onPress: () => removeSubmission(id)},
       ],
       {cancelable: false},
     );
@@ -205,15 +207,15 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   };
 
   useEffect(() => {
-    if (data) {
-      // If data[0] exists and has a non-null `code`, proceed with your logic
-      const companyWithoutQuotations = {
-        ...data.company,
-        quotations: [],
-      };
-      setCompanyData(companyWithoutQuotations);
-      setQuotationData(data.company.quotations);
-      setOriginalData(data.company.quotations);
+    if (data && data.company && data.company.submissions) {
+      const sortedSubmissions = data.company?.submissions.sort((a, b) => {
+        const dateA = new Date(a.updatedAt);
+        const dateB = new Date(b.updatedAt);
+        return dateB.getTime() - dateA.getTime();
+      });
+
+      setSubmissionsData(sortedSubmissions);
+      setOriginalData(sortedSubmissions);
     }
   }, [data]);
 
@@ -235,22 +237,18 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   }, [user]);
 
   useEffect(() => {
-    // ใช้ useEffect เพื่อตรวจสอบการเปลี่ยนแปลงของ showProjectModal และ showPDFModal
-    // และทำการเปลี่ยนแปลงค่าของ showModal ให้เป็น false เพื่อปิด Modal
-    // ที่เปิดอยู่ก่อนหน้านี้
     if (showProjectModal || showPDFModal) {
       setShowModal(false);
     }
   }, [showProjectModal, showPDFModal]);
 
   const filtersToShow = [
-    QuotationStatus.ALL,
-    QuotationStatus.SUBMITTED,
-    QuotationStatus.CUSTOMER_APPROVED,
-    QuotationStatus.CUSTOMER_REJECTED,
-    QuotationStatus.CUSTOMER_REVIEWED,
+    SubmissionStatus.ALL,
+    SubmissionStatus.PENDING,
+    SubmissionStatus.APPROVED,
+    SubmissionStatus.REJECTED,
   ];
-  const handleModalOpen = (item: Quotations, index: number) => {
+  const handleModalOpen = (item: Submissions, index: number) => {
     setSelectedItem(item);
     setSelectedIndex(index);
     // handleModal(item, index);
@@ -262,38 +260,35 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     setSelectedIndex(null);
     setShowModal(false);
   };
-  const editQuotation = async (
-    services: ServicesEmbed[],
-    quotation: Quotations,
-  ) => {
+  const editSubmission = async (submission: Submissions) => {
     setIsLoadingAction(true);
-    dispatch(stateAction.get_companyID(data?.company?.id as string));
-    dispatch(stateAction.get_edit_quotation(quotation));
+    dispatch(stateAction.get_edit_submission(submission));
     setIsLoadingAction(false);
-    handleModalClose();
-    navigation.navigate('CreateQuotation');
 
-    // navigation.navigate('EditQuotation', {
-    //   quotation,
-    //   company: data[0],
-    //   services,
-    // });
+    handleModalClose();
+    navigation.navigate('SendWorks');
+  };
+
+  const viewSubmission = async (submission: Submissions) => {
+    setIsLoadingAction(true);
+    dispatch(stateAction.view_submission(submission));
+    setIsLoadingAction(false);
+
+    handleModalClose();
+    navigation.navigate('ViewSubmission');
   };
 
   if (isError && error) {
     handleErrorResponse(error);
   }
 
-  const renderItem = ({item, index}: any) => (
+  const renderItem = ({item, index}: {item: Submissions; index: number}) => (
     <>
       <View style={{marginTop: 10}}>
-        <CardDashBoard
+        <CardDashBoardSubmission
           status={item.status}
           date={item.dateOffer}
-          end={item.dateEnd}
-          price={item.allTotal}
           customerName={item.customer?.name as string}
-          // onCardPress={()=>handleModal(item, index)}
           onCardPress={() => handleModalOpen(item, index)}
         />
       </View>
@@ -323,43 +318,23 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                     {item.customer?.name}
                   </List.Subheader>
                   <Divider />
-                  {/* <List.Item
-                    onPress={() => {
-                      handleModalClose();
-                      navigation.navigate('ProjectViewScreen', {
-                        id: item.id,
-                        pdfUrl: item.pdfUrl,
 
-                        fileName: `ใบเสนอราคา ${item.customer.name}.pdf`,
-                      });
+                  <List.Item
+                    onPress={() => {
+                      setShowModal(false);
+                      viewSubmission(selectedItem);
                     }}
                     centered={true}
-                    title="พรีวิวเอกสาร"
+                    title="ดูรายละเอียด"
                     titleStyle={{textAlign: 'center', color: 'black'}}
                   />
-
-                  <Divider /> */}
-                  {/* <List.Item
-                    onPress={() => {
-                      handleModalClose();
-                      navigation.navigate('PDFViewScreen', {
-                        pdfUrl: item.pdfUrl,
-
-                        fileName: `ใบเสนอราคา ${item.customer.name}.pdf`,
-                      });
-                    }}
-                    title="เอกสาร PDF"
-                    titleStyle={{textAlign: 'center'}}
-                  />
-
-                  <Divider /> */}
-
-                  {selectedItem?.status === QuotationStatus.SUBMITTED && (
+                  <Divider />
+                  {selectedItem?.status === SubmissionStatus.PENDING && (
                     <>
                       <List.Item
                         onPress={() => {
                           setShowModal(false);
-                          editQuotation(selectedItem.services, selectedItem);
+                          editSubmission(selectedItem);
                         }}
                         title="แก้ไข"
                         titleStyle={{textAlign: 'center', color: 'black'}}
@@ -367,49 +342,6 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                     </>
                   )}
 
-                  {selectedItem?.status ===
-                    QuotationStatus.CUSTOMER_REJECTED && (
-                    <>
-                      <Divider />
-                      <List.Item
-                        onPress={() => {}}
-                        centered={true}
-                        title="ดูรายละเอียด"
-                        titleStyle={{textAlign: 'center', color: 'black'}}
-                      />
-                    </>
-                  )}
-                  {selectedItem?.status ===
-                    QuotationStatus.CUSTOMER_REVIEWED && (
-                    <>
-                      <Divider />
-                      <List.Item
-                        onPress={() => {}}
-                        centered={true}
-                        title="ดูความคิดเห็น"
-                        titleStyle={{textAlign: 'center', color: 'black'}}
-                      />
-                    </>
-                  )}
-                  {selectedItem?.status === QuotationStatus.CUSTOMER_APPROVED &&
-                    QuotationStatus.CUSTOMER_REVIEWED && (
-                      <>
-                        <Divider />
-                        <List.Item
-                          onPress={() => {}}
-                          centered={true}
-                          title="ส่งใบรับประกัน"
-                          titleStyle={{textAlign: 'center', color: 'black'}}
-                        />
-                        <Divider />
-                        <List.Item
-                          onPress={() => {}}
-                          centered={true}
-                          title="ส่งใบเสร็จรับเงิน"
-                          titleStyle={{textAlign: 'center', color: 'black'}}
-                        />
-                      </>
-                    )}
                   <Divider />
                   <List.Item
                     onPress={() =>
@@ -425,22 +357,22 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                   <Divider />
                   <List.Item
                     onPress={() => {
-                      dispatch(stateAction.get_edit_quotation(selectedItem));
+                      dispatch(stateAction.get_edit_submission(selectedItem));
                       setShowModal(false);
                       navigation.navigate('SendWorks');
                     }}
                     title={
-                      selectedItem?.status === QuotationStatus.SUBMITTED
+                      selectedItem?.status === SubmissionStatus.PENDING
                         ? 'ส่งงานอีกครั้ง'
                         : 'แจ้งส่งงาน'
                     }
                     titleStyle={{textAlign: 'center'}}
                   />
                   <Divider />
-                  {QuotationStatus.SUBMITTED && (
+                  {SubmissionStatus.PENDING && (
                     <List.Item
                       onPress={() =>
-                        confirmRemoveQuotation(item.id, item?.customer?.name)
+                        confirmRemoveSubmission(item.id, item?.customer?.name)
                       }
                       title="ลบ"
                       titleStyle={{textAlign: 'center', color: 'red'}}
@@ -471,7 +403,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
               }}
             />
             <Appbar.Content
-              title={'งานที่แจ้งส่ง '}
+              title={'งานที่แจ้งส่ง'}
               titleStyle={{
                 fontSize: 18,
                 fontWeight: 'bold',
@@ -491,7 +423,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                   showsHorizontalScrollIndicator={false}
                   data={filtersToShow}
                   renderItem={({item}) => (
-                    <QuotationsFilterButton
+                    <SubmissionFilterButton
                       filter={item}
                       isActive={item === activeFilter}
                       onPress={() => {
@@ -536,7 +468,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                       </View>
                     }
                     contentContainerStyle={
-                      quotationData?.length === 0 && {flex: 1}
+                      submissionsData?.length === 0 && {flex: 1}
                     }
                   />
                 </View>

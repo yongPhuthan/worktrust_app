@@ -15,7 +15,6 @@ import {
   View,
 } from 'react-native';
 import {Appbar, TextInput} from 'react-native-paper';
-import {companyValidationSchema} from '../utils/validationSchema';
 
 import {useMutation, useQueryClient} from '@tanstack/react-query';
 
@@ -32,13 +31,13 @@ import {
 import {Button} from 'react-native-paper';
 import {useUser} from '../../providers/UserContext';
 import {Store} from '../../redux/store';
-import {CompanySeller} from '../../types/docType';
 import {ParamListBase} from '../../types/navigationType';
 import {useUploadToFirebase} from '../../hooks/useUploadtoFirebase';
 import {usePickImage} from '../../hooks/utils/image/usePickImage';
 import {useCreateToServer} from '../../hooks/useUploadToserver';
 import {usePutServer} from '../../hooks/putServer';
 import ConfirmDeleteDialog from '../../components/ConfirmDeleteDialog';
+import { CompanyState } from 'types';
 
 interface MyError {
   response: object;
@@ -61,7 +60,7 @@ const EditSetting = ({navigation, route}: Props) => {
   const {
     state: {code},
     dispatch,
-  }: any = useContext(Store);
+  } = useContext(Store);
   const defaultValues = {
     bizName: company.bizName,
     name: seller.name,
@@ -86,7 +85,6 @@ const EditSetting = ({navigation, route}: Props) => {
   } = useForm<any>({
     mode: 'onChange',
     defaultValues,
-    resolver: yupResolver(companyValidationSchema),
   });
   const watchedValues: any = useWatch({
     defaultValue: defaultValues,
@@ -103,7 +101,7 @@ const EditSetting = ({navigation, route}: Props) => {
   });
   const dirtyValues = Object.keys(dirtyFields).reduce((acc, key) => {
     if (key in watchedValues) {
-      acc[key] = watchedValues[key as keyof CompanySeller];
+      acc[key] = watchedValues[key as keyof CompanyState];
     }
     return acc;
   }, {} as any);

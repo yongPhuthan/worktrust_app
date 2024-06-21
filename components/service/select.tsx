@@ -16,25 +16,29 @@ import { ServicesEmbed } from '@prisma/client';
 interface Props {
   visible: boolean;
   onClose: () => void;
-  quotationId: string;
   onAddService: (service: any) => void;
-  currentValue: any;
 }
 
 const SelectProductModal: React.FC<Props> = ({
   visible,
   onClose,
   onAddService,
-  quotationId,
-  currentValue,
 }) => {
   const {
     state: {existingServices},
     dispatch,
-  }: any = useContext(Store);
+  } = useContext(Store);
   const [showAddNewService, setShowAddNewService] = useState(false);
   const [selectService, setSelectService] = useState<ServicesEmbed | null>(null);
   const [addNewService, setAddNewService] = useState(false);
+  const uniqueExistingServices: ServicesEmbed[] = existingServices.reduce((acc: ServicesEmbed[], current: ServicesEmbed) => {
+    const x = acc.find((item: ServicesEmbed) => item.id === current.id);
+    if (!x) {
+      return acc.concat([current]);
+    } else {
+      return acc;
+    }
+  }, []);
   return (
     <>
       <Modal animationType="slide" visible={visible}>
@@ -55,7 +59,7 @@ const SelectProductModal: React.FC<Props> = ({
               fontFamily: 'Sukhumvit set',
             }}
           />
-          {existingServices.length > 0 && (
+          {uniqueExistingServices.length > 0 && (
             <Button
               testID="submited-button"
               mode="outlined"
@@ -69,7 +73,7 @@ const SelectProductModal: React.FC<Props> = ({
         </Appbar.Header>
         <View style={styles.container}>
           <FlatList
-            data={existingServices}
+            data={uniqueExistingServices}
             keyExtractor={item => item.id}
             renderItem={({item, index}) => (
               <TouchableOpacity
@@ -82,7 +86,7 @@ const SelectProductModal: React.FC<Props> = ({
                 style={styles.subContainer}>
                 <View style={styles.row}>
                   <Image
-                    source={{uri: item?.serviceImages[0]?.thumbnailUrl}}
+                    source={{uri: item.serviceImages[0].thumbnailUrl}}
                     style={{width: 50, height: 50}}
                   />
                   <View>
@@ -112,9 +116,7 @@ const SelectProductModal: React.FC<Props> = ({
           resetSelectService={() => setSelectService(null)}
           selectService={selectService}
           resetAddNewService={() => setAddNewService(false)}
-          quotationId={quotationId}
           onAddService={onAddService}
-          currentValue={currentValue}
           visible={showAddNewService}
           onClose={() => setShowAddNewService(false)}
         />
@@ -124,9 +126,7 @@ const SelectProductModal: React.FC<Props> = ({
           resetSelectService={() => setSelectService(null)}
           selectService={selectService}
           resetAddNewService={() => setAddNewService(false)}
-          quotationId={quotationId}
           onAddService={onAddService}
-          currentValue={currentValue}
           visible={showAddNewService}
           onClose={() => setShowAddNewService(false)}
         />

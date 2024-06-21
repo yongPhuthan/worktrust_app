@@ -1,4 +1,4 @@
-import { InvoiceStatus, QuotationStatus } from '@prisma/client';
+import {InvoiceStatus, QuotationStatus} from '@prisma/client';
 import React from 'react';
 import {
   Dimensions,
@@ -10,14 +10,14 @@ import {
 type Props = {
   customerName: string;
   price: number;
-  date: Date
-  end: Date;
+  date: Date;
+  end: Date | null;
   status: string;
   onCardPress?: () => void;
 };
 
 const windowWidth = Dimensions.get('window').width;
-function convertDateToDDMMYYYY(dateString :string) {
+function convertDateToDDMMYYYY(dateString: string) {
   const date = new Date(dateString);
 
   // Get the day, month, and year from the date object
@@ -46,46 +46,49 @@ const CardDashBoard = (props: Props) => {
         {/* <FontAwesomeIcon icon={faChevronRight} size={24} color="#19232e" /> */}
       </View>
       {props.status?.length > 0 && (
-            <View
-            style={{
-              backgroundColor:
-                props.status ===  InvoiceStatus.PENDING
-                  ? '#ccc'
-                  : props.status === InvoiceStatus.BILLED 
-                  ? '#43a047'
-                  : props.status ===  InvoiceStatus.INVOICED
-                  ? '#1079ae'
-                
-                  : '#ccc',
-              borderRadius: 4,
-              paddingHorizontal: 8,
-              paddingVertical: 4,
-              marginTop: 8,
-              alignSelf: 'flex-start',
-            }}>
-            <Text
-              style={{
-                color: props.status === InvoiceStatus.PENDING ? '#000' : '#fff',
-                fontSize: 12,
-                fontWeight: 'bold',
-                textTransform: 'uppercase',
-              }}>
-              {props.status === InvoiceStatus.PENDING 
-                ? 'รอวางบิล'
+        <View
+          style={{
+            backgroundColor:
+              props.status === InvoiceStatus.PENDING
+                ? '#ccc'
                 : props.status === InvoiceStatus.BILLED
-                ? 'วางบิลแล้ว'
+                ? '#43a047'
                 : props.status === InvoiceStatus.INVOICED
-                ? 'เปิดบิลแล้ว'
-                :''
-                }
-            </Text>
-          </View>
+                ? '#1079ae'
+                : '#ccc',
+            borderRadius: 4,
+            paddingHorizontal: 8,
+            paddingVertical: 4,
+            marginTop: 8,
+            alignSelf: 'flex-start',
+          }}>
+          <Text
+            style={{
+              color: props.status === InvoiceStatus.PENDING ? '#000' : '#fff',
+              fontSize: 12,
+              fontWeight: 'bold',
+              textTransform: 'uppercase',
+            }}>
+            {props.status === InvoiceStatus.PENDING
+              ? 'รอวางบิล'
+              : props.status === InvoiceStatus.BILLED
+              ? 'วางบิลแล้ว'
+              : props.status === InvoiceStatus.INVOICED
+              ? 'เปิดบิลแล้ว'
+              : ''}
+          </Text>
+        </View>
       )}
-  
 
       <View style={styles.telAndTax}>
-        <Text style={styles.summaryPrice}>วันที่ {convertDateToDDMMYYYY(props.date.toString())}</Text>
-        <Text style={styles.summaryPrice}>สิ้นสุด {convertDateToDDMMYYYY(props.end.toString())}</Text>
+        <Text style={styles.summaryPrice}>
+          วันที่ {convertDateToDDMMYYYY(props.date.toString())}
+        </Text>
+        {props.end ? (
+          <Text style={styles.summaryPrice}>
+            สิ้นสุด {convertDateToDDMMYYYY(props.end.toString())}
+          </Text>
+        ) : null}
       </View>
     </TouchableOpacity>
   );

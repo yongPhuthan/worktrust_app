@@ -11,7 +11,7 @@ import {
   StyleSheet,
   Text,
   View,
-  ActivityIndicator
+
 } from 'react-native';
 import Modal from 'react-native-modal';
 import CardDashBoard from '../../components/ui/invoice/CardDashboard';
@@ -26,7 +26,7 @@ import {
   useActiveInvoiceFilter,
   useActiveReceiptFilter,
 } from '../../hooks/dashboard/useActiveFilter';
-import {useFilteredInvoicesData} from '../../hooks/dashboard/useFilteredData';
+import {useFilteredReceiptsData} from '../../hooks/dashboard/useFilteredData';
 import {useUser} from '../../providers/UserContext';
 import * as stateAction from '../../redux/actions';
 import {Store} from '../../redux/store';
@@ -40,6 +40,7 @@ import {
   Icon,
   List,
   PaperProvider,
+  ActivityIndicator,
   Portal,
 } from 'react-native-paper';
 import {requestNotifications} from 'react-native-permissions';
@@ -54,6 +55,7 @@ import {
 import useFetchDashboardInvoice from '../../hooks/invoice/queryInvoices';
 import {useModal} from '../../hooks/quotation/create/useModal';
 import FABButton from '../../components/ui/Button/FAB';
+import useFetchDashboardReceipt from '../../hooks/receipt/queryReceipts';
 interface ErrorResponse {
   message: string;
   action: 'logout' | 'redirectToCreateCompany' | 'contactSupport' | 'retry';
@@ -73,7 +75,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     isVisible: showProjectModal,
   } = useModal();
   const {dispatch}: any = useContext(Store);
-  const {data, isLoading, isError, error} = useFetchDashboardInvoice();
+  const {data, isLoading, isError, error} = useFetchDashboardReceipt();
   const {activeFilter, updateActiveFilter} = useActiveReceiptFilter();
   const {width, height} = Dimensions.get('window');
   const [isLoadingAction, setIsLoadingAction] = useState(false);
@@ -82,11 +84,10 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   const [selectedItem, setSelectedItem] = useState<Receipts | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [originalData, setOriginalData] = useState<Receipts[] | null>(null);
-  const filteredData = useFilteredInvoicesData(
+  const filteredData = useFilteredReceiptsData(
     originalData,
     activeFilter as ReceiptStatus,
   );
-  const [companyData, setCompanyData] = useState<Company | null>(null);
   const [invoicesData, setReceiptsData] = useState<Receipts[] | null>(null);
   const handleLogout = async () => {
     try {
@@ -167,11 +168,11 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     }
   };
 
-  const confirmRemoveReceipt = (id: string, customer: CustomerEmbed) => {
+  const confirmRemoveReceipt = (id: string, customerName: string) => {
     setShowModal(false);
     Alert.alert(
       'ยืนยันลบเอกสาร',
-      `ลูกค้า ${customer}`,
+      `ลูกค้า ${customerName}`,
       [
         {
           text: 'ยกเลิก',
@@ -184,22 +185,15 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     );
   };
   useEffect(() => {
-    if (data) {
-      // If data[0] exists and has a non-null `code`, proceed with your logic
-      const onlyCompany = {
-        ...data.company,
-        receipts: [],
-      };
-      setCompanyData(onlyCompany);
-      if (
-        !data.company ||
-        !data.company.receipts ||
-        data.company.receipts.length === 0
-      ) {
-        return;
-      }
-      setReceiptsData(data.company.receipts);
-      setOriginalData(data.company.receipts);
+    if (data && data.company && data.company.receipts) {
+      const sortedReceipts = data.company?.receipts.sort((a, b) => {
+        const dateA = new Date(a.updated);
+        const dateB = new Date(b.updated);
+        return dateB.getTime() - dateA.getTime();
+      });
+
+      setReceiptsData(sortedReceipts);
+      setOriginalData(sortedReceipts);
     }
   }, [data]);
 
@@ -217,15 +211,6 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
       return unsubscribe;
     }
   }, [user]);
-
-  useEffect(() => {
-    // ใช้ useEffect เพื่อตรวจสอบการเปลี่ยนแปลงของ showProjectModal และ showPDFModal
-    // และทำการเปลี่ยนแปลงค่าของ showModal ให้เป็น false เพื่อปิด Modal
-    // ที่เปิดอยู่ก่อนหน้านี้
-    if (showProjectModal || showPDFModal) {
-      setShowModal(false);
-    }
-  }, [showProjectModal, showPDFModal]);
 
   const filtersToShow = [
     ReceiptStatus.ALL,
@@ -248,28 +233,31 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   const editReceipt = async (services: ServicesEmbed[], receipt: Receipts) => {
     setIsLoadingAction(true);
     dispatch(stateAction.get_companyID(receipt.companyId));
-    dispatch(stateAction.get_edit_invoice(receipt));
+    dispatch(stateAction.get_edit_receipt(receipt));
     setIsLoadingAction(false);
     handleModalClose();
-    navigation.navigate('CreateNewInvoice');
+    navigation.navigate('CreateNewReceipt');
   };
 
-  if (isError && error) {
-    handleErrorResponse(error);
-  }
-  const renderItem = ({item, index}: any) => (
+  // if (isError && error) {
+  //   handleErrorResponse(error);
+  // }
+  const renderItem = ({item, index}: {item: Receipts, index: number}) => (
     <>
+    {item.status && (
       <View style={{marginTop: 10}}>
-        <CardDashBoard
-          status={item.status}
-          date={item.dateOffer}
-          end={item.dateEnd}
-          price={item.allTotal}
-          customerName={item.customer?.name as string}
-          // onCardPress={()=>handleModal(item, index)}
-          onCardPress={() => handleModalOpen(item, index)}
-        />
-      </View>
+      <CardDashBoard
+        status={item.status}
+        date={item.dateOffer}
+        end={null}
+        price={item.allTotal}
+        customerName={item.customer.name }
+        // onCardPress={()=>handleModal(item, index)}
+        onCardPress={() => handleModalOpen(item, index)}
+      />
+    </View>
+    )}
+      
 
       {selectedIndex === index && selectedItem && (
         <>
@@ -296,6 +284,19 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                     {item.customer?.name}
                   </List.Subheader>
                   <Divider />
+                  <List.Item
+                    onPress={() => {
+                      handleModalClose();
+                      navigation.navigate('PDFViewScreen', {
+                        pdfUrl: item.pdfUrl ?? '',
+                        fileType: 'IV',
+                        fileName: `${item.customer.name}.pdf`,
+                      });
+                    }}
+                    title="ดูเอกสาร PDF"
+                    titleStyle={{textAlign: 'center'}}
+                  />
+        <Divider />
 
                   {selectedItem?.status === ReceiptStatus.PENDING && (
                     <>
@@ -312,7 +313,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                  
                       <List.Item
                         onPress={() => {
-                          dispatch(stateAction.get_edit_invoice(selectedItem));
+                          dispatch(stateAction.get_edit_receipt(selectedItem));
                           setShowModal(false);
                           navigation.navigate('ReceiptDepositScreen');
                         }}
@@ -354,9 +355,8 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   );
 
   const createNewReceipt = () => {
-    if (!companyData) {
-      navigation.navigate('CreateCompanyScreen');
-    }
+    dispatch(stateAction.reset_edit_receipt());
+
     navigation.navigate('CreateNewReceipt');
   };
   if (isError) {
@@ -399,7 +399,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
           {isLoadingAction ? (
              <View
              style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-             <ActivityIndicator size={"large"} />
+                  <ActivityIndicator color='#047e6e' size={'large'}  />
            </View>
           ) : (
             <>
@@ -422,8 +422,8 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
               </View>
               {isLoading || isLoadingAction ? (
                 <View style={styles.loadingContainer}>
-                  <ActivityIndicator color='primary' size={'large'} />
-                </View>
+              <ActivityIndicator  color='#047e6e' size={'large'} />
+              </View>
               ) : (
                 <View
                   style={{

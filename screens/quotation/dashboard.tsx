@@ -1,9 +1,9 @@
-import { BACK_END_SERVER_URL } from '@env';
+import {BACK_END_SERVER_URL} from '@env';
 import messaging from '@react-native-firebase/messaging';
-import { DrawerActions } from '@react-navigation/native';
-import { useQueryClient } from '@tanstack/react-query';
+import {DrawerActions} from '@react-navigation/native';
+import {useQueryClient} from '@tanstack/react-query';
 
-import React, { useContext, useEffect, useState } from 'react';
+import React, {useContext, useEffect, useState,useCallback} from 'react';
 import {
   Alert,
   Dimensions,
@@ -11,23 +11,21 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  ActivityIndicator,
 
   View,
+  RefreshControl,
 } from 'react-native';
 import Modal from 'react-native-modal';
 import CardDashBoard from '../../components/CardDashBoard';
-import { QuotationsFilterButton } from '../../components/ui/Dashboard/FilterButton'; // Adjust the import path as necessary
+import {QuotationsFilterButton} from '../../components/ui/Dashboard/FilterButton'; // Adjust the import path as necessary
 import firebase from '../../firebase';
-import { useActiveFilter } from '../../hooks/dashboard/useActiveFilter';
-import {
-  useFilteredData
-} from '../../hooks/dashboard/useFilteredData';
-import { useUser } from '../../providers/UserContext';
+import {useActiveFilter} from '../../hooks/dashboard/useActiveFilter';
+import {useFilteredData} from '../../hooks/dashboard/useFilteredData';
+import {useUser} from '../../providers/UserContext';
 import * as stateAction from '../../redux/actions';
-import { Store } from '../../redux/store';
+import {Store} from '../../redux/store';
 
-import { DashboardScreenProps } from '../../types/navigationType';
+import {DashboardScreenProps} from '../../types/navigationType';
 
 import {
   Appbar,
@@ -37,20 +35,21 @@ import {
   Icon,
   List,
   PaperProvider,
+  ActivityIndicator,
   Portal,
   Menu,
 } from 'react-native-paper';
-import { requestNotifications } from 'react-native-permissions';
+import {requestNotifications} from 'react-native-permissions';
 import useFetchDashboard from '../../hooks/quotation/dashboard/useFetchDashboard'; // adjust the path as needed
 
 import {
   CustomerEmbed,
   QuotationStatus,
   Quotations,
-  ServicesEmbed
+  ServicesEmbed,
 } from '@prisma/client';
-import { CompanyState } from 'types';
-import { useModal } from '../../hooks/quotation/create/useModal';
+import {CompanyState} from 'types';
+import {useModal} from '../../hooks/quotation/create/useModal';
 import useResetQuotation from '../../hooks/quotation/update/resetStatus';
 import FABButton from '../../components/ui/Button/FAB';
 interface ErrorResponse {
@@ -74,9 +73,11 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     dispatch,
     state: {code},
   }: any = useContext(Store);
-  const {data, isLoading, isError, error} = useFetchDashboard();
+  const {data, isLoading, isError, error,refetch} = useFetchDashboard();
   const {activeFilter, updateActiveFilter} = useActiveFilter();
   const {width, height} = Dimensions.get('window');
+  const [refreshing, setRefreshing] = useState(false);
+
   const [isLoadingAction, setIsLoadingAction] = useState(false);
   const queryClient = useQueryClient();
   const [isModalSignContract, setIsModalSignContract] = useState(false);
@@ -100,6 +101,17 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
       console.error('Failed to sign out: ', error);
     }
   };
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    refetch()
+      .then(() => {
+        setRefreshing(false);
+      })
+      .catch(() => {
+        setRefreshing(false);
+      });
+  }, [refetch]);
   const handleErrorResponse = (error: ErrorResponse) => {
     switch (error.message) {
       case 'logout':
@@ -115,7 +127,6 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
       default:
         console.log('Unhandled error action:', error.message);
         handleLogout();
-        
     }
   };
 
@@ -216,19 +227,18 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
         quotations: [],
       };
       setCompanyData(companyWithoutQuotations);
-  
+
       // Sort the quotations by the most recently updated date
       const sortedQuotations = data.company?.quotations.sort((a, b) => {
         const dateA = new Date(a.updated);
         const dateB = new Date(b.updated);
         return dateB.getTime() - dateA.getTime();
       });
-  
+
       setQuotationData(sortedQuotations);
       setOriginalData(sortedQuotations);
     }
   }, [data]);
-  
 
   useEffect(() => {
     requestNotificationPermission();
@@ -354,36 +364,34 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                     {item.customer?.name}
                   </List.Subheader>
                   <Divider />
-                  {/* <List.Item
+                  <List.Item
                     onPress={() => {
                       handleModalClose();
                       navigation.navigate('ProjectViewScreen', {
-                        id: item.id,
-                        pdfUrl: item.pdfUrl,
-
-                        fileName: `ใบเสนอราคา ${item.customer.name}.pdf`,
+                        id: item.id,   
+                        fileName: `${item.customer.name}`,                     
                       });
                     }}
                     centered={true}
-                    title="พรีวิวเอกสาร"
+                    title="พรีวิว"
                     titleStyle={{textAlign: 'center', color: 'black'}}
                   />
 
-                  <Divider /> */}
-                  {/* <List.Item
+                  <Divider />
+                  <List.Item
                     onPress={() => {
                       handleModalClose();
                       navigation.navigate('PDFViewScreen', {
                         pdfUrl: item.pdfUrl,
-
-                        fileName: `ใบเสนอราคา ${item.customer.name}.pdf`,
+                        fileType: 'QT',
+                        fileName: `${item.customer.name}.pdf`,
                       });
                     }}
-                    title="เอกสาร PDF"
+                    title="ดูเอกสาร PDF"
                     titleStyle={{textAlign: 'center'}}
                   />
 
-                  <Divider /> */}
+                  <Divider />
 
                   {selectedItem?.status === QuotationStatus.PENDING && (
                     <>
@@ -424,7 +432,15 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                       <List.Item
                         onPress={() => {
                           dispatch(
-                            stateAction.get_edit_quotation(selectedItem),
+                            stateAction.get_edit_receipt(selectedItem as any), // เป็นได้ทั้ง Quotations และ Receipts
+                          );
+                          dispatch(
+                            stateAction.get_quotation_ref_number(
+                              selectedItem.docNumber,
+                            ),
+                          );
+                          dispatch(
+                            stateAction.get_quotation_id(selectedItem.id),
                           );
                           setShowModal(false);
                           navigation.navigate('CreateNewReceipt');
@@ -490,7 +506,9 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                   <Divider />
                   <List.Item
                     onPress={() => {
+                      dispatch(stateAction.reset_edit_submission());
                       dispatch(stateAction.get_edit_quotation(selectedItem));
+                      dispatch(stateAction.get_quotation_id(selectedItem.id));
                       setShowModal(false);
                       navigation.navigate('SendWorks');
                     }}
@@ -555,10 +573,10 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
               // }}
             />
           </Appbar.Header>
-          {isLoadingAction  ? (
+          {isLoadingAction ? (
             <View
               style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-              <ActivityIndicator color="primary" />
+              <ActivityIndicator  color='#047e6e' size={'large'} />
             </View>
           ) : (
             <>
@@ -566,7 +584,6 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                 <FlatList
                   horizontal
                   showsHorizontalScrollIndicator={false}
-                  
                   data={filtersToShow}
                   renderItem={({item}) => (
                     <QuotationsFilterButton
@@ -580,9 +597,14 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                   keyExtractor={item => item}
                 />
               </View>
-              {isLoading || isLoadingAction || isReseting ? (
-                <View style={styles.loadingContainer}>
-                  <ActivityIndicator   size={'large'} />
+              {isLoading || isLoadingAction || isReseting && !refreshing ? (
+                <View style={{
+                  flex: 1,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}>
+                             <ActivityIndicator  color='#047e6e' size={'large'} />
+
                 </View>
               ) : (
                 <View
@@ -592,9 +614,16 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                     alignItems: 'center',
                     backgroundColor: '#f5f5f5',
                   }}>
+
                   <FlatList
                     data={filteredData}
+                    refreshControl={
+                      <RefreshControl  refreshing={refreshing} onRefresh={onRefresh} />
+                    }
+                    onRefresh={onRefresh}
                     renderItem={renderItem}
+                    refreshing={refreshing}
+                    
                     keyExtractor={item => item.id}
                     ListEmptyComponent={
                       <View
@@ -622,11 +651,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                   />
                 </View>
               )}
-             <FABButton 
-             createNewFunction={createNewQuotation}
-             />
-
-             
+              <FABButton createNewFunction={createNewQuotation} />
             </>
           )}
 
@@ -690,7 +715,7 @@ const styles = StyleSheet.create({
     bottom: height * 0.1,
     right: width * 0.05,
     position: 'absolute',
-    backgroundColor:'#027f6f',
+    backgroundColor: '#027f6f',
     // backgroundColor: '#1b52a7',
     // backgroundColor: '#00674a',
     // backgroundColor: '#009995',

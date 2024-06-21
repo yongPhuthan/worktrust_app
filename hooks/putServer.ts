@@ -25,7 +25,7 @@ export function usePutServer(
   const queryClient = useQueryClient();
   const {
     state: {code},
-  }: any = useContext(Store);
+  } = useContext(Store);
 
   const putToServer = async (data: any) => {
     if (!user || !user.uid) {

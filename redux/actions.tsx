@@ -10,6 +10,7 @@ import {
   ServiceImagesEmbed,
   ServicesEmbed,
   StandardEmbed,
+  Submissions,
   User,
   WarrantyEmbed,
   WorkerEmbed,
@@ -84,8 +85,19 @@ export const get_edit_receipt = (payload: Receipts) => ({
   payload,
 });
 
+export const get_edit_submission = (payload: Submissions) => ({
+  type: contrains.GET_EDIT_SUBMISSION,
+  payload,
+});
+
+export const view_submission = (payload: Submissions) => ({
+  type: contrains.VIEW_SUBMISSION,
+  payload,
+});
+
 export const reset_edit_quotation = () => ({
   type: contrains.RESET_EDIT_QUOTATION,
+  
 });
 
 export const reset_edit_invoice = () => ({
@@ -96,6 +108,12 @@ export const reset_edit_receipt = () => ({
   type: contrains.RESET_EDIT_RECEIPT,
 });
 
+export const reset_edit_submission = () => ({
+  type: contrains.RESET_EDIT_SUBMISSION,
+});
+
+
+
 export const get_seller_id = (payload: string) => ({
   type: contrains.GET_SELLER_ID,
   payload,
@@ -105,6 +123,18 @@ export const get_fcm_token = (payload: string) => ({
   type: contrains.GET_FCM_TOKEN,
   payload,
 });
+
+export const get_quotation_ref_number = (payload: string) => ({
+  type: contrains.GET_QUOTATION_REF_NUMBER,
+  payload,
+});
+
+export const get_quotation_id = (payload: string) => ({
+  type: contrains.GET_QUOTATION_ID,
+  payload,
+});
+
+
 
 // COMPONENTS  => ACTION
 export const codeCompany = (payload: string) => {
@@ -223,3 +253,35 @@ export const getFcmToken = (payload: string) => {
     dispatch(get_fcm_token(payload));
   };
 };
+
+export const getQuotationRefNumber = (payload: string) => {
+  return (dispatch: (arg0: {type: string; payload: string}) => void) => {
+    dispatch(get_quotation_ref_number(payload));
+  };
+};
+
+export const getQuotationId = (payload: string) => {
+  return (dispatch: (arg0: {type: string; payload: string}) => void) => {
+    dispatch(get_quotation_id(payload));
+  };
+};
+
+export const getEditSubmission = (payload: Submissions) => {
+  return (dispatch: (arg0: {type: string; payload: Submissions}) => void) => {
+    dispatch(get_edit_submission(payload));
+  };
+};
+
+export const viewSubmission = (payload: Submissions) => {
+  return (dispatch: (arg0: {type: string; payload: Submissions}) => void) => {
+    dispatch(view_submission(payload));
+  };
+};
+
+
+export const resetEditSubmission = () => {
+  return (dispatch: (arg0: { type: string; }) => void) => {
+    dispatch(reset_edit_submission());
+  };
+};
+

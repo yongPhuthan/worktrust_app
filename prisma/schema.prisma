@@ -118,6 +118,8 @@ model Quotations {
     created  DateTime      @default(now())
     updated  DateTime      @updatedAt
     warranty WarrantyEmbed
+    warrantyStatus             WarrantyStatus? @default(PENDING)  
+
 
     @@map("quotations")
 }
@@ -135,7 +137,6 @@ model Invoices {
     discountValue        Float?
     allTotal             Float
     dateOffer            DateTime
-    dateEnd              DateTime
     docNumber            String
     FCMToken             String?
     sellerSignature      String?
@@ -160,7 +161,6 @@ model Invoices {
 
     created            DateTime       @default(now())
     updated            DateTime       @updatedAt
-    warranty           WarrantyEmbed?
     quotationRefNumber String?
 
     @@map("invoices")
@@ -179,7 +179,6 @@ model Receipts {
     discountValue        Float?
     allTotal             Float
     dateOffer            DateTime
-    dateEnd              DateTime
     docNumber            String
     FCMToken             String?
     sellerSignature      String?
@@ -204,7 +203,6 @@ model Receipts {
 
     created            DateTime       @default(now())
     updated            DateTime       @updatedAt
-    warranty           WarrantyEmbed?
     quotationRefNumber String?
 
     @@map("receipts")
@@ -231,13 +229,12 @@ model DefaultMaterials {
     description String
     image       String
     created     DateTime @default(now())
-    tags        String[]
-    companyId   String   @unique @db.ObjectId
+    updated     DateTime @updatedAt
+    companyId   String    @db.ObjectId
     company     Company? @relation(fields: [companyId], references: [id])
 
     @@map("default_materials")
 }
-
 model Workers {
     id           String       @id @default(auto()) @map("_id") @db.ObjectId
     name         String
@@ -291,11 +288,12 @@ model Submissions {
     companyName        String
     companyCode        String
     quotationRefNumber String
+    reSubmissionId     String?
+    history            Boolean?         @default(false)
     createdAt          DateTime         @default(now())
     updatedAt          DateTime         @updatedAt
     companyId          String           @db.ObjectId
     company            Company?         @relation(fields: [companyId], references: [id])
-
     @@map("submissions")
 }
 
@@ -730,6 +728,13 @@ enum SignatureType {
     ONLINE
     OFFLINE
     PENDING
+}
+
+enum WarrantyStatus  {
+    ALL
+    PENDING
+    ACTIVE
+    EXPIRED
 }
 
 enum Provider {

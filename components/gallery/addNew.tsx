@@ -1,7 +1,7 @@
 import {yupResolver} from '@hookform/resolvers/yup';
 import Slider from '@react-native-community/slider';
 import {useQuery, useQueryClient} from '@tanstack/react-query';
-import {debounce, set} from 'lodash';
+import {create, debounce, set} from 'lodash';
 import React, {useContext, useEffect, useState} from 'react';
 import {Controller, useForm, useWatch} from 'react-hook-form';
 import Marker, {Position} from 'react-native-image-marker';
@@ -150,7 +150,7 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
   const {
     state: {code, logoSrc},
     dispatch,
-  }: any = useContext(Store);
+  } = useContext(Store);
   const {
     register,
     handleSubmit,
@@ -249,17 +249,15 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
   };
   const uploadImageWithTags = async (): Promise<void> => {
     if (!image || selectedTags.length === 0) {
-      alert(
-        'Please ensure an image is selected and at least one tag is chosen.',
-      );
+      alert('Please ensure an image is selected and at least one tag is chosen.');
       return;
     }
     setIsLoading(true);
-
+  
     const db = firebase.firestore();
     const imageCollectionRef = db.collection(`${code}/gallery/images`);
     const tagsCollectionRef = db.collection(`${code}/gallery/tags`);
-
+  
     try {
       // Create a new document in the Images collection
       const uploadedImageUrl = await uploadImage(image);
@@ -267,17 +265,18 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
         console.error('Image upload returned null or undefined.');
         return;
       }
-
+  
       const imageDocRef = await imageCollectionRef.add({
         url: uploadedImageUrl,
         tags: selectedTags, // Assuming selectedTags are IDs or names of tags
+        created: new Date(), // Add the created field here
       });
-
+  
       // For each tag, update or create a tag document to include the image URL
       selectedTags.forEach(async tag => {
         const tagRef = tagsCollectionRef.doc(tag);
         const doc = await tagRef.get();
-
+  
         if (doc.exists) {
           // Update existing tag document to include this image
           await tagRef.update({
@@ -288,22 +287,28 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
           await tagRef.set({
             name: tag,
             images: [imageDocRef.id],
+            created: new Date(),
           });
         }
       });
-
+  
       onClose();
       reset();
-      setIsLoading(false);
-      queryClient.invalidateQueries({
-        queryKey: ['gallery', code],
-      });
+  
+      setTimeout(() => {
+        queryClient.invalidateQueries({
+          queryKey: ['gallery', code],
+        });
+      }, 1500); // หน่วงเวลา 1.5 วินาที (1500 มิลลิวินาที)
     } catch (error) {
       console.error('Error uploading image with tags:', error);
       alert('Error uploading image with tags, please try again.');
+    } finally {
       setIsLoading(false);
     }
   };
+  
+  
 
   const handleSelectTag = (tag: string) => {
     if (selectedTags.includes(tag)) {

@@ -10,12 +10,13 @@ import {
   Text,
   View
 } from 'react-native';
-import CardDashBoard from '../../components/CardDashBoard';
-import { QuotationsFilterButton } from '../../components/ui/Dashboard/FilterButton'; // Adjust the import path as necessary
+import CardDashBoard from '../../components/warranty/CardDashBoard';
+import { QuotationsFilterButton, WarrantyFilterButton } from '../../components/ui/Dashboard/FilterButton'; // Adjust the import path as necessary
 import firebase from '../../firebase';
-import { useActiveFilter } from '../../hooks/dashboard/useActiveFilter';
+import { useActiveFilter, useActiveWarrantyFilter } from '../../hooks/dashboard/useActiveFilter';
 import {
-  useFilteredData
+  useFilteredData,
+  useFilteredWarrantyData
 } from '../../hooks/dashboard/useFilteredData';
 import { useUser } from '../../providers/UserContext';
 import * as stateAction from '../../redux/actions';
@@ -31,11 +32,13 @@ import {
   Portal
 } from 'react-native-paper';
 import { requestNotifications } from 'react-native-permissions';
-import useFetchDashboard from '../../hooks/quotation/dashboard/useFetchDashboard';
+import useFetchDashboard from '../../hooks/warranty/useFetchDashBoard';
 
 import {
   QuotationStatus,
-  Quotations
+  Quotations,
+  WarrantyEmbed,
+  WarrantyStatus
 } from '@prisma/client';
 import { CompanyState } from 'types';
 import useResetQuotation from '../../hooks/quotation/update/resetStatus';
@@ -48,16 +51,16 @@ const DashboardWarranty = ({navigation}: DashboardScreenProps) => {
   const {
     dispatch,
     state: {code},
-  }: any = useContext(Store);
+  }= useContext(Store);
   const {data, isLoading, isError, error} = useFetchDashboard();
-  const {activeFilter, updateActiveFilter} = useActiveFilter();
+  const {activeFilter, updateActiveFilter} = useActiveWarrantyFilter();
   const {width, height} = Dimensions.get('window');
   const [isLoadingAction, setIsLoadingAction] = useState(false);
   const queryClient = useQueryClient();
   const [originalData, setOriginalData] = useState<Quotations[] | null>(null);
-  const filteredData = useFilteredData(
+  const filteredData = useFilteredWarrantyData(
     originalData,
-    activeFilter as QuotationStatus,
+    activeFilter as WarrantyStatus,
   );
   const [companyData, setCompanyData] = useState<CompanyState | null>(null);
   const [quotationData, setQuotationData] = useState<Quotations[] | null>(null);
@@ -106,14 +109,14 @@ const DashboardWarranty = ({navigation}: DashboardScreenProps) => {
   const {mutate: resetStatus, isPending: isReseting} = useResetQuotation();
 
   useEffect(() => {
-    if (data) {
-      const companyWithoutQuotations = {
-        ...data.company,
-        quotations: [],
-      };
-      setCompanyData(companyWithoutQuotations);
-      setQuotationData(data.company?.quotations);
-      setOriginalData(data.company?.quotations);
+    if (data && data.company ) {
+      const sortedQuotations = data.company.quotations.sort((a, b) => {
+        const dateA = new Date(a.updated);
+        const dateB = new Date(b.updated);
+        return dateB.getTime() - dateA.getTime();
+      });
+      setQuotationData(sortedQuotations);
+      setOriginalData(sortedQuotations);
     }
   }, [data]);
 
@@ -122,8 +125,6 @@ const DashboardWarranty = ({navigation}: DashboardScreenProps) => {
   }, []);
   useEffect(() => {
     if (user) {
-      console.log('User:', user);
-
       const unsubscribe = messaging().setBackgroundMessageHandler(
         async remoteMessage => {
           console.log('Message handled in the background!', remoteMessage);
@@ -135,12 +136,10 @@ const DashboardWarranty = ({navigation}: DashboardScreenProps) => {
   }, [user]);
 
   const filtersToShow = [
-    QuotationStatus.ALL,
-    QuotationStatus.PENDING,
-    QuotationStatus.APPROVED,
-    QuotationStatus.INVOICE_DEPOSIT,
-    QuotationStatus.RECEIPT_DEPOSIT,
-    QuotationStatus.SUBMITTED,
+    WarrantyStatus.ALL,
+    WarrantyStatus.PENDING,
+    WarrantyStatus.ACTIVE,
+    WarrantyStatus.EXPIRED,
   ];
 
 
@@ -155,14 +154,12 @@ const DashboardWarranty = ({navigation}: DashboardScreenProps) => {
     handleErrorResponse(error);
   }
 
-  const renderItem = ({item, index}: any) => (
+  const renderItem = ({item, index}: {item: Quotations, index: number}) => (
     <>
-      <View style={{marginTop: 10}}>
+      <View key={index} style={{marginTop: 10}}>
         
         <CardDashBoard
-          status={item.status}
-          date={item.dateOffer}
-          end={item.dateEnd}
+          status={item.warrantyStatus || ''}
           price={item.allTotal}
           customerName={item.customer?.name as string}
           onCardPress={() =>handleWarranty(item)}
@@ -214,7 +211,7 @@ const DashboardWarranty = ({navigation}: DashboardScreenProps) => {
                   showsHorizontalScrollIndicator={false}
                   data={filtersToShow}
                   renderItem={({item}) => (
-                    <QuotationsFilterButton
+                    <WarrantyFilterButton
                       filter={item}
                       isActive={item === activeFilter}
                       onPress={() => {

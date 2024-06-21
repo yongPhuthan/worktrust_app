@@ -39,6 +39,10 @@ import CreateNewReceipt from '../screens/receipt/create/createNew';
 import InvoiceDepositScreen from '../screens/deposit/invoiceDeposit';
 import ReceiptDepositScreen from '../screens/deposit/receiptDeposit';
 import CreateWarranty from '../screens/warranty/create';
+import EditWorkers from '../screens/setting/workers/edit';
+import ViewSubmission from '../screens/submit/view';
+import EditMaterials from '../screens/setting/materials/edit';
+import EditGallery from '../screens/setting/gallery/edit';
 
 const Theme = {
   ...DefaultTheme,
@@ -64,9 +68,7 @@ const Navigation = ({initialRouteName}: any) => {
   ];
 
   const commonScreenOptions = {
-    headerTitleStyle: {
-      fontFamily: 'Sukhumvit Set Bold',
-    },
+
     headerStyle: {
       backgroundColor: '#ffffff',
     },
@@ -215,6 +217,20 @@ const Navigation = ({initialRouteName}: any) => {
           }}
         />
         <Stack.Screen
+          name="ViewSubmission"
+          component={ViewSubmission}
+          options={{
+            ...commonScreenOptions,
+            headerShown: false,
+            title: 'แจ้งส่งงานลูกค้า',
+            headerBackTitleVisible: false,
+            headerStyle: {
+              backgroundColor: '#ffffff',
+            },
+            headerTintColor: 'black',
+          }}
+        />
+        <Stack.Screen
           name="Installment"
           component={Installment}
           options={{
@@ -250,6 +266,20 @@ const Navigation = ({initialRouteName}: any) => {
             ...commonScreenOptions,
             headerShown: false,
             title: 'แก้ไขข้อมูลธุรกิจ',
+            headerBackTitleVisible: false,
+            headerStyle: {
+              backgroundColor: '#ffffff',
+            },
+            headerTintColor: 'black',
+          }}
+        />
+              <Stack.Screen
+          name="EditGallery"
+          component={EditGallery}
+          options={{
+            ...commonScreenOptions,
+            headerShown: false,
+            title: 'แก้ไขรูปภาพ',
             headerBackTitleVisible: false,
             headerStyle: {
               backgroundColor: '#ffffff',
@@ -347,6 +377,36 @@ const Navigation = ({initialRouteName}: any) => {
             headerTintColor: 'black',
           }}
         />
+        <Stack.Screen
+          name="EditWorkers"
+          component={EditWorkers}
+          options={{
+            ...commonScreenOptions,
+            headerShown: false,
+            title: 'รายละเอียดสัญญา',
+            headerBackTitleVisible: false,
+
+            headerStyle: {
+              backgroundColor: '#ffffff',
+            },
+            headerTintColor: 'black',
+          }}
+          />
+                <Stack.Screen
+          name="EditMaterials"
+          component={EditMaterials}
+          options={{
+            ...commonScreenOptions,
+            headerShown: false,
+            title: 'แก้ไขวัสดุ-อุปกรณ์',
+            headerBackTitleVisible: false,
+
+            headerStyle: {
+              backgroundColor: '#ffffff',
+            },
+            headerTintColor: 'black',
+          }}
+          />
 
         <Stack.Screen
           name="DefaultContract"

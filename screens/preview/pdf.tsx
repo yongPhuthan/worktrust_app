@@ -20,10 +20,11 @@ interface Props {
   route: RouteProp<ParamListBase, 'PDFViewScreen'>;
 }
 const PDFViewScreen = ({navigation, route}: Props) => {
-  const {pdfUrl, fileName} = route.params;
+  const {pdfUrl, fileName,fileType} = route.params;
 
   const [isLoading, setIsLoading] = useState(false);
   const source = {uri: pdfUrl, cache: false};
+
   const printRemotePDF = async () => {
     try {
       // Download the file first
@@ -32,7 +33,7 @@ const PDFViewScreen = ({navigation, route}: Props) => {
       }).fetch('GET', pdfUrl);
 
       const localFileUri = res.path(); // Get the local file path
-console.log(localFileUri)
+
       // Print the downloaded file
       await RNPrint.print({filePath: localFileUri});
 
@@ -48,12 +49,12 @@ console.log(localFileUri)
     const type = 'application/pdf'; // MIME type
     const configOptions = {
       fileCache: true,
-      path: `${dirs.DocumentDir}/${fileName}`,
+      path: `${dirs.DocumentDir}/${fileType}_${fileName}.pdf`,
       
       addAndroidDownloads: {
         useDownloadManager: true,
         notification: true,
-        title: `${fileName}`,
+        title: `${fileType}_${fileName}.pdf`,
         description: 'File downloaded by Worktrust App.',
         mime: 'application/pdf',
       },
@@ -66,7 +67,8 @@ console.log(localFileUri)
         let options = {
           type: type,
           url: 'file://' + filePath,
-          
+          fileName: `${fileType}_${fileName}.pdf`,
+
         };
 
         await Share.open(options);
@@ -80,40 +82,41 @@ console.log(localFileUri)
         console.log('Error sharing', error);
       });
   };
-  const downloadFile = () => {
-    let dirs = ReactNativeBlobUtil.fs.dirs;
-    ReactNativeBlobUtil.config({
-      fileCache: true,
-      appendExt: 'pdf',
-      path: `${dirs.DocumentDir}/${fileName}`,
-      addAndroidDownloads: {
-        useDownloadManager: true,
-        notification: true,
-        title: `${fileName}`,
-        description: 'File downloaded by Worktrust App.',
-        mime: 'application/pdf',
-      },
-    })
-      .fetch('GET', pdfUrl)
-      .then(res => {
-        // in iOS, we want to save our files by opening up the saveToFiles bottom sheet action.
-        // whereas in android, the download manager is handling the download for us.
-        if (Platform.OS === 'ios') {
-          const filePath = res.path();
-          let options = {
-            type: 'application/pdf',
-            url: 'file://' + filePath,
-            saveToFiles: true,
-            print:true,
-            
-          };
+  const downloadFile = async () => {
+    try {
+      let dirs = ReactNativeBlobUtil.fs.dirs;
+      const res = await ReactNativeBlobUtil.config({
+        fileCache: true,
+        appendExt: 'pdf',
+        path: `${dirs.DocumentDir}/${fileType}_${fileName}.pdf`,
+        addAndroidDownloads: {
+          useDownloadManager: true,
+          notification: true,
+          title: `${fileType}_${fileName}.pdf`,
+          description: 'File downloaded by Worktrust App.',
+          mime: 'application/pdf',
+        },
+      }).fetch('GET', pdfUrl);
 
-          Share.open(options)
-            .then(resp => console.log(resp))
-            .catch(err => console.log(err));
-        }
-      })
-      .catch(err => console.log('BLOB ERROR -> ', err));
+      if (Platform.OS === 'ios') {
+        const filePath = res.path();
+        const options = {
+          type: 'application/pdf',
+          url: 'file://' + filePath,
+          fileName: `${fileType}_${fileName}.pdf`,
+          saveToFiles: true,
+          print: true,
+        };
+
+        Share.open(options)
+          .then(resp => console.log(resp))
+          .catch(err => console.log('Share Error -> ', err));
+      } else {
+        console.log('File downloaded at: ' + res.path());
+      }
+    } catch (err) {
+      console.log('BLOB ERROR -> ', err);
+    }
   };
   return (
     <>

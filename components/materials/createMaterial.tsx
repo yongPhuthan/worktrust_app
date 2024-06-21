@@ -31,26 +31,26 @@ import {usePickImage} from '../../hooks/utils/image/usePickImage';
 import {materialSchema} from '../../screens/utils/validationSchema';
 import {useUploadToFirebase} from '../../hooks/useUploadtoFirebase';
 import {useCreateToServer} from '../../hooks/useUploadToserver';
-import {MaterialEmbed} from '@prisma/client';
+import {DefaultMaterials, MaterialEmbed} from '@prisma/client';
 
 type Props = {
   isVisible: boolean;
   onClose: () => void;
-  companyId: string;
 };
 
 const CreateMaterial = (props: Props) => {
-  const {isVisible, onClose, companyId} = props;
+  const {isVisible, onClose} = props;
   const {
-    state: {code},
+    state: {code, companyId},
     dispatch,
   } = useContext(Store);
 
-  const defaultMaterial: MaterialEmbed = {
+  const defaultMaterial: DefaultMaterials = {
     id: uuidv4(),
     name: '',
     image: '',
     description: '',
+    companyId,
     created: new Date(),
     updated: new Date(),
   };
@@ -60,7 +60,7 @@ const CreateMaterial = (props: Props) => {
     setValue,
     getValues,
     formState: {errors, isValid},
-  } = useForm<MaterialEmbed>({
+  } = useForm<DefaultMaterials>({
     mode: 'onChange',
     defaultValues: defaultMaterial,
     resolver: yupResolver(materialSchema),
@@ -84,10 +84,10 @@ const CreateMaterial = (props: Props) => {
     uploadImage,
   } = useUploadToFirebase(materialStoragePath);
 
-  const url = `${BACK_END_SERVER_URL}/api/services/createMaterial`;
+  const url = `${BACK_END_SERVER_URL}/api/company/createMaterial`;
   const {isLoading, error, createToServer} = useCreateToServer(
     url,
-    'existingMaterials',
+    'defaultMaterials',
   );
   const handleSubmit = async () => {
     if (!isValid) {
@@ -255,14 +255,14 @@ const CreateMaterial = (props: Props) => {
               <View>
                 <TextInput
                   mode="outlined"
-                  numberOfLines={2}
+                  numberOfLines={4}
                   label={'รายละเอียด'}
                   multiline={true}
                   onBlur={onBlur}
                   error={!!error}
                   style={
                     Platform.OS === 'ios'
-                      ? {height: 60, textAlignVertical: 'top'}
+                      ? {height: 100, textAlignVertical: 'top'}
                       : {}
                   }
                   placeholder="จุดเด่นหรือรายละเอียดของวัสดุ-อุปกรณ์..."

@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 
 import { BACK_END_SERVER_URL } from '@env';
-import { MaterialEmbed } from '@prisma/client';
+import { DefaultMaterials, MaterialEmbed } from '@prisma/client';
 import { useQuery } from '@tanstack/react-query';
 import { useFormContext } from 'react-hook-form';
 import Modal from 'react-native-modal';
@@ -70,7 +70,7 @@ const ExistingMaterials = ({
           Authorization: `Bearer ${idToken}`,
         },
       });
-      const data :MaterialEmbed[] = await response.json();
+      const data :DefaultMaterials[] = await response.json();
 
       if (!response.ok) {
         // console.log('error', data)
@@ -90,7 +90,7 @@ const ExistingMaterials = ({
     // ['existingMaterials'],
     // () => fetchExistingMaterials().then(res => res),
     {
-      queryKey: ['existingMaterials', code],
+      queryKey: ['existingMaterials'],
       queryFn: fetchExistingMaterials,
     },
   );
@@ -136,9 +136,7 @@ const ExistingMaterials = ({
       onClose();
     }
   };
-  const handleAddNewProduct = () => {
-    setIsOpenModal(true);
-  };
+
   return (
     <Modal isVisible={isVisible} style={styles.modal} onBackdropPress={onClose}>
       <Appbar.Header
@@ -236,7 +234,6 @@ const ExistingMaterials = ({
           <CreateMaterial
             isVisible={isCreateMaterial}
             onClose={() => setIsCreateMaterial(false)}
-            companyId={'22324'}
           />
         </Modal>
       </View>

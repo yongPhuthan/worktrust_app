@@ -1,12 +1,14 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useUser } from '../../providers/UserContext';
 import { BACK_END_SERVER_URL } from '@env';
+import { Submissions } from '@prisma/client';
+import { CompanyState } from 'types';
 export interface SubmissionActions {
   setSubmissionServerId: (id: string) => void;
   openProjectModal: () => void;
 }
 // Pass actions via props
-const useCreateSubmission = (actions: SubmissionActions) => {
+const useUpdateSubmission = (actions: SubmissionActions) => {
   const { setSubmissionServerId, openProjectModal } = actions;
   const queryClient = useQueryClient();
   const user = useUser();
@@ -16,19 +18,19 @@ const useCreateSubmission = (actions: SubmissionActions) => {
     throw new Error('User is not authenticated');
   }
 
-  const createSubmission = async (data: any) => {
+  const updateSubmission = async (submission: Submissions) => {
     if (!user || !user.uid) {
       throw new Error('User is not available');
     }
 
     const token = await user.getIdToken(true);
-    const response = await fetch(`${BACK_END_SERVER_URL}/api/submission/createSubmission?quotationId=${encodeURI(data.quotationId)}`, {
+    const response = await fetch(`${BACK_END_SERVER_URL}/api/submission/updateSubmission`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({data}),
+      body: JSON.stringify({submission}),
     });
 
     if (!response.ok) {
@@ -42,11 +44,14 @@ const useCreateSubmission = (actions: SubmissionActions) => {
   };
 
   const { mutate, data, error, isError, isPending, isSuccess, reset } = useMutation( {
-    mutationFn: createSubmission,
+    mutationFn: async (data: { submission: Submissions}) => {
+        const { submission } = data;
+        return updateSubmission(submission);
+      },
     onSuccess: (responseData:any) => {
       setSubmissionServerId(responseData.submissionId);
       openProjectModal();
-      queryClient.invalidateQueries({queryKey: ['dashboardData']});
+      queryClient.invalidateQueries({queryKey: ['submissionsDashboard']});
     },
     onError: (error: any) => {
       console.error("Mutation error:", error.message);
@@ -56,4 +61,4 @@ const useCreateSubmission = (actions: SubmissionActions) => {
   return { mutate, data, error, isError, isPending, isSuccess, reset };
 };
 
-export default useCreateSubmission;
+export default useUpdateSubmission;

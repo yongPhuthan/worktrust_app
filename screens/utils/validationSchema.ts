@@ -9,7 +9,7 @@ import {
   QuotationStatus,
   Quotations,
   RejectEmbed,
-
+  DefaultMaterials,
   ReviewsEmbed,
   ServiceImagesEmbed,
   ServicesEmbed,
@@ -89,11 +89,12 @@ export const standardSchema: yup.ObjectSchema<StandardEmbed> = yup
   })
   .defined(); // Add .defined() to remove undefined from the schema
 
-export const materialSchema: yup.ObjectSchema<MaterialEmbed> = yup
+export const materialSchema: yup.ObjectSchema<DefaultMaterials> = yup
   .object({
     id: yup.string().required(),
     name: yup.string().required(),
     description: yup.string().required(),
+    companyId: yup.string().required(),
     image: yup.string().required(),
     created: yup.date().required(),
     updated: yup.date().required(),
@@ -151,6 +152,7 @@ export const warrantySchemas: yup.ObjectSchema<WarrantyEmbed> = yup.object({
     .default(0)
     .required('ระบุระยะเวลาประกันสินค้า'),
   skillWarantyYear: yup.number().required('ระบุระยะเวลาประกันบริการ'),
+  pdfUrl : yup.string().nullable().default(null),
   fixDays: yup.number().default(0).required('ระบุจำนวนวันซ่อม'),
   condition: yup.string().required('ระบุเงื่อนไขการรับประกัน'),
   dateWaranty: yup.date().nullable().default(null),
@@ -233,6 +235,9 @@ export const submissionValidationSchema: yup.ObjectSchema<Submissions> = yup.obj
     .string()
     .required('ระบุสถานะงาน')
     .oneOf(Object.values(WorkStatus)),
+    reSubmissionId: yup.string().nullable().default(null),
+    history: yup.boolean().nullable().default(false),
+
   description: yup.string().required('ระบุรายละเอียดงาน'),
   beforeImages: yup
     .array()
@@ -243,6 +248,7 @@ export const submissionValidationSchema: yup.ObjectSchema<Submissions> = yup.obj
     .of(yup.string().required('ภาพหลังทำงานแต่ละภาพเป็นสิ่งจำเป็น'))
     .required('ระบุภาพหลังทำงาน'),
     reject: rejectValidationSchema.nullable().default(null),
+    
     FCMToken: yup.string().nullable().default(null),
   workers: yup.array().of(workerSchema).required(),
   status: yup

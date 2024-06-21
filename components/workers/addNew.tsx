@@ -1,9 +1,10 @@
-import {BACK_END_SERVER_URL} from '@env';
-import {faCamera, faClose} from '@fortawesome/free-solid-svg-icons';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {useMutation, useQueryClient} from '@tanstack/react-query';
-import React, {useCallback, useContext, useState} from 'react';
-import {Controller, useForm, useWatch} from 'react-hook-form';
+import { BACK_END_SERVER_URL } from '@env';
+import { faCamera, faClose } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { WorkerStatus, Workers } from '@prisma/client';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useCallback, useContext, useState } from 'react';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import {
   Alert,
   Dimensions,
@@ -20,21 +21,16 @@ import {
   launchImageLibrary,
 } from 'react-native-image-picker';
 import {
-  Checkbox,
-  TextInput,
   Button,
-  ActivityIndicator,
+  Checkbox,
+  TextInput
 } from 'react-native-paper';
-import firebase from '../../firebase';
-import {useUriToBlob} from '../../hooks/utils/image/useUriToBlob';
-import {useSlugify} from '../../hooks/utils/useSlugify';
-import {useUser} from '../../providers/UserContext';
-import {Store} from '../../redux/store';
-import SaveButton from '../ui/Button/SaveButton';
-import {useUploadToFirebase} from '../../hooks/useUploadtoFirebase';
-import {useCreateToServer} from '../../hooks/useUploadToserver';
 import { useUploadMedium } from '../../hooks/useUploadMedium';
-import { WorkerStatus } from '@prisma/client';
+import { useCreateToServer } from '../../hooks/useUploadToserver';
+import { useUriToBlob } from '../../hooks/utils/image/useUriToBlob';
+import { useSlugify } from '../../hooks/utils/useSlugify';
+import { useUser } from '../../providers/UserContext';
+import { Store } from '../../redux/store';
 
 interface ExistingModalProps {
   setRefetch: () => void
@@ -50,7 +46,7 @@ const AddNewWorker = ({setRefetch, onClose}: ExistingModalProps) => {
   const [isImageUpload, setIsImageUpload] = useState(false);
   const user = useUser();
   const {
-    state: {code},
+    state: {code,companyId},
     dispatch,
   } = useContext(Store);
   const {
@@ -61,14 +57,14 @@ const AddNewWorker = ({setRefetch, onClose}: ExistingModalProps) => {
     watch,
     setValue,
     formState: {errors, isValid, isDirty},
-  } = useForm({
+  } = useForm<Workers>({
     mode: 'onChange',
     defaultValues: {
       name: '',
       mainSkill: '',
       image: '',
       workerStatus: WorkerStatus.MAINWORKER,
-      code
+      companyId
     },
   });
   const image = useWatch({
@@ -113,9 +109,9 @@ const AddNewWorker = ({setRefetch, onClose}: ExistingModalProps) => {
     uploadImage,
   } = useUploadMedium(storagePath);
   const url = `${BACK_END_SERVER_URL}/api/company/createWorker`;
-  const {isLoading, error, createToServer} = useCreateToServer(url, 'dashboardData');
+  const {isLoading, error, createToServer} = useCreateToServer(url, 'Workers');
   const createWorker = useCallback(async () => {
-    if (!user || !user.uid || !isValid) {
+    if (!user || !user.uid || !image) {
       console.error('User or user email or Image is not available');
       return;
     }
@@ -231,7 +227,7 @@ const AddNewWorker = ({setRefetch, onClose}: ExistingModalProps) => {
         )}
       />
       <Text style={{marginTop: 30, fontSize: 16, alignItems: 'center'}}>
-        สถาณะ
+        สถานะ
       </Text>
 
       <Controller
@@ -262,7 +258,7 @@ const AddNewWorker = ({setRefetch, onClose}: ExistingModalProps) => {
       />
       <Button
         loading={isPending || isImageUpload || isUploading || isLoading }
-        disabled={!isValid}
+        disabled={!isValid || isPending || isImageUpload || isUploading || isLoading}
         style={{
           width: '90%',
           alignSelf: 'center',

@@ -38,6 +38,9 @@ export type ParamListBase = {
   Quotation: undefined;
   CreateWarranty : undefined;
   CreateNewInvoice: undefined;
+  EditWorkers:undefined;
+  EditMaterials:undefined;
+  EditGallery:undefined;
   InvoiceDepositScreen  : undefined;
   ReceiptDepositScreen  : undefined;
   CreateNewReceipt: undefined;
@@ -52,8 +55,8 @@ export type ParamListBase = {
     quotationId: string;
     currentValue: ServicesEmbed | null;
   };
-  ProjectViewScreen : {id: string, pdfUrl: string, fileName:string};
-  PDFViewScreen: {pdfUrl: string,fileName:string};
+  ProjectViewScreen : {id: string,  fileName:string};
+  PDFViewScreen: {pdfUrl: string,fileName:string,fileType:string};
   ExistingContract: undefined;
   TopUpScreen: {balance: number};
   LayoutScreen: undefined;
@@ -61,6 +64,7 @@ export type ParamListBase = {
   HomeScreen: undefined;
   CreateQuotation: undefined;
   Dashboard: undefined;
+  DashBoardSubmission: undefined;
   DashboardWarranty: undefined;
   ContractCard: undefined;
   SelectAudit: Audit;
@@ -113,6 +117,7 @@ export type ParamListBase = {
   FirstAppScreen: undefined;
   SelectWorks: {quotationId: string};
   SendWorks: undefined,
+  ViewSubmission : undefined;
   Signature: {
     text: string;
     data: Quotations;

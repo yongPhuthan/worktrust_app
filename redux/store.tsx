@@ -9,12 +9,13 @@ import {
   Quotations,
   Receipts,
   ServicesEmbed,
+  Submissions,
   WarrantyEmbed,
   WorkerEmbed,
   Workers,
 } from '@prisma/client';
 export type StateType = {
-  companyID: string;
+  companyId: string;
   code: string;
   services: ServicesEmbed[];
   companyState: Company | null;
@@ -24,11 +25,15 @@ export type StateType = {
   editQuotation: Quotations | null;
   editInvoice: Invoices | null;
   editReceipt: Receipts | null;
+  editSubmission: Submissions | null;
+  viewSubmission: Submissions | null;
   logoSrc: string;
   existingWorkers: Workers[];
   userSignature: string;
   sellerId: string;
   fcmToken: string;
+  quotationRefNumber: string;
+  quotationId : string;
 };
 
 type ActionType = {
@@ -43,7 +48,7 @@ type ContextType = {
 
 export const Store = createContext<ContextType>({
   state: {
-    companyID: '',
+    companyId: '',
     code: '',
     services: [],
     companyState: null,
@@ -56,14 +61,19 @@ export const Store = createContext<ContextType>({
     editQuotation: null,
     editInvoice: null,
     editReceipt: null,
+    editSubmission: null,
+    viewSubmission: null,
     sellerId: '',
     fcmToken:'',
+    quotationRefNumber: '',
+    quotationId: '',
+
   },
   dispatch: () => {},
 });
 
 const initialState: StateType = {
-  companyID: '',
+  companyId: '',
   code: '',
   services: [],
   companyState: null,
@@ -76,8 +86,12 @@ const initialState: StateType = {
   editQuotation: null,
   editInvoice: null,
   editReceipt: null,
+  editSubmission: null,
+  viewSubmission: null,
   sellerId: '',
   fcmToken:'',
+  quotationRefNumber: '',
+  quotationId: '',
 };
 
 function reducer(state: StateType, action: ActionType): StateType {
@@ -85,7 +99,7 @@ function reducer(state: StateType, action: ActionType): StateType {
     case contrains.CODE:
       return {...state, code: action.payload as string};
     case contrains.GET_COMPANYID:
-      return {...state, companyID: action.payload as string};
+      return {...state, companyId: action.payload as string};
     case contrains.GET_COMPANY_STATE:
       return {...state, companyState: action.payload as Company};
     case contrains.ADD_PRODUCT:
@@ -111,6 +125,10 @@ function reducer(state: StateType, action: ActionType): StateType {
       return {...state, editInvoice: action.payload as Invoices};
     case contrains.GET_EDIT_RECEIPT:
       return {...state, editReceipt: action.payload as Receipts};
+    case contrains.GET_EDIT_SUBMISSION:
+      return {...state, editSubmission: action.payload as Submissions};
+    case contrains.VIEW_SUBMISSION:
+      return {...state, viewSubmission: action.payload as Submissions};
     case contrains.GET_SELLER_ID:
       return {...state, sellerId: action.payload as string};
     case contrains.GET_FCM_TOKEN:
@@ -121,6 +139,12 @@ function reducer(state: StateType, action: ActionType): StateType {
       return {...state, editInvoice: null};
     case contrains.RESET_EDIT_RECEIPT:
       return {...state, editReceipt: null};
+    case contrains.RESET_EDIT_SUBMISSION:
+      return {...state, editSubmission: null};
+    case contrains.GET_QUOTATION_REF_NUMBER:
+      return {...state, quotationRefNumber: action.payload as string};
+    case contrains.GET_QUOTATION_ID:
+      return {...state, quotationId: action.payload as string};
 
     default:
       return state;

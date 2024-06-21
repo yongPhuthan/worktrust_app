@@ -41,52 +41,51 @@ const CardProject = (props: Props) => {
 
   return (
     <Menu
-    visible={visibleModalIndex}
-    onDismiss={handleModalClose}
-    anchorPosition="bottom"
-    anchor={
-      <TouchableOpacity
-        style={styles.subContainer}
-        onPress={setVisibleModalIndex}>
-        <View style={styles.summary}>
-          <Text style={styles.summaryText}>
-            {props.index + 1}. {serviceList.title}
-          </Text>
-        </View>
-        <View style={styles.description}>
-          <Text>{serviceList.description}</Text>
-          <Text></Text>
-        </View>
-        <View
-          style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-          <View style={styles.unitPrice}>
-            <Text>
-              {serviceList.unitPrice
-                ? new Intl.NumberFormat().format(serviceList.unitPrice)
+      visible={visibleModalIndex}
+      onDismiss={handleModalClose}
+      anchorPosition="bottom"
+      anchor={
+        <TouchableOpacity
+          style={styles.subContainer}
+          onPress={setVisibleModalIndex}>
+          <View style={styles.summary}>
+            <Text style={styles.summaryText}>
+              {props.index + 1}. {serviceList.title}
+            </Text>
+          </View>
+          <View style={styles.description}>
+            <Text>{serviceList.description}</Text>
+            <Text></Text>
+          </View>
+          <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+            <View style={styles.unitPrice}>
+              <Text>
+                {serviceList.unitPrice
+                  ? new Intl.NumberFormat().format(serviceList.unitPrice)
+                  : '0'}
+              </Text>
+              <Text> x</Text>
+              <Text> {serviceList.qty}</Text>
+            </View>
+            <Text style={styles.summaryPrice}>
+              {serviceList.total
+                ? new Intl.NumberFormat().format(serviceList.total)
                 : '0'}
             </Text>
-            <Text> x</Text>
-            <Text> {serviceList.qty}</Text>
           </View>
-          <Text style={styles.summaryPrice}>
-            {serviceList.total
-              ? new Intl.NumberFormat().format(serviceList.total)
-              : '0'}
-          </Text>
-        </View>
-      </TouchableOpacity>
-    }>
-    <Menu.Item
-      leadingIcon="pencil"
-      onPress={() => handleEditService()}
-      title="แก้ไข"
-    />
-    <Menu.Item
-      leadingIcon="delete"
-      onPress={() => handleRemoveService()}
-      title="ลบ"
-    />
-  </Menu>
+        </TouchableOpacity>
+      }>
+      <Menu.Item
+        leadingIcon="pencil"
+        onPress={() => handleEditService()}
+        title="แก้ไข"
+      />
+      <Menu.Item
+        leadingIcon="delete"
+        onPress={() => handleRemoveService()}
+        title="ลบ"
+      />
+    </Menu>
   );
 };
 

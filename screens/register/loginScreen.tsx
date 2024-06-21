@@ -89,7 +89,7 @@ const LoginScreen = ({navigation}: Props) => {
       </TouchableOpacity>
       <View
         style={{marginTop: 40, paddingHorizontal: 20, alignContent: 'center'}}>
-        <Text style={styles.title}>worktrust</Text>
+        <Text style={styles.title}>Worktrust</Text>
         <Text style={styles.subtitle}>เข้าสู่ระบบ</Text>
 
         <Controller
@@ -139,15 +139,6 @@ const LoginScreen = ({navigation}: Props) => {
 
         <Button
           mode="contained"
-          style={{
-            marginTop: 20,
-            borderRadius: 4,
-          }}
-          // style={[
-          //   styles.pressable,
-          //   styles.getStartedButton,
-          //   !isValid && styles.disabledButton,
-          // ]}
           loading={isLoading}
           onPress={handleLogin}
           disabled={!isValid || isLoading}>

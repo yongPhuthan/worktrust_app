@@ -7,7 +7,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { useContext } from 'react';
-import { CompanyQuery } from 'types';
+import { CompanyQuery, SubmissionQuery } from 'types';
 import { useUser } from '../../providers/UserContext';
 import { Store } from '../../redux/store';
 
@@ -17,15 +17,11 @@ interface ErrorResponse {
 }
 
 
-const useFetchDashboard = (): UseQueryResult<CompanyQuery, ErrorResponse> => {
+const useFetchSubmissions = (): UseQueryResult<SubmissionQuery, ErrorResponse> => {
   const user = useUser();
   const queryClient = useQueryClient();
-  const {
-    dispatch,
-    state: {code},
-  } = useContext(Store);
 
-  const fetchDashboard = async (): Promise<CompanyQuery> => {
+  const fetchSubmissions = async (): Promise<SubmissionQuery> => {
     if (!user) {
       throw new Error('User not authenticated.');
     }
@@ -55,15 +51,15 @@ const useFetchDashboard = (): UseQueryResult<CompanyQuery, ErrorResponse> => {
 
   const queryKey: QueryKey = ['submissionsDashboard'];
 
-  const queryOptions: UseQueryOptions<CompanyQuery, ErrorResponse> = {
+  const queryOptions: UseQueryOptions<SubmissionQuery, ErrorResponse> = {
     queryKey: queryKey,
-    queryFn: fetchDashboard,
+    queryFn: fetchSubmissions,
     retry: 3,
     staleTime: 5 * 60 * 1000,
     enabled: !!user,
   };
 
-  return useQuery<CompanyQuery, ErrorResponse>(queryOptions);
+  return useQuery<SubmissionQuery, ErrorResponse>(queryOptions);
 };
 
-export default useFetchDashboard;
+export default useFetchSubmissions;

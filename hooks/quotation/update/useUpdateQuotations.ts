@@ -19,7 +19,7 @@ const useUpdateQuotation = (actions: QuotationActions) => {
     throw new Error('User is not authenticated');
   }
 
-  const createQuotation = async (quotation: Quotations, company:CompanyState) => {
+  const updateQuotation = async (quotation: Quotations, company:CompanyState) => {
     if (!user || !user.uid) {
       throw new Error('User is not available');
     }
@@ -47,7 +47,7 @@ const useUpdateQuotation = (actions: QuotationActions) => {
   const { mutate, data, error, isError, isPending, isSuccess, reset } = useMutation( {
     mutationFn: async (data: { quotation: Quotations, company: CompanyState }) => {
       const { quotation, company } = data;
-      return createQuotation(quotation, company);
+      return updateQuotation(quotation, company);
     },
     onSuccess: (responseData:any) => {
       setQuotationServerId(responseData.quotationId);

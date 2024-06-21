@@ -20,7 +20,7 @@ import { useFilteredInvoicesData } from '../../hooks/dashboard/useFilteredData';
 import {
   QuotationStatus,
   QuotationStatusKey
-} from '../../models/QuotationStatus';
+} from '../../models/DocumentStatus';
 
 import CardDashBoard from '../../components/CardDashBoard';
 import { useUser } from '../../providers/UserContext';

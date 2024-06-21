@@ -19,47 +19,9 @@ interface Props {
   route: RouteProp<ParamListBase, 'ProjectViewScreen'>;
 }
 const ProjectViewScreen = ({navigation, route}: Props) => {
-  const {id, pdfUrl, fileName} = route.params;
+  const {id,fileName} = route.params;
   const [url, setUrl] = useState(`https://www.worktrust.co/preview/${id}`);
-  const [isLoading, setIsLoading] = useState(false);
   const handleShare = useShare({url, title: `ใบเสนอราคา ${fileName}`});
-
-  const handleShareFile = async () => {
-    console.log('Share button pressed');
-    let dirs = ReactNativeBlobUtil.fs.dirs;
-    const type = 'application/pdf'; // MIME type
-    const configOptions = {
-      fileCache: true,
-      path: `${dirs.DocumentDir}/${fileName}`,
-      addAndroidDownloads: {
-        useDownloadManager: true,
-        notification: true,
-        // title: `${fileName}`,
-        // description: 'File downloaded by Worktrust App.',
-        // mime: 'application/pdf',
-      },
-    };
-
-    ReactNativeBlobUtil.config(configOptions)
-      .fetch('GET', pdfUrl)
-      .then(async resp => {
-        let filePath = resp.path();
-        let options = {
-          type: type,
-          url: 'file://' + filePath,
-        };
-
-        await Share.open(options);
-        // Use ReactNativeBlobUtil's fs.unlink to remove the file after sharing
-        ReactNativeBlobUtil.fs
-          .unlink(filePath)
-          .then(() => console.log('File deleted successfully'))
-          .catch(err => console.error('Error deleting file', err));
-      })
-      .catch(error => {
-        console.error('Error sharing', error);
-      });
-  };
   return (
     <>
       <Appbar.Header
@@ -87,16 +49,6 @@ const ProjectViewScreen = ({navigation, route}: Props) => {
             handleShare();
           }}
         />
-        {/* <Button
-          mode="outlined"
-          onPress={() => {
-            navigation.navigate('PDFViewScreen', {
-              pdfUrl,
-              fileName,
-            });
-          }}>
-          {'ดูสัญญา'}
-        </Button> */}
       </Appbar.Header>
       <SafeAreaView style={{flex: 1}}>
         <WebView
@@ -116,157 +68,5 @@ const ProjectViewScreen = ({navigation, route}: Props) => {
     </>
   );
 };
-const {width, height} = Dimensions.get('window');
-
-const styles = StyleSheet.create({
-  shareButtonContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 70,
-    backgroundColor: 'white',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-evenly',
-    marginVertical: 10,
-  },
-  button: {
-    backgroundColor: '#0c5caa',
-    paddingHorizontal: 30,
-    paddingVertical: 10,
-    borderRadius: 5,
-    elevation: 2, // for Android
-    shadowColor: '#000', // for iOS
-    shadowOffset: {width: 0, height: 2}, // for iOS
-    shadowOpacity: 0.25, // for iOS
-    shadowRadius: 3.84, // for iOS
-    marginHorizontal: 5,
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginRight: 8,
-    marginTop: 1,
-  },
-  buttonHomeText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft: 8,
-    color: 'black',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  icon: {
-    color: 'white',
-    marginLeft: 10,
-  },
-  buttonRow: {
-    position: 'absolute',
-    bottom: 10,
-    flexDirection: 'row',
-    width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: 70,
-    backgroundColor: 'white',
-    letterSpacing: 10,
-  },
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  cardStyle: {
-    // borderTopLeftRadius: 20,
-    // borderTopRightRadius: 20,
-    // Shadow for iOS
-    shadowColor: '#000',
-    // shadowOffset: {
-    //   width: 0,
-    //   height: 2,
-    // },
-    shadowOpacity: 0.25,
-    // shadowRadius: 3.84,
-  },
-  homeButton: {
-    backgroundColor: '#0c5caa',
-    paddingHorizontal: 30,
-    paddingVertical: 10,
-    borderRadius: 5,
-    width: 200,
-    elevation: 2, // for Android
-    shadowColor: '#000', // for iOS
-    shadowOffset: {width: 0, height: 2}, // for iOS
-    shadowOpacity: 0.25, // for iOS
-    shadowRadius: 3.84, // for iOS
-  },
-  shareButton: {
-    backgroundColor: '#0c5caa',
-    paddingHorizontal: 30,
-    paddingVertical: 10,
-    borderRadius: 5,
-    elevation: 2, // for Android
-    shadowColor: '#000', // for iOS
-    shadowOffset: {width: 0, height: 2}, // for iOS
-    shadowOpacity: 0.25, // for iOS
-    shadowRadius: 3.84, // for iOS
-  },
-  homeButtonWhite: {
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 30,
-    paddingVertical: 10,
-    marginHorizontal: 5,
-    borderRadius: 5,
-    borderWidth: 0.5,
-    elevation: 2, // for Android
-    shadowColor: '#000', // for iOS
-    shadowOffset: {width: 0, height: 2}, // for iOS
-    shadowOpacity: 0.25, // for iOS
-    shadowRadius: 3.84, // for iOS
-  },
-  fab: {
-    position: 'absolute',
-    margin: 16,
-    right: 0,
-    bottom: 0,
-  },
-  outlinedButton: {
-    borderColor: '#1b52a7', // Border color
-    borderWidth: 1, // Border width
-    borderRadius: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 5, // Vertical padding
-  },
-  buttonTextOutlined: {
-    color: '#1b52a7', // Text color matching the border
-    fontSize: 18,
-  },
-  fabStyle: {
-    bottom: height * 0.1,
-    right: width * 0.05,
-    position: 'absolute',
-    backgroundColor: '#1b52a7',
-  },
-  fabPrint: {
-    bottom: height * 0.4,
-    right: width * 0.05,
-    position: 'absolute',
-    backgroundColor: '#1b52a7',
-  },
-  pdf: {
-    flex: 1,
-    width: Dimensions.get('window').width,
-    height: Dimensions.get('window').height,
-  },
-});
 
 export default ProjectViewScreen;

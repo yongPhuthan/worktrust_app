@@ -13,7 +13,6 @@ import {Store} from '../../redux/store';
 import {BACK_END_SERVER_URL} from '@env';
 import {useQuery} from '@tanstack/react-query';
 import {useFormContext} from 'react-hook-form';
-import {Audit, Standard} from '../../types/docType';
 
 import Modal from 'react-native-modal';
 import {
@@ -27,6 +26,7 @@ import {
 } from 'react-native-paper';
 import {useUser} from '../../providers/UserContext';
 import CreateStandard from './createStandard';
+import { DefaultStandards, StandardEmbed } from '@prisma/client';
 
 interface AuditModalProps {
   isVisible: boolean;
@@ -57,7 +57,7 @@ const SelectStandard = ({
   const [isCreateStandard, setIsCreateStandard] = useState(false);
 
   const user = useUser();
-  const [standardDatas, setStandardDatas] = useState<Standard[] | null>(null);
+  const [standardDatas, setStandardDatas] = useState<DefaultStandards[] | null>(null);
   const context = useFormContext();
   const {
     register,
@@ -87,7 +87,7 @@ const SelectStandard = ({
           Authorization: `Bearer ${idToken}`,
         },
       });
-      const data: Standard[] = await response.json();
+      const data: DefaultStandards[] = await response.json();
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
@@ -107,10 +107,10 @@ const SelectStandard = ({
     queryFn: fetchStandards,
   });
 
-  const handleSelectStandard = (standard: Standard) => {
+  const handleSelectStandard = (standard: DefaultStandards) => {
     const currentStandards = getValues('standards') || [];
     const standardIndex = currentStandards.findIndex(
-      (standardData: Standard) => standardData.id === standard.id,
+      (standardData: DefaultStandards) => standardData.id === standard.id,
     );
     if (standardIndex !== -1) {
       const updatedStandards = [...currentStandards];
@@ -203,7 +203,7 @@ const SelectStandard = ({
                 style={[
                   styles.card,
                   (watch('standards') || []).some(
-                    (standard: Standard) => standard.id === item.id,
+                    (standard: DefaultStandards) => standard.id === item.id,
                   )
                     ? styles.cardChecked
                     : null,
@@ -230,7 +230,7 @@ const SelectStandard = ({
                       }}
                       status={
                         (watch('standards') || []).some(
-                          (standard: Standard) => standard.id === item.id,
+                          (standard: DefaultStandards) => standard.id === item.id,
                         )
                           ? 'checked'
                           : 'unchecked'

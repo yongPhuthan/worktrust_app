@@ -1,48 +1,32 @@
-import {
-  faBriefcase,
-  faPlus,
-  faSign,
-  faSignature,
-  faUser,
-} from '@fortawesome/free-solid-svg-icons';
+import {faBriefcase, faUser} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {yupResolver} from '@hookform/resolvers/yup';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {StackNavigationProp} from '@react-navigation/stack';
 import React, {useContext, useEffect, useMemo, useState} from 'react';
 import {
+  Controller,
   FormProvider,
-  set,
   useFieldArray,
   useForm,
   useWatch,
-  Controller,
 } from 'react-hook-form';
 import {
   Alert,
   Dimensions,
-  FlatList,
-  Image,
+  Modal,
   Platform,
   SafeAreaView,
-  ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
-  Modal,
   View,
 } from 'react-native';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {
   Appbar,
   Button,
-  ProgressBar,
-  Switch,
-  List,
   Divider,
   IconButton,
+  Switch,
   TextInput,
-  SegmentedButtons,
-  Icon,
 } from 'react-native-paper';
 import {v4 as uuidv4} from 'uuid';
 import AddServices from '../../../components/AddServices';
@@ -51,29 +35,9 @@ import CardProject from '../../../components/CardProject';
 import DocNumber from '../../../components/DocNumber';
 import Summary from '../../../components/Summary';
 import AddCustomer from '../../../components/add/AddCustomer';
-import ContractModal from '../../../components/contract/create';
 import SelectProductModal from '../../../components/service/select';
 import DatePickerButton from '../../../components/styles/DatePicker';
 // import Divider from '../../components/styles/Divider';
-import SmallDivider from '../../../components/styles/SmallDivider';
-import AddCard from '../../../components/ui/Button/AddCard';
-import SignatureComponent from '../../../components/utils/signature/create';
-import ProjectModalScreen from '../../../components/webview/project';
-import ExistingWorkers from '../../../components/workers/existing';
-import useCreateQuotation from '../../../hooks/quotation/create/useSaveQuotation';
-import useSelectedDates from '../../../hooks/quotation/create/useSelectDates';
-import useThaiDateFormatter from '../../../hooks/utils/useThaiDateFormatter';
-import {TaxType} from '../../../models/Tax';
-import {Store} from '../../../redux/store';
-import {ParamListBase} from '../../../types/navigationType';
-import {quotationsValidationSchema} from '../../utils/validationSchema';
-import PDFModalScreen from '../../../components/webview/pdf';
-import useShare from '../../../hooks/webview/useShare';
-import WarrantyModal from '../../../components/warranty/create';
-import AddProductFormModal from '../../../components/service/addNew';
-import {useModal} from '../../../hooks/quotation/create/useModal';
-import useCreateNewInvoice from '../../../hooks/invoice/useCreateInvoice';
-import * as stateAction from '../../../redux/actions';
 import {
   CustomerEmbed,
   DiscountType,
@@ -82,7 +46,20 @@ import {
   ServicesEmbed,
 } from '@prisma/client';
 import {CompanyState} from 'types';
+import AddProductFormModal from '../../../components/service/addNew';
+import SmallDivider from '../../../components/styles/SmallDivider';
+import AddCard from '../../../components/ui/Button/AddCard';
+import SignatureComponent from '../../../components/utils/signature/create';
 import ShowSignature from '../../../components/utils/signature/view';
+import PDFModalScreen from '../../../components/webview/pdf';
+import useCreateNewInvoice from '../../../hooks/invoice/useCreateInvoice';
+import {useModal} from '../../../hooks/quotation/create/useModal';
+import useSelectedDates from '../../../hooks/quotation/create/useSelectDates';
+import useThaiDateFormatter from '../../../hooks/utils/useThaiDateFormatter';
+import useShare from '../../../hooks/webview/useShare';
+import {TaxType} from '../../../models/Tax';
+import {Store} from '../../../redux/store';
+import {ParamListBase} from '../../../types/navigationType';
 
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'CreateNewInvoice'>;
@@ -90,9 +67,9 @@ interface Props {
 
 const CreateNewInvoice = ({navigation}: Props) => {
   const {
-    state: {companyState, editQuotation, sellerId},
+    state: {companyState, editInvoice, sellerId, quotationRefNumber},
     dispatch,
-  }: any = useContext(Store);
+  } = useContext(Store);
 
   const {
     initialDocnumber,
@@ -107,16 +84,13 @@ const CreateNewInvoice = ({navigation}: Props) => {
 
   // const [customerName, setCustomerName] = useState('');
   const [signaturePicker, setSignaturePicker] = useState(false);
-  const [contractPicker, setContractPicker] = useState(false);
-  const [isNewInvoice, setIsNewInvoice] = useState(true);
-  const [savedInvoiceData, setSavedInvoiceData] = useState<any>(null);
 
-  const [workerPicker, setWorkerpicker] = useState(false);
+  const [isNewInvoice, setIsNewInvoice] = useState(editInvoice ? false : true);
+
   const [save, setSave] = useState<boolean>(false);
   const [isLoadingWebP, setIsLoadingWebP] = useState(false);
   const [invoiceServerId, setInvoiceServerId] = useState<string | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>('');
-  const [value, setValue] = React.useState('');
   const [openNoteToCustomer, setOpenNoteToCustomer] = useState(false);
   const [openNoteToTeam, setOpenNoteToTeam] = useState(false);
   const [selectService, setSelectService] = useState<ServicesEmbed | null>(
@@ -141,31 +115,19 @@ const CreateNewInvoice = ({navigation}: Props) => {
     closeModal: closeAddCustomerModal,
     isVisible: addCustomerModal,
   } = useModal();
-  const {
-    openModal: openWorkerModal,
-    closeModal: closeWorkerModal,
-    isVisible: workerModal,
-  } = useModal();
+
   const {
     openModal: openSignatureModal,
     closeModal: closeSignatureModal,
     isVisible: signatureModal,
   } = useModal();
-  const {
-    openModal: openContractModal,
-    closeModal: closeContractModal,
-    isVisible: contractModal,
-  } = useModal();
+
   const {
     openModal: openPDFModal,
     closeModal: closePDFModal,
     isVisible: showPDFModal,
   } = useModal();
-  const {
-    openModal: openProjectModal,
-    closeModal: closeProjectModal,
-    isVisible: showProjectModal,
-  } = useModal();
+
   const {
     openModal: openAddNewServiceModal,
     closeModal: closeAddNewServiceModal,
@@ -198,8 +160,8 @@ const CreateNewInvoice = ({navigation}: Props) => {
     id: uuidv4(),
     services: [],
     customer: defalutCustomer,
-    companyId: companyState.id,
-    quotationRefNumber: '',
+    companyId: companyState ? companyState.id : '',
+    quotationRefNumber: quotationRefNumber ? quotationRefNumber : '',
     vat7: 0,
     taxType: TaxType.NOTAX,
     taxValue: 0,
@@ -220,10 +182,8 @@ const CreateNewInvoice = ({navigation}: Props) => {
     dateOffer: initialDateOffer,
     noteToCustomer: '',
     noteToTeam: '',
-    dateEnd: initialDateEnd,
-    docNumber: `IV${initialDocnumber}`,
+    docNumber: `BL${initialDocnumber}`,
     sellerSignature: '',
-    warranty: editQuotation?.warranty ? editQuotation?.warranty : null,
     status: InvoiceStatus.PENDING, // Set the status to a valid QuotationStatus value
     dateApproved: null,
     pdfUrl: '',
@@ -234,7 +194,7 @@ const CreateNewInvoice = ({navigation}: Props) => {
   };
   const methods = useForm<Invoices>({
     mode: 'all',
-    defaultValues: invoiceDefaultValue,
+    defaultValues: editInvoice ? editInvoice : invoiceDefaultValue,
   });
   const {fields, append, remove, update} = useFieldArray({
     control: methods.control,
@@ -316,10 +276,6 @@ const CreateNewInvoice = ({navigation}: Props) => {
     setDateOfferFormatted(thaiDateFormatter(date));
     methods.setValue('dateOffer', date);
   };
-  const handleEndDateSelected = (date: Date) => {
-    setDateEndFormatted(thaiDateFormatter(date));
-    methods.setValue('dateEnd', date);
-  };
 
   const handleRemoveService = (index: number) => {
     setVisibleModalIndex(null);
@@ -340,11 +296,12 @@ const CreateNewInvoice = ({navigation}: Props) => {
       methods.setValue('noteToCustomer', '', {shouldDirty: true});
       methods.setValue('noteToTeam', '', {shouldDirty: true});
     }
-    if (editQuotation) {
-      methods.setValue('quotationRefNumber', editQuotation.docNumber);
-      methods.setValue('docNumber', `IV${initialDocnumber}`);
+    if (editInvoice) {
+      methods.setValue('quotationRefNumber', editInvoice.quotationRefNumber);
+      methods.setValue('docNumber', `BL${initialDocnumber}`);
     }
   }, [openNoteToCustomer, openNoteToTeam]);
+  console.log('editInvoice PDF', editInvoice?.pdfUrl);
   return (
     <>
       <Appbar.Header
@@ -353,42 +310,15 @@ const CreateNewInvoice = ({navigation}: Props) => {
         style={{
           backgroundColor: 'white',
         }}>
-        <Appbar.BackAction
-          onPress={() => {
-            if (!save) {
-              Alert.alert(
-                'ปิดหน้าต่าง',
-                'ยืนยันไม่บันทึกข้อมูลและปิดหน้าต่าง',
-                [
-                  // The "No" button
-                  // Does nothing but dismiss the dialog when pressed
-                  {
-                    text: 'อยู่ต่อ',
-                    style: 'cancel',
-                  },
-                  // The "Yes" button
-                  {
-                    text: 'ปิดหน้าต่าง',
-                    onPress: () => navigation.goBack(),
-                  },
-                ],
-                {cancelable: false},
-              );
-            } else {
-              () => navigation.goBack();
-            }
-          }}
-        />
+        <Appbar.BackAction onPress={() => navigation.goBack()} />
         <Appbar.Content title="" />
 
-        {pdfUrl && (
-          <IconButton
-            mode="outlined"
-            icon="file-document"
-            iconColor="gray"
-            onPress={openPDFModal}
-          />
-        )}
+        <IconButton
+          mode="outlined"
+          disabled={editInvoice ? !editInvoice.pdfUrl : !pdfUrl}
+          icon="file-document"
+          onPress={openPDFModal}
+        />
         <Appbar.Content title="" />
         <Button
           loading={isPending}
@@ -417,7 +347,7 @@ const CreateNewInvoice = ({navigation}: Props) => {
                 value={methods.watch('docNumber')}
               />
               <DocNumber
-                label="อ้างอิงใบเสนอราคาเลขที่"
+                label="อ้างอิง"
                 onChange={handleQuotationRefNumberChange}
                 value={methods.watch('quotationRefNumber') || ''}
               />
@@ -651,34 +581,23 @@ const CreateNewInvoice = ({navigation}: Props) => {
           </SafeAreaView>
         </Modal>
         <SelectProductModal
-          quotationId={quotationId}
           onAddService={newProduct => append(newProduct)}
           currentValue={null}
           visible={showAddExistingService}
           onClose={closeAddExistingServiceModal}
         />
-        {/* <ContractModal
-          visible={contractModal}
-          onClose={() => setContractModal(false)}
-        /> */}
-
-        {pdfUrl && (
-          <>
-            <PDFModalScreen
-              fileType="IV"
+        <PDFModalScreen
+              fileType="BL"
               fileName={customer.name}
               visible={showPDFModal}
               onClose={closePDFModal}
-              pdfUrl={pdfUrl}
+              pdfUrl={editInvoice? editInvoice.pdfUrl ? editInvoice.pdfUrl : '' : pdfUrl || ''}
             />
-          </>
-        )}
         {showAddNewService && (
           <AddProductFormModal
             resetSelectService={() => setSelectService(null)}
             selectService={selectService}
             resetAddNewService={() => setAddNewService(false)}
-            quotationId={quotationId}
             onAddService={newProduct => update(serviceIndex, newProduct)}
             currentValue={currentValue}
             visible={showAddNewService}

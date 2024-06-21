@@ -18,7 +18,7 @@ const useCreateNewReceipt = (actions: InvoiceActions) => {
     throw new Error('User is not authenticated');
   }
 
-  const createReceipt = async (receipt: Receipts, company:CompanyState) => {
+  const createReceipt = async (receipt: Receipts, company:CompanyState, quotationId:string) => {
     if (!user || !user.uid) {
       throw new Error('User is not available');
     }
@@ -30,7 +30,7 @@ const useCreateNewReceipt = (actions: InvoiceActions) => {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({receipt, company}),
+      body: JSON.stringify({receipt, company, quotationId}),
     });
 
     if (!response.ok) {
@@ -44,14 +44,14 @@ const useCreateNewReceipt = (actions: InvoiceActions) => {
   };
 
   const { mutate, data, error, isError, isPending, isSuccess, reset } = useMutation( {
-    mutationFn: async (data: { receipt: Receipts, company: CompanyState }) => {
-      const { receipt, company } = data;
-      return createReceipt(receipt, company);
+    mutationFn: async (data: { receipt: Receipts, company: CompanyState, quotationId: string }) => {
+      const { receipt, company,quotationId } = data;
+      return createReceipt(receipt, company,quotationId);
     },
     onSuccess: (responseData) => {
       setPdfUrl(responseData.pdfUrl);
       openPDFModal();
-      queryClient.invalidateQueries({queryKey: ['dashboardReceipt']});
+      queryClient.invalidateQueries({queryKey: ['dashboardReceipt','dashboardData']});
     },
     onError: (error: Error) => {
       console.error("Mutation error:", error.message);

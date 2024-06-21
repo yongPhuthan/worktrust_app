@@ -28,7 +28,7 @@ import {v4 as uuidv4} from 'uuid';
 import DatePickerButton from '../../components/styles/DatePicker';
 import {useModal} from '../../hooks/quotation/create/useModal';
 import useSelectedDates from '../../hooks/quotation/create/useSelectDates';
-import useCreateSubmission from '../../hooks/submission/useSaveSubmission';
+import useCreateSubmission from '../../hooks/submission/useCreate';
 import {useUser} from '../../providers/UserContext';
 import {Store} from '../../redux/store';
 import {ParamListBase} from '../../types/navigationType';
@@ -190,8 +190,8 @@ const CreateWarranty = (props: Props) => {
         }}
         elevated
         mode="center-aligned">
-        <Appbar.Action
-          icon={'close'}
+        <Appbar.BackAction
+        
           onPress={() => {
             dispatch(stateAction.reset_edit_quotation() as any);
             navigation.goBack();
@@ -292,6 +292,7 @@ const CreateWarranty = (props: Props) => {
       {pdfUrl && (
         <>
           <PDFModalScreen
+          fileType='ใบรับประกัน'
             fileName={editQuotation.customer.name}
             visible={showPDFModal}
             onClose={closePDFModal}

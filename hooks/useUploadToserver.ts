@@ -25,7 +25,7 @@ export function useCreateToServer(
   const queryClient = useQueryClient();
   const {
     state: {code},
-  }: any = useContext(Store);
+  } = useContext(Store);
 
   const createToServer = async (data: any) => {
     if (!user || !user.uid) {
@@ -57,7 +57,7 @@ export function useCreateToServer(
 
       // Invalidate queries or refetch data as needed
       queryClient.invalidateQueries({
-        queryKey: [queryKey, code],
+        queryKey: [queryKey],
       });
     } catch (err) {
       console.error('An error occurred:', err);

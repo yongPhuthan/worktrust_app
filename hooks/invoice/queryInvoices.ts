@@ -1,4 +1,4 @@
-import {BACK_END_SERVER_URL} from '@env';
+import { BACK_END_SERVER_URL } from '@env';
 import {
   QueryKey,
   UseQueryOptions,
@@ -6,12 +6,8 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import {useContext} from 'react';
-import {useUser} from '../../providers/UserContext';
-import * as stateAction from '../../redux/actions';
-import {Store} from '../../redux/store';
-import {Company, Invoices, Quotations} from '@prisma/client';
-import { CompanyQuery } from 'types';
+import { InvoiceQuery } from 'types';
+import { useUser } from '../../providers/UserContext';
 
 interface ErrorResponse {
   message: string;
@@ -19,14 +15,12 @@ interface ErrorResponse {
 }
 
 
-const useFetchDashboard = (): UseQueryResult<CompanyQuery, ErrorResponse> => {
+const useFetchInvoices = (): UseQueryResult<InvoiceQuery, ErrorResponse> => {
   const user = useUser();
   const queryClient = useQueryClient();
-  const {
-    dispatch,
-  }:any  = useContext(Store);
 
-  const fetchDashboard = async (): Promise<CompanyQuery> => {
+
+  const fetchInvoices = async (): Promise<InvoiceQuery> => {
     if (!user) {
       throw new Error('User not authenticated.');
     }
@@ -43,7 +37,6 @@ const useFetchDashboard = (): UseQueryResult<CompanyQuery, ErrorResponse> => {
         },
       },
     );
-    console.log('respnse', response)
 
     if (!response.ok) {
       const errorData: ErrorResponse = await response.json();
@@ -53,31 +46,19 @@ const useFetchDashboard = (): UseQueryResult<CompanyQuery, ErrorResponse> => {
 
     const data = await response.json();
 
-    // dispatch(stateAction.code_company(data.company.code));
-    // dispatch(stateAction.get_companyID(data.company.id));
-    // dispatch(stateAction.get_logo(data.company.logo));
-    // dispatch(stateAction.get_company_state(data.company));
-
-    // dispatch(stateAction.get_default_contract(data.company.defaultContract));
-    // dispatch(stateAction.get_default_warranty(data.company.defaultWarranty));
-    // dispatch(stateAction.get_existing_workers(data.company.workers));
-    // dispatch(stateAction.get_existing_services(services));
-    // dispatch(stateAction.get_user_signature(data.userSignature));
-    // dispatch(stateAction.get_seller_id(data.sellerId));
-
     return data;
   };
 
-  const queryKey: QueryKey = ['dashboardInvoices'];
+  const queryKey: QueryKey = ['dashboardInvoice'];
 
-  const queryOptions: UseQueryOptions<CompanyQuery, ErrorResponse> = {
+  const queryOptions: UseQueryOptions<InvoiceQuery, ErrorResponse> = {
     queryKey: queryKey,
-    queryFn: fetchDashboard,
+    queryFn: fetchInvoices,
     staleTime: 5 * 60 * 1000,
     enabled: !!user,
   };
 
-  return useQuery<CompanyQuery, ErrorResponse>(queryOptions);
+  return useQuery<InvoiceQuery, ErrorResponse>(queryOptions);
 };
 
-export default useFetchDashboard;
+export default useFetchInvoices;

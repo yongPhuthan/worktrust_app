@@ -1,57 +1,52 @@
-import {BACK_END_SERVER_URL} from '@env';
+import { BACK_END_SERVER_URL } from '@env';
 import messaging from '@react-native-firebase/messaging';
-import {DrawerActions} from '@react-navigation/native';
-import {useQueryClient} from '@tanstack/react-query';
-
-import React, {useContext, useEffect, useState} from 'react';
+import { DrawerActions } from '@react-navigation/native';
+import { useQueryClient } from '@tanstack/react-query';
+import React, { useContext, useEffect, useState } from 'react';
 import {
   Alert,
   Dimensions,
   FlatList,
   StyleSheet,
   Text,
-  ActivityIndicator,
   View,
 } from 'react-native';
 import Modal from 'react-native-modal';
-import CardDashBoard from '../../components/ui/invoice/CardDashboard';
 import {
-  InvoicesFilterButton,
-  QuotationsFilterButton,
+  InvoicesFilterButton
 } from '../../components/ui/Dashboard/FilterButton'; // Adjust the import path as necessary
+import CardDashBoard from '../../components/ui/invoice/CardDashboard';
 import firebase from '../../firebase';
 import {
-  useActiveFilter,
-  useActiveInvoiceFilter,
+  useActiveInvoiceFilter
 } from '../../hooks/dashboard/useActiveFilter';
-import {useFilteredInvoicesData} from '../../hooks/dashboard/useFilteredData';
-import {useUser} from '../../providers/UserContext';
+import { useFilteredInvoicesData } from '../../hooks/dashboard/useFilteredData';
+import { useUser } from '../../providers/UserContext';
 import * as stateAction from '../../redux/actions';
-import {Store} from '../../redux/store';
+import { Store } from '../../redux/store';
 
-import {DashboardScreenProps} from '../../types/navigationType';
+import { DashboardScreenProps } from '../../types/navigationType';
 
 import {
+  ActivityIndicator,
   Appbar,
   Divider,
-  FAB,
   Icon,
   List,
   PaperProvider,
-  Portal,
+  Portal
 } from 'react-native-paper';
-import {requestNotifications} from 'react-native-permissions';
+import { requestNotifications } from 'react-native-permissions';
 
 import {
   Company,
-  CustomerEmbed,
   InvoiceStatus,
   Invoices,
-  ServicesEmbed,
+  ServicesEmbed
 } from '@prisma/client';
-import useFetchDashboardInvoice from '../../hooks/invoice/queryInvoices';
-import {useModal} from '../../hooks/quotation/create/useModal';
 import FABButton from '../../components/ui/Button/FAB';
+import useFetchDashboardInvoice from '../../hooks/invoice/queryInvoices';
+import { useModal } from '../../hooks/quotation/create/useModal';
 interface ErrorResponse {
   message: string;
   action: 'logout' | 'redirectToCreateCompany' | 'contactSupport' | 'retry';
@@ -60,23 +55,12 @@ interface ErrorResponse {
 const Dashboard = ({navigation}: DashboardScreenProps) => {
   const [showModal, setShowModal] = useState(true);
   const user = useUser();
-  const {
-    openModal: openPDFModal,
-    closeModal: closePDFModal,
-    isVisible: showPDFModal,
-  } = useModal();
-  const {
-    openModal: openProjectModal,
-    closeModal: closeProjectModal,
-    isVisible: showProjectModal,
-  } = useModal();
   const {dispatch}: any = useContext(Store);
   const {data, isLoading, isError, error} = useFetchDashboardInvoice();
   const {activeFilter, updateActiveFilter} = useActiveInvoiceFilter();
   const {width, height} = Dimensions.get('window');
   const [isLoadingAction, setIsLoadingAction] = useState(false);
   const queryClient = useQueryClient();
-  const [isModalSignContract, setIsModalSignContract] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Invoices | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [originalData, setOriginalData] = useState<Invoices[] | null>(null);
@@ -147,7 +131,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
 
       if (response.ok) {
         queryClient.invalidateQueries({
-          queryKey: ['dashboardInvoices'],
+          queryKey: ['dashboardInvoice'],
         });
         setIsLoadingAction(false);
       } else {
@@ -165,11 +149,11 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     }
   };
 
-  const confirmRemoveInvoice = (id: string, customer: CustomerEmbed) => {
+  const confirmRemoveInvoice = (id: string, customerName: string) => {
     setShowModal(false);
     Alert.alert(
       'ยืนยันลบเอกสาร',
-      `ลูกค้า ${customer}`,
+      `ลูกค้า ${customerName}`,
       [
         {
           text: 'ยกเลิก',
@@ -182,18 +166,15 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     );
   };
   useEffect(() => {
-    if (data) {
-      // If data[0] exists and has a non-null `code`, proceed with your logic
-      const onlyCompany = {
-        ...data.company,
-        invoices: [],
-      };
-      setCompanyData(onlyCompany);
-      if (!data.company || !data.company.invoices) {
-        return;
-      }
-      setInvoicesData(data.company.invoices);
-      setOriginalData(data.company.invoices);
+    if (data && data.company && data.company.invoices) {
+      const sortedInvoices = data.company?.invoices.sort((a, b) => {
+        const dateA = new Date(a.updated);
+        const dateB = new Date(b.updated);
+        return dateB.getTime() - dateA.getTime();
+      });
+
+      setInvoicesData(sortedInvoices);
+      setOriginalData(sortedInvoices);
     }
   }, [data]);
 
@@ -214,14 +195,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     }
   }, [user]);
 
-  useEffect(() => {
-    // ใช้ useEffect เพื่อตรวจสอบการเปลี่ยนแปลงของ showProjectModal และ showPDFModal
-    // และทำการเปลี่ยนแปลงค่าของ showModal ให้เป็น false เพื่อปิด Modal
-    // ที่เปิดอยู่ก่อนหน้านี้
-    if (showProjectModal || showPDFModal) {
-      setShowModal(false);
-    }
-  }, [showProjectModal, showPDFModal]);
+
 
   const filtersToShow = [
     InvoiceStatus.ALL,
@@ -229,18 +203,6 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     InvoiceStatus.BILLED,
     InvoiceStatus.INVOICED,
   ];
-  // const handleCreateContract = (index: number) => {
-  //   if (companyData && invoicesData && invoicesData.length > 0) {
-  //     console.log('quotationSelected', selectedItem);
-  //     navigation.navigate('ContractOptions', {
-  //       id: selectedItem.id,
-  //       sellerId: selectedItem.id,
-  //       allTotal: selectedItem.allTotal,
-  //       customerName: selectedItem.customer?.name as string,
-  //     });
-  //   }
-  //   setIsModalSignContract(false);
-  // };
 
   const handleModalOpen = (item: Invoices, index: number) => {
     setSelectedItem(item);
@@ -261,30 +223,26 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     setIsLoadingAction(false);
     handleModalClose();
     navigation.navigate('CreateNewInvoice');
-
-    // navigation.navigate('EditQuotation', {
-    //   quotation,
-    //   company: data[0],
-    //   services,
-    // });
   };
 
   if (isError && error) {
     handleErrorResponse(error);
   }
-  const renderItem = ({item, index}: any) => (
+  const renderItem = ({item, index}: {item: Invoices, index: number}) => (
     <>
+    {item.status && (
       <View style={{marginTop: 10}}>
-        <CardDashBoard
-          status={item.status}
-          date={item.dateOffer}
-          end={item.dateEnd}
-          price={item.allTotal}
-          customerName={item.customer?.name as string}
-          // onCardPress={()=>handleModal(item, index)}
-          onCardPress={() => handleModalOpen(item, index)}
-        />
-      </View>
+      <CardDashBoard
+        status={item.status}
+        date={item.dateOffer}
+        end={null}
+        price={item.allTotal}
+        customerName={item.customer.name }
+        // onCardPress={()=>handleModal(item, index)}
+        onCardPress={() => handleModalOpen(item, index)}
+      />
+    </View>
+    )}
 
       {selectedIndex === index && selectedItem && (
         <>
@@ -311,6 +269,19 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                     {item.customer?.name}
                   </List.Subheader>
                   <Divider />
+                  <List.Item
+                    onPress={() => {
+                      handleModalClose();
+                      navigation.navigate('PDFViewScreen', {
+                        pdfUrl: item.pdfUrl ?? '',
+                        fileType: 'QT',
+                        fileName: `${item.customer.name}.pdf`,
+                      });
+                    }}
+                    title="ดูเอกสาร PDF"
+                    titleStyle={{textAlign: 'center'}}
+                  />
+        <Divider />
 
                   {selectedItem?.status === InvoiceStatus.PENDING && (
                     <>
@@ -455,9 +426,9 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
           </Appbar.Header>
           {isLoadingAction ? (
             <View
-            style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-            <ActivityIndicator size={"large"} />
-          </View>
+              style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+              <ActivityIndicator color="#047e6e" size={'large'} />
+            </View>
           ) : (
             <>
               <View>
@@ -478,9 +449,9 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                 />
               </View>
               {isLoading || isLoadingAction ? (
-               <View style={styles.loadingContainer}>
-               <ActivityIndicator  size={'large'} />
-             </View>
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator color="#047e6e" size={'large'} />
+                </View>
               ) : (
                 <View
                   style={{

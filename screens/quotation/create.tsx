@@ -88,11 +88,13 @@ import {
   type Quotations,
   type WarrantyEmbed,
   TaxType,
+  WarrantyStatus,
 } from '@prisma/client';
 import {JsonValue} from '@prisma/client/runtime/library';
 import {CompanyState} from 'types';
 import ShowSignature from '../../components/utils/signature/view';
 import useUpdateQuotation from '../../hooks/quotation/update/useUpdateQuotations';
+import UpdateServiceModal from '../../components/service/update';
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'Quotation'>;
 }
@@ -126,10 +128,8 @@ const Quotation = ({navigation}: Props) => {
   const [openNoteToCustomer, setOpenNoteToCustomer] = useState(false);
   const [openNoteToTeam, setOpenNoteToTeam] = useState(false);
   const [workerPicker, setWorkerpicker] = useState(false);
-  const [showDateOffer, setShowDateOffer] = useState(false);
-  const [showDateEnd, setShowDateEnd] = useState(false);
   const [quotationServerId, setQuotationServerId] = useState<string | null>(
-    editQuotation? editQuotation.id : null,
+    editQuotation ? editQuotation.id : null,
   );
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [viewResult, setViewResult] = React.useState('');
@@ -146,7 +146,9 @@ const Quotation = ({navigation}: Props) => {
   const [dateEndFormatted, setDateEndFormatted] = useState<string>(
     initialDateEndFormatted,
   );
-  const [isNewInvoice, setIsNewInvoice] = useState(editQuotation ? false : true);
+  const [isNewQuotation, setIsNewQuotation] = useState(
+    editQuotation ? false : true,
+  );
   const [savedInvoiceData, setSavedInvoiceData] = useState<any>(null);
 
   const [serviceIndex, setServiceIndex] = useState<number>(0);
@@ -262,6 +264,7 @@ const Quotation = ({navigation}: Props) => {
     taxType: TaxType.NOTAX,
     taxValue: 0,
     summary: 0,
+    warrantyStatus: WarrantyStatus.PENDING,
     summaryAfterDiscount: 0,
     deposit: null,
     sellerId,
@@ -385,13 +388,10 @@ const Quotation = ({navigation}: Props) => {
     setVisibleModalIndex(null);
   };
   const handleEditService = (index: number, currentValue: ServicesEmbed) => {
-    openEditServiceModal();
     handleModalClose();
     setCurrentValue(currentValue);
     setServiceIndex(index);
-    if (!visibleModalIndex) {
-      openAddNewServiceModal();
-    }
+
   };
 
   const actions: any = {
@@ -401,7 +401,8 @@ const Quotation = ({navigation}: Props) => {
   };
 
   const {mutate, isPending} = useCreateQuotation(actions);
-  const {mutate: updateQuotation, isPending: isUpdatePending} = useUpdateQuotation(actions)
+  const {mutate: updateQuotation, isPending: isUpdatePending} =
+    useUpdateQuotation(actions);
 
   // const handleButtonPress = async () => {
   //   const data = {
@@ -417,15 +418,15 @@ const Quotation = ({navigation}: Props) => {
       quotation: methods.getValues() as Quotations,
       company: companyState as CompanyState,
     };
-    if (isNewInvoice) {
+    if (isNewQuotation) {
       mutate(data, {
-        onSuccess: (response) => {
-          setIsNewInvoice(false);
+        onSuccess: response => {
+          setIsNewQuotation(false);
           setSavedInvoiceData(data); // เก็บค่าที่บันทึก
         },
       });
     } else {
-      console.log('update',quotationServerId);
+      console.log('UPADTE');
       const existingData = {
         ...methods.getValues(),
         id: quotationServerId,
@@ -480,7 +481,14 @@ const Quotation = ({navigation}: Props) => {
 
     return () => clearInterval(interval);
   }, [sellerSignature, isLoadingWebP]);
-  console.log('quotationServerId',quotationServerId);
+
+  React.useEffect(() => {
+    if (currentValue) {
+      openEditServiceModal();
+    } else if(!currentValue) {
+      closeEditServiceModal();
+    }
+  }, [currentValue]);
 
   return (
     <>
@@ -519,19 +527,16 @@ const Quotation = ({navigation}: Props) => {
           />
           <Appbar.Content title="" />
           <IconButton
-           
             disabled={!quotationServerId}
             icon="web"
-            iconColor="gray"
+            mode="outlined"
             onPress={openProjectModal}
           />
 
           <IconButton
-           
-
             disabled={!pdfUrl && !editQuotation?.pdfUrl}
             icon="file-document"
-            iconColor="gray"
+            mode="outlined"
             onPress={openPDFModal}
           />
           <Appbar.Content title="" />
@@ -895,41 +900,44 @@ const Quotation = ({navigation}: Props) => {
           </SafeAreaView>
         </Modal>
         <SelectProductModal
-          quotationId={quotationId}
           onAddService={newProduct => append(newProduct)}
-          currentValue={currentValue}
           visible={showAddExistingService}
           onClose={closeAddExistingServiceModal}
         />
-        {/* <ContractModal
-          visible={contractModal}
-          onClose={() => setContractModal(false)}
-        /> */}
+
         <WarrantyModal visible={contractModal} onClose={closeContractModal} />
 
         <ProjectModalScreen
-              fileName={customer.name}
-              visible={showProjectModal}
-              onClose={closeProjectModal}
-              url={url}
-            />
-            <PDFModalScreen
-            fileType='QT'
-              fileName={customer.name}
-              visible={showPDFModal}
-              onClose={closePDFModal}
-              pdfUrl={pdfUrl ? pdfUrl : editQuotation?.pdfUrl || ''}
-            />
-        {showAddNewService && (
+          fileName={customer.name}
+          visible={showProjectModal}
+          onClose={closeProjectModal}
+          url={url}
+        />
+        <PDFModalScreen
+          fileType="QT"
+          fileName={customer.name}
+          visible={showPDFModal}
+          onClose={closePDFModal}
+          pdfUrl={pdfUrl ? pdfUrl : editQuotation?.pdfUrl || ''}
+        />
+        {/* {showAddNewService && (
           <AddProductFormModal
             resetSelectService={() => setSelectService(null)}
             selectService={selectService}
             resetAddNewService={() => setAddNewService(false)}
-            quotationId={quotationId}
             onAddService={newProduct => update(serviceIndex, newProduct)}
-            currentValue={currentValue}
             visible={showAddNewService}
             onClose={closeAddNewServiceModal}
+          />
+        )} */}
+        {currentValue && (
+          <UpdateServiceModal
+            visible={showEditServiceModal}
+            resetUpdateService={() => setCurrentValue(null)}
+            onClose={closeEditServiceModal}
+            currentValue={currentValue}
+            serviceIndex={serviceIndex}
+            onUpdateService={(serviceIndex :number,updatedService : ServicesEmbed ) => update( serviceIndex,updatedService)}
           />
         )}
       </FormProvider>
@@ -948,7 +956,6 @@ const styles = StyleSheet.create({
 
     // backgroundColor: '#e9f7ff',
     backgroundColor: '#eaf9f9',
-
   },
   subContainerHead: {
     padding: 30,

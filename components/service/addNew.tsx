@@ -45,13 +45,11 @@ import {ParamListBase} from '../../types/navigationType';
 import {serviceValidationSchema} from '../../screens/utils/validationSchema';
 import Decimal from 'decimal.js-light';
 import ProjectModalScreen from 'components/webview/project';
-import { v4 as uuidv4 } from 'uuid';
-import { DiscountType, ServicesEmbed } from '@prisma/client';
+import {v4 as uuidv4} from 'uuid';
+import {DiscountType, ServicesEmbed} from '@prisma/client';
 
 type Props = {
-  quotationId: string;
   onAddService: (data: ServicesEmbed) => void;
-  currentValue: ServicesEmbed  | null;
   onClose: () => void;
   visible: boolean;
   selectService: ServicesEmbed | null;
@@ -64,9 +62,7 @@ const imageContainerWidth = width / 3 - 10;
 const AddProductFormModal = (props: Props) => {
   // const {control, handleSubmit, watch} = useForm<FormData>();
   const {
-    quotationId,
     onAddService,
-    currentValue,
     onClose,
     visible,
     selectService,
@@ -75,7 +71,6 @@ const AddProductFormModal = (props: Props) => {
   } = props;
   const [isModalVisible, setModalVisible] = useState(false);
   const [isModalMaterialsVisible, setIsModalMaterialsVisible] = useState(false);
-  const [serviceImages, setServiceImages] = useState<string[]>([]);
   const [isModalImagesVisible, setModalImagesVisible] = useState(false);
   // const {isImageUpload, imageUrl, handleLogoUpload} = useImageUpload();
   const [serviceID, setServiceID] = useState<string>('');
@@ -88,7 +83,7 @@ const AddProductFormModal = (props: Props) => {
     resetAddNewService();
   };
 
-  const defaultService : ServicesEmbed = {
+  const defaultService: ServicesEmbed = {
     id: uuidv4(),
     title: '',
     description: '',
@@ -102,12 +97,11 @@ const AddProductFormModal = (props: Props) => {
     standards: [],
     materials: [],
     created: new Date(),
-    };
+  };
   const methods = useForm<ServicesEmbed>({
     mode: 'onChange',
-    defaultValues: currentValue
-      ? currentValue
-      : selectService
+    defaultValues: 
+       selectService
       ? selectService
       : defaultService,
     resolver: yupResolver(serviceValidationSchema),
@@ -140,6 +134,11 @@ const AddProductFormModal = (props: Props) => {
     name: ['unitPrice', 'qty'],
   });
 
+  const serviceImages = useWatch({
+    control: methods.control,
+    name: 'serviceImages',
+  });
+
   useEffect(() => {
     const unitPriceValue = methods.watch('unitPrice') || '0';
     const quantityValue = methods.watch('qty') || '0';
@@ -158,11 +157,7 @@ const AddProductFormModal = (props: Props) => {
     methods.formState.isDirty,
   ]);
   const isButtonDisbled = useMemo(() => {
-    return (
-      title &&
-      unitPrice > 0 &&
-      qty > 0
-    );
+    return title && unitPrice > 0 && qty > 0;
   }, [standards, materials, title, unitPrice, qty]);
 
   return (
@@ -180,7 +175,6 @@ const AddProductFormModal = (props: Props) => {
               'ปิดหน้าต่าง',
               'ยืนยันไม่บันทึกข้อมูลและปิดหน้าต่าง',
               [
-
                 {
                   text: 'อยู่ต่อ',
                   style: 'cancel',
@@ -235,10 +229,13 @@ const AddProductFormModal = (props: Props) => {
                     horizontal={true}
                     renderItem={({item, index}) => {
                       return (
-                        <View style={styles.imageContainer}>
+                        <View key={index} style={styles.imageContainer}>
                           <TouchableOpacity
                             onPress={() => setModalImagesVisible(true)}>
-                            <Image source={{uri: item.originalUrl}} style={styles.image} />
+                            <Image
+                              source={{uri: item.originalUrl}}
+                              style={styles.image}
+                            />
                           </TouchableOpacity>
                         </View>
                       );
@@ -275,9 +272,7 @@ const AddProductFormModal = (props: Props) => {
                             height: 150,
                             width: 200,
                           }}
-                          onPress={() => 
-                            setModalImagesVisible(true)
-                          }>
+                          onPress={() => setModalImagesVisible(true)}>
                           <FontAwesomeIcon
                             icon={faImages}
                             style={{marginVertical: 5, marginHorizontal: 50}}
@@ -425,7 +420,6 @@ const AddProductFormModal = (props: Props) => {
                       </>
                     )}
                   />
-                
                 </View>
                 <View
                   style={{
@@ -556,7 +550,6 @@ const AddProductFormModal = (props: Props) => {
                               onPress={() =>
                                 setIsModalMaterialsVisible(true)
                               }></Button>
-                   
                           ))}
                       </View>
                     </>
@@ -598,9 +591,7 @@ const AddProductFormModal = (props: Props) => {
                     alignSelf: 'center',
                     alignItems: 'center',
                     justifyContent: 'center',
-                  }}>
-
-                </View>
+                  }}></View>
               </View>
               <SelectStandard
                 isVisible={isModalVisible}
@@ -618,10 +609,7 @@ const AddProductFormModal = (props: Props) => {
                 isVisible={isModalImagesVisible}
                 onClose={() => setModalImagesVisible(false)}
                 serviceImages={serviceImages}
-                setServiceImages={setServiceImages}
               />
- 
-
             </ScrollView>
           </View>
         </KeyboardAwareScrollView>

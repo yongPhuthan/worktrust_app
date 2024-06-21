@@ -1,10 +1,10 @@
-import { faClose } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { RouteProp } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { useQueryClient } from '@tanstack/react-query';
-import React, { useCallback, useContext, useState } from 'react';
-import { Controller, FormProvider, useForm, useWatch } from 'react-hook-form';
+import {faClose} from '@fortawesome/free-solid-svg-icons';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {RouteProp} from '@react-navigation/native';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {useQueryClient} from '@tanstack/react-query';
+import React, {useCallback, useContext, useState} from 'react';
+import {Controller, FormProvider, useForm, useWatch} from 'react-hook-form';
 import {
   ActivityIndicator,
   Alert,
@@ -18,7 +18,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import Modal from 'react-native-modal';
 import {
   Appbar,
@@ -26,29 +26,31 @@ import {
   Button,
   Divider,
   IconButton,
-  TextInput
+  TextInput,
 } from 'react-native-paper';
 
 import {
   ServicesEmbed,
   SubmissionStatus,
   Submissions,
-  WorkStatus
+  WorkStatus,
 } from '@prisma/client';
 import Clipboard from '@react-native-clipboard/clipboard';
-import { v4 as uuidv4 } from 'uuid';
+import {v4 as uuidv4} from 'uuid';
 import DatePickerButton from '../../components/styles/DatePicker';
 import AddNewImage from '../../components/submission/after/addNew';
 import AddNewBeforeImage from '../../components/submission/before/addNew';
 import ProjectModalScreen from '../../components/webview/project';
-import { useModal } from '../../hooks/quotation/create/useModal';
+import {useModal} from '../../hooks/quotation/create/useModal';
 import useSelectedDates from '../../hooks/quotation/create/useSelectDates';
-import useCreateSubmission from '../../hooks/submission/useSaveSubmission';
-import { useUploadToFirebase } from '../../hooks/submission/useUploadToFirebase';
+import useCreateSubmission from '../../hooks/submission/useCreate';
+import {useUploadToFirebase} from '../../hooks/submission/useUploadToFirebase';
 import useShare from '../../hooks/webview/useShare';
-import { useUser } from '../../providers/UserContext';
-import { Store } from '../../redux/store';
-import { ParamListBase } from '../../types/navigationType';
+import {useUser} from '../../providers/UserContext';
+import {Store} from '../../redux/store';
+import {ParamListBase} from '../../types/navigationType';
+import SubmissionViewScreen from '../../components/webview/submission';
+import useUpdateSubmission from '../../hooks/submission/useUpdate';
 type Props = {
   navigation: StackNavigationProp<ParamListBase>;
   route: RouteProp<ParamListBase, 'SendWorks'>;
@@ -60,6 +62,12 @@ type BeforeImageLoadingStatus = {
   [index: number]: boolean;
 };
 
+const thaiDateFormatter = new Intl.DateTimeFormat('th-TH', {
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
+
 const width = Dimensions.get('window').width;
 
 const SendWorks = (props: Props) => {
@@ -70,15 +78,16 @@ const SendWorks = (props: Props) => {
     initialDateOffer,
   } = useSelectedDates();
   const {
-    state: {code, editQuotation, companyState, fcmToken},
+    state: {
+      code,
+      editQuotation,
+      companyState,
+      fcmToken,
+      editSubmission,
+      quotationId,
+    },
     dispatch,
   } = useContext(Store);
-
-  if (!editQuotation || !companyState || !editQuotation.customer) {
-    Alert.alert('ไม่พบข้อมูลใบเสนอราคา');
-    navigation.goBack();
-    return null;
-  }
   const [dateOfferFormatted, setDateOfferFormatted] = useState<string>(
     initialDateOfferFormatted,
   );
@@ -99,34 +108,35 @@ const SendWorks = (props: Props) => {
 
   const [opneSubmissionModal, setOpenSubmissionModal] =
     useState<boolean>(false);
-  const handleShare = useShare({
-    url,
-    title: `ส่งงานลูกค้า ${editQuotation.customer.name}`,
-  });
 
+  const initialSubmission: Submissions = {
+    id: uuidv4(),
+    address: editQuotation ? editQuotation.customer.address : '',
+    description: '',
+    dateOffer: initialDateOffer,
+    services: editQuotation ? editQuotation.services : [],
+    beforeImages: [],
+    reject: null,
+    inspector: null,
+    reviews: [],
+    afterImages: [],
+    workStatus: WorkStatus?.ALL,
+    reSubmissionId: null,
+    history:false,
+    FCMToken: fcmToken,
+    quotationRefNumber: editQuotation ? editQuotation.docNumber : '',
+    companyId: companyState ? companyState.id : '',
+    customer: editQuotation ? editQuotation.customer : (null as any),
+    companyCode: code,
+    status: SubmissionStatus?.PENDING,
+    createdAt: new Date(),
+    companyName: companyState?.bizName ?? '',
+    workers: editQuotation ? editQuotation.workers : [],
+    updatedAt: new Date(),
+  };
   const methods = useForm<Submissions>({
     mode: 'all',
-    defaultValues: {
-      id: uuidv4(),
-      address: editQuotation.customer.address || '',
-      description: '',
-      dateOffer: initialDateOffer,
-      services: editQuotation.services,
-      beforeImages: [],
-      afterImages: [],
-      workStatus: WorkStatus?.ALL,
-      FCMToken: fcmToken,
-      quotationRefNumber: editQuotation.docNumber,
-      companyId: companyState.id,
-      customer: editQuotation.customer,
-      companyCode: code,
-      quotationId: editQuotation.id,
-      status: SubmissionStatus?.PENDING,
-      createdAt: new Date(),
-      companyName: companyState?.bizName ?? '',
-      workers: editQuotation.workers ? editQuotation.workers : [],
-      updatedAt: new Date(),
-    } as unknown as Submissions,
+    defaultValues: editSubmission ? editSubmission : initialSubmission,
   });
   const beforeImages = useWatch({
     control: methods.control,
@@ -134,40 +144,24 @@ const SendWorks = (props: Props) => {
   });
   const dateOffer = useWatch({control: methods.control, name: 'dateOffer'});
   const afterImages = useWatch({control: methods.control, name: 'afterImages'});
-  const [viewResult, setViewResult] = React.useState('');
-  const beforeImagesStoragePath = `${code}/submission/${editQuotation.docNumber}/beforeImages/${imageRandomId}`;
-  const afterImagesStoragePath = `${code}/submission/${editQuotation.docNumber}/afterImages/${imageRandomId}`;
   const {isUploading, error, uploadImages} = useUploadToFirebase();
   const [isOpenModal, setIsOpenModal] = useState(false);
   const [isBeforeImage, setIsBeforeImage] = useState(false);
   const [checkLoading, setCheckLoading] = useState(false);
-
-  // const {isImagePicking: pickingBeforeImage, pickImage: pickBeforeImage} =
-  //   usePickImage((uri: string) => {
-  //     setValue('beforeImages', [...beforeImages, uri], {
-  //       shouldDirty: true,
-  //       shouldValidate: true,
-  //     });
-  //   });
-
-  // const {isImagePicking: pickingAfterImage, pickImage: pickAfterImage} =
-  //   usePickImage((uri: string) => {
-  //     setValue('afterImages', [...afterImages, uri], {
-  //       shouldDirty: true,
-  //       shouldValidate: true,
-  //     });
-  //   });
   const services = useWatch({control: methods.control, name: 'services'});
 
   const actions: any = {
     setSubmissionServerId,
-    openProjectModal,
+    openProjectModal: () => {
+      setOpenSubmissionModal(true);
+    },
   };
   const [loadingStatus, setLoadingStatus] = useState<LoadingStatus>({});
   const [loadingBeforeImageStatus, setLoadingBeforeImageStatus] =
     useState<BeforeImageLoadingStatus>({});
 
   const {mutate, isPending} = useCreateSubmission(actions);
+  const {mutate: editQuotationMutation, isPending:isUpdating} = useUpdateSubmission(actions);
 
   const removeService = (index: number) => {
     const updatedServices = services.filter((_: any, i: number) => i !== index);
@@ -176,7 +170,19 @@ const SendWorks = (props: Props) => {
       shouldValidate: true,
     });
   };
+const quotationRefNumber = useWatch({
+    control: methods.control,
+    name: 'quotationRefNumber',
+  });
 
+  const customerName = useWatch({
+    control: methods.control,
+    name: 'customer.name',
+  });
+const workers = useWatch({
+    control: methods.control,
+    name: 'workers',
+  });
   const removeBeforeImage = useCallback(
     (uri: string) => {
       // Filter out the image URI from the current state
@@ -203,45 +209,51 @@ const SendWorks = (props: Props) => {
   );
 
   const handleDone = useCallback(async () => {
-    // const uploadedBeforeImageUrls = await uploadImages(
-    //   beforeImages,
-    //   beforeImagesStoragePath,
-    // );
-    // const uploadedAfterImageUrls = await uploadImages(
-    //   afterImages,
-    //   afterImagesStoragePath,
-    // );
-    mutate({
-      ...methods.getValues(),
-      // beforeImages: uploadedBeforeImageUrls,
-      // afterImages: uploadedAfterImageUrls,
-      quotationId: editQuotation.id,
-    });
-  }, [beforeImages, afterImages, editQuotation, methods.getValues, mutate]);
+    if(editSubmission){
+      editQuotationMutation({
+        submission: methods.getValues(),
+      });
+      return;
+    
+    }else{
+      mutate({
+        ...methods.getValues(),
+        quotationId,
+      });
+    }
+  
+  }, [beforeImages, afterImages, editQuotation, methods.getValues, mutate,editSubmission]);
 
   const handleStartDateSelected = (date: Date) => {
     methods.setValue('dateOffer', date);
   };
 
-  const copyLinkToClipboard = () => {
-    const link = `www.worktrust.co/submission/${submissionServerId}`;
-    Clipboard.setString(link);
-    setCopied(true);
-    setTimeout(() => {
-      setCopied(false);
-    }, 2000);
-  };
+
   React.useEffect(() => {
-    if (services.length !== editQuotation.services.length) {
-      methods.setValue('workStatus', WorkStatus.PERIOD, {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
-    } else {
-      methods.setValue('workStatus', WorkStatus.ALL, {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
+    if (editQuotation) {
+      if (services.length !== editQuotation.services.length) {
+        methods.setValue('workStatus', WorkStatus.PERIOD, {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+      } else {
+        methods.setValue('workStatus', WorkStatus.ALL, {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+      }
+    } else if (editSubmission) {
+      if (services.length !== editSubmission.services.length) {
+        methods.setValue('workStatus', WorkStatus.PERIOD, {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+      } else {
+        methods.setValue('workStatus', WorkStatus.ALL, {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+      }
     }
   }, [services]);
 
@@ -284,6 +296,9 @@ const SendWorks = (props: Props) => {
     return () => clearInterval(interval);
   }, [beforeImages, loadingBeforeImageStatus]);
 
+
+
+
   return (
     <>
       <FormProvider {...methods}>
@@ -304,16 +319,15 @@ const SendWorks = (props: Props) => {
               mode="outlined"
               icon="web"
               iconColor="gray"
-              onPress={openProjectModal}
+              onPress={() => setOpenSubmissionModal(true)}
             />
           )}
           <Appbar.Content title="" />
 
           <Button
-            loading={isUploading || isPending}
-            disabled={!methods.formState.isValid || isUploading || isPending}
+            loading={isUploading || isPending || isUpdating}
+            disabled={!methods.formState.isValid || isUploading || isPending || isUpdating}
             mode="contained"
-            // buttonColor={'#1b72e8'}
             onPress={handleDone}>
             {'บันทึก'}
           </Button>
@@ -336,7 +350,7 @@ const SendWorks = (props: Props) => {
                   alignContent: 'center',
                 }}>
                 <Text style={styles.title}> ใบเสนอราคาเลขที่ </Text>
-                <Text>{editQuotation.docNumber}</Text>
+                <Text>{ quotationRefNumber}</Text>
               </View>
               <Divider />
               <View
@@ -348,7 +362,7 @@ const SendWorks = (props: Props) => {
                   alignContent: 'center',
                 }}>
                 <Text style={styles.title}>ลูกค้า </Text>
-                <Text>{editQuotation.customer.name}</Text>
+                <Text>{customerName}</Text>
               </View>
             </View>
 
@@ -359,16 +373,18 @@ const SendWorks = (props: Props) => {
               style={{
                 flexDirection: 'row',
                 justifyContent: 'space-between',
+                alignItems: 'center',
+                marginVertical: 15,
               }}>
-              <Text style={styles.titleDate}>วันที่ส่งงาน</Text>
-              <View style={{marginTop: 10, marginLeft: 10}}>
-                <DatePickerButton
-                  title="วันที่ส่งงาน"
-                  label=""
-                  date={new Date(dateOffer)}
-                  onDateSelected={handleStartDateSelected}
-                />
-              </View>
+              <Text style={styles.titleDate}>วันที่แจ้งส่งงาน</Text>
+              <View >
+                  <DatePickerButton
+                    title="วันที่แจ้งส่งงาน"
+                    label=""
+                    date={new Date(dateOffer)}
+                    onDateSelected={handleStartDateSelected}
+                  />
+                </View>
             </View>
 
             <Divider />
@@ -386,8 +402,12 @@ const SendWorks = (props: Props) => {
                     <TextInput
                       multiline
                       style={styles.input}
+                     
                       error={!!error}
-                      mode="outlined"
+                      mode={
+                        'outlined'
+                     
+                      }
                       numberOfLines={4}
                       placeholder="สถาณที่ติดตั้งงาน เลขที่ ถนน ตำบล อำเภอ จังหวัด...."
                       placeholderTextColor={'#A6A6A6'}
@@ -415,7 +435,7 @@ const SendWorks = (props: Props) => {
                     flexDirection: 'row',
                     flex: 1,
                     justifyContent: 'space-between',
-                    maxWidth: width *0.75,
+                    maxWidth: width * 0.75,
                     gap: 10,
                   }}
                   key={index}>
@@ -441,11 +461,11 @@ const SendWorks = (props: Props) => {
             <Divider style={{marginVertical: 20}} />
 
             <View>
-              {editQuotation.workers && editQuotation.workers.length > 0 && (
+              {workers.length > 0 && (
                 <View>
                   <Text style={styles.title}>พนักงานติดตั้ง</Text>
                   <FlatList
-                    data={editQuotation.workers}
+                    data={workers}
                     horizontal={true}
                     renderItem={({item, index}) => {
                       return (
@@ -600,11 +620,11 @@ const SendWorks = (props: Props) => {
         </KeyboardAwareScrollView>
         {submissionServerId && (
           <>
-            <ProjectModalScreen
-              fileName={editQuotation.customer.name}
-              visible={showProjectModal}
-              onClose={closeProjectModal}
-              url = {url}
+            <SubmissionViewScreen
+              fileName={customerName}
+              visible={opneSubmissionModal}
+              onClose={() => setOpenSubmissionModal(false)}
+              url={url}
             />
           </>
         )}
@@ -632,7 +652,6 @@ const SendWorks = (props: Props) => {
 };
 
 export default SendWorks;
-
 
 const styles = StyleSheet.create({
   containerForm: {

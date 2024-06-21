@@ -5,6 +5,7 @@ import {
   Invoices,
   Quotations,
   Receipts,
+  Submissions,
   User,
   WarrantyEmbed,
   Workers,
@@ -38,6 +39,25 @@ export type CompanyQuery = {
   company: CompanyState;
   userSignature: string;
   sellerId: string;
+};
+export type ReceiptsQuery = {
+  company :{
+    receipts: Receipts[];
+
+  }
+
+};
+
+export type InvoiceQuery = {
+  company: {
+    invoices: Invoices[];
+  };
+};
+
+export type SubmissionQuery = {
+  company: {
+    submissions : Submissions[];
+  };
 };
 
 export type companyWithoutQuotations = Omit<CompanyState, 'quotations'>;

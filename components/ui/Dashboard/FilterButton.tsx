@@ -1,8 +1,8 @@
 // FilterButton.tsx
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { InvoicesFilterLabels, QuotationsFilterLabels, ReceiptsFilterLabels } from '../../../models/QuotationStatus'; // Adjust the import path as necessary
-import { InvoiceStatus, QuotationStatus, ReceiptStatus } from '@prisma/client';
+import { InvoicesFilterLabels, QuotationsFilterLabels, ReceiptsFilterLabels, SubmissionFilterLabels, WarrantyFilterLabels } from '../../../models/DocumentStatus'; // Adjust the import path as necessary
+import { InvoiceStatus, QuotationStatus, ReceiptStatus, SubmissionStatus, WarrantyStatus } from '@prisma/client';
 
 type QuotationsFilterButtonProps = {
     filter: QuotationStatus
@@ -20,6 +20,18 @@ type QuotationsFilterButtonProps = {
     isActive: boolean;
     onPress: () => void;
   };
+
+  type SubmissionFilterButtonProps = {
+    filter: SubmissionStatus
+    isActive: boolean;
+    onPress: () => void;
+  };
+
+  type WarrantyFilterButtonProps = {
+    filter: WarrantyStatus
+    isActive: boolean;
+    onPress: () => void;
+  }
 
 
 
@@ -54,6 +66,31 @@ export const QuotationsFilterButton: React.FC<QuotationsFilterButtonProps> = ({ 
       </TouchableOpacity>
     );
   };
+
+  export const SubmissionFilterButton: React.FC<SubmissionFilterButtonProps> = ({ filter, isActive, onPress }) => {
+    const displayText = SubmissionFilterLabels[filter as keyof typeof SubmissionFilterLabels];
+    return (
+      <TouchableOpacity
+        style={[styles.filterButton, isActive ? styles.activeFilter : null]}
+        onPress={onPress}>
+        <Text style={isActive ? { color: 'white' } : null}>{ displayText}</Text>
+      </TouchableOpacity>
+    );
+  };
+
+
+  export const WarrantyFilterButton: React.FC<WarrantyFilterButtonProps> = ({ filter, isActive, onPress }) => {
+    const displayText = WarrantyFilterLabels[filter as keyof typeof WarrantyFilterLabels];
+    return (
+      <TouchableOpacity
+        style={[styles.filterButton, isActive ? styles.activeFilter : null]}
+        onPress={onPress}>
+        <Text style={isActive ? { color: 'white' } : null}>{ displayText}</Text>
+      </TouchableOpacity>
+    );
+  };
+
+
 
 // Define styles for your FilterButton here
 const styles = StyleSheet.create({

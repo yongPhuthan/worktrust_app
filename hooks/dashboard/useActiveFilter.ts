@@ -1,5 +1,5 @@
 // useActiveFilter.ts
-import { InvoiceStatus, QuotationStatus, ReceiptStatus } from '@prisma/client';
+import { InvoiceStatus, QuotationStatus, ReceiptStatus, SubmissionStatus, WarrantyStatus } from '@prisma/client';
 import { useState } from 'react';
 
 export const useActiveFilter = () => {
@@ -31,3 +31,24 @@ export const useActiveReceiptFilter = () => {
 
   return { activeFilter, updateActiveFilter };
 };
+
+export const useActiveSubmissionFilter = () => {
+  const [activeFilter, setActiveFilter] = useState<SubmissionStatus>(SubmissionStatus.ALL);
+
+  const updateActiveFilter = (filter: SubmissionStatus) => {
+    setActiveFilter(filter);
+  };
+
+  return { activeFilter, updateActiveFilter };
+};
+
+export const useActiveWarrantyFilter = () => {
+  const [activeFilter, setActiveFilter] = useState<WarrantyStatus>(WarrantyStatus.ALL);
+
+  const updateActiveFilter = (filter: WarrantyStatus) => {
+    setActiveFilter(filter);
+  };
+
+  return { activeFilter, updateActiveFilter };
+};
+
