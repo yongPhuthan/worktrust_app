@@ -36,6 +36,7 @@ import {
   TextInput,
   Text as TextPaper,
   Chip,
+  Divider,
 } from 'react-native-paper';
 import GalleryScreen from '../gallery/existing';
 import ExistingMaterials from '../materials/existing';
@@ -46,7 +47,13 @@ import {serviceValidationSchema} from '../../screens/utils/validationSchema';
 import Decimal from 'decimal.js-light';
 import ProjectModalScreen from 'components/webview/project';
 import {v4 as uuidv4} from 'uuid';
-import {DiscountType, ServicesEmbed} from '@prisma/client';
+import {
+  DefaultMaterials,
+  DiscountType,
+  MaterialEmbed,
+  ServicesEmbed,
+  StandardEmbed,
+} from '@prisma/client';
 
 type Props = {
   onAddService: (data: ServicesEmbed) => void;
@@ -100,10 +107,7 @@ const AddProductFormModal = (props: Props) => {
   };
   const methods = useForm<ServicesEmbed>({
     mode: 'onChange',
-    defaultValues: 
-       selectService
-      ? selectService
-      : defaultService,
+    defaultValues: selectService ? selectService : defaultService,
     resolver: yupResolver(serviceValidationSchema),
   });
   const standards = useWatch({
@@ -198,7 +202,6 @@ const AddProductFormModal = (props: Props) => {
           title="เพิ่มสินค้า-บริการ"
           titleStyle={{
             fontSize: 18,
-            fontWeight: 'bold',
           }}
         />
         <Button
@@ -250,7 +253,7 @@ const AddProductFormModal = (props: Props) => {
                           }}>
                           <FontAwesomeIcon
                             icon={faPlus}
-                            size={32}
+                            size={20}
                             color="#0073BA"
                           />
                         </TouchableOpacity>
@@ -292,6 +295,14 @@ const AddProductFormModal = (props: Props) => {
                     }
                   />
                 </View>
+                <View style={{
+                  flexDirection:'column',
+                  justifyContent:'center',
+                  gap:5,
+                  marginVertical:20
+                }}>
+
+            
                 <Controller
                   control={methods.control}
                   name="title"
@@ -329,12 +340,12 @@ const AddProductFormModal = (props: Props) => {
                       keyboardType="name-phone-pad"
                       style={
                         Platform.OS === 'ios'
-                          ? {
+                          && {
                               height: 80,
                               textAlignVertical: 'top',
-                              marginTop: 10,
+                      
                             }
-                          : {marginTop: 10}
+                          
                       }
                       mode="outlined"
                       numberOfLines={3}
@@ -427,7 +438,7 @@ const AddProductFormModal = (props: Props) => {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: 10,
-                    marginTop: 20,
+           
                   }}>
                   <TextPaper variant="headlineMedium">รวม</TextPaper>
 
@@ -445,153 +456,103 @@ const AddProductFormModal = (props: Props) => {
                     )}
                   />
                 </View>
-                <View
-                  style={{
-                    ...Platform.select({
-                      ios: {
-                        paddingVertical: 10,
-                      },
-                      android: {
-                        paddingVertical: 0,
-                      },
-                    }),
-                  }}></View>
-                <SmallDivider />
-
-                <View>
-                  {methods.watch('standards')?.length > 0 ? (
-                    <View style={styles.cardContainer}>
-                      <Text
-                        style={{
-                          marginBottom: 5,
-                          marginTop: 20,
-                          fontFamily: 'Sukhumvit Set Bold',
-                          fontWeight: 'bold',
-                          fontSize: 16,
-                          color: '#333',
-                        }}>
-                        มาตรฐานของบริการนี้
-                      </Text>
-                      {methods.watch('standards')?.map((item: any) => (
-                        <Button
-                          children={item.standardShowTitle}
-                          // icon={'chevron-right'}
-                          style={{
-                            margin: 3,
-                            maxWidth: '100%',
-                          }}
-                          contentStyle={{flexDirection: 'row-reverse'}}
-                          mode="outlined"
-                          key={item.id}
-                          onPress={() => setModalVisible(true)}></Button>
-                      ))}
-                    </View>
-                  ) : (
-                    <TouchableOpacity
-                      style={styles.selectButton}
-                      onPress={() => setModalVisible(true)}>
-                      <View style={styles.containerButton}>
-                        <FontAwesomeIcon
-                          icon={faPlusCircle}
-                          color="#0073BA"
-                          size={14}
-                        />
-                        <Text style={styles.selectButtonText}>
-                          เลือกมาตรฐานการทำงาน
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                  )}
                 </View>
                 <View
                   style={{
-                    ...Platform.select({
-                      ios: {
-                        paddingVertical: 10,
-                      },
-                      android: {
-                        paddingVertical: 10,
-                      },
-                    }),
-                  }}></View>
-                <SmallDivider />
-                <View>
-                  {methods.watch('materials')?.length > 0 ? (
-                    <>
-                      <Text
-                        style={{
-                          marginBottom: 5,
-                          marginTop: 20,
-                          fontSize: 16,
-                          fontFamily: 'Sukhumvit Set Bold',
-                          fontWeight: 'bold',
-                          color: '#333',
-                        }}>
-                        วัสดุอุปกรณ์ที่ใช้
-                      </Text>
+                    flexDirection: 'column',
+                    gap: 20,
+                  }}>
+                  <Divider />
+
+                  <View>
+                    {methods.watch('standards')?.length > 0 ? (
                       <View style={styles.cardContainer}>
-                        {methods
-                          .watch('materials')
-                          ?.map((item: any, index: number) => (
-                            <Button
-                              children={item.name}
-                              // icon={'chevron-right'}
-                              style={{
-                                margin: 3,
-                                maxWidth: '100%',
-                                alignContent: 'flex-start',
-                              }}
-                              contentStyle={{
-                                flexDirection: 'row-reverse',
-                                alignItems: 'flex-start',
-                              }}
-                              mode="outlined"
-                              key={index}
-                              onPress={() =>
-                                setIsModalMaterialsVisible(true)
-                              }></Button>
-                          ))}
+                        <Text
+                          style={{
+                            marginBottom: 5,
+                            marginTop: 20,
+                            fontWeight: 'bold',
+                            fontSize: 16,
+                            color: '#333',
+                          }}>
+                          มาตรฐานของบริการนี้
+                        </Text>
+                        <TouchableOpacity
+                          onPress={() => setModalVisible(true)}
+                          style={styles.cardContainer}>
+                          {methods
+                            .watch('standards')
+                            ?.map((item: StandardEmbed) => (
+                              <Text key={item.id}>
+                                {item.standardShowTitle}
+                              </Text>
+                            ))}
+                        </TouchableOpacity>
                       </View>
-                    </>
-                  ) : (
-                    <View>
-                      <TouchableOpacity
-                        style={styles.selectButton}
-                        onPress={() => setIsModalMaterialsVisible(true)}>
-                        <View style={styles.containerButton}>
-                          <FontAwesomeIcon
-                            icon={faPlusCircle}
-                            color="#0073BA"
-                            size={14}
-                          />
-
-                          <Text style={styles.selectButtonText}>
-                            เลือกวัสดุอุปกรณ์
-                          </Text>
-                        </View>
-                      </TouchableOpacity>
-                    </View>
-                  )}
+                    ) : (
+                      <Button
+                        children="เพิ่มมาตรฐานการทำงาน"
+                        style={{
+                          borderColor: '#0073BA',
+                          borderStyle: 'dotted',
+                        }}
+                        mode="outlined"
+                        icon={'plus'}
+                        textColor="#0073BA"
+                        contentStyle={{
+                          flexDirection: 'row-reverse',
+                          justifyContent: 'space-between',
+                        }}
+                        onPress={() => setModalVisible(true)}></Button>
+                    )}
+                  </View>
+                  {/* <Divider /> */}
+                  <View>
+                    {methods.watch('materials')?.length > 0 ? (
+                      <>
+                        <Text
+                          style={{
+                            marginBottom: 5,
+                            marginTop: 20,
+                            fontSize: 16,
+                            fontFamily: 'Sukhumvit Set Bold',
+                            fontWeight: 'bold',
+                            color: '#333',
+                          }}>
+                          วัสดุอุปกรณ์ที่ใช้
+                        </Text>
+                        <TouchableOpacity
+                          onPress={() => setIsModalMaterialsVisible(true)}
+                          style={styles.cardContainer}>
+                          {methods
+                            .watch('materials')
+                            ?.map((item: MaterialEmbed, index: number) => (
+                              <Text key={index}>{item.name}</Text>
+                            ))}
+                        </TouchableOpacity>
+                      </>
+                    ) : (
+                      <View>
+                        <Button
+                          children="เพิ่มวัสดุอุปกรณ์"
+                          style={{
+                            borderColor: '#0073BA',
+                            borderStyle: 'dotted',
+                          }}
+                          mode="outlined"
+                          icon={'plus'}
+                          textColor="#0073BA"
+                          contentStyle={{
+                            flexDirection: 'row-reverse',
+                            justifyContent: 'space-between',
+                          }}
+                          onPress={() =>
+                            setIsModalMaterialsVisible(true)
+                          }></Button>
+                      </View>
+                    )}
+                  </View>
                 </View>
-                <View
-                  style={{
-                    ...Platform.select({
-                      ios: {
-                        paddingVertical: 10,
-                      },
-                      android: {
-                        paddingVertical: 10,
-                      },
-                    }),
-                  }}></View>
-                <SmallDivider />
-                <View
-                  style={{
-                    width: '100%',
-                    alignSelf: 'center',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}></View>
               </View>
               <SelectStandard
                 isVisible={isModalVisible}
@@ -811,10 +772,8 @@ const styles = StyleSheet.create({
     borderColor: '#0073BA',
     borderWidth: 1,
     borderStyle: 'dotted',
-    paddingVertical: 12,
-    paddingHorizontal: 32,
+
     borderRadius: 5,
-    marginTop: 20,
   },
   image: {
     width: '100%',
@@ -825,7 +784,7 @@ const styles = StyleSheet.create({
   selectButtonText: {
     fontSize: 16,
     color: '#0073BA',
-    fontFamily: 'Sukhumvit set',
+    // fontFamily: 'Sukhumvit set',
     marginLeft: 10,
   },
   btnDisabled: {
@@ -854,6 +813,9 @@ const styles = StyleSheet.create({
   cardContainer: {
     flexDirection: 'column',
     gap: 10,
+    borderWidth: 0.5,
+    padding: 20,
+    borderRadius: 10,
   },
 
   card: {

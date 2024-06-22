@@ -2,28 +2,44 @@ import {
   faPlusCircle
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import React, { useContext } from 'react';
+import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Store } from '../redux/store';
+import {
+  Button
+} from 'react-native-paper';
 type Props = {
   handleAddProductFrom: Function;
 };
 
 const AddServices = (props: Props) => {
-  const {
-    state: {client_name, serviceList},
-    dispatch,
-  }: any = useContext(Store);
   return (
     <View style={styles.container}>
-      <TouchableOpacity
+                   <Button
+                    children=
+                      "เพิ่มบริการ-สินค้า"
+                    
+                    style={{
+                      borderColor: '#0073BA',
+                      borderStyle: 'dotted',
+                    }}
+                    mode="outlined"
+                    icon={'plus'}
+                    textColor="#0073BA"
+                    contentStyle={{
+              
+                      justifyContent: 'center',
+                    }}
+                    onPress={() =>
+                      props.handleAddProductFrom()
+                    }></Button>
+      {/* <TouchableOpacity
         onPress={() => props.handleAddProductFrom()}
         style={styles.button}>
         <View style={styles.containerButton}>
           <FontAwesomeIcon icon={faPlusCircle} color="#0073BA" size={18} />
           <Text style={styles.labelButton}>เพิ่มบริการ-สินค้า</Text>
         </View>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </View>
   );
 };

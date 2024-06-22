@@ -27,6 +27,7 @@ import {useUriToBlob} from '../../hooks/utils/image/useUriToBlob';
 import {useUser} from '../../providers/UserContext';
 import {Store} from '../../redux/store';
 import { usePutServer } from '../../hooks/workers/update';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 interface ExistingModalProps {
   setRefetch: () => void;
@@ -170,7 +171,7 @@ const UpdateWorkers = ({setRefetch, onClose, worker}: ExistingModalProps) => {
   });
 
   return (
-    <View style={styles.container}>
+    <View >
             <Appbar.Header
         mode="center-aligned"
         elevated
@@ -184,11 +185,10 @@ const UpdateWorkers = ({setRefetch, onClose, worker}: ExistingModalProps) => {
           title={`แก้ไขทีม`}
           titleStyle={{
             fontSize: 18,
-            fontWeight: 'bold',
-            fontFamily: 'Sukhumvit set',
           }}
         />
       </Appbar.Header>
+      <KeyboardAwareScrollView style={styles.container}>
       <Controller
         control={control}
         name="image"
@@ -278,7 +278,7 @@ const UpdateWorkers = ({setRefetch, onClose, worker}: ExistingModalProps) => {
         style={{
           width: '90%',
           alignSelf: 'center',
-          marginBottom: 20,
+          marginBottom: 100,
           marginTop: 20,
         }}
         mode="contained"
@@ -287,6 +287,7 @@ const UpdateWorkers = ({setRefetch, onClose, worker}: ExistingModalProps) => {
         }}>
         {'บันทึก'}
       </Button>
+      </KeyboardAwareScrollView>
     </View>
   );
 };
@@ -294,10 +295,10 @@ const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
 const styles = StyleSheet.create({
   container: {
-    margin: 50,
     paddingHorizontal: 20,
-    marginVertical: 20,
+    paddingVertical: 20,
     backgroundColor: '#ffffff',
+    paddingBottom: 100,
     width: windowWidth,
     height: windowHeight,
   },

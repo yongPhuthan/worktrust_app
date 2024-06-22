@@ -225,10 +225,14 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
   };
   const afterImages = context.getValues('afterImages');
   const uploadImageWithTags = async (): Promise<void> => {
-    if (!image || selectedTags.length === 0) {
+    if (!image ) {
       alert(
         'Please ensure an image is selected and at least one tag is chosen.',
       );
+      return;
+    }
+    if( !selectedTags || selectedTags.length === 0){
+      Alert.alert('กรุณาเลือกหมวดหมู่', 'กรุณาเลือกหมวดหมู่ของรูปภาพเพื่อบันทึกผลงาน');
       return;
     }
     setIsLoading(true);
@@ -391,7 +395,7 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
         />
         <Button
           loading={isImageUpload || isUploading}
-          disabled={!image || !selectedTags || selectedTags.length === 0 ||isImageUpload || isUploading}
+          disabled={!image  ||isImageUpload || isUploading}
           mode="outlined"
           onPress={() => {
             uploadImageWithTags();

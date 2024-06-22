@@ -11,7 +11,7 @@ import {
 import {Appbar, Button, Text} from 'react-native-paper';
 import {Store} from '../../redux/store';
 import AddProductFormModal from './addNew';
-import { ServicesEmbed } from '@prisma/client';
+import {ServicesEmbed} from '@prisma/client';
 
 interface Props {
   visible: boolean;
@@ -29,16 +29,21 @@ const SelectProductModal: React.FC<Props> = ({
     dispatch,
   } = useContext(Store);
   const [showAddNewService, setShowAddNewService] = useState(false);
-  const [selectService, setSelectService] = useState<ServicesEmbed | null>(null);
+  const [selectService, setSelectService] = useState<ServicesEmbed | null>(
+    null,
+  );
   const [addNewService, setAddNewService] = useState(false);
-  const uniqueExistingServices: ServicesEmbed[] = existingServices.reduce((acc: ServicesEmbed[], current: ServicesEmbed) => {
-    const x = acc.find((item: ServicesEmbed) => item.id === current.id);
-    if (!x) {
-      return acc.concat([current]);
-    } else {
-      return acc;
-    }
-  }, []);
+  const uniqueExistingServices: ServicesEmbed[] = existingServices.reduce(
+    (acc: ServicesEmbed[], current: ServicesEmbed) => {
+      const x = acc.find((item: ServicesEmbed) => item.id === current.id);
+      if (!x) {
+        return acc.concat([current]);
+      } else {
+        return acc;
+      }
+    },
+    [],
+  );
   return (
     <>
       <Modal animationType="slide" visible={visible}>
@@ -52,11 +57,10 @@ const SelectProductModal: React.FC<Props> = ({
           <Appbar.Action icon={'close'} onPress={onClose} />
 
           <Appbar.Content
-            title={`เลือกจากรายการเดิม`}
+            title={`เลือกรายการสินค้า`}
             titleStyle={{
               fontSize: 18,
               fontWeight: 'bold',
-              fontFamily: 'Sukhumvit set',
             }}
           />
           {uniqueExistingServices.length > 0 && (
@@ -97,16 +101,32 @@ const SelectProductModal: React.FC<Props> = ({
               </TouchableOpacity>
             )}
             ListEmptyComponent={
-              <Button
-                icon={'plus'}
-                children="เพิ่มรายการใหม่"
-                testID="submited-button"
-                mode="outlined"
-                onPress={() => {
-                  setShowAddNewService(true);
-                  setAddNewService(true);
-                  onClose();
-                }}></Button>
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  alignContent: 'center',
+                  
+
+        
+                }}>
+                  <Text style={
+                    {fontSize: 16, color: 'gray', marginBottom: 10}
+                  
+                  }>ยังไม่มีรายการสินค้า</Text>
+                <Button
+                  icon={'plus'}
+                  children="เพิ่มใหม่"
+                  testID="submited-button"
+                  contentStyle={{flexDirection: 'row-reverse'}}
+                  mode="contained"
+                  onPress={() => {
+                    setShowAddNewService(true);
+                    setAddNewService(true);
+                    onClose();
+                  }}></Button>
+              </View>
             }
           />
         </View>

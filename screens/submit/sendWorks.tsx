@@ -1,5 +1,6 @@
 import {faClose} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+
 import {RouteProp} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {useQueryClient} from '@tanstack/react-query';
@@ -209,6 +210,7 @@ const workers = useWatch({
   );
 
   const handleDone = useCallback(async () => {
+    
     if(editSubmission){
       editQuotationMutation({
         submission: methods.getValues(),
@@ -297,8 +299,6 @@ const workers = useWatch({
   }, [beforeImages, loadingBeforeImageStatus]);
 
 
-
-
   return (
     <>
       <FormProvider {...methods}>
@@ -314,14 +314,15 @@ const workers = useWatch({
             }}
           />
           <Appbar.Content title="" />
-          {submissionServerId && (
-            <IconButton
+          <IconButton
               mode="outlined"
-              icon="web"
-              iconColor="gray"
+              
+              icon="navigation-variant"
+              iconColor='#047e6e'
+              disabled={!submissionServerId}
+              
               onPress={() => setOpenSubmissionModal(true)}
             />
-          )}
           <Appbar.Content title="" />
 
           <Button
@@ -435,7 +436,7 @@ const workers = useWatch({
                     flexDirection: 'row',
                     flex: 1,
                     justifyContent: 'space-between',
-                    maxWidth: width * 0.75,
+                    maxWidth: width * 0.90,
                     gap: 10,
                   }}
                   key={index}>

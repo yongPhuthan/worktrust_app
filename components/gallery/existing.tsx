@@ -1,5 +1,5 @@
-import {useQuery, useQueryClient} from '@tanstack/react-query';
-import React, {useContext, useState, useCallback, useEffect} from 'react';
+import {useQuery} from '@tanstack/react-query';
+import React, {useContext, useState} from 'react';
 import {
   Dimensions,
   FlatList,
@@ -10,20 +10,17 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {ActivityIndicator, Appbar, Button, Checkbox} from 'react-native-paper';
+import {ActivityIndicator, Appbar, Button,Checkbox} from 'react-native-paper';
 import firebase from '../../firebase';
 import {useUser} from '../../providers/UserContext';
 
-import {faExpand} from '@fortawesome/free-solid-svg-icons';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {ServiceImagesEmbed} from '@prisma/client';
 import {useFormContext} from 'react-hook-form';
 import Modal from 'react-native-modal';
 import CustomCheckbox from '../../components/CustomCheckbox';
-import {useUriToBlob} from '../../hooks/utils/image/useUriToBlob';
-import {useSlugify} from '../../hooks/utils/useSlugify';
 import {Store} from '../../redux/store';
 import AddNewImage from './addNew';
-import {ServiceImagesEmbed} from '@prisma/client';
+import FilterModal from './filterModal';
 
 interface ImageModalProps {
   isVisible: boolean;
@@ -75,9 +72,9 @@ const GalleryScreen = ({
     [],
   );
   const [isLoadingWebP, setIsLoadingWebP] = useState<boolean>(false);
-
-  const [galleryImages, setGalleryImages] = useState<ImageData[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [openFilter, setOpenFilter] = useState<boolean>(false);
+  const [galleryImages, setGalleryImages] = useState<ImageData[]>([]);
   const context = useFormContext();
   const {
     register,
@@ -86,11 +83,13 @@ const GalleryScreen = ({
     setValue,
     watch,
     formState: {errors},
-  } = context as any;
+  } = context;
   const {
     state: {code},
     dispatch,
   } = useContext(Store);
+
+
   const handleCheckbox = (id: string) => {
     const updatedData = galleryImages.map(img => {
       if (img.id === id) {
@@ -104,6 +103,11 @@ const GalleryScreen = ({
       .filter(img => img.defaultChecked)
       .map(img => img.url);
     setValue('serviceImages', urls, {shouldDirty: true});
+  };
+    const toggleTag = (tag: string) => {
+    setSelectedTags(prev =>
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag],
+    );
   };
   const getGallery = async () => {
     const imagesCollectionPath = `${code}/gallery/images`;
@@ -149,6 +153,7 @@ const GalleryScreen = ({
       });
 
       setGalleryImages(images);
+      setInitialGalleryImages(images);
       setTags(fetchedTags); // Assuming setTags updates the state containing all tags
 
       return images; // Return images array, even if it's empty
@@ -163,23 +168,28 @@ const GalleryScreen = ({
     queryFn: getGallery,
   });
 
-  const handleSelectTag = (id: string): void => {
+  const handleFilterGalleryImages = (id: string): void => {
     const newSelectedTags = selectedTags.includes(id)
       ? selectedTags.filter(tagId => tagId !== id) // Toggle off if already selected
       : [...selectedTags, id]; // Add to selection if not currently selected
     setSelectedTags(newSelectedTags);
 
-    // Filter gallery images or reset to show all if no tags are selected
+    // Filter gallery images based on AND logic for multiple tags
     if (newSelectedTags.length > 0) {
       const filteredImages = initialGalleryImages.filter(image =>
-        image.tags.some(tagId => newSelectedTags.includes(tagId)),
+        newSelectedTags.every(tag => image.tags.includes(tag))
       );
       setGalleryImages(filteredImages);
+      setValue('serviceImages', [], {shouldDirty: true});
     } else {
       // No tags are selected, show all images
       setGalleryImages(initialGalleryImages);
+      setValue('serviceImages', [], {shouldDirty: true});
+
     }
   };
+
+  
   return (
     <>
       <Modal
@@ -201,7 +211,7 @@ const GalleryScreen = ({
               }}>
               <Appbar.Action icon={'close'} onPress={() => onClose()} />
               <Appbar.Content
-                title={`เลือกภาพผลงานของคุณ`}
+                title={`เลือกภาพผลงาน`}
                 titleStyle={{fontSize: 18}}
               />
               <Appbar.Action
@@ -218,10 +228,25 @@ const GalleryScreen = ({
                 <View
                   style={{
                     flexDirection: 'column',
-                    gap: 20,
+                    gap: 10,
                     paddingBottom: '35%',
                   }}>
-                  <FlatList
+                  <Button
+                    onPress={() => setOpenFilter(true)}
+                    mode="outlined"
+                    icon={'tune-variant'}
+                    style={{
+                      width: '50%',
+                      marginTop: 5,
+                    }}
+                    contentStyle={{
+                      flexDirection: 'row-reverse',
+                      justifyContent: 'space-between',
+                    }}
+                    children={'กรองหมวดหมู่'}
+                  />
+
+                  {/* <FlatList
                     data={tags}
                     keyExtractor={item => item.id.toString()}
                     renderItem={({item}) => (
@@ -238,21 +263,30 @@ const GalleryScreen = ({
                       </View>
                     )}
                     numColumns={2}
-                  />
+                  /> */}
 
                   <FlatList
                     data={galleryImages}
                     numColumns={3}
                     ListEmptyComponent={
-                      <Text
+                      <View
                         style={{
-                          textAlign: 'center',
-                          color: 'gray',
-                          fontSize: 16,
-                          fontFamily: 'Sukhumvit Set',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          marginTop: '20%',
                         }}>
-                        ยังไม่มีรูปภาพ กด+เพิ่มรูปภาพ
-                      </Text>
+                        <Text
+                          style={{
+                            textAlign: 'center',
+                            color: 'gray',
+                            fontSize: 16,
+                            // fontFamily: 'Sukhumvit Set',
+                          }}>
+                          ยังไม่มีรูปภาพผลงาน
+                        </Text>
+                      </View>
                     }
                     renderItem={({item}) => (
                       <View
@@ -328,10 +362,16 @@ const GalleryScreen = ({
             isVisible={isOpenModal}
             onClose={() => {
               setIsOpenModal(false);
-
             }}
           />
         </Modal>
+        <FilterModal
+          selectedTags={selectedTags}
+          handleSelectTag ={handleFilterGalleryImages} 
+          isVisible={openFilter}
+          onClose={() => setOpenFilter(false)}
+          tags={tags}
+        />
       </Modal>
     </>
   );

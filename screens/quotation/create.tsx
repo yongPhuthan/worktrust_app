@@ -426,7 +426,6 @@ const Quotation = ({navigation}: Props) => {
         },
       });
     } else {
-      console.log('UPADTE');
       const existingData = {
         ...methods.getValues(),
         id: quotationServerId,
@@ -528,8 +527,10 @@ const Quotation = ({navigation}: Props) => {
           <Appbar.Content title="" />
           <IconButton
             disabled={!quotationServerId}
-            icon="web"
+          icon="navigation-variant"
             mode="outlined"
+            iconColor='#047e6e'
+
             onPress={openProjectModal}
           />
 
@@ -537,6 +538,7 @@ const Quotation = ({navigation}: Props) => {
             disabled={!pdfUrl && !editQuotation?.pdfUrl}
             icon="file-document"
             mode="outlined"
+            iconColor='#047e6e'
             onPress={openPDFModal}
           />
           <Appbar.Content title="" />
@@ -616,11 +618,11 @@ const Quotation = ({navigation}: Props) => {
                 ))}
 
               <AddServices handleAddProductFrom={openAddExistingServiceModal} />
-              <Divider
+              {/* <Divider
                 style={{
                   marginTop: 20,
                 }}
-              />
+              /> */}
               <View
                 style={{
                   flexDirection: 'column',

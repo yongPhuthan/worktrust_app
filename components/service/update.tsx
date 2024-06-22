@@ -25,12 +25,13 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { DiscountType, ServicesEmbed } from '@prisma/client';
+import { DiscountType, MaterialEmbed, ServicesEmbed, StandardEmbed } from '@prisma/client';
 import Decimal from 'decimal.js-light';
 import CurrencyInput from 'react-native-currency-input';
 import {
   Appbar,
   Button,
+  Divider,
   TextInput,
   Text as TextPaper
 } from 'react-native-paper';
@@ -148,7 +149,6 @@ const UpdateServiceModal = (props: Props) => {
   const isButtonDisbled = useMemo(() => {
     return title && unitPrice > 0 && qty > 0;
   }, [standards, materials, title, unitPrice, qty]);
-  console.log('CURRENT VALUE', currentValue ?? "NO VALUE");
 
   return (
     <Modal animationType="slide" visible={visible}>
@@ -169,7 +169,7 @@ const UpdateServiceModal = (props: Props) => {
           title="แก้ไขสินค้า-บริการ"
           titleStyle={{
             fontSize: 18,
-            fontWeight: 'bold',
+   
           }}
         />
         <Button
@@ -222,7 +222,7 @@ const UpdateServiceModal = (props: Props) => {
                           }}>
                           <FontAwesomeIcon
                             icon={faPlus}
-                            size={32}
+                            size={20}
                             color="#0073BA"
                           />
                         </TouchableOpacity>
@@ -264,6 +264,13 @@ const UpdateServiceModal = (props: Props) => {
                     }
                   />
                 </View>
+                <View style={{
+                  flexDirection:'column',
+                  justifyContent:'center',
+                  gap:5,
+                  marginVertical:20
+                }}>
+
                 <Controller
                   control={methods.control}
                   name="title"
@@ -426,20 +433,13 @@ const UpdateServiceModal = (props: Props) => {
                     )}
                   />
                 </View>
+                </View>
                 <View
                   style={{
-                    ...Platform.select({
-                      ios: {
-                        paddingVertical: 10,
-                      },
-                      android: {
-                        paddingVertical: 0,
-                      },
-                    }),
-                  }}></View>
-                <SmallDivider />
-
-                <View>
+                    flexDirection: 'column',
+                    gap: 20,
+                  }}>
+                  <Divider />
                   {methods.watch('standards')?.length > 0 ? (
                     <View style={styles.cardContainer}>
                       <Text
@@ -453,7 +453,18 @@ const UpdateServiceModal = (props: Props) => {
                         }}>
                         มาตรฐานของบริการนี้
                       </Text>
-                      {methods.watch('standards')?.map((item: any) => (
+                      <TouchableOpacity
+                          onPress={() => setModalVisible(true)}
+                          style={styles.cardContainer}>
+                          {methods
+                            .watch('standards')
+                            ?.map((item: StandardEmbed) => (
+                              <Text key={item.id}>
+                                {item.standardShowTitle}
+                              </Text>
+                            ))}
+                        </TouchableOpacity>
+                      {/* {methods.watch('standards')?.map((item: any) => (
                         <Button
                           children={item.standardShowTitle}
                           // icon={'chevron-right'}
@@ -465,37 +476,27 @@ const UpdateServiceModal = (props: Props) => {
                           mode="outlined"
                           key={item.id}
                           onPress={() => setModalVisible(true)}></Button>
-                      ))}
+                      ))} */}
                     </View>
                   ) : (
-                    <TouchableOpacity
-                      style={styles.selectButton}
-                      onPress={() => setModalVisible(true)}>
-                      <View style={styles.containerButton}>
-                        <FontAwesomeIcon
-                          icon={faPlusCircle}
-                          color="#0073BA"
-                          size={14}
-                        />
-                        <Text style={styles.selectButtonText}>
-                          เลือกมาตรฐานการทำงาน
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
+                    <Button
+                    children="เพิ่มมาตรฐานการทำงาน"
+                    style={{
+                      borderColor: '#0073BA',
+                      borderStyle: 'dotted',
+                    }}
+                    mode="outlined"
+                    icon={'plus'}
+                    textColor="#0073BA"
+                    contentStyle={{
+                      flexDirection: 'row-reverse',
+                      justifyContent: 'space-between',
+                    }}
+                    onPress={() => setModalVisible(true)}></Button>
+                
                   )}
-                </View>
-                <View
-                  style={{
-                    ...Platform.select({
-                      ios: {
-                        paddingVertical: 10,
-                      },
-                      android: {
-                        paddingVertical: 10,
-                      },
-                    }),
-                  }}></View>
-                <SmallDivider />
+               
+               
                 <View>
                   {methods.watch('materials')?.length > 0 ? (
                     <>
@@ -510,69 +511,40 @@ const UpdateServiceModal = (props: Props) => {
                         }}>
                         วัสดุอุปกรณ์ที่ใช้
                       </Text>
-                      <View style={styles.cardContainer}>
-                        {methods
-                          .watch('materials')
-                          ?.map((item: any, index: number) => (
-                            <Button
-                              children={item.name}
-                              // icon={'chevron-right'}
-                              style={{
-                                margin: 3,
-                                maxWidth: '100%',
-                                alignContent: 'flex-start',
-                              }}
-                              contentStyle={{
-                                flexDirection: 'row-reverse',
-                                alignItems: 'flex-start',
-                              }}
-                              mode="outlined"
-                              key={index}
-                              onPress={() =>
-                                setIsModalMaterialsVisible(true)
-                              }></Button>
-                          ))}
-                      </View>
+                      <TouchableOpacity
+                          onPress={() => setIsModalMaterialsVisible(true)}
+                          style={styles.cardContainer}>
+                          {methods
+                            .watch('materials')
+                            ?.map((item: MaterialEmbed, index: number) => (
+                              <Text key={index}>{item.name}</Text>
+                            ))}
+                        </TouchableOpacity>
                     </>
                   ) : (
                     <View>
-                      <TouchableOpacity
-                        style={styles.selectButton}
-                        onPress={() => setIsModalMaterialsVisible(true)}>
-                        <View style={styles.containerButton}>
-                          <FontAwesomeIcon
-                            icon={faPlusCircle}
-                            color="#0073BA"
-                            size={14}
-                          />
-
-                          <Text style={styles.selectButtonText}>
-                            เลือกวัสดุอุปกรณ์
-                          </Text>
-                        </View>
-                      </TouchableOpacity>
-                    </View>
+                    <Button
+                      children="เพิ่มวัสดุอุปกรณ์"
+                      style={{
+                        borderColor: '#0073BA',
+                        borderStyle: 'dotted',
+                      }}
+                      mode="outlined"
+                      icon={'plus'}
+                      textColor="#0073BA"
+                      contentStyle={{
+                        flexDirection: 'row-reverse',
+                        justifyContent: 'space-between',
+                      }}
+                      onPress={() =>
+                        setIsModalMaterialsVisible(true)
+                      }></Button>
+                  </View>
                   )}
                 </View>
-                <View
-                  style={{
-                    ...Platform.select({
-                      ios: {
-                        paddingVertical: 10,
-                      },
-                      android: {
-                        paddingVertical: 10,
-                      },
-                    }),
-                  }}></View>
-                <SmallDivider />
-                <View
-                  style={{
-                    width: '100%',
-                    alignSelf: 'center',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}></View>
+             
+      
+              </View>
               </View>
               <SelectStandard
                 isVisible={isModalVisible}
@@ -832,11 +804,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
   },
-  cardContainer: {
-    flexDirection: 'column',
-    gap: 10,
-  },
-
   card: {
     backgroundColor: '#fff',
     borderWidth: 1,
@@ -890,6 +857,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     width: '100%',
     paddingVertical: 15,
+  },
+  cardContainer: {
+    flexDirection: 'column',
+    gap: 10,
+    borderWidth: 0.5,
+    padding: 20,
+    borderRadius: 10,
   },
   heading: {
     fontSize: 16,
