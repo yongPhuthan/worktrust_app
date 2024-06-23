@@ -29,7 +29,7 @@ import {
 import { useUploadToFirebase } from '../../hooks/useUploadtoFirebase';
 import { usePickImage } from '../../hooks/utils/image/usePickImage';
 import { useUser } from '../../providers/UserContext';
-import { materialSchema } from '../../screens/utils/validationSchema';
+import { materialSchema } from '../../models/validationSchema';
 
 type Props = {
   onClose: () => void;

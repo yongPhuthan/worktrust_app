@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import {Store} from '../../redux/store';
 import {Divider, TextInput} from 'react-native-paper';
-import {defaultContractSchema} from '../utils/validationSchema';
+import {defaultContractSchema} from '../../models/validationSchema';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {
   ActivityIndicator,

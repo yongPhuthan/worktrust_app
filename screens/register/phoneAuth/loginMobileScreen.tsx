@@ -9,7 +9,7 @@ import {FirebaseAuthTypes} from '@react-native-firebase/auth';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {Controller, set, useForm} from 'react-hook-form';
 import {ParamListBase} from '../../../types/navigationType';
-import {signupMobilevalidationSchema} from '../../utils/validationSchema';
+import {signupMobilevalidationSchema} from '../../../models/validationSchema';
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'LoginMobileScreen'>;
 }

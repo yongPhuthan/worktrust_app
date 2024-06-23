@@ -70,7 +70,7 @@ import useSelectedDates from '../../hooks/quotation/create/useSelectDates';
 import useThaiDateFormatter from '../../hooks/utils/useThaiDateFormatter';
 import {Store} from '../../redux/store';
 import {ParamListBase} from '../../types/navigationType';
-import {quotationsValidationSchema} from '../utils/validationSchema';
+import {quotationsValidationSchema} from '../../models/validationSchema';
 import PDFModalScreen from '../../components/webview/pdf';
 import useShare from '../../hooks/webview/useShare';
 import * as yup from 'yup';

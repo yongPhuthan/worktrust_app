@@ -21,7 +21,7 @@ import * as yup from 'yup';
 import {BACK_END_SERVER_URL} from '@env';
 
 import {Controller, set, useForm, useWatch} from 'react-hook-form';
-import {signupMobilevalidationSchema} from '../../utils/validationSchema';
+import {signupMobilevalidationSchema} from '../../../models/validationSchema';
 import {FirebaseAuthTypes} from '@react-native-firebase/auth';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {ParamListBase} from '../../../types/navigationType';

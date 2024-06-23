@@ -57,7 +57,7 @@ import {TaxType} from '../../../models/Tax';
 import * as stateAction from '../../../redux/actions';
 import {Store} from '../../../redux/store';
 import {ParamListBase} from '../../../types/navigationType';
-import {quotationsValidationSchema} from '../../utils/validationSchema';
+import {quotationsValidationSchema} from '../../../models/validationSchema';
 import {
   CustomerEmbed,
   DiscountType,

@@ -57,10 +57,10 @@ const SelectProductModal: React.FC<Props> = ({
           <Appbar.Action icon={'close'} onPress={onClose} />
 
           <Appbar.Content
-            title={`เลือกรายการสินค้า`}
+            title={`เลือกสินค้า-บริการ`}
             titleStyle={{
               fontSize: 18,
-              fontWeight: 'bold',
+       
             }}
           />
           {uniqueExistingServices.length > 0 && (
@@ -107,17 +107,14 @@ const SelectProductModal: React.FC<Props> = ({
                   justifyContent: 'center',
                   alignItems: 'center',
                   alignContent: 'center',
-                  
-
-        
+                  marginTop: 50,
                 }}>
-                  <Text style={
-                    {fontSize: 16, color: 'gray', marginBottom: 10}
-                  
-                  }>ยังไม่มีรายการสินค้า</Text>
+                {/* <Text style={{fontSize: 16, color: 'gray', marginBottom: 10}}>
+                  ยังไม่มีรายการสินค้า
+                </Text> */}
                 <Button
                   icon={'plus'}
-                  children="เพิ่มใหม่"
+                  children="เพิ่มรายการใหม่"
                   testID="submited-button"
                   contentStyle={{flexDirection: 'row-reverse'}}
                   mode="contained"

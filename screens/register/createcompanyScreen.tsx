@@ -39,7 +39,7 @@ import {useUser} from '../../providers/UserContext';
 import {ParamListBase} from '../../types/navigationType';
 import {useUploadToFirebase} from '../../hooks/useUploadtoFirebase';
 import {usePickImage} from '../../hooks/utils/image/usePickImage';
-import {companyValidationSchema} from '../utils/validationSchema';
+import {companyValidationSchema} from '../../models/validationSchema';
 import {useCreateToServer} from '../../hooks/useUploadToserver';
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'RegisterScreen'>;

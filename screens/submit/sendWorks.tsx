@@ -123,7 +123,7 @@ const SendWorks = (props: Props) => {
     afterImages: [],
     workStatus: WorkStatus?.ALL,
     reSubmissionId: null,
-    history:false,
+    history: false,
     FCMToken: fcmToken,
     quotationRefNumber: editQuotation ? editQuotation.docNumber : '',
     companyId: companyState ? companyState.id : '',
@@ -162,7 +162,8 @@ const SendWorks = (props: Props) => {
     useState<BeforeImageLoadingStatus>({});
 
   const {mutate, isPending} = useCreateSubmission(actions);
-  const {mutate: editQuotationMutation, isPending:isUpdating} = useUpdateSubmission(actions);
+  const {mutate: editQuotationMutation, isPending: isUpdating} =
+    useUpdateSubmission(actions);
 
   const removeService = (index: number) => {
     const updatedServices = services.filter((_: any, i: number) => i !== index);
@@ -171,7 +172,7 @@ const SendWorks = (props: Props) => {
       shouldValidate: true,
     });
   };
-const quotationRefNumber = useWatch({
+  const quotationRefNumber = useWatch({
     control: methods.control,
     name: 'quotationRefNumber',
   });
@@ -180,7 +181,7 @@ const quotationRefNumber = useWatch({
     control: methods.control,
     name: 'customer.name',
   });
-const workers = useWatch({
+  const workers = useWatch({
     control: methods.control,
     name: 'workers',
   });
@@ -210,26 +211,29 @@ const workers = useWatch({
   );
 
   const handleDone = useCallback(async () => {
-    
-    if(editSubmission){
+    if (editSubmission) {
       editQuotationMutation({
         submission: methods.getValues(),
       });
       return;
-    
-    }else{
+    } else {
       mutate({
         ...methods.getValues(),
         quotationId,
       });
     }
-  
-  }, [beforeImages, afterImages, editQuotation, methods.getValues, mutate,editSubmission]);
+  }, [
+    beforeImages,
+    afterImages,
+    editQuotation,
+    methods.getValues,
+    mutate,
+    editSubmission,
+  ]);
 
   const handleStartDateSelected = (date: Date) => {
     methods.setValue('dateOffer', date);
   };
-
 
   React.useEffect(() => {
     if (editQuotation) {
@@ -298,7 +302,6 @@ const workers = useWatch({
     return () => clearInterval(interval);
   }, [beforeImages, loadingBeforeImageStatus]);
 
-
   return (
     <>
       <FormProvider {...methods}>
@@ -315,19 +318,22 @@ const workers = useWatch({
           />
           <Appbar.Content title="" />
           <IconButton
-              mode="outlined"
-              
-              icon="navigation-variant"
-              iconColor='#047e6e'
-              disabled={!submissionServerId}
-              
-              onPress={() => setOpenSubmissionModal(true)}
-            />
+            mode="outlined"
+            icon="navigation-variant"
+            iconColor="#047e6e"
+            disabled={!submissionServerId}
+            onPress={() => setOpenSubmissionModal(true)}
+          />
           <Appbar.Content title="" />
 
           <Button
             loading={isUploading || isPending || isUpdating}
-            disabled={!methods.formState.isValid || isUploading || isPending || isUpdating}
+            disabled={
+              !methods.formState.isValid ||
+              isUploading ||
+              isPending ||
+              isUpdating
+            }
             mode="contained"
             onPress={handleDone}>
             {'บันทึก'}
@@ -351,7 +357,7 @@ const workers = useWatch({
                   alignContent: 'center',
                 }}>
                 <Text style={styles.title}> ใบเสนอราคาเลขที่ </Text>
-                <Text>{ quotationRefNumber}</Text>
+                <Text>{quotationRefNumber}</Text>
               </View>
               <Divider />
               <View
@@ -378,14 +384,14 @@ const workers = useWatch({
                 marginVertical: 15,
               }}>
               <Text style={styles.titleDate}>วันที่แจ้งส่งงาน</Text>
-              <View >
-                  <DatePickerButton
-                    title="วันที่แจ้งส่งงาน"
-                    label=""
-                    date={new Date(dateOffer)}
-                    onDateSelected={handleStartDateSelected}
-                  />
-                </View>
+              <View>
+                <DatePickerButton
+                  title="วันที่แจ้งส่งงาน"
+                  label=""
+                  date={new Date(dateOffer)}
+                  onDateSelected={handleStartDateSelected}
+                />
+              </View>
             </View>
 
             <Divider />
@@ -403,12 +409,8 @@ const workers = useWatch({
                     <TextInput
                       multiline
                       style={styles.input}
-                     
                       error={!!error}
-                      mode={
-                        'outlined'
-                     
-                      }
+                      mode={'outlined'}
                       numberOfLines={4}
                       placeholder="สถาณที่ติดตั้งงาน เลขที่ ถนน ตำบล อำเภอ จังหวัด...."
                       placeholderTextColor={'#A6A6A6'}
@@ -436,7 +438,7 @@ const workers = useWatch({
                     flexDirection: 'row',
                     flex: 1,
                     justifyContent: 'space-between',
-                    maxWidth: width * 0.90,
+                    maxWidth: width * 0.9,
                     gap: 10,
                   }}
                   key={index}>
@@ -520,6 +522,7 @@ const workers = useWatch({
                   beforeImages.length > 0 ? (
                     <IconButton
                       icon={'plus'}
+                      iconColor={'#047e6e'}
                       // loading={pickingBeforeImage}
                       style={styles.addButtonContainer}
                       onPress={() => {
@@ -530,6 +533,7 @@ const workers = useWatch({
                 ListEmptyComponent={
                   <IconButton
                     icon={'plus'}
+                    iconColor={'#047e6e'}
                     // loading={pickingBeforeImage}
                     style={styles.addButtonContainer}
                     onPress={() => {
@@ -575,6 +579,7 @@ const workers = useWatch({
                   afterImages.length > 0 ? (
                     <IconButton
                       icon={'plus'}
+                      iconColor={'#047e6e'}
                       // loading={pickingAfterImage}
                       style={styles.addButtonContainer}
                       onPress={() => setIsOpenModal(true)}></IconButton>
@@ -583,6 +588,7 @@ const workers = useWatch({
                 ListEmptyComponent={
                   <IconButton
                     icon={'plus'}
+                    iconColor={'#047e6e'}
                     // loading={pickingAfterImage}
                     style={styles.addButtonContainer}
                     onPress={() => setIsOpenModal(true)}></IconButton>
@@ -929,9 +935,10 @@ const styles = StyleSheet.create({
     margin: 5,
     marginTop: 20,
     height: 110,
+    backgroundColor: '#f5f5f5',
     justifyContent: 'center',
     alignItems: 'center',
-    borderColor: '#0073BA',
+    borderColor: '#047e6e',
     borderStyle: 'dashed',
     borderWidth: 1,
     borderRadius: 4, // Optional, for rounded edges

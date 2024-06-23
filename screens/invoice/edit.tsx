@@ -37,7 +37,7 @@ import {Store} from '../../redux/store';
 import {ParamListBase} from '../../types/navigationType';
 
 import ExistingWorkers from '../../components/workers/existing';
-import {quotationsValidationSchema} from '../utils/validationSchema';
+import {quotationsValidationSchema} from '../../models/validationSchema';
 import { ServicesEmbed } from '@prisma/client';
 
 interface Props {

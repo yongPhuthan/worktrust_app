@@ -35,7 +35,7 @@ import {
   TextInput,
   Text as TextPaper
 } from 'react-native-paper';
-import { serviceValidationSchema } from '../../screens/utils/validationSchema';
+import { serviceValidationSchema } from '../../models/validationSchema';
 import GalleryScreen from '../gallery/existing';
 import ExistingMaterials from '../materials/existing';
 import SelectStandard from '../standard/selectStandard';

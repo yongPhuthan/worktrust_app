@@ -216,7 +216,6 @@ model DefaultStandards {
     badStandardImage  String?
     standardShowTitle String?
     createdAt         DateTime @default(now())
-    tags              String[]
     companyId         String   @db.ObjectId
     company           Company? @relation(fields: [companyId], references: [id])
 

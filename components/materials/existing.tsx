@@ -1,6 +1,5 @@
 import React, { useContext, useState } from 'react';
 import {
-  ActivityIndicator,
   Dimensions,
   FlatList,
   Image,
@@ -14,7 +13,7 @@ import { DefaultMaterials, MaterialEmbed } from '@prisma/client';
 import { useQuery } from '@tanstack/react-query';
 import { useFormContext } from 'react-hook-form';
 import Modal from 'react-native-modal';
-import { Appbar, Button, Checkbox, Text } from 'react-native-paper';
+import { Appbar, Button, Checkbox, Text,ActivityIndicator } from 'react-native-paper';
 import { useUser } from '../../providers/UserContext';
 import { Store } from '../../redux/store';
 import CreateMaterial from './createMaterial';
@@ -49,7 +48,7 @@ const ExistingMaterials = ({
   const user = useUser();
 
   const {
-    state: {code},
+    state: {companyId},
     dispatch,
   } = useContext(Store);
 
@@ -58,10 +57,9 @@ const ExistingMaterials = ({
       throw new Error('User not authenticated');
     } else {
       const idToken = await user.getIdToken(true);
-      console.log('CompanyID');
 
-      let url = `${BACK_END_SERVER_URL}/api/services/queryMaterials?code=${encodeURIComponent(
-        code,
+      let url = `${BACK_END_SERVER_URL}/api/services/queryMaterials?id=${encodeURIComponent(
+        companyId,
       )}`;
       const response = await fetch(url, {
         method: 'GET',
@@ -90,7 +88,7 @@ const ExistingMaterials = ({
     // ['existingMaterials'],
     // () => fetchExistingMaterials().then(res => res),
     {
-      queryKey: ['existingMaterials'],
+      queryKey: ['defaultMaterials'],
       queryFn: fetchExistingMaterials,
     },
   );
@@ -117,13 +115,7 @@ const ExistingMaterials = ({
     }
   };
 
-  if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator />
-      </View>
-    );
-  }
+
   // if (isError) {
   //   return (
   //     <View style={styles.loadingContainer}>
@@ -148,7 +140,7 @@ const ExistingMaterials = ({
         <Appbar.Action icon={'close'} onPress={onClose} />
         <Appbar.Content
           title="วัสดุอุปกรณ์ที่ต้องการนำเสนอ"
-          titleStyle={{fontSize: 16, fontWeight: 'bold'}}
+          titleStyle={{fontSize: 16, }}
         />
         {materials && materials?.length > 0 && (
           <Appbar.Action
@@ -157,86 +149,93 @@ const ExistingMaterials = ({
           />
         )}
       </Appbar.Header>
-      <View style={styles.container}>
-        <FlatList
-          data={materials}
-          renderItem={({item, index}) => (
-            <>
-              <TouchableOpacity
-                style={[
-                  styles.card,
-                  (watch('materials') || []).some(
-                    (material: MaterialEmbed) => material.id === item.id,
-                  )
-                    ? styles.cardChecked
-                    : null,
-                ]}
-                onPress={() => handleSelectMaterial(item)}>
-                <Checkbox.Android
-                  status={
-                    (watch('materials') || []).some(
-                      (material: MaterialEmbed) => material.id === item.id,
-                    )
-                      ? 'checked'
-                      : 'unchecked'
-                  }
-                  onPress={() => handleSelectMaterial(item)}
-                  color="#012b20"
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+              <ActivityIndicator  color='#047e6e' size={'large'} />
+        </View>
+      ):(
+              <View style={styles.container}>
+              <FlatList
+                data={materials}
+                renderItem={({item, index}) => (
+                  <>
+                    <TouchableOpacity
+                      style={[
+                        styles.card,
+                        (watch('materials') || []).some(
+                          (material: MaterialEmbed) => material.id === item.id,
+                        )
+                          ? styles.cardChecked
+                          : null,
+                      ]}
+                      onPress={() => handleSelectMaterial(item)}>
+                      <Checkbox.Android
+                        status={
+                          (watch('materials') || []).some(
+                            (material: MaterialEmbed) => material.id === item.id,
+                          )
+                            ? 'checked'
+                            : 'unchecked'
+                        }
+                        onPress={() => handleSelectMaterial(item)}
+                        color="#012b20"
+                      />
+                      <View style={styles.textContainer}>
+                        <Text style={styles.productTitle}>{item.name}</Text>
+                        <Text style={styles.description}>{item.description}</Text>
+                      </View>
+                      <Image source={{uri: item.image}} style={styles.productImage} />
+                    </TouchableOpacity>
+                  </>
+                )}
+                ListEmptyComponent={
+                  <View
+                    style={{
+                      flex: 1,
+                      justifyContent: 'center',
+                      height: height * 0.5,
+      
+                      alignItems: 'center',
+                    }}>
+                    <Button
+                      onPress={() => setIsCreateMaterial(true)}
+                      mode="contained"
+                      icon={'plus'}>
+                      <Text
+                        
+                        style={{color: 'white', fontSize:16}}>
+                        เพิ่มวัสดุอุปกรณ์
+                      </Text>
+                    </Button>
+                  </View>
+                }
+                keyExtractor={item => item.id}
+              />
+      
+              {watch('materials')?.length > 0 && (
+                <Button
+                  style={{
+                    width: '80%',
+                    alignSelf: 'center',
+                  }}
+                  // buttonColor="#1b52a7"
+                  mode="contained"
+                  onPress={handleDonePress}>
+                  {`บันทึก ${watch('materials')?.length} รายการ`}{' '}
+                </Button>
+              )}
+               <Modal
+                isVisible={isCreateMaterial}
+                style={styles.modal}
+                onBackdropPress={() => setIsCreateMaterial(false)}>
+                <CreateMaterial
+                  isVisible={isCreateMaterial}
+                  onClose={() => setIsCreateMaterial(false)}
                 />
-                <View style={styles.textContainer}>
-                  <Text style={styles.productTitle}>{item.name}</Text>
-                  <Text style={styles.description}>{item.description}</Text>
-                </View>
-                <Image source={{uri: item.image}} style={styles.productImage} />
-              </TouchableOpacity>
-            </>
-          )}
-          ListEmptyComponent={
-            <View
-              style={{
-                flex: 1,
-                justifyContent: 'center',
-                height: height * 0.5,
-
-                alignItems: 'center',
-              }}>
-              <Button
-                onPress={() => setIsCreateMaterial(true)}
-                mode="contained"
-                icon={'plus'}>
-                <Text
-                  variant="titleMedium"
-                  style={{color: 'white', fontFamily: 'Sukhumvit set'}}>
-                  เพิ่มวัสดุอุปกรณ์
-                </Text>
-              </Button>
+              </Modal>
             </View>
-          }
-          keyExtractor={item => item.id}
-        />
+      )}
 
-        {watch('materials')?.length > 0 && (
-          <Button
-            style={{
-              width: '80%',
-              alignSelf: 'center',
-            }}
-            // buttonColor="#1b52a7"
-            mode="contained"
-            onPress={handleDonePress}>
-            {`บันทึก ${watch('materials')?.length} รายการ`}{' '}
-          </Button>
-        )}
-         <Modal
-          isVisible={isCreateMaterial}
-          style={styles.modal}
-          onBackdropPress={() => setIsCreateMaterial(false)}>
-          <CreateMaterial
-            isVisible={isCreateMaterial}
-            onClose={() => setIsCreateMaterial(false)}
-          />
-        </Modal>
-      </View>
     </Modal>
   );
 };
@@ -303,6 +302,8 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'white',
+    width
   },
 
   buttonText: {

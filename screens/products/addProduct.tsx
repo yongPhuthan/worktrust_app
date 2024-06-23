@@ -41,7 +41,7 @@ import ExistingMaterials from '../../components/materials/existing';
 import SelectStandard from '../../components/standard/selectStandard';
 import SmallDivider from '../../components/styles/SmallDivider';
 import {ParamListBase} from '../../types/navigationType';
-import {serviceValidationSchema} from '../utils/validationSchema';
+import {serviceValidationSchema} from '../../models/validationSchema';
 
 import Decimal from 'decimal.js-light';
 

@@ -29,7 +29,7 @@ import {
   Switch,
   TextInput,
 } from 'react-native-paper';
-import {imageTogallery} from '../../../screens/utils/validationSchema';
+import {imageTogallery} from '../../../models/validationSchema';
 
 import {v4 as uuidv4} from 'uuid';
 import firebase from '../../../firebase';

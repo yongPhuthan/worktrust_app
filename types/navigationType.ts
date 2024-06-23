@@ -40,6 +40,7 @@ export type ParamListBase = {
   CreateNewInvoice: undefined;
   EditWorkers:undefined;
   EditMaterials:undefined;
+  EditStandard:undefined;
   EditGallery:undefined;
   InvoiceDepositScreen  : undefined;
   ReceiptDepositScreen  : undefined;

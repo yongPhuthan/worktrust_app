@@ -51,7 +51,7 @@ const EditMaterials = ({navigation, route}: Props) => {
   const user = useUser();
 
   const {
-    state: {code},
+    state: {companyId},
     dispatch,
   } = useContext(Store);
 
@@ -60,10 +60,9 @@ const EditMaterials = ({navigation, route}: Props) => {
       throw new Error('User not authenticated');
     } else {
       const idToken = await user.getIdToken(true);
-      console.log('CompanyID');
 
-      let url = `${BACK_END_SERVER_URL}/api/services/queryMaterials?code=${encodeURIComponent(
-        code,
+      let url = `${BACK_END_SERVER_URL}/api/services/queryMaterials?id=${encodeURIComponent(
+        companyId,
       )}`;
       const response = await fetch(url, {
         method: 'GET',
@@ -145,7 +144,8 @@ const EditMaterials = ({navigation, route}: Props) => {
               justifyContent: 'center',
               alignItems: 'center',
             }}>
-            <ActivityIndicator />
+          <ActivityIndicator color="#047e6e" size={'large'} />
+
           </View>
         ) : (
           <FlatList
@@ -400,6 +400,7 @@ const styles = StyleSheet.create({
   textContainer: {
     flex: 1,
     justifyContent: 'center',
+    paddingHorizontal: 10,
   },
   productTitle: {
     fontSize: 14,

@@ -12,7 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {Divider, ActivityIndicator,Appbar} from 'react-native-paper';
+import {Divider, ActivityIndicator, Appbar} from 'react-native-paper';
 import firebase from '../../firebase';
 import {ParamListBase} from '../../types/navigationType';
 import {Store} from '../../redux/store';
@@ -20,8 +20,8 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import {useQuery} from '@tanstack/react-query';
 import {launchImageLibrary, MediaType} from 'react-native-image-picker';
 import {useUser} from '../../providers/UserContext';
-import { CompanyState } from 'types';
-import { User } from '@prisma/client';
+import {CompanyState} from 'types';
+import {User} from '@prisma/client';
 import {DrawerActions} from '@react-navigation/native';
 
 interface SettingScreenProps {
@@ -56,8 +56,6 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
       ],
     );
   };
-
-
 
   const businessDetails = [
     {id: 2, title: 'Business Address', value: company?.address || ''},
@@ -175,27 +173,26 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
 
   return (
     <>
-              <Appbar.Header
-            // elevated
-            mode="center-aligned"
-            style={{
-              backgroundColor: 'white',
-            }}>
-            <Appbar.Action
-              icon={'menu'}
-              onPress={() => {
-                navigation.dispatch(DrawerActions.openDrawer());
-              }}
-            />
-            <Appbar.Content
-              title={'ตั้งค่า'}
-              titleStyle={{
-                fontSize: 18,
-                fontWeight: 'bold',
-              }}
-            />
-          
-          </Appbar.Header>
+      <Appbar.Header
+        // elevated
+        mode="center-aligned"
+        style={{
+          backgroundColor: 'white',
+        }}>
+        <Appbar.Action
+          icon={'menu'}
+          onPress={() => {
+            navigation.dispatch(DrawerActions.openDrawer());
+          }}
+        />
+        <Appbar.Content
+          title={'ตั้งค่า'}
+          titleStyle={{
+            fontSize: 18,
+            fontWeight: 'bold',
+          }}
+        />
+      </Appbar.Header>
       {company && seller && (
         <ScrollView style={{flex: 1, backgroundColor: '#f5f5f5'}}>
           {/* Business Details */}
@@ -204,7 +201,7 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
             <TouchableOpacity
               style={{alignItems: 'center', marginBottom: 24}}
               onPress={handleLogoUpload}>
-              {logo  ? (
+              {logo ? (
                 <Image
                   source={{
                     uri: logo,
@@ -367,11 +364,10 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
               </View>
             </TouchableOpacity>
             <Divider />
-           
+
             <TouchableOpacity
-            onPress={() => navigation.navigate('EditWorkers')}
-              style={{paddingVertical: 15, paddingHorizontal: 24}}
-              >
+              onPress={() => navigation.navigate('EditWorkers')}
+              style={{paddingVertical: 15, paddingHorizontal: 24}}>
               <View
                 style={{
                   flexDirection: 'row',
@@ -386,9 +382,8 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
             </TouchableOpacity>
             <Divider />
             <TouchableOpacity
-            onPress={() => navigation.navigate('EditMaterials')}
-              style={{paddingVertical: 15, paddingHorizontal: 24}}
-              >
+              onPress={() => navigation.navigate('EditMaterials')}
+              style={{paddingVertical: 15, paddingHorizontal: 24}}>
               <View
                 style={{
                   flexDirection: 'row',
@@ -400,13 +395,27 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
                 </Text>
                 <FontAwesomeIcon icon={faChevronRight} size={18} color="#aaa" />
               </View>
-              
             </TouchableOpacity>
             <Divider />
             <TouchableOpacity
-            onPress={() => navigation.navigate('EditGallery')}
-              style={{paddingVertical: 15, paddingHorizontal: 24}}
-              >
+              onPress={() => navigation.navigate('EditStandard')}
+              style={{paddingVertical: 15, paddingHorizontal: 24}}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}>
+                <Text style={{fontSize: 15, fontWeight: '600', color: '#333'}}>
+                  มาตรฐานการทำงาน
+                </Text>
+                <FontAwesomeIcon icon={faChevronRight} size={18} color="#aaa" />
+              </View>
+            </TouchableOpacity>
+            <Divider />
+            <TouchableOpacity
+              onPress={() => navigation.navigate('EditGallery')}
+              style={{paddingVertical: 15, paddingHorizontal: 24}}>
               <View
                 style={{
                   flexDirection: 'row',
@@ -418,14 +427,15 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
                 </Text>
                 <FontAwesomeIcon icon={faChevronRight} size={18} color="#aaa" />
               </View>
-              
             </TouchableOpacity>
             <Divider />
-            <Divider style={{
-marginTop:50
-            }} />
+            <Divider
+              style={{
+                marginTop: 50,
+              }}
+            />
             <TouchableOpacity
-              style={{paddingVertical: 15, paddingHorizontal: 24, }}
+              style={{paddingVertical: 15, paddingHorizontal: 24}}
               onPress={() => toggleLogoutModal()}>
               <View
                 style={{
@@ -439,7 +449,6 @@ marginTop:50
                 {/* <FontAwesomeIcon icon={faChevronRight} size={18} color="#aaa" /> */}
               </View>
             </TouchableOpacity>
- 
           </View>
         </ScrollView>
       )}

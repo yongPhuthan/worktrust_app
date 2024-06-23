@@ -29,7 +29,7 @@ import DatePickerButton from '../../components/styles/DatePicker';
 import { useUser } from '../../providers/UserContext';
 import { Contract } from '../../types/docType';
 import { ParamListBase } from '../../types/navigationType';
-import { signContractValidationSchema } from '../utils/validationSchema';
+import { signContractValidationSchema } from '../../models/validationSchema';
 
 type Props = {
   navigation: StackNavigationProp<ParamListBase, 'ContractOptions'>;

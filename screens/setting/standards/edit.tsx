@@ -1,6 +1,7 @@
 import React, {useContext, useEffect, useState} from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Dimensions,
   FlatList,
   Image,
@@ -8,72 +9,78 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import {Store} from '../../redux/store';
+import {Store} from '../../../redux/store';
 
 import {BACK_END_SERVER_URL} from '@env';
 import {useQuery} from '@tanstack/react-query';
-import {useFormContext} from 'react-hook-form';
-
+import {useFormContext, useForm} from 'react-hook-form';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {ParamListBase} from '../../../types/navigationType';
+import type {RouteProp} from '@react-navigation/native';
 import {DefaultStandards} from '@prisma/client';
 import Modal from 'react-native-modal';
+import {useDeleteMaterial} from '../../../hooks/materials/delete';
+
 import {
   Appbar,
   Banner,
   Button,
   Checkbox,
+  IconButton,
   List,
+  Menu,
   Snackbar,
   Text,
 } from 'react-native-paper';
-import {useUser} from '../../providers/UserContext';
-import CreateStandard from './createStandard';
+import {useUser} from '../../../providers/UserContext';
+import CreateStandard from '../../../components/standard/createStandard';
+import {useDeleteStandard} from '../../../hooks/standard/delete';
+import UpdateStandard from '../../../components/standard/update';
 
-interface AuditModalProps {
-  isVisible: boolean;
-  onClose: () => void;
-  title?: string;
-  description?: string;
-  serviceId: string;
+interface Props {
+  navigation: StackNavigationProp<ParamListBase, 'EditStandard'>;
+  route: RouteProp<ParamListBase, 'EditStandard'>;
 }
-interface StandardData {
-  id: string;
-  createdAt: string;
-  standardShowTitle: string;
-  content: string;
-  image: string;
-  badStandardImage: string;
-  badStandardEffect: string;
-}
+const deleteUrl = `${BACK_END_SERVER_URL}/api/company/deleteStandard`;
 
-const SelectStandard = ({
-  isVisible,
-  onClose,
-  serviceId,
-  title,
-  description,
-}: AuditModalProps) => {
+const EditStandard = ({navigation, route}: Props) => {
   const [showCards, setShowCards] = useState(true);
   const [headerText, setHeaderText] = useState('');
   const [isCreateStandard, setIsCreateStandard] = useState(false);
-
+  const [isUpdateModal, setIsUpdateModal] = useState<boolean>(false);
+  const [visibleMenuIndex, setVisibleMenuIndex] = useState<number | null>(null);
   const user = useUser();
+  const [selectStandard, setSelectStandard] = useState<DefaultStandards | null>(
+    null,
+  );
   const [standardDatas, setStandardDatas] = useState<DefaultStandards[] | null>(
     null,
   );
-  const context = useFormContext();
-  const {
-    register,
-    control,
-    getValues,
-    setValue,
-    watch,
-    formState: {errors},
-  } = context as any;
 
   const {
     state: {companyId, code},
     dispatch,
   } = useContext(Store);
+
+  const initialStandard: DefaultStandards = {
+    id: '',
+    standardShowTitle: '',
+    image: '',
+    content: '',
+    badStandardImage: '',
+    badStandardEffect: '',
+    companyId,
+    createdAt: new Date(),
+  };
+
+  const {
+    getValues,
+    setValue,
+    watch,
+    formState: {errors},
+  } = useForm<DefaultStandards>({
+    defaultValues: initialStandard,
+  });
   const fetchStandards = async () => {
     if (!user) {
       throw new Error('User not authenticated');
@@ -108,49 +115,34 @@ const SelectStandard = ({
     queryFn: fetchStandards,
   });
 
-  const handleSelectStandard = (standard: DefaultStandards) => {
-    const currentStandards = getValues('standards') || [];
-    const standardIndex = currentStandards.findIndex(
-      (standardData: DefaultStandards) => standardData.id === standard.id,
-    );
-    if (standardIndex !== -1) {
-      const updatedStandards = [...currentStandards];
-      updatedStandards.splice(standardIndex, 1);
-      setValue('standards', updatedStandards, {shouldDirty: true});
-    } else {
-      const updatedStandards = [
-        ...currentStandards,
-        {
-          id: standard.id,
-          standardShowTitle: standard.standardShowTitle,
-          image: standard.image,
-          content: standard.content,
-        },
-      ];
-      setValue('standards', updatedStandards, {shouldDirty: true});
-    }
+  const {
+    isDeleting,
+    error: deleteError,
+    deleteStandard,
+  } = useDeleteStandard(deleteUrl, 'standards');
+
+  const confirmDeleteStandard = (id: string, name: string) => {
+    Alert.alert(`ยืนยันลบ ${name} `, ``, [
+      {
+        text: 'ยกเลิก',
+        onPress: () => console.log('Cancel Pressed'),
+        style: 'cancel',
+      },
+      {text: 'ยืนยัน', onPress: () => handleDeleteStandard(id)},
+    ]);
   };
 
-  const handleDonePress = () => {
-    if (watch('standards')?.length > 0) {
-      onClose();
+  const handleDeleteStandard = async (id: string) => {
+    try {
+      await deleteStandard(id);
+    } catch (err) {
+      console.error('An error occurred:', err);
+      Alert.alert('ไม่สามารถลบข้อมูลได้', 'กรุณาลองใหม่อีกครั้ง');
     }
   };
-
-  const stardardsWithChecked =
-    standardDatas?.map(standard => ({
-      ...standard,
-      defaultChecked: standardDatas.some(a => a?.image === standard?.image),
-    })) || [];
-
-  useEffect(() => {
-    if (stardardsWithChecked) {
-      setShowCards(false);
-    }
-  }, []);
 
   return (
-    <Modal isVisible={isVisible} style={styles.modal} onBackdropPress={onClose}>
+    <>
       <Appbar.Header
         mode="center-aligned"
         elevated
@@ -158,10 +150,10 @@ const SelectStandard = ({
           backgroundColor: 'white',
           width: Dimensions.get('window').width,
         }}>
-        <Appbar.Action icon={'close'} onPress={onClose} />
+        <Appbar.BackAction  onPress={() => navigation.goBack()} />
 
         <Appbar.Content
-          title={`เลือกมาตรฐานที่ต้องการเสนอ`}
+          title={`มาตรฐานทั้งหมด ${standardDatas?.length || 0} รายการ`}
           titleStyle={{
             fontSize: 16,
           }}
@@ -173,78 +165,86 @@ const SelectStandard = ({
           />
         )}
       </Appbar.Header>
-      {isLoading ? (
+      {isLoading || isDeleting ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator color="#047e6e" size={'large'} />
         </View>
       ) : (
         <SafeAreaView style={styles.container}>
-          <Banner
-            visible={true}
-            contentStyle={{
-              alignItems: 'center',
-              justifyContent: 'center',
-              alignContent: 'center',
-              alignSelf: 'center',
-            }}>
-            {`งานติดตั้ง ${title || ''}`}
-          </Banner>
           <FlatList
             style={{padding: 10}}
             data={standardDatas}
             renderItem={({item, index}) => (
-              <>
+              <View
+                style={[styles.card]}
+                // onPress={() => handleSelectAudit(item)}
+              >
                 <View
-                  style={[
-                    styles.card,
-                    (watch('standards') || []).some(
-                      (standard: DefaultStandards) => standard.id === item.id,
-                    )
-                      ? styles.cardChecked
-                      : null,
-                  ]}
-                  // onPress={() => handleSelectAudit(item)}
-                >
+                  style={{
+                    flexDirection: 'column',
+                    width: '100%',
+                  }}>
                   <View
                     style={{
-                      flexDirection: 'column',
-                      width: '100%',
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      height: 'auto',
+                      justifyContent: 'space-between',
+                      paddingLeft: 15,
+                      gap: 10,
+                      maxWidth: '100%',
                     }}>
+                    <Text
+                      style={{
+                        fontSize: 16,
+                        // fontWeight: 'bold',
+                        color: 'black',
+                        alignSelf: 'center',
+                        paddingVertical: 10,
+                        maxWidth: '70%',
+                      }}>
+                      {index + 1}. {item.standardShowTitle}
+                    </Text>
                     <View
                       style={{
                         flexDirection: 'row',
+                        justifyContent: 'flex-end',
                         alignItems: 'center',
-                        height: 'auto',
+                        paddingVertical: 10,
                       }}>
-                      <Checkbox.Android
-                        onPress={() => handleSelectStandard(item)}
-                        color="#012b20"
-                        style={{
-                          flexDirection: 'row-reverse',
-                          alignItems: 'center',
+                      <IconButton
+                        size={20}
+                        icon="pencil"
+                        iconColor="gray"
+                        onPress={() => {
+                          setVisibleMenuIndex(null);
+                          setSelectStandard(item);
+                          setIsUpdateModal(true);
                         }}
-                        status={
-                          (watch('standards') || []).some(
-                            (standard: DefaultStandards) =>
-                              standard.id === item.id,
-                          )
-                            ? 'checked'
-                            : 'unchecked'
-                        }
                       />
-                      <Text
-                        style={{
-                          fontSize: 16,
-                          fontWeight: 'bold',
-                          color: 'black',
-                        }}>
-                        {item.standardShowTitle}
-                      </Text>
+                      <IconButton
+                        size={20}
+                        iconColor="gray"
+                        icon="delete"
+                        onPress={() => {
+                          setVisibleMenuIndex(null);
+
+                          confirmDeleteStandard(
+                            item.id,
+                            item.standardShowTitle || '',
+                          );
+                        }}
+                      />
                     </View>
-                  
-                    <View
-                      style={{flexDirection: 'column', paddingHorizontal: 10}}>
-                      <List.Section>
+                  </View>
+
+                  <View
+                    style={{
+                      flexDirection: 'column',
+                      paddingHorizontal: 10,
+                      gap: 5,
+                    }}>
+                    <List.Section>
                       <List.Accordion
                         title="รูปภาพ"
                         titleStyle={{fontSize: 16}}
@@ -290,43 +290,27 @@ const SelectStandard = ({
                           titleNumberOfLines={8}
                         />
                       </List.Accordion>
-                        <List.Accordion
-                          title="มาตรฐานของคุณ"
-                          titleStyle={{fontSize: 16}}
-                          left={props => (
-                            <List.Icon
-                              {...props}
-                              icon="check-circle"
-                              color="green"
-                            />
-                          )}
-                          style={{width: '100%'}}>
-                          <List.Item
-                            title={`${item.content}`}
-                            titleNumberOfLines={8}
-                          />
-                        </List.Accordion>
-                        <List.Accordion
-                          title="ตัวอย่างที่ไม่ได้มาตรฐาน"
-                          titleStyle={{color: 'red'}}
-                          left={props => (
-                            <List.Icon
-                              {...props}
-                              icon="close-circle"
-                              color="red"
-                            />
-                          )}>
-                          <List.Item
-                            title={`${item.badStandardEffect}`}
-                            titleNumberOfLines={8}
-                          />
-                        </List.Accordion>
-                      </List.Section>
-                     
-                    </View>
+                      <List.Accordion
+                        title="มาตรฐานของคุณ"
+                        titleStyle={{fontSize: 16}}
+                        style={{width: '100%'}}>
+                        <List.Item
+                          title={`${item.content}`}
+                          titleNumberOfLines={8}
+                        />
+                      </List.Accordion>
+                      <List.Accordion
+                        title="ตัวอย่างที่ไม่ได้มาตรฐาน"
+                        titleStyle={{color: 'red'}}>
+                        <List.Item
+                          title={`${item.badStandardEffect}`}
+                          titleNumberOfLines={8}
+                        />
+                      </List.Accordion>
+                    </List.Section>
                   </View>
                 </View>
-              </>
+              </View>
             )}
             ListEmptyComponent={
               <View
@@ -344,9 +328,7 @@ const SelectStandard = ({
                   onPress={() => setIsCreateStandard(true)}
                   mode="contained"
                   icon={'plus'}>
-                  <Text
-                    variant="titleMedium"
-                    style={{color: 'white',}}>
+                  <Text variant="titleMedium" style={{color: 'white'}}>
                     เพิ่มมาตรฐานการทำงาน
                   </Text>
                 </Button>
@@ -354,19 +336,6 @@ const SelectStandard = ({
             }
             keyExtractor={item => item.id}
           />
-
-          {watch('standards')?.length > 0 && (
-            <Button
-              style={{
-                width: '90%',
-                alignSelf: 'center',
-                marginBottom: 20,
-              }}
-              mode="contained"
-              onPress={handleDonePress}>
-              {`บันทึก ${watch('standards')?.length} มาตรฐาน`}{' '}
-            </Button>
-          )}
           <Modal
             isVisible={isCreateStandard}
             style={styles.modal}
@@ -376,6 +345,17 @@ const SelectStandard = ({
               onClose={() => setIsCreateStandard(false)}
             />
           </Modal>
+          {selectStandard && (
+            <Modal
+              isVisible={isUpdateModal}
+              style={styles.modal}
+              onBackdropPress={() => setIsUpdateModal(false)}>
+              <UpdateStandard
+                standard={selectStandard}
+                onClose={() => setIsUpdateModal(false)}
+              />
+            </Modal>
+          )}
         </SafeAreaView>
       )}
 
@@ -390,11 +370,11 @@ const SelectStandard = ({
           เกิดข้อผิดพลาด
         </Snackbar>
       )}
-    </Modal>
+    </>
   );
 };
 
-export default SelectStandard;
+export default EditStandard;
 const {width, height} = Dimensions.get('window');
 
 const styles = StyleSheet.create({

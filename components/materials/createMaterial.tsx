@@ -28,10 +28,11 @@ import {
   TextInput,
 } from 'react-native-paper';
 import {usePickImage} from '../../hooks/utils/image/usePickImage';
-import {materialSchema} from '../../screens/utils/validationSchema';
+import {materialSchema} from '../../models/validationSchema';
 import {useUploadToFirebase} from '../../hooks/useUploadtoFirebase';
 import {useCreateToServer} from '../../hooks/useUploadToserver';
 import {DefaultMaterials, MaterialEmbed} from '@prisma/client';
+import UploadImage from '../../components/ui/UploadImage';
 
 type Props = {
   isVisible: boolean;
@@ -142,8 +143,6 @@ const CreateMaterial = (props: Props) => {
           title={`เพิ่มวัสดุอุปกรณ์`}
           titleStyle={{
             fontSize: 18,
-            fontWeight: 'bold',
-            fontFamily: 'Sukhumvit set',
           }}
         />
       </Appbar.Header>
@@ -158,7 +157,16 @@ const CreateMaterial = (props: Props) => {
             alignContent: 'center',
             gap: 20,
           }}>
-          <Controller
+            <UploadImage 
+              control={control}
+              name="image"
+              label="อัพโหลดรูปวัสดุ-อุปกรณ์"
+              isUploading={isStandardImageUploading}
+              pickImage={pickStandardImage}
+              width={200}
+              height={200}
+            />
+          {/* <Controller
             control={control}
             name="image"
             render={({field: {onChange, value}}) => (
@@ -222,7 +230,7 @@ const CreateMaterial = (props: Props) => {
                 )}
               </TouchableOpacity>
             )}
-          />
+          /> */}
           <Controller
             control={control}
             name="name"

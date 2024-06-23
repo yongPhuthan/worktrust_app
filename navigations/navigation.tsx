@@ -43,6 +43,7 @@ import EditWorkers from '../screens/setting/workers/edit';
 import ViewSubmission from '../screens/submit/view';
 import EditMaterials from '../screens/setting/materials/edit';
 import EditGallery from '../screens/setting/gallery/edit';
+import EditStandard from '../screens/setting/standards/edit';
 
 const Theme = {
   ...DefaultTheme,
@@ -377,6 +378,22 @@ const Navigation = ({initialRouteName}: any) => {
             headerTintColor: 'black',
           }}
         />
+         <Stack.Screen
+          name="EditStandard"
+          component={EditStandard}
+          options={{
+            ...commonScreenOptions,
+            headerShown: false,
+            title: 'แก้ไขเอกสาร',
+            headerBackTitleVisible: false,
+
+            headerStyle: {
+              backgroundColor: '#ffffff',
+            },
+            headerTintColor: 'black',
+          }}
+        />
+
         <Stack.Screen
           name="EditWorkers"
           component={EditWorkers}

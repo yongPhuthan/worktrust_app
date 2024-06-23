@@ -1,6 +1,6 @@
 import React, {useState, useEffect, useContext} from 'react';
 import {yupResolver} from '@hookform/resolvers/yup';
-import {defaultContractSchema} from '../../utils/validationSchema';
+import {defaultContractSchema} from '../../../models/validationSchema';
 
 import {
   Alert,

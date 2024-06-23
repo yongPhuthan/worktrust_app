@@ -21,6 +21,8 @@ import {
   WorkStatus,
   WorkerEmbed,
   WorkerStatus,
+  DefaultStandards,
+  WarrantyStatus,
 } from '@prisma/client';
 import { first } from 'lodash';
 import * as yup from 'yup';
@@ -76,7 +78,23 @@ export const imageTogallery = yup.object().shape({
   image : yup.string().required('เลือกรูปภาพผลงานของคุณ'),
 
 });
-export const standardSchema: yup.ObjectSchema<StandardEmbed> = yup
+
+export const defaulatStandardSchema: yup.ObjectSchema<DefaultStandards> = yup
+  .object({
+    id: yup.string().required(),
+    image: yup.string().required().required('*จำเป็น'),
+    content: yup.string().required('*จำเป็น'),
+    badStandardEffect: yup.string().nullable().default(null).required('*จำเป็น'),
+    badStandardImage: yup.string().nullable().default(null).required('*จำเป็น'),
+    standardShowTitle: yup.string().nullable().default(null).required('*จำเป็น'),
+    companyId : yup.string().required(),
+    createdAt : yup.date().required(),
+  })
+  .defined(); // Add .defined() to remove undefined from the schema
+
+
+
+export const standardEmbedSchema: yup.ObjectSchema<StandardEmbed> = yup
   .object({
     id: yup.string().required(),
     image: yup.string().required(),
@@ -117,7 +135,7 @@ export const servicesSchema = yup.object({
   total: yup.number().required(),
   unit: yup.string().required(),
   serviceImages: yup.array().of(yup.string()).required('เลือกภาพตัวอย่างผลงาน'),
-  standards: yup.array().of(standardSchema),
+  standards: yup.array().of(standardEmbedSchema),
   materials: yup.array().of(materialSchema),
 });
 
@@ -137,7 +155,7 @@ export const serviceValidationSchema: yup.ObjectSchema<ServicesEmbed> =
     discountValue: yup.number().required().min(0).default(0),
     total: yup.number().required('ระบุยอดรวม').positive(),
     serviceImages: yup.array().of(serviceImagesSchema).default([]), // Allow null values
-    standards: yup.array().of(standardSchema).default([]), // Add default value of empty array
+    standards: yup.array().of(standardEmbedSchema).default([]), // Add default value of empty array
     materials: yup.array().of(materialSchema).default([]), // Add default value of empty array
     created: yup
       .date()
@@ -207,6 +225,7 @@ export const quotationsValidationSchema: yup.ObjectSchema<QuotationWithoutArrays
     sellerId: yup.string().nullable().default(null),
     warranty: warrantySchemas,
     dateOffer: yup.date().required('เลือกวันที่เสนอราคา'),
+    warrantyStatus : yup.string().required().oneOf(Object.values(WarrantyStatus)).default(WarrantyStatus.PENDING),
     discountPercentage: yup.number().default(0),
     discountType: yup.string().nullable().oneOf(Object.values(DiscountType)).default(DiscountType.PERCENT),
     dateEnd: yup.date().required('เลือกวันที่สิ้นสุด'),
@@ -226,6 +245,7 @@ export const submissionValidationSchema: yup.ObjectSchema<Submissions> = yup.obj
   address: yup.string().required('ระบุที่อยู่'),
   dateOffer: yup.date().required('ระบุวันที่เสนอราคา'),
   customer: customerSchemas.required(),
+  customerSign : customerSignSchema,
   inspector: inspectorValidationSchema.nullable().default(null),
   services: yup
     .array()

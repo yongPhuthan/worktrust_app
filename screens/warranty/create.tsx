@@ -22,7 +22,7 @@ import {
   TextInput,
   Text as TextPaper,
 } from 'react-native-paper';
-import {quotationsValidationSchema} from '../utils/validationSchema';
+import {quotationsValidationSchema} from '../../models/validationSchema';
 import * as stateAction from '../../redux/actions';
 import {v4 as uuidv4} from 'uuid';
 import DatePickerButton from '../../components/styles/DatePicker';

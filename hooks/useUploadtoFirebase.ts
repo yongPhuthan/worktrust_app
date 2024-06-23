@@ -138,11 +138,7 @@ async function uploadToFirebase(
             // Convert .png download URL to .webp
             const webpDownloadURL = downloadURL.replace('.png', '.webp');
 
-            
-            console.log(
-              `${type}  webpDownloadURL uploaded successfully to Firebase with URL:`,
-              webpDownloadURL,
-            );
+      
             resolve(webpDownloadURL);
           } catch (error) {
             if (error instanceof Error) {

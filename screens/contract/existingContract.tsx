@@ -26,7 +26,7 @@ import {
 import {useUser} from '../../providers/UserContext';
 import {DefaultContractType} from '../../types/docType';
 import {ParamListBase} from '../../types/navigationType';
-import {defaultContractSchema} from '../utils/validationSchema';
+import {defaultContractSchema} from '../../models/validationSchema';
 
 type Props = {
   navigation: StackNavigationProp<ParamListBase, 'ExistingContract'>;

@@ -1,5 +1,5 @@
 import {yupResolver} from '@hookform/resolvers/yup';
-import React, {useContext, useState, useEffect} from 'react';
+import React, {useContext, useState, useCallback} from 'react';
 import {useQueryClient, QueryClient} from '@tanstack/react-query';
 import {BACK_END_SERVER_URL} from '@env';
 import {Store} from '../../redux/store';
@@ -36,13 +36,18 @@ import {
 } from '../../models/validationSchema';
 import {DefaultStandards, StandardEmbed} from '@prisma/client';
 import UploadImage from '../../components/ui/UploadImage';
+import { usePutServer } from '../../hooks/standard/update';
+import { useUser } from '../../providers/UserContext';
+
 type Props = {
-  isVisible: boolean;
-  onClose: () => void;
+    onClose: () => void;
+  standard : DefaultStandards;
 };
 
-const CreateStandard = (props: Props) => {
-  const {isVisible, onClose} = props;
+const UpdateStandard = (props: Props) => {
+  const { standard, onClose} = props;
+  const user = useUser();
+
   const {
     state: {code, companyId},
     dispatch,
@@ -50,25 +55,16 @@ const CreateStandard = (props: Props) => {
   const {width, height} = Dimensions.get('window');
   const [isError, setError] = React.useState('');
   const queryClient = useQueryClient();
-  const defaultStandard: DefaultStandards = {
-    id: uuidv4(),
-    standardShowTitle: null,
-    image: '',
-    content: '',
-    companyId,
-    badStandardImage: null,
-    badStandardEffect: null,
-    createdAt: new Date(),
-  };
+
   const {
     register,
     control,
     setValue,
     getValues,
-    formState: {errors, isValid},
+    formState: {errors, isValid,isDirty},
   } = useForm<DefaultStandards>({
     mode: 'onChange',
-    defaultValues: defaultStandard,
+    defaultValues: standard,
     resolver: yupResolver(defaulatStandardSchema),
   });
 
@@ -84,14 +80,14 @@ const CreateStandard = (props: Props) => {
     isImagePicking: isStandardImageUploading,
     pickImage: pickStandardImage,
   } = usePickImage((uri: string) => {
-    setValue('image', uri);
+    setValue('image', uri, {shouldDirty: true});
   });
 
   const {
     isImagePicking: isBadStandardImageUploading,
     pickImage: pickBadStandardImage,
   } = usePickImage((uri: string) => {
-    setValue('badStandardImage', uri);
+    setValue('badStandardImage', uri, {shouldDirty: true});
   });
 
   const standardStoragePath = `${code}/standards/${getValues(
@@ -111,56 +107,65 @@ const CreateStandard = (props: Props) => {
     uploadImage: uploadBadStandardImage,
   } = useUploadToFirebase(badStandardStoragePath);
 
-  const url = `${BACK_END_SERVER_URL}/api/services/createStandards`;
-  const {isLoading, error, createToServer} = useCreateToServer(
+  const url = `${BACK_END_SERVER_URL}/api/company/updateStandard`;
+  const {isLoading, error, putToServer} = usePutServer(
     url,
     'standards',
   );
-  const handleSubmit = async () => {
-    if (!image) {
-      Alert.alert('กรุณาเพิ่มรูปภาพมาตรฐาน', '');
+  const updateStandard = useCallback(async () => {
+    if (!user || !user.uid ) {
+      console.error('User  error');
       return;
     }
-    if (!badStandardImage) {
-      Alert.alert('กรุณาเพิ่มรูปตัวอย่างงานที่ไม่ได้มาตรฐาน', '');
-      return;
-    }
-    const uploadPromises = [
-      uploadStandardImage(image),
-      uploadBadStandardImage(badStandardImage),
-    ];
 
-    const uploadedImages = await Promise.all(uploadPromises);
     try {
-      // หน่วงเวลา 1.5 วินาทีก่อนเรียก setValue
-      setTimeout(() => {
-        if (
-          !uploadedImages ||
-          !uploadedImages[0].originalUrl ||
-          !uploadedImages[1].originalUrl
-        ) {
-          Alert.alert('อัพโหลดล้มเหลว', 'กรุณาลองใหม่อีกครั้ง');
-          return;
+      if (isDirty) {
+        if ( image && image !== standard.image) {
+          const downloadUrl = await uploadStandardImage(image);
+          if (!downloadUrl) {
+            throw new Error('ไม่สามารถอัพโหลดรูปภาพได้');
+          }
+          setValue('image', downloadUrl.originalUrl as string, {
+            shouldDirty: true,
+          });
         }
-        setValue('image', uploadedImages[0].originalUrl);
-        setValue('badStandardImage', uploadedImages[1].originalUrl);
-
-        // Step 3: Proceed with creating the standard
-        const formData = {
-          ...getValues(),
-        };
-
-        createToServer(formData); // Assuming this method exists and is implemented to create the standard
-      }, 1500);
+        if (badStandardImage && badStandardImage !== standard.badStandardImage) {
+          const downloadUrl = await uploadBadStandardImage(badStandardImage);
+          if (!downloadUrl) {
+            throw new Error('ไม่สามารถอัพโหลดรูปภาพได้');
+          }
+          setValue('badStandardImage', downloadUrl.originalUrl as string, {
+            shouldDirty: true,
+          });
+        }
+        const formData = getValues();
+        await putToServer(formData);
+        onClose();
+      } else {
+        console.log('No changes to save');
+      }
     } catch (err) {
-      // Handle errors from uploading images or creating the standard
       console.error('An error occurred:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      onClose();
+      Alert.alert(
+        'เกิดข้อผิดพลาด',
+        'An error occurred while updating the worker. Please try again.',
+        [{text: 'OK'}],
+        {cancelable: false},
+      );
     }
-  };
-
+  }, [
+    user,
+    isValid,
+    image,
+    standard.image,
+    isDirty,
+    setValue,
+    getValues,
+    uploadStandardImage,
+    uploadBadStandardImage,
+    putToServer,
+    onClose,
+  ]);
   return (
     <SafeAreaView style={styles.container}>
       <Appbar.Header
@@ -173,18 +178,18 @@ const CreateStandard = (props: Props) => {
         <Appbar.Action icon={'close'} onPress={onClose} />
 
         <Appbar.Content
-          title={`เพิ่มมาตรฐาน`}
+          title={`แก้ไขมาตรฐาน`}
           titleStyle={{
             fontSize: 18,
           }}
         />
         <Button
           loading={isBadStandardUploading || isStandardUploading || isLoading}
-          disabled={!isValid}
+          disabled={!isDirty || isLoading || isStandardUploading || isBadStandardUploading}
           testID="submited-button"
           mode="contained"
           onPress={() => {
-            handleSubmit();
+            updateStandard();
           }}>
           {'บันทึก'}
         </Button>
@@ -359,7 +364,7 @@ const CreateStandard = (props: Props) => {
   );
 };
 
-export default CreateStandard;
+export default UpdateStandard;
 const {width, height} = Dimensions.get('window');
 const styles = StyleSheet.create({
   modal: {

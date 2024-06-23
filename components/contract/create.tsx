@@ -19,7 +19,7 @@ import {
   Text as TextPaper,
 } from 'react-native-paper';
 import {Store} from '../../redux/store';
-import {defaultContractSchema} from '../../screens/utils/validationSchema';
+import {defaultContractSchema} from '../../models/validationSchema';
 
 import {Controller, useForm, useFormContext, useWatch} from 'react-hook-form';
 import {useUser} from '../../providers/UserContext';
