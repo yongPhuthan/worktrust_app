@@ -44,6 +44,7 @@ import ViewSubmission from '../screens/submit/view';
 import EditMaterials from '../screens/setting/materials/edit';
 import EditGallery from '../screens/setting/gallery/edit';
 import EditStandard from '../screens/setting/standards/edit';
+import DashboardSubmit from '../screens/submit/dashboard';
 
 const Theme = {
   ...DefaultTheme,
@@ -53,10 +54,8 @@ const Theme = {
   },
 };
 
-const Navigation = ({initialRouteName}: any) => {
+const Navigation = ({initialRouteName}: {initialRouteName: keyof ParamListBase | undefined}) => {
   const Stack = createNativeStackNavigator<ParamListBase>();
-  const user = useUser();
-
   const screens: ScreenItem[] = [
     {name: 'CreateCompanyScreen', component: CreateCompanyScreen},
     {name: 'RegisterScreen', component: RegisterScreen},
@@ -220,6 +219,20 @@ const Navigation = ({initialRouteName}: any) => {
         <Stack.Screen
           name="ViewSubmission"
           component={ViewSubmission}
+          options={{
+            ...commonScreenOptions,
+            headerShown: false,
+            title: 'แจ้งส่งงานลูกค้า',
+            headerBackTitleVisible: false,
+            headerStyle: {
+              backgroundColor: '#ffffff',
+            },
+            headerTintColor: 'black',
+          }}
+        />
+         <Stack.Screen
+          name="DashboardSubmit"
+          component={DashboardSubmit}
           options={{
             ...commonScreenOptions,
             headerShown: false,

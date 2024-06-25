@@ -417,12 +417,10 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                 fontWeight: 'bold',
               }}
             />
-            <Appbar.Action
+            {/* <Appbar.Action
               icon="bell-outline"
-              // onPress={() => {
-              //   navigation.navigate('SearchScreen');
-              // }}
-            />
+
+            /> */}
           </Appbar.Header>
           {isLoadingAction ? (
             <View

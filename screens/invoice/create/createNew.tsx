@@ -43,6 +43,7 @@ import {
   DiscountType,
   InvoiceStatus,
   Invoices,
+  Quotations,
   ServicesEmbed,
 } from '@prisma/client';
 import {CompanyState} from 'types';
@@ -60,6 +61,7 @@ import useShare from '../../../hooks/webview/useShare';
 import {TaxType} from '../../../models/Tax';
 import {Store} from '../../../redux/store';
 import {ParamListBase} from '../../../types/navigationType';
+import UpdateServiceModal from '../../../components/service/update';
 
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'CreateNewInvoice'>;
@@ -67,7 +69,7 @@ interface Props {
 
 const CreateNewInvoice = ({navigation}: Props) => {
   const {
-    state: {companyState, editInvoice, sellerId, quotationRefNumber},
+    state: {companyState, editInvoice, sellerId, quotationRefNumber, editQuotation},
     dispatch,
   } = useContext(Store);
 
@@ -192,9 +194,9 @@ const CreateNewInvoice = ({navigation}: Props) => {
 
     customerSign: null,
   };
-  const methods = useForm<Invoices>({
+  const methods = useForm<Invoices | Quotations>({
     mode: 'all',
-    defaultValues: editInvoice ? editInvoice : invoiceDefaultValue,
+    defaultValues: editInvoice ? editInvoice : editQuotation ? editQuotation :   invoiceDefaultValue,
   });
   const {fields, append, remove, update} = useFieldArray({
     control: methods.control,
@@ -582,7 +584,7 @@ const CreateNewInvoice = ({navigation}: Props) => {
         </Modal>
         <SelectProductModal
           onAddService={newProduct => append(newProduct)}
-          currentValue={null}
+
           visible={showAddExistingService}
           onClose={closeAddExistingServiceModal}
         />
@@ -593,15 +595,14 @@ const CreateNewInvoice = ({navigation}: Props) => {
               onClose={closePDFModal}
               pdfUrl={editInvoice? editInvoice.pdfUrl ? editInvoice.pdfUrl : '' : pdfUrl || ''}
             />
-        {showAddNewService && (
-          <AddProductFormModal
-            resetSelectService={() => setSelectService(null)}
-            selectService={selectService}
-            resetAddNewService={() => setAddNewService(false)}
-            onAddService={newProduct => update(serviceIndex, newProduct)}
+       {currentValue && (
+          <UpdateServiceModal
+            visible={showEditServiceModal}
+            resetUpdateService={() => setCurrentValue(null)}
+            onClose={closeEditServiceModal}
             currentValue={currentValue}
-            visible={showAddNewService}
-            onClose={closeAddNewServiceModal}
+            serviceIndex={serviceIndex}
+            onUpdateService={(serviceIndex :number,updatedService : ServicesEmbed ) => update( serviceIndex,updatedService)}
           />
         )}
       </FormProvider>

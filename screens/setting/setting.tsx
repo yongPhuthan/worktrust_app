@@ -12,7 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {Divider, ActivityIndicator, Appbar} from 'react-native-paper';
+import {Divider, ActivityIndicator, Appbar, Button} from 'react-native-paper';
 import firebase from '../../firebase';
 import {ParamListBase} from '../../types/navigationType';
 import {Store} from '../../redux/store';
@@ -23,6 +23,7 @@ import {useUser} from '../../providers/UserContext';
 import {CompanyState} from 'types';
 import {User} from '@prisma/client';
 import {DrawerActions} from '@react-navigation/native';
+import SelectPackages from '../../components/payment/selectPackages';
 
 interface SettingScreenProps {
   navigation: StackNavigationProp<ParamListBase, 'TopUpScreen'>;
@@ -35,9 +36,10 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
   const {
     state: {code},
     dispatch,
-  }: any = useContext(Store);
+  } = useContext(Store);
   const [logo, setLogo] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
 
   const toggleLogoutModal = () => {
     Alert.alert(
@@ -174,7 +176,7 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
   return (
     <>
       <Appbar.Header
-        // elevated
+        elevated
         mode="center-aligned"
         style={{
           backgroundColor: 'white',
@@ -189,163 +191,110 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
           title={'ตั้งค่า'}
           titleStyle={{
             fontSize: 18,
-            fontWeight: 'bold',
+            // fontWeight: 'bold',
           }}
         />
       </Appbar.Header>
       {company && seller && (
         <ScrollView style={{flex: 1, backgroundColor: '#f5f5f5'}}>
           {/* Business Details */}
-          <View style={{backgroundColor: '#fff', paddingVertical: 24}}>
-            {/* Logo */}
-            <TouchableOpacity
-              style={{alignItems: 'center', marginBottom: 24}}
-              onPress={handleLogoUpload}>
-              {logo ? (
+          <View
+            style={{
+              paddingHorizontal: 20,
+              backgroundColor: '#fff',
+              paddingVertical: 20,
+              paddingTop: 30,
+              flexDirection: 'column',
+            }}>
+            <View style={{flexDirection: logo ? 'row': 'column', gap: 10}}>
+              {logo && (
                 <Image
                   source={{
                     uri: logo,
                   }}
-                  style={{width: 100, aspectRatio: 1, resizeMode: 'contain'}}
-                />
-              ) : (
-                <View
                   style={{
-                    width: 80,
-                    height: 80,
-                    backgroundColor: '#ddd',
-                    borderRadius: 40,
-                    alignItems: 'center',
+                    alignSelf: 'center',
+                    width: 100,
+                    aspectRatio: 1,
+                    resizeMode: 'contain',
                   }}
                 />
               )}
-            </TouchableOpacity>
-            {/* Business Name and Address */}
-            <View style={{alignItems: 'center'}}>
-              <Text
-                style={{
-                  fontSize: 18,
-                  fontWeight: 'bold',
-                  color: '#333',
-                  marginBottom: 12,
-                }}>
-                {company?.bizName}
-              </Text>
-              <Text
-                style={{
-                  fontSize: 14,
-                  marginBottom: 5,
-                  fontWeight: '600',
-                  color: '#333',
-                }}>
-                {seller?.name} {seller?.lastName}
-              </Text>
-              <Text
-                style={{
-                  fontSize: 14,
-                  marginBottom: 10,
-                  fontWeight: '600',
-                  color: '#333',
-                }}>
-                {seller?.jobPosition}
-              </Text>
-              {businessDetails.map(item => (
-                <View
-                  key={item.id}
+              {/* Business Name and Address */}
+              <View style={{alignItems: logo ?'flex-start' : 'center'}}>
+                <Text
                   style={{
-                    flexDirection: 'row',
-                    maxWidth: '92%',
-                    marginBottom: 8,
+                    fontSize: 14,
+                    marginBottom: 5,
+                    fontWeight: '600',
+                    color: '#333',
                   }}>
-                  <Text
-                    style={{fontSize: 14, fontWeight: '600', color: '#333'}}>
-                    {item.value}
-                  </Text>
-                </View>
-              ))}
-              <Text
-                style={{
-                  fontSize: 14,
-                  marginBottom: 10,
-                  fontWeight: '600',
-                  color: '#333',
-                }}>
-                เบอร์ติดต่อ {company?.officeTel} มือถือ {company?.mobileTel}
-              </Text>
-
-              {company.companyTax && (
+                  คุณ {seller?.name} {seller?.lastName}
+                </Text>
                 <Text
                   style={{
                     fontSize: 14,
                     marginBottom: 10,
-                    fontWeight: '600',
+
                     color: '#333',
                   }}>
-                  {company?.companyTax}
+                  ตำแหน่ง: {seller?.jobPosition}
                 </Text>
-              )}
 
+                <Text
+                  style={{
+                    fontSize: 14,
+                    marginBottom: 10,
+
+                    color: '#333',
+                  }}>
+                  รหัสลูกค้า : {company?.code}
+                </Text>
+                <Divider />
+
+                <Text
+                  style={{
+                    fontSize: 14,
+                    marginBottom: 10,
+
+                    color: '#333',
+                  }}>
+                  แพคเกจปัจจุบัน : "FREETIER"
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    marginBottom: 10,
+
+                    color: '#333',
+                  }}>
+                  หมดอายุ : 20/03/24
+                </Text>
+              </View>
+            </View>
+            <Button
+            icon={'crown'}
+              mode={!logo ? 'contained' : 'outlined'}
+              style={{marginTop: 10, }}
+            // #FFBF47
+              onPress={
+                () => setIsVisible(true)
+              }>
               <Text
                 style={{
                   fontSize: 14,
-                  marginBottom: 10,
-                  fontWeight: '600',
-                  color: '#333',
+                  // fontWeight: 'bold',
+                  color: !logo ? '#fff' : '#333',
+                  //  fontFamily: 'Sukhumvit Set Bold',
                 }}>
-                รหัสลูกค้า : {company?.code}
+                ต่ออายุแพคเกจ
               </Text>
-            </View>
+            </Button>
           </View>
           {/* Business Name and Address */}
           {/* Account */}
           <View style={{backgroundColor: '#fff', marginTop: 10}}>
-            <TouchableOpacity
-              // onPress={() => {
-              //   navigation.navigate('TopUpScreen', {
-              //     balance: credit,
-              //   });
-              // }}
-              style={{paddingVertical: 16, paddingHorizontal: 24}}>
-              {/* <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}>
-                <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                  <FontAwesomeIcon icon={faCreditCard} size={24} color="#1b72e8" />
 
-                  <Text
-                    style={{
-                      fontSize: 15,
-                      fontWeight: '600',
-                      marginLeft: 10,
-                      color: '#333',
-                    }}>
-                    เครดิต
-                  </Text>
-                </View>
-                <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: '800',
-                      color: '#1b72e8',
-                      marginRight: 8,
-                    }}>
-                    {Number(credit)
-                      .toFixed(2)
-                      .replace(/\d(?=(\d{3})+\.)/g, '$&,')}
-                  </Text>
-                  <FontAwesomeIcon
-                    icon={faChevronRight}
-                    size={18}
-                    color="#aaa"
-                  />
-                </View>
-              </View> */}
-            </TouchableOpacity>
-            <Divider />
             <TouchableOpacity
               style={{paddingVertical: 15, paddingHorizontal: 24}}
               onPress={() =>
@@ -452,6 +401,13 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
           </View>
         </ScrollView>
       )}
+       <SelectPackages
+       selectedPackage='fsf'
+       setSelectedPackage={() => {}}
+        isVisible={isVisible}
+        onClose={() => setIsVisible(false)}
+        serviceId="fsf"
+      />
     </>
   );
 };

@@ -34,7 +34,23 @@ export type CompanyState = {
   receipts: Receipts[];
   defaultContracts: ContractsEmbed | null;
   defaultWarranty: WarrantyEmbed | null;
+  submissions: Submissions[];
 };
+
+export type CompanyOnly = {
+  id: string;
+  code: string;
+  bizName: string;
+  address: string;
+  officeTel: string | null;
+  mobileTel: string | null;
+  companyTax: string | null;
+  bizType: string;
+  logo: string | null;
+  isActive: boolean;
+  signature: string | null;
+  userIds: string[];
+}
 export type CompanyQuery = {
   company: CompanyState;
   userSignature: string;

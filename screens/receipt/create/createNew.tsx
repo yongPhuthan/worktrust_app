@@ -57,10 +57,11 @@ import {TaxType} from '../../../models/Tax';
 import * as stateAction from '../../../redux/actions';
 import {Store} from '../../../redux/store';
 import {ParamListBase} from '../../../types/navigationType';
-import {quotationsValidationSchema} from '../../../models/validationSchema';
+import UpdateServiceModal from '../../../components/service/update';
 import {
   CustomerEmbed,
   DiscountType,
+  Quotations,
   ReceiptStatus,
   Receipts,
   ServicesEmbed,
@@ -81,6 +82,7 @@ const CreateNewReceipt = ({navigation}: Props) => {
       editReceipt,
       defaultWarranty,
       quotationRefNumber,
+      editQuotation,
       quotationId,
     },
     dispatch,
@@ -103,7 +105,7 @@ const CreateNewReceipt = ({navigation}: Props) => {
 
   const [isLoadingWebP, setIsLoadingWebP] = useState(false);
 
-  const [pdfUrl, setPdfUrl] = useState<string | null>('true');
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [value, setValue] = React.useState('');
   const [isNewReceipt, setIsNewReceipt] = useState(editReceipt ? false : true);
 
@@ -213,15 +215,15 @@ const CreateNewReceipt = ({navigation}: Props) => {
     sellerSignature: '',
     status: ReceiptStatus.PENDING, // Set the status to a valid QuotationStatus value
     dateApproved: null,
-    pdfUrl: '',
+    pdfUrl: null,
     updated: new Date(),
     created: new Date(),
 
     customerSign: null,
   };
-  const methods = useForm<Receipts>({
+  const methods = useForm<Receipts | Quotations>({
     mode: 'all',
-    defaultValues: editReceipt ? editReceipt : receiptDefaultValue,
+    defaultValues: editReceipt ? editReceipt : editQuotation ? editQuotation : receiptDefaultValue ,
   });
   const {fields, append, remove, update} = useFieldArray({
     control: methods.control,
@@ -275,6 +277,7 @@ const CreateNewReceipt = ({navigation}: Props) => {
     openPDFModal,
     setReceiptServerId,
   };
+
 
   const {mutate, isPending} = useCreateNewReceipt(actions);
   const {mutate: updateReceipt, isUpdating: isUpdatePending} =
@@ -365,15 +368,7 @@ const CreateNewReceipt = ({navigation}: Props) => {
         }}>
         <Appbar.BackAction onPress={() => navigation.goBack()} />
         <Appbar.Content title="" />
-
-        <IconButton
-          disabled={editReceipt ? !editReceipt.pdfUrl : !pdfUrl}
-
-          mode="outlined"
-          icon="file-document"
-          onPress={openPDFModal}
-        />
-
+        <Appbar.Action    disabled={editReceipt ? !editReceipt.pdfUrl : !pdfUrl}  iconColor='#047e6e'  mode='outlined'      icon="file-document"onPress={openPDFModal} />
         <Appbar.Content title="" />
         <Button
           loading={isPending || isUpdatePending}
@@ -434,7 +429,7 @@ const CreateNewReceipt = ({navigation}: Props) => {
                 <Text style={styles.label}>บริการ-สินค้า</Text>
               </View>
               {fields.length > 0 &&
-                fields.map((field: any, index: number) => (
+                fields.map((field, index: number) => (
                   <CardProject
                     handleModalClose={handleModalClose}
                     visibleModalIndex={visibleModalIndex === index}
@@ -637,7 +632,6 @@ const CreateNewReceipt = ({navigation}: Props) => {
         </Modal>
         <SelectProductModal
           onAddService={newProduct => append(newProduct)}
-          currentValue={null}
           visible={showAddExistingService}
           onClose={closeAddExistingServiceModal}
         />
@@ -654,15 +648,15 @@ const CreateNewReceipt = ({navigation}: Props) => {
                     : pdfUrl || ''
                 }
               />
-        {showAddNewService && (
-          <AddProductFormModal
-            resetSelectService={() => setSelectService(null)}
-            selectService={selectService}
-            resetAddNewService={() => setAddNewService(false)}
-            onAddService={newProduct => update(serviceIndex, newProduct)}
+      
+        {currentValue && (
+          <UpdateServiceModal
+            visible={showEditServiceModal}
+            resetUpdateService={() => setCurrentValue(null)}
+            onClose={closeEditServiceModal}
             currentValue={currentValue}
-            visible={showAddNewService}
-            onClose={closeAddNewServiceModal}
+            serviceIndex={serviceIndex}
+            onUpdateService={(serviceIndex :number,updatedService : ServicesEmbed ) => update( serviceIndex,updatedService)}
           />
         )}
       </FormProvider>

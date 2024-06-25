@@ -13,6 +13,7 @@ import Dashboard from '../screens/quotation/dashboard';
 import {ParamListBase} from '../types/navigationType';
 import DashboardSubmit from '../screens/submit/dashboard';
 import {BRAND_NAME} from '@env';
+import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import InvoiceDashboard from '../screens/invoice/dashboard';
 import ReceiptDashboard from '../screens/receipt/dashboard';
 import DashboardWarranty from '../screens/warranty/dashboard';
@@ -32,6 +33,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
   const activeTintColor = 'white'; // Replace with your color for active item
   const inactiveTintColor = 'white'; // Replace with your color for inactive item
   const borderRadius = 3; // Adjust as needed
+  const navigation = useNavigation();
 
   return (
     <SafeAreaView style={{flex: 1}}>
@@ -134,15 +136,15 @@ function DashboardDrawer() {
 
           title: 'ใบเสนอราคา',
 
-          headerRight: () => (
-            <TouchableOpacity
-              style={{marginRight: 10}}
-              onPress={() => {
-                /* handle press */
-              }}>
-              <FontAwesomeIcon icon={faBell} color="#1f303cff" size={22} />
-            </TouchableOpacity>
-          ),
+          // headerRight: () => (
+          //   <TouchableOpacity
+          //     style={{marginRight: 10}}
+          //     onPress={() => {
+          //       /* handle press */
+          //     }}>
+          //     <FontAwesomeIcon icon={faBell} color="#1f303cff" size={22} />
+          //   </TouchableOpacity>
+          // ),
           // ... other common options ...
         }}
       />
@@ -154,15 +156,15 @@ function DashboardDrawer() {
           ...commonScreenOptions,
           headerShown: false,
           title: 'ใบวางบิล',
-          headerRight: () => (
-            <TouchableOpacity
-              style={{marginRight: 10}}
-              onPress={() => {
-                /* handle press */
-              }}>
-              <FontAwesomeIcon icon={faBell} color="#1f303cff" size={22} />
-            </TouchableOpacity>
-          ),
+          // headerRight: () => (
+          //   <TouchableOpacity
+          //     style={{marginRight: 10}}
+          //     onPress={() => {
+          //       /* handle press */
+          //     }}>
+          //     <FontAwesomeIcon icon={faBell} color="#1f303cff" size={22} />
+          //   </TouchableOpacity>
+          // ),
           // ... other common options ...
         }}
       />
@@ -173,15 +175,15 @@ function DashboardDrawer() {
           ...commonScreenOptions,
           headerShown: false,
           title: 'ใบเสร็จรับเงิน',
-          headerRight: () => (
-            <TouchableOpacity
-              style={{marginRight: 10}}
-              onPress={() => {
-                /* handle press */
-              }}>
-              <FontAwesomeIcon icon={faBell} color="#1f303cff" size={22} />
-            </TouchableOpacity>
-          ),
+          // headerRight: () => (
+          //   <TouchableOpacity
+          //     style={{marginRight: 10}}
+          //     onPress={() => {
+          //       /* handle press */
+          //     }}>
+          //     <FontAwesomeIcon icon={faBell} color="#1f303cff" size={22} />
+          //   </TouchableOpacity>
+          // ),
           // ... other common options ...
         }}
       />
@@ -192,14 +194,14 @@ function DashboardDrawer() {
           ...commonScreenOptions,
           headerShown: false,
           title: 'ใบรับประกัน', 
-          headerRight: () => (
-            <TouchableOpacity
-              style={{marginRight: 10}}
-              onPress={() => {
-              }}>
-              <FontAwesomeIcon icon={faBell} color="#1f303cff" size={22} />
-            </TouchableOpacity>
-          ),
+          // headerRight: () => (
+          //   <TouchableOpacity
+          //     style={{marginRight: 10}}
+          //     onPress={() => {
+          //     }}>
+          //     <FontAwesomeIcon icon={faBell} color="#1f303cff" size={22} />
+          //   </TouchableOpacity>
+          // ),
         }}
       />
       <Drawer.Screen
@@ -209,15 +211,15 @@ function DashboardDrawer() {
           ...commonScreenOptions,
           headerShown: false,
           title: 'ส่งงาน',
-          headerRight: () => (
-            <TouchableOpacity
-              style={{marginRight: 10}}
-              onPress={() => {
+          // headerRight: () => (
+          //   <TouchableOpacity
+          //     style={{marginRight: 10}}
+          //     onPress={() => {
   
-              }}>
-              <FontAwesomeIcon icon={faBell} color="#1f303cff" size={22} />
-            </TouchableOpacity>
-          ),
+          //     }}>
+          //     <FontAwesomeIcon icon={faBell} color="#1f303cff" size={22} />
+          //   </TouchableOpacity>
+          // ),
         }}
       />
        <Drawer.Screen
@@ -227,15 +229,15 @@ function DashboardDrawer() {
           ...commonScreenOptions,
           headerShown: false,
           title: 'ตั้งค่า',
-          headerRight: () => (
-            <TouchableOpacity
-              style={{marginRight: 10}}
-              onPress={() => {
+          // headerRight: () => (
+          //   <TouchableOpacity
+          //     style={{marginRight: 10}}
+          //     onPress={() => {
   
-              }}>
-              <FontAwesomeIcon icon={faBell} color="#1f303cff" size={22} />
-            </TouchableOpacity>
-          ),
+          //     }}>
+          //     <FontAwesomeIcon icon={faBell} color="#1f303cff" size={22} />
+          //   </TouchableOpacity>
+          // ),
         }}
       />
 

@@ -38,7 +38,7 @@ const App = () => {
   return (
     <PaperProvider theme={theme}>
       <QueryClientProvider client={queryClient}>
-        <AuthCheckedNavigation />
+        <AuthCheckedNavigation  initialRouteName='DashboardQuotation'/>
       </QueryClientProvider>
     </PaperProvider>
   );

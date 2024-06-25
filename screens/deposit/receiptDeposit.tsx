@@ -90,6 +90,7 @@ const ReceiptDepositScreen = ({navigation}: Props) => {
     paymentMethod: '',
     paymentStatus: '',
     depositPaid: true,
+    
     depositApplied:
       editQuotation?.deposit?.firstDeposit! > 0
         ? editQuotation?.allTotal! - editQuotation?.deposit?.firstDeposit!
@@ -105,10 +106,8 @@ const ReceiptDepositScreen = ({navigation}: Props) => {
     dateOffer: initialDateOffer,
     noteToCustomer: '',
     noteToTeam: '',
-    dateEnd: initialDateEnd,
     docNumber: `IV${initialDocnumber}`,
     sellerSignature: '',
-    warranty: editQuotation?.warranty ? editQuotation?.warranty : null,
     status: ReceiptStatus.PENDING, // Set the status to a valid QuotationStatus value
     dateApproved: null,
     pdfUrl: '',
@@ -254,15 +253,16 @@ const ReceiptDepositScreen = ({navigation}: Props) => {
         style={{
           backgroundColor: 'white',
         }}>
-        <Appbar.Action
-          icon="chevron-left"
+        <Appbar.BackAction
+        
           onPress={() => {
             navigation.goBack();
           }}
         />
 
         <Appbar.Content title="" />
-        {pdfUrl && <Appbar.Action icon={"file-find-outline"} onPress={openPDFModal} />}
+        <Appbar.Action    disabled={!pdfUrl}  iconColor='#047e6e'  mode='outlined'      icon="file-document"onPress={openPDFModal} />
+        <Appbar.Content title="" />
 
         <Button
           mode="contained"
@@ -655,6 +655,7 @@ const ReceiptDepositScreen = ({navigation}: Props) => {
       {pdfUrl && (
         <>
           <PDFModalScreen
+          fileType='IV'
             fileName={editQuotation.customer.name}
             visible={showPDFModal}
             onClose={closePDFModal}

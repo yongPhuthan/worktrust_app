@@ -35,7 +35,9 @@ const CardDashBoardSubmission = (props: Props) => {
     <TouchableOpacity onPress={props.onCardPress} style={styles.subContainer}>
       <View style={styles.summary}>
         <Text style={styles.summaryText}>{props.customerName}</Text>
-      
+        <Text style={styles.summaryPrice}>
+          วันที่ส่งงาน {convertDateToDDMMYYYY(props.date.toString())}
+        </Text>
 
         {/* <FontAwesomeIcon icon={faChevronRight} size={24} color="#19232e" /> */}
       </View>
@@ -74,12 +76,7 @@ const CardDashBoardSubmission = (props: Props) => {
         </View>
       )}
 
-      <View style={styles.telAndTax}>
-        <Text style={styles.summaryPrice}>
-          วันที่แจ้งส่ง {convertDateToDDMMYYYY(props.date.toString())}
-        </Text>
 
-      </View>
     </TouchableOpacity>
   );
 };
@@ -135,7 +132,7 @@ const styles = StyleSheet.create({
     color: '#19232e',
   },
   summaryPrice: {
-    fontSize: 14,
+    fontSize: 12,
     alignSelf: 'flex-end',
     color: '#19232e',
   },

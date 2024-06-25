@@ -37,7 +37,7 @@ import {usePickImage} from '../../hooks/utils/image/usePickImage';
 import {useCreateToServer} from '../../hooks/useUploadToserver';
 import {usePutServer} from '../../hooks/putServer';
 import ConfirmDeleteDialog from '../../components/ConfirmDeleteDialog';
-import { CompanyState } from 'types';
+import {CompanyState} from 'types';
 
 interface MyError {
   response: object;
@@ -51,6 +51,7 @@ interface Props {
 const EditSetting = ({navigation, route}: Props) => {
   const {company, seller}: any = route.params || {};
   const [isImageUpload, setIsImageUpload] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
   const errorText = 'กรุณากรอกข้อมูล';
   const API_URL = `${BACK_END_SERVER_URL}/api/company/updateCompanySeller?id=${encodeURIComponent(
     company.id,
@@ -436,8 +437,8 @@ style={styles.input}
           title="แก้ไขข้อมูลธุรกิจ"
           titleStyle={{
             fontSize: 18,
-            fontFamily: 'Sukhumvit Set Bold',
-            fontWeight: 'bold',
+            // fontFamily: 'Sukhumvit Set Bold',
+            // fontWeight: 'bold',
           }}
         />
         <Button
@@ -478,6 +479,7 @@ style={styles.input}
           company={company.bizName}
         />
       </SafeAreaView>
+
     </>
   );
 };

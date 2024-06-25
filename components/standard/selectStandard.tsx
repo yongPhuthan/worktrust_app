@@ -35,15 +35,6 @@ interface AuditModalProps {
   description?: string;
   serviceId: string;
 }
-interface StandardData {
-  id: string;
-  createdAt: string;
-  standardShowTitle: string;
-  content: string;
-  image: string;
-  badStandardImage: string;
-  badStandardEffect: string;
-}
 
 const SelectStandard = ({
   isVisible,
@@ -74,6 +65,8 @@ const SelectStandard = ({
     state: {companyId, code},
     dispatch,
   } = useContext(Store);
+  console.log('code', code);
+  console.log('companyId', companyId);
   const fetchStandards = async () => {
     if (!user) {
       throw new Error('User not authenticated');
@@ -190,7 +183,7 @@ const SelectStandard = ({
             {`งานติดตั้ง ${title || ''}`}
           </Banner>
           <FlatList
-            style={{padding: 10}}
+            style={{padding: 10, paddingTop: 20}}
             data={standardDatas}
             renderItem={({item, index}) => (
               <>

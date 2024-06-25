@@ -1,34 +1,27 @@
-import { RouteProp } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import React, { useContext, useState } from 'react';
-import { FormProvider, useForm, useWatch } from 'react-hook-form';
+import {RouteProp} from '@react-navigation/native';
+import {StackNavigationProp} from '@react-navigation/stack';
+import React, {useContext, useState} from 'react';
+import {FormProvider, useForm, useWatch} from 'react-hook-form';
 import {
-    Alert,
-    Dimensions,
-    FlatList,
-    Image,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View
+  Alert,
+  Dimensions,
+  FlatList,
+  Image,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import {
-    Appbar,
-    Avatar,
-    Divider,
-    IconButton
-} from 'react-native-paper';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {Appbar, Avatar, Divider, IconButton} from 'react-native-paper';
 
-import {
-    ServicesEmbed,
-    Submissions
-} from '@prisma/client';
+import {ReviewsEmbed, ServicesEmbed, Submissions} from '@prisma/client';
 import SubmissionViewScreen from '../../components/webview/submission';
 import useSelectedDates from '../../hooks/quotation/create/useSelectDates';
-import { Store } from '../../redux/store';
-import { ParamListBase } from '../../types/navigationType';
+import {Store} from '../../redux/store';
+import {ParamListBase} from '../../types/navigationType';
+import {Float} from 'react-native/Libraries/Types/CodegenTypes';
 type Props = {
   navigation: StackNavigationProp<ParamListBase>;
   route: RouteProp<ParamListBase, 'ViewSubmission'>;
@@ -41,7 +34,20 @@ const thaiDateFormatter = new Intl.DateTimeFormat('th-TH', {
 });
 
 const width = Dimensions.get('window').width;
-
+const StarRating = ({rating}: {rating: Float}) => {
+  const stars = [];
+  for (let i = 1; i <= 5; i++) {
+    stars.push(
+      <IconButton
+        key={i}
+        icon={i <= rating ? 'star' : 'star-outline'}
+        iconColor={'#047e6e'}
+        size={20}
+      />,
+    );
+  }
+  return <View style={styles.starContainer}>{stars}</View>;
+};
 const ViewSubmission = (props: Props) => {
   const {route, navigation} = props;
   const {
@@ -50,14 +56,11 @@ const ViewSubmission = (props: Props) => {
     initialDateOffer,
   } = useSelectedDates();
   const {
-    state: {
-      viewSubmission,
-      quotationId,
-    },
+    state: {viewSubmission, quotationId},
     dispatch,
   } = useContext(Store);
-  if(!viewSubmission){
-    Alert.alert('ไม่พบข้อมูลงานที่ส่ง');  
+  if (!viewSubmission) {
+    Alert.alert('ไม่พบข้อมูลงานที่ส่ง');
     navigation.goBack();
   }
   const [dateOfferFormatted, setDateOfferFormatted] = useState<string>(
@@ -71,7 +74,6 @@ const ViewSubmission = (props: Props) => {
 
   const [opneSubmissionModal, setOpenSubmissionModal] =
     useState<boolean>(false);
-
 
   const methods = useForm<Submissions>({
     mode: 'all',
@@ -87,14 +89,12 @@ const ViewSubmission = (props: Props) => {
   const description = useWatch({control: methods.control, name: 'description'});
   const services = useWatch({control: methods.control, name: 'services'});
 
-  const removeService = (index: number) => {
-    const updatedServices = services.filter((_: any, i: number) => i !== index);
-    methods.setValue('services', updatedServices, {
-      shouldDirty: true,
-      shouldValidate: true,
-    });
-  };
-const quotationRefNumber = useWatch({
+  const isReviwed =
+    viewSubmission &&
+    (viewSubmission.reviews as ReviewsEmbed[]) &&
+    viewSubmission.reviews.length > 0;
+
+  const quotationRefNumber = useWatch({
     control: methods.control,
     name: 'quotationRefNumber',
   });
@@ -103,7 +103,7 @@ const quotationRefNumber = useWatch({
     control: methods.control,
     name: 'customer.name',
   });
-const workers = useWatch({
+  const workers = useWatch({
     control: methods.control,
     name: 'workers',
   });
@@ -121,16 +121,18 @@ const workers = useWatch({
               navigation.goBack();
             }}
           />
-          <Appbar.Content  title="รายละเอียดงานที่ส่ง" titleStyle={{
-            fontSize: 18,
-            fontWeight: 'bold',
-          }} />
+          <Appbar.Content
+            title={isReviwed ? 'รีวิวจากลูกค้า' : 'รายละเอียดงานที่แจ้งส่ง'}
+            titleStyle={{
+              fontSize: 18,
+              // fontWeight: 'bold',
+            }}
+          />
           <IconButton
-              mode="outlined"
-              icon="web"
-           
-              onPress={() => setOpenSubmissionModal(true)}
-            />
+            mode="outlined"
+            icon="web"
+            onPress={() => setOpenSubmissionModal(true)}
+          />
         </Appbar.Header>
         <KeyboardAwareScrollView>
           <ScrollView
@@ -149,20 +151,144 @@ const workers = useWatch({
                   alignContent: 'center',
                 }}>
                 <Text style={styles.title}>ใบเสนอราคาเลขที่</Text>
-                <Text>{ quotationRefNumber}</Text>
+                <Text>{quotationRefNumber}</Text>
               </View>
               <Divider />
               <View
                 style={{
                   flexDirection: 'row',
                   justifyContent: 'space-between',
-
                   marginVertical: 15,
                   alignContent: 'center',
                 }}>
-                <Text style={styles.title}>ลูกค้า </Text>
+                <Text style={styles.title}>ลูกค้า</Text>
                 <Text>{customerName}</Text>
               </View>
+              {isReviwed && (
+                <>
+                  <View
+                    style={{
+                      borderWidth: 0.5,
+                      borderRadius: 10,
+                      marginBottom: 20,
+                      padding: 20,
+                      borderColor: 'gray',
+                    }}>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 20,
+                        marginTop: 5,
+                      }}>
+                      <Image
+                        source={{
+                          uri: viewSubmission.reviews[0].inspectorImage ?? '',
+                        }}
+                        style={{width: 50, height: 50, borderRadius: 50}}
+                      />
+                      <View
+                        style={{
+                          flexDirection: 'column',
+                          gap: 5,
+                        }}>
+                        <Text
+                          style={{
+                            fontSize: 16,
+                            fontWeight: 'bold',
+                            color: '#19232e',
+                          }}>
+                          {viewSubmission?.reviews[0].inspectorName}
+                        </Text>
+                        <Text style={{color: 'gray'}}>
+                          {thaiDateFormatter.format(
+                            new Date(
+                              viewSubmission?.reviews[0]?.createdAt || '',
+                            ),
+                          )}
+                        </Text>
+                      </View>
+                    </View>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 20,
+                      }}>
+                      <Text
+                        style={{
+                          width: 50,
+                        }}></Text>
+
+                      <Text>{viewSubmission?.reviews[0].comment}</Text>
+                    </View>
+                    <Divider style={{marginTop: 20}} />
+
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginVertical: 5,
+                      }}>
+                      <Text style={styles.titleReview}>
+                        คุณภาพผลงานที่ได้รับ
+                      </Text>
+                      <StarRating
+                        rating={Math.round(
+                          viewSubmission?.reviews[0].qualityRating ?? 0,
+                        )}
+                      />
+                    </View>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginVertical: 5,
+                      }}>
+                      <Text style={styles.titleReview}>
+                        วัสดุอุปกรณ์ถูกต้องตามแบบ
+                      </Text>
+                      <StarRating
+                        rating={Math.round(
+                          viewSubmission?.reviews[0].qualityRating ?? 0,
+                        )}
+                      />
+                    </View>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginVertical: 5,
+                      }}>
+                      <Text style={styles.titleReview}>ความตรงต่อเวลา</Text>
+                      <StarRating
+                        rating={Math.round(
+                          viewSubmission?.reviews[0].qualityRating ?? 0,
+                        )}
+                      />
+                    </View>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginVertical: 5,
+                      }}>
+                      <Text style={styles.titleReview}>
+                        การติดต่อและการติดตามงาน
+                      </Text>
+                      <StarRating
+                        rating={Math.round(
+                          viewSubmission?.reviews[0].qualityRating ?? 0,
+                        )}
+                      />
+                    </View>
+                  </View>
+                </>
+              )}
             </View>
 
             <View style={styles.stepContainer} />
@@ -172,19 +298,20 @@ const workers = useWatch({
                 flexDirection: 'row',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-              
               }}>
               <Text style={styles.titleDate}>วันที่แจ้งส่งงาน</Text>
               <Text>{thaiDateFormatter.format(new Date(dateOffer))}</Text>
-
             </View>
-
             <Divider />
-            <View style={{ alignItems:'center', justifyContent:'space-between',marginVertical: 20, flexDirection:'row'}}>
+            <View
+              style={{
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginVertical: 20,
+                flexDirection: 'row',
+              }}>
               <Text style={styles.title}>หนังสือส่งงานทำขึ้นที่</Text>
-            <Text >
-                {address}
-            </Text>
+              <Text>{address}</Text>
             </View>
             <Divider style={{marginBottom: 20}} />
 
@@ -208,8 +335,6 @@ const workers = useWatch({
                       {service.description}
                     </Text>
                   </View>
-
-              
                 </View>
               ))}
             </View>
@@ -237,10 +362,10 @@ const workers = useWatch({
                     }}
                     keyExtractor={(item, index) => index.toString()}
                   />
+                  <Divider style={{marginVertical: 20}} />
                 </View>
               )}
             </View>
-            <Divider style={{marginVertical: 20}} />
             <View>
               <Text style={styles.title}>รูปก่อนทำงาน</Text>
               <FlatList
@@ -248,14 +373,13 @@ const workers = useWatch({
                 horizontal={true}
                 renderItem={({item, index}) => (
                   <View key={index} style={styles.imageContainer}>
-                  <Image
-                        source={{uri: item.thumbnailUrl}}
-                        style={styles.image}
-                      />
+                    <Image
+                      source={{uri: item.thumbnailUrl}}
+                      style={styles.image}
+                    />
                   </View>
                 )}
                 keyExtractor={(item, index) => index.toString()}
-              
               />
             </View>
             <Divider style={{marginVertical: 10}} />
@@ -267,32 +391,29 @@ const workers = useWatch({
                 renderItem={({item, index}) => (
                   <View key={index} style={styles.imageContainer}>
                     <Image
-                        source={{uri: item.thumbnailUrl}}
-                        style={styles.image}
-                      />
-                   
+                      source={{uri: item.thumbnailUrl}}
+                      style={styles.image}
+                    />
                   </View>
                 )}
                 keyExtractor={(item, index) => index.toString()}
-               
               />
             </View>
             <Divider style={{marginVertical: 10}} />
 
             <View style={{alignSelf: 'flex-start', marginVertical: 10}}>
               <Text style={styles.title}>รายละเอียดงานที่ส่ง</Text>
-              <Text style={{marginTop:15}}>
-              {description}</Text>
+              <Text style={{marginTop: 15}}>{description}</Text>
             </View>
+            <Divider style={{marginVertical: 10}} />
           </ScrollView>
         </KeyboardAwareScrollView>
         <SubmissionViewScreen
-              fileName={customerName}
-              visible={opneSubmissionModal}
-              onClose={() => setOpenSubmissionModal(false)}
-              url={url}
-            />
-       
+          fileName={customerName}
+          visible={opneSubmissionModal}
+          onClose={() => setOpenSubmissionModal(false)}
+          url={url}
+        />
       </FormProvider>
     </>
   );
@@ -393,6 +514,12 @@ const styles = StyleSheet.create({
     height: 50,
 
     paddingHorizontal: 10,
+  },
+  starContainer: {
+    flexDirection: 'row',
+    marginRight: -20,
+    gap: -20,
+    alignSelf: 'flex-end',
   },
   inputPrefix: {
     flexDirection: 'row',
@@ -562,6 +689,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#19232e',
+  },
+  titleReview: {
+    fontSize: 16,
+    color: '#19232e',
+    maxWidth: width * 0.4,
   },
   listTitle: {
     fontSize: 14,

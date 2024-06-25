@@ -3,13 +3,15 @@ import { useUser } from '../../providers/UserContext';
 import { BACK_END_SERVER_URL } from '@env';
 import {  Receipts } from '@prisma/client';
 import { CompanyState } from 'types';
-export interface InvoiceActions {
+export interface CreateNewReceiptActions {
   setPdfUrl: (url: string) => void;
   openPDFModal: () => void;
+  setReceiptServerId: (id: string) => void;
+
 }
 // Pass actions via props
-const useCreateNewReceipt = (actions: InvoiceActions) => {
-  const {  setPdfUrl, openPDFModal } = actions;
+const useCreateNewReceipt = (actions: CreateNewReceiptActions) => {
+  const {  setPdfUrl, openPDFModal, setReceiptServerId } = actions;
   const queryClient = useQueryClient();
   const user = useUser();
 
@@ -50,8 +52,9 @@ const useCreateNewReceipt = (actions: InvoiceActions) => {
     },
     onSuccess: (responseData) => {
       setPdfUrl(responseData.pdfUrl);
+      setReceiptServerId(responseData.receiptId);
       openPDFModal();
-      queryClient.invalidateQueries({queryKey: ['dashboardReceipt','dashboardData']});
+      queryClient.invalidateQueries({queryKey: ['dashboardData']});
     },
     onError: (error: Error) => {
       console.error("Mutation error:", error.message);

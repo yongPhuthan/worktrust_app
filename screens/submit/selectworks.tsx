@@ -103,27 +103,6 @@ const Selectworks = (props: Props) => {
       throw err;
     }
   }
-  // const {
-  //   isLoading: isQuery,
-  //   error,
-  //   data,
-  //   refetch,
-  // } = useQuery({
-  //   queryFn: fetchContractByQuotation,
-  //   queryKey: ['quotation-submit', quotationId],
-  //   enabled: !!user,
-  //   // onSuccess: data => {
-  //   //   reset({
-  //   //     services: data.services,
-  //   //     projectName: data.contract.projectName,
-  //   //     signAddress: data.signAddress,
-  //   //     customerName: data.customer.name,
-  //   //     periodPercent: data.periodPercent,
-  //   //     companyUserId: data.companyUser.id,
-  //   //     customerId: data.customer.id,
-  //   //   });
-  //   // },
-  // });
   const handleSelectedAll = () => {
     setSelectedAll(!selectedAll);
     if (selectedAll) {

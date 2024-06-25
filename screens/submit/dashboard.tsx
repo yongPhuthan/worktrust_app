@@ -59,11 +59,18 @@ import {
 import {CompanyState} from 'types';
 import useResetQuotation from '../../hooks/quotation/update/resetStatus';
 import CardDashBoardSubmission from '../../components/ui/submission/CardDashboard';
+import {ParamListBase} from '../../types/navigationType';
+import {RouteProp} from '@react-navigation/native';
+import {StackNavigationProp} from '@react-navigation/stack';
 interface ErrorResponse {
   message: string;
   action: 'logout' | 'redirectToCreateCompany' | 'contactSupport' | 'retry';
 }
-const Dashboard = ({navigation}: DashboardScreenProps) => {
+type Props = {
+  navigation: StackNavigationProp<ParamListBase>;
+  route: RouteProp<ParamListBase, 'DashboardSubmit'>;
+};
+const DashboardSubmit = ({navigation}: Props) => {
   const [showModal, setShowModal] = useState(true);
   const user = useUser();
   const {
@@ -463,7 +470,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                         }}>
                         <Icon source="inbox" color={'gray'} size={80} />
                         <Text style={{marginTop: 10, color: 'gray'}}>
-                          ยังไม่มีงานแจ้งส่ง
+                          ยังไม่มีเอกสาร
                         </Text>
                       </View>
                     }
@@ -481,7 +488,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   );
 };
 
-export default Dashboard;
+export default DashboardSubmit;
 const {width, height} = Dimensions.get('window');
 
 const styles = StyleSheet.create({

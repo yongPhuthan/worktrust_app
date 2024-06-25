@@ -2,8 +2,9 @@ import {BACK_END_SERVER_URL} from '@env';
 import messaging from '@react-native-firebase/messaging';
 import {DrawerActions} from '@react-navigation/native';
 import {useQueryClient} from '@tanstack/react-query';
+import * as contrains from '../../redux/constrains';
 
-import React, {useContext, useEffect, useState,useCallback} from 'react';
+import React, {useContext, useEffect, useState, useCallback} from 'react';
 import {
   Alert,
   Dimensions,
@@ -11,7 +12,6 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-
   View,
   RefreshControl,
 } from 'react-native';
@@ -48,10 +48,11 @@ import {
   Quotations,
   ServicesEmbed,
 } from '@prisma/client';
-import {CompanyState} from 'types';
+import {CompanyOnly, CompanyState} from 'types';
 import {useModal} from '../../hooks/quotation/create/useModal';
 import useResetQuotation from '../../hooks/quotation/update/resetStatus';
 import FABButton from '../../components/ui/Button/FAB';
+
 interface ErrorResponse {
   message: string;
   action: 'logout' | 'redirectToCreateCompany' | 'contactSupport' | 'retry';
@@ -71,9 +72,9 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   } = useModal();
   const {
     dispatch,
-    state: {code},
-  }: any = useContext(Store);
-  const {data, isLoading, isError, error,refetch} = useFetchDashboard();
+    state: {sellerId, companyId},
+  } = useContext(Store);
+  const {data, isLoading, isError, error, refetch} = useFetchDashboard();
   const {activeFilter, updateActiveFilter} = useActiveFilter();
   const {width, height} = Dimensions.get('window');
   const [refreshing, setRefreshing] = useState(false);
@@ -90,6 +91,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   );
   const [companyData, setCompanyData] = useState<CompanyState | null>(null);
   const [quotationData, setQuotationData] = useState<Quotations[] | null>(null);
+
   const handleLogout = async () => {
     try {
       await firebase.auth().signOut();
@@ -222,11 +224,27 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   useEffect(() => {
     if (data) {
       // If data[0] exists and has a non-null `code`, proceed with your logic
-      const companyWithoutQuotations = {
-        ...data.company,
+      const companyOnly: CompanyState = {
+        ...data.company ,
         quotations: [],
+        workers:[],
+        invoices  :[],
+        receipts:[],
+        defaultWarranty:null,
+        submissions :[],
+        defaultContracts: null,
+        defaultStandards:[],
+        defaultMaterials:[],
+        users:[],
+        
       };
-      setCompanyData(companyWithoutQuotations);
+      setCompanyData(companyOnly);
+      dispatch(stateAction.get_company_state(companyOnly));
+
+      dispatch(
+        stateAction.get_companyID(companyOnly.id ),
+      );
+      dispatch(stateAction.get_seller_id(data.sellerId));
 
       // Sort the quotations by the most recently updated date
       const sortedQuotations = data.company?.quotations.sort((a, b) => {
@@ -241,12 +259,72 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   }, [data]);
 
   useEffect(() => {
-    requestNotificationPermission();
+    const initializeListeners = () => {
+      const messageUnsubscribe = messaging().onMessage(async remoteMessage => {
+        if (remoteMessage.notification) {
+          const {title, body} = remoteMessage.notification;
+          if (title && body) {
+            Alert.alert(title, body);
+          }
+        }
+      });
+
+      messaging().setBackgroundMessageHandler(async remoteMessage => {
+        console.log('Message handled in the background!', remoteMessage);
+      });
+
+      messaging().onNotificationOpenedApp(remoteMessage => {
+        console.log(
+          'Notification caused app to open from background state:',
+          remoteMessage.notification,
+        );
+        if (remoteMessage.data && remoteMessage.data.eventType) {
+          handleNavigation(remoteMessage.data);
+        }
+      });
+
+      messaging()
+        .getInitialNotification()
+        .then(remoteMessage => {
+          if (remoteMessage) {
+            console.log(
+              'Notification caused app to open from quit state:',
+              remoteMessage.notification,
+            );
+            if (remoteMessage.data && remoteMessage.data.eventType) {
+              handleNavigation(remoteMessage.data);
+            }
+          }
+        });
+
+      return messageUnsubscribe;
+    };
+
+    const handleNavigation = (
+      data:
+        | {eventType: string; submissionId: string}
+        | {[key: string]: string | object},
+    ) => {
+      const {eventType, submissionId} = data;
+      switch (eventType) {
+        case 'REVIEW_SUBMITTED':
+          navigation.navigate('DashboardSubmit');
+          break;
+        // case 'OTHER_EVENT':
+        //   navigation.navigate('OtherScreen', { submissionId });
+        //   break;
+        // default:
+        //   navigation.navigate('DefaultScreen', { submissionId });
+        // break;
+      }
+    };
+    // Request notification permission and initialize listeners
+    requestNotificationPermission().then(() => {
+      initializeListeners();
+    });
   }, []);
   useEffect(() => {
     if (user) {
-      console.log('User:', user);
-
       const unsubscribe = messaging().setBackgroundMessageHandler(
         async remoteMessage => {
           console.log('Message handled in the background!', remoteMessage);
@@ -290,13 +368,6 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     }
     setIsModalSignContract(false);
   };
-
-  const handleSignContractModal = (item: Quotations, index: number) => {
-    setSelectedItem(item);
-    setSelectedIndex(index);
-    setShowModal(false);
-    setIsModalSignContract(true);
-  };
   const handleModalOpen = (item: Quotations, index: number) => {
     setSelectedItem(item);
     setSelectedIndex(index);
@@ -314,7 +385,6 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     quotation: Quotations,
   ) => {
     setIsLoadingAction(true);
-    dispatch(stateAction.get_companyID(data?.company?.id as string));
     dispatch(stateAction.get_edit_quotation(quotation));
     setIsLoadingAction(false);
     handleModalClose();
@@ -368,8 +438,8 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                     onPress={() => {
                       handleModalClose();
                       navigation.navigate('ProjectViewScreen', {
-                        id: item.id,   
-                        fileName: `${item.customer.name}`,                     
+                        id: item.id,
+                        fileName: `${item.customer.name}`,
                       });
                     }}
                     centered={true}
@@ -422,6 +492,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                           dispatch(
                             stateAction.get_edit_quotation(selectedItem),
                           );
+
                           setShowModal(false);
                           navigation.navigate('InvoiceDepositScreen');
                         }}
@@ -432,7 +503,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                       <List.Item
                         onPress={() => {
                           dispatch(
-                            stateAction.get_edit_receipt(selectedItem as any), // เป็นได้ทั้ง Quotations และ Receipts
+                            stateAction.get_edit_quotation(selectedItem),
                           );
                           dispatch(
                             stateAction.get_quotation_ref_number(
@@ -506,7 +577,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                   <Divider />
                   <List.Item
                     onPress={() => {
-                      dispatch(stateAction.reset_edit_submission());
+                      dispatch(stateAction.reset_edit_submission() as any);
                       dispatch(stateAction.get_edit_quotation(selectedItem));
                       dispatch(stateAction.get_quotation_id(selectedItem.id));
                       setShowModal(false);
@@ -540,7 +611,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     if (!companyData) {
       navigation.navigate('CreateCompanyScreen');
     }
-    dispatch(stateAction.reset_edit_quotation());
+    dispatch(stateAction.reset_edit_quotation() as any);
     navigation.navigate('CreateQuotation');
   };
   return (
@@ -566,17 +637,15 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                 fontWeight: 'bold',
               }}
             />
-            <Appbar.Action
+            {/* <Appbar.Action
               icon="bell-outline"
-              // onPress={() => {
-              //   navigation.navigate('SearchScreen');
-              // }}
-            />
+
+            /> */}
           </Appbar.Header>
           {isLoadingAction ? (
             <View
               style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-              <ActivityIndicator  color='#047e6e' size={'large'} />
+              <ActivityIndicator color="#047e6e" size={'large'} />
             </View>
           ) : (
             <>
@@ -597,14 +666,14 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                   keyExtractor={item => item}
                 />
               </View>
-              {isLoading || isLoadingAction || isReseting && !refreshing ? (
-                <View style={{
-                  flex: 1,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}>
-                             <ActivityIndicator  color='#047e6e' size={'large'} />
-
+              {isLoading || isLoadingAction || (isReseting && !refreshing) ? (
+                <View
+                  style={{
+                    flex: 1,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}>
+                  <ActivityIndicator color="#047e6e" size={'large'} />
                 </View>
               ) : (
                 <View
@@ -614,16 +683,17 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                     alignItems: 'center',
                     backgroundColor: '#f5f5f5',
                   }}>
-
                   <FlatList
                     data={filteredData}
                     refreshControl={
-                      <RefreshControl  refreshing={refreshing} onRefresh={onRefresh} />
+                      <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                      />
                     }
                     onRefresh={onRefresh}
                     renderItem={renderItem}
                     refreshing={refreshing}
-                    
                     keyExtractor={item => item.id}
                     ListEmptyComponent={
                       <View

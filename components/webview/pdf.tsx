@@ -48,11 +48,11 @@ const PDFModalScreen = (props: Props) => {
       const res = await ReactNativeBlobUtil.config({
         fileCache: true,
         appendExt: 'pdf',
-        path: `${dirs.DocumentDir}/${fileType}_${fileName}.pdf`,
+        path: `${dirs.DocumentDir}/${fileType}${fileName}.pdf`,
         addAndroidDownloads: {
           useDownloadManager: true,
           notification: true,
-          title: `${fileType}_${fileName}.pdf`,
+          title: `${fileType}${fileName}.pdf`,
           description: 'File downloaded by Worktrust App.',
           mime: 'application/pdf',
         },
@@ -89,7 +89,7 @@ const PDFModalScreen = (props: Props) => {
       addAndroidDownloads: {
         useDownloadManager: true,
         notification: true,
-        title: `${fileType}_${fileName}.pdf`,
+        title: `${fileType}${fileName}.pdf`,
         description: 'File downloaded by Worktrust App.',
         mime: 'application/pdf',
       },

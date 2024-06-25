@@ -1,47 +1,38 @@
-import React, {useContext, useEffect, useState} from 'react';
-import {Alert, Platform, StyleSheet, View} from 'react-native';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import React, { useContext, useEffect, useState } from 'react';
+import { Alert, Platform, StyleSheet, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import {
   Appbar,
   Button,
   Divider,
-  SegmentedButtons,
   Switch,
   Text,
-  TextInput,
-  TextInputAffixProps,
-  TextInputProps,
+  TextInput
 } from 'react-native-paper';
-import {v4 as uuidv4} from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 
-import {StackNavigationProp} from '@react-navigation/stack';
+import { StackNavigationProp } from '@react-navigation/stack';
 import CurrencyInput from 'react-native-currency-input';
 import DocNumber from '../../components/DocNumber';
 import DatePickerButton from '../../components/styles/DatePicker';
 import useSelectedDates from '../../hooks/quotation/create/useSelectDates';
 import useThaiDateFormatter from '../../hooks/utils/useThaiDateFormatter';
-import {TaxType} from '../../models/Tax';
-import {Store} from '../../redux/store';
-import {ParamListBase} from '../../types/navigationType';
+import { TaxType } from '../../models/Tax';
+import { Store } from '../../redux/store';
+import { ParamListBase } from '../../types/navigationType';
 
-import Decimal from 'decimal.js-light';
-import {Controller, useForm, useWatch} from 'react-hook-form';
-import PDFModalScreen from '../../components/webview/pdf';
-import useCreateNewDepositInvoice from '../../hooks/invoice/deposit/useCreateDeposit';
-import {useModal} from '../../hooks/quotation/create/useModal';
 import {
   DiscountType,
   InvoiceStatus,
-  Invoices,
-  QuotationStatus,
-  Quotations,
+  Invoices
 } from '@prisma/client';
-import {CompanyState} from 'types';
-import { IconButton } from 'react-native-paper';
-const taxLabel = [
-  {label: '3%', value: 3},
-  {label: '5%', value: 5},
-];
+import Decimal from 'decimal.js-light';
+import { Controller, useForm, useWatch } from 'react-hook-form';
+import { CompanyState } from 'types';
+import PDFModalScreen from '../../components/webview/pdf';
+import useCreateNewDepositInvoice from '../../hooks/invoice/deposit/useCreateDeposit';
+import { useModal } from '../../hooks/quotation/create/useModal';
+
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'InvoiceDepositScreen'>;
 }
@@ -106,10 +97,8 @@ const InvoiceDepositScreen = ({navigation}: Props) => {
     dateOffer: initialDateOffer,
     noteToCustomer: '',
     noteToTeam: '',
-    dateEnd: initialDateEnd,
     docNumber: `IV${initialDocnumber}`,
     sellerSignature: '',
-    warranty: editQuotation?.warranty ? editQuotation?.warranty : null,
     status: InvoiceStatus.PENDING, // Set the status to a valid QuotationStatus value
     dateApproved: null,
     pdfUrl: '',
@@ -118,7 +107,7 @@ const InvoiceDepositScreen = ({navigation}: Props) => {
 
     customerSign: null,
   };
-
+console.log('sellerId',sellerId)
   const methods = useForm({
     defaultValues: depositInviceDefaultValue,
     mode: 'onChange',
@@ -255,16 +244,15 @@ const InvoiceDepositScreen = ({navigation}: Props) => {
         style={{
           backgroundColor: 'white',
         }}>
-        <Appbar.Action
-          icon="chevron-left"
+        <Appbar.BackAction
           onPress={() => {
             navigation.goBack();
           }}
         />
 
         <Appbar.Content title="" />
-        {pdfUrl && <Appbar.Action icon={"file-find-outline"} onPress={openPDFModal} />}
-
+        <Appbar.Action    disabled={!pdfUrl}  iconColor='#047e6e'  mode='outlined'      icon="file-document"onPress={openPDFModal} />
+        <Appbar.Content title="" />
         <Button
           mode="contained"
           loading={isPending}
@@ -656,6 +644,7 @@ const InvoiceDepositScreen = ({navigation}: Props) => {
       {pdfUrl && (
         <>
           <PDFModalScreen
+           fileType='BL'
             fileName={editQuotation.customer.name}
             visible={showPDFModal}
             onClose={closePDFModal}

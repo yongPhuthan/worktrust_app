@@ -57,10 +57,7 @@ const company = data.company;
 const quotations = company.quotations;
 const services = quotations.flatMap((quotation : Quotations) => quotation.services.slice(0, 10));
     dispatch(stateAction.code_company(data.company.code));
-    dispatch(stateAction.get_companyID(data.company.id));
     dispatch(stateAction.get_logo(data.company.logo));
-    dispatch(stateAction.get_company_state(data.company));
-
     dispatch(stateAction.get_default_contract(data.company.defaultContract));
     dispatch(stateAction.get_default_warranty(data.company.defaultWarranty));
     dispatch(stateAction.get_existing_workers(data.company.workers));
