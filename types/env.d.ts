@@ -10,7 +10,8 @@ declare module '@env' {
   export const FIREBASE_PROJECT_ID:string
   export const FIREBASE_STORAGE_BUCKET:string
   export const DEBUG_TOKEN:string
-
+  export const SLIPOK_BRANCH_ID:string
+export const SLIPOK_API_KEY:string
     // Add more environment variables if needed
   }
   

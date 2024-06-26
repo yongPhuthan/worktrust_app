@@ -1,37 +1,34 @@
-// hooks/useCreateWorker.ts
-import React, {useContext, useEffect, useMemo, useState} from 'react';
-import {useQueryClient, QueryClient} from '@tanstack/react-query';
-import {useUser} from '../providers/UserContext';
-import {Store} from '../redux/store';
+import React, { useContext, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useUser } from '../providers/UserContext';
+import { Store } from '../redux/store';
 
 type User = {
   email: string;
   getIdToken: () => Promise<string>;
 };
 
-type CreateWorkerResponse = {
+type Response = {
   isLoading: boolean;
   error: Error | null;
-  createToServer: (data: any) => Promise<void>;
+  createToServer: (data: any) => Promise<boolean>;
 };
 
-export function useCreateToServer(
-  url: string,
-  queryKey: string,
-): CreateWorkerResponse {
+export function useCreateToServer(url: string, queryKey: string): Response {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const user = useUser();
   const queryClient = useQueryClient();
   const {
-    state: {code},
+    state: { code },
   } = useContext(Store);
 
-  const createToServer = async (data: any) => {
+  const createToServer = async (data: any): Promise<boolean> => {
+    console.log('data', data);
     if (!user || !user.uid) {
       console.error('User or user uid is not available');
       setError(new Error('User or user uid is not available'));
-      return;
+      return false;
     }
     setIsLoading(true);
     setError(null);
@@ -44,7 +41,7 @@ export function useCreateToServer(
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({data}),
+        body: JSON.stringify({ data }),
       });
 
       if (!response.ok) {
@@ -54,22 +51,23 @@ export function useCreateToServer(
         throw new Error(errorMessage);
       }
 
-
       // Invalidate queries or refetch data as needed
       queryClient.invalidateQueries({
         queryKey: [queryKey],
       });
+      return true;
     } catch (err) {
       console.error('An error occurred:', err);
       setError(
         err instanceof Error
           ? err
-          : new Error('An error occurred during worker creation'),
+          : new Error('An error occurred during worker creation')
       );
+      return false;
     } finally {
       setIsLoading(false);
     }
   };
 
-  return {isLoading, error, createToServer};
+  return { isLoading, error, createToServer };
 }

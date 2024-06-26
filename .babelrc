@@ -11,9 +11,10 @@
         "FIREBASE_MESSAGING_SENDER_ID",
         "FIREBASE_PROJECT_ID",
         "FIREBASE_STORAGE_BUCKET",
-        "DEBUG_TOKEN"
+        "DEBUG_TOKEN",
+        "SLIPOK_API_KEY",
+        "SLIPOK_BRANCH_ID"
 
-        
       ],
       "safe": true,
       "allowUndefined": false

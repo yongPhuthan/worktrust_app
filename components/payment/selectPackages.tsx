@@ -1,67 +1,83 @@
 import React, {useContext, useState} from 'react';
+import {SLIPOK_API_KEY, SLIPOK_BRANCH_ID, BACK_END_SERVER_URL} from '@env';
+import ConfettiCannon from 'react-native-confetti-cannon';
+
 import {
+  Alert,
   Dimensions,
-  FlatList,
+  Image,
+  ScrollView,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
   View,
-  Image,
 } from 'react-native';
-import {MaterialEmbed} from '@prisma/client';
-import {useFormContext} from 'react-hook-form';
 import Modal from 'react-native-modal';
 import {
   Appbar,
-  Badge,
   Button,
   Chip,
   Divider,
   IconButton,
   RadioButton,
   Text,
+  Badge,
 } from 'react-native-paper';
-import {useUser} from '../../providers/UserContext';
+import {useForm, useWatch} from 'react-hook-form';
+import {useMutation, useQueryClient} from '@tanstack/react-query';
 import {Store} from '../../redux/store';
-import DatePickerButton from '../../components/styles/DatePicker';
-import DocNumber from '../../components/DocNumber';
+import {usePickImage} from '../../hooks/utils/image/usePickImage';
+import {useCreateToServer} from '../../hooks/useUploadToserver';
 import UploadImage from '../../components/ui/UploadImage';
+import {useUploadSlipToFirebase} from '../../hooks/utils/image/useUploadSlip';
+import Clipboard from '@react-native-clipboard/clipboard';
 
 interface ExistingModalProps {
   isVisible: boolean;
   onClose: () => void;
-  serviceId: string;
-  selectedPackage: string;
-  setSelectedPackage: (value: string) => void;
+}
+interface Packages {
+  id: string;
+  name: string;
+  price: string;
+  pricePerMonth: string;
+  save: string;
+}
+
+interface SelectPackagesData {
+  selectedPackage: Packages | null;
+  paymentSlip: string | null;
+  companyId: string;
 }
 const PRIMARY_COLOR = '#00a69c';
 const {width, height} = Dimensions.get('window');
 const imageContainerWidth = width / 3 - 10;
-const SelectPackages = ({
-  isVisible,
-  onClose,
-}: ExistingModalProps) => {
+const SelectPackages = ({isVisible, onClose}: ExistingModalProps) => {
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [isCheckingSlip, setIsCheckingSlip] = useState(false);
   const packages = [
     {
       id: '1',
       name: '1 เดือน',
-      price: '999',
+      price: '2',
       pricePerMonth: '999',
       save: '0',
     },
     {
-      id: '2',
+      id: '6',
       name: '6 เดือน',
-      price: '4,800',
+      price: '2',
+      // price: '5,399',
       pricePerMonth: '899',
-      save: '995',
+      save: '595',
     },
     {
-      id: '3',
+      id: '12',
       name: '12 เดือน',
-      price: '8,400',
+      price: '3',
+      // price: '8,988',
       pricePerMonth: '749',
-      save: '1,988',
+      save: '3,000',
     },
   ];
 
@@ -69,19 +85,132 @@ const SelectPackages = ({
     state: {companyId},
     dispatch,
   } = useContext(Store);
-  const [paymentSlip, setPaymentSlip] = useState(null);
-const [selectedPackage, setSelectedPackage] = useState('');
-  const handleUploadSlip = () => {
-    // Function to handle uploading the payment slip
-  };
+  const {
+    isUploading,
+    error: uploadError,
+    uploadSlip,
+  } = useUploadSlipToFirebase();
+  const {control, setValue, reset} = useForm<SelectPackagesData>({
+    mode: 'onChange',
+    defaultValues: {
+      paymentSlip: null,
+      selectedPackage: packages[2],
+      companyId,
+    },
+  });
 
+  const {isImagePicking, pickImage} = usePickImage((uri: string) => {
+    setValue('paymentSlip', uri, {shouldDirty: true});
+  });
+
+  const selectedPackage = useWatch({
+    control,
+    name: 'selectedPackage',
+  });
+
+  const paymentSlip = useWatch({
+    control,
+    name: 'paymentSlip',
+  });
+
+  const checkSlip = async () => {
+    setIsCheckingSlip(true);
+
+    if (!selectedPackage) {
+      Alert.alert('โปรดเลือกแพคเกจที่ต้องการชำระ');
+      return;
+    }
+    if (!paymentSlip) {
+      Alert.alert('โปรดอัพโหลดสลิปการโอนเงิน');
+      return;
+    }
+    try {
+      const uploadImage = await uploadSlip(paymentSlip);
+
+      if (!uploadImage.originalUrl) {
+        Alert.alert('เกิดข้อผิดพลาดในการอัพโหลดสลิป กรุณาลองใหม่อีกครั้ง  ');
+        return;
+      }
+
+      const response = await fetch(
+        `https://api.slipok.com/api/line/apikey/${SLIPOK_BRANCH_ID}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-authorization': SLIPOK_API_KEY,
+          },
+          body: JSON.stringify({
+            // data: qrString,
+            url: 'https://firebasestorage.googleapis.com/v0/b/worktrust-b9c02.appspot.com/o/slip%2FIMG_8F0AD19BD6FA-1.jpeg?alt=media&token=81371615-95ce-4b7b-b8e7-0a32dfa7a5b1',
+            log: true,
+            // url: uploadImage.originalUrl,
+            amount: selectedPackage.price,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        // Handle invalid slip
+        const errorData = await response.json();
+        console.log(errorData.code); // Check error code
+        console.log(errorData.message); // Check error message
+        Alert.alert(errorData.message, 'กรุณาลองใหม่อีกครั้ง', [
+          {
+            text: 'ตกลง',
+            style: 'cancel',
+          },
+        ]);
+        return;
+      }
+
+      // Handle success slip
+      const slipData = await response.json();
+      const success = await createToServer(selectedPackage.id);
+      if (success) {
+        setShowConfetti(true);
+        Alert.alert(
+          'ชำระเงินสำเร็จ!',
+          `แพคเกจปัจจุบันของคุณคือ ${selectedPackage.name}`,
+          [
+            {
+              text: 'ตกลง',
+              onPress: () => {
+                setShowConfetti(false);
+                reset();
+                onClose();
+              },
+            },
+          ],
+        );
+      } else {
+        Alert.alert('เกิดข้อผิดพลาดกรุณาลองใหม่อีกครั้ง');
+      }
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setIsCheckingSlip(false);
+    }
+  };
+  const url = `${BACK_END_SERVER_URL}/api/company/createSubscriptionPlan`;
+
+  const {isLoading, error, createToServer} = useCreateToServer(
+    url,
+    'companySetting',
+  );
   const handleConfirmPayment = () => {
     // Function to handle confirming the payment
-    const selectedPackageDetails = packages.find(pkg => pkg.name === selectedPackage);
+    if (!selectedPackage) {
+      alert('กรุณาเลือกแพคเกจ');
+      return;
+    }
+    const selectedPackageDetails = packages.find(
+      pkg => pkg.name === selectedPackage.name,
+    );
     if (selectedPackageDetails && paymentSlip) {
-      // Send selectedPackageDetails and paymentSlip to server
+      checkSlip();
     } else {
-      alert('Please select a package and upload a payment slip');
+      alert('กรุณาเลือกแพคเกจและอัพโหลดสลิปการโอนเงิน');
     }
   };
   return (
@@ -108,11 +237,14 @@ const [selectedPackage, setSelectedPackage] = useState('');
               <View style={[styles.card]}>
                 <RadioButton.Android
                   value={item.name}
-                  
                   status={
-                    selectedPackage === item.name ? 'checked' : 'unchecked'
+                    selectedPackage?.name === item.name
+                      ? 'checked'
+                      : 'unchecked'
                   }
-                  onPress={() => setSelectedPackage(item.name)}
+                  onPress={() =>
+                    setValue('selectedPackage', item, {shouldDirty: true})
+                  }
                   color={PRIMARY_COLOR}
                 />
                 <View style={styles.textContainer}>
@@ -124,7 +256,6 @@ const [selectedPackage, setSelectedPackage] = useState('');
                       gap: 10,
                     }}>
                     <Text style={styles.price}>{item.name}</Text>
-
                   </View>
 
                   {index !== 0 && (
@@ -133,18 +264,20 @@ const [selectedPackage, setSelectedPackage] = useState('');
                         flexDirection: 'column',
                         marginBottom: 5,
                       }}>
-<View
-                      style={{
-                        flexDirection: 'row',
-                        justifyContent: 'flex-start',
-                        alignItems: 'center',
-                        gap: 10,
-                      }}>
-                      <Text style={styles.discount}>{item.price} บาท</Text>
-                      {index !== 0 && (
-                      <Chip children={<Text>ประหยัด {item.save} บาท</Text>} />
-                    )}
-                    </View>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          justifyContent: 'flex-start',
+                          alignItems: 'center',
+                          gap: 10,
+                        }}>
+                        <Text style={styles.discount}>{item.price} บาท</Text>
+                        {index !== 0 && (
+                          <Chip
+                            children={<Text>ประหยัด {item.save} บาท</Text>}
+                          />
+                        )}
+                      </View>
                       <Text style={styles.description}>
                         ชำระ {item.price} บาท
                       </Text>
@@ -192,14 +325,14 @@ const [selectedPackage, setSelectedPackage] = useState('');
                     fontSize: 14,
                     // fontWeight: 'bold',
                   }}>
-                  5,000 บาท
+                  {selectedPackage?.price} บาท
                 </Text>
               </View>
               <Text
                 style={{
                   fontSize: 14,
                 }}>
-                ได้รับ 12 เดือน
+                ได้รับ {selectedPackage?.name}
               </Text>
             </View>
             <View
@@ -239,14 +372,14 @@ const [selectedPackage, setSelectedPackage] = useState('');
                     สาขา บิ๊กซีอ้อมใหญ่
                   </Text>
                   <Text>หจก สยามเซฟตี้เอ็นจิเนียริ่ง (กรุ๊ป) </Text>
-
                 </View>
 
                 <View
                   style={{
-                    flexDirection: 'row',
+                    flexDirection: 'column',
                     gap: 5,
-                    alignItems: 'center',
+                    alignItems: 'flex-start',
+                    marginVertical: 5,
                   }}>
                   <Text
                     style={{
@@ -255,11 +388,17 @@ const [selectedPackage, setSelectedPackage] = useState('');
                     }}>
                     เลขที่ 123-4-56789-0
                   </Text>
+                  {/* {copied && (
+              <Badge  style={styles.badge}>copied</Badge>
+            )}
                   <IconButton
                     icon="content-copy"
+        
                     size={14}
-                    onPress={() => {}}
+                    onPress={() => copyToClipboard(accountNumber)}
+
                   />
+                   */}
                 </View>
               </View>
             </View>
@@ -278,36 +417,19 @@ const [selectedPackage, setSelectedPackage] = useState('');
                 }}>
                 สลิปโอนเงิน
               </Text>
-              <TouchableOpacity
-                style={{
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  borderColor: '#047e6e',
-                  borderWidth: 1,
-                  backgroundColor: '#f5f5f5',
-                  borderRadius: 5,
-                  borderStyle: 'dashed',
-                  padding: 10,
-                  height: 150,
-                  width: 150,
-                }}
-                onPress={handleUploadSlip}>
-                <IconButton
-                  icon="image-plus"
-                  iconColor={'#047e6e'}
-                  size={30}
-                  onPress={handleUploadSlip}
-                />
-                <Text
-                  style={{
-                    textAlign: 'center',
-                    color: '#047e6e',
-                  }}>
-                  อัพโหลดสลิปโอนเงิน
-                </Text>
-              </TouchableOpacity>
+              <UploadImage
+                control={control}
+                name="paymentSlip"
+                label="อัพโหลดสลิปโอนเงิน"
+                isUploading={isImagePicking}
+                pickImage={pickImage}
+                width={150}
+                height={150}
+              />
             </View>
             <Button
+              loading={isLoading || isCheckingSlip}
+              disabled={isLoading || isCheckingSlip}
               mode="contained"
               style={{
                 borderRadius: 5,
@@ -321,6 +443,15 @@ const [selectedPackage, setSelectedPackage] = useState('');
           </View>
         </View>
       </ScrollView>
+      {showConfetti && (
+        <ConfettiCannon
+          count={200}
+          origin={{x: -10, y: 0}}
+          fallSpeed={2000}
+          fadeOut
+          autoStart
+        />
+      )}
     </Modal>
   );
 };
@@ -485,6 +616,13 @@ const styles = StyleSheet.create({
     gap: 10,
 
     width: width - 32, // Adjust based on your padding
+  },
+  badge: {
+    position: 'absolute',
+    top: -10,
+    right: -10,
+    backgroundColor: 'gray',
+    color: 'white',
   },
   cardChecked: {
     borderColor: '#012b20', // Color when checked

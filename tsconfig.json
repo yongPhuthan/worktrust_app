@@ -11,7 +11,7 @@
     "paths": {
       "@env": ["./node_modules/react-native-dotenv"]
     },
-    "types": ["jest"],
+    "types": ["jest", "node"],
     "jsx": "react-native",
     "esModuleInterop": true
   },

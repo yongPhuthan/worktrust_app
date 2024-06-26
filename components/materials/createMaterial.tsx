@@ -1,38 +1,31 @@
-import {yupResolver} from '@hookform/resolvers/yup';
-import React, {useContext, useState, useEffect} from 'react';
-import {useQueryClient, QueryClient} from '@tanstack/react-query';
-import {BACK_END_SERVER_URL} from '@env';
-import {Store} from '../../redux/store';
-import {v4 as uuidv4} from 'uuid';
+import { BACK_END_SERVER_URL } from '@env';
+import { yupResolver } from '@hookform/resolvers/yup';
+import React, { useContext } from 'react';
+import { v4 as uuidv4 } from 'uuid';
+import { Store } from '../../redux/store';
 
-import {Controller, useForm, useWatch} from 'react-hook-form';
+import { DefaultMaterials } from '@prisma/client';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import {
   Alert,
   Dimensions,
-  Image,
   Platform,
   SafeAreaView,
   ScrollView,
   StyleSheet,
-  TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import {
-  ActivityIndicator,
   Appbar,
   Button,
-  Divider,
-  IconButton,
-  Snackbar,
   Text,
-  TextInput,
+  TextInput
 } from 'react-native-paper';
-import {usePickImage} from '../../hooks/utils/image/usePickImage';
-import {materialSchema} from '../../models/validationSchema';
-import {useUploadToFirebase} from '../../hooks/useUploadtoFirebase';
-import {useCreateToServer} from '../../hooks/useUploadToserver';
-import {DefaultMaterials, MaterialEmbed} from '@prisma/client';
 import UploadImage from '../../components/ui/UploadImage';
+import { useCreateToServer } from '../../hooks/useUploadToserver';
+import { useUploadToFirebase } from '../../hooks/useUploadtoFirebase';
+import { usePickImage } from '../../hooks/utils/image/usePickImage';
+import { materialSchema } from '../../models/validationSchema';
 
 type Props = {
   isVisible: boolean;

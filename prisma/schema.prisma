@@ -29,24 +29,26 @@ model Account {
 }
 
 model User {
-    id               String    @id @default(auto()) @map("_id") @db.ObjectId
-    name             String?
-    lastName         String?
-    provider         Provider  @default(PHONE)
-    email            String?
-    phoneNumber      String?
-    role             UserRole  @default(OWNER)
-    password         String?
-    signature        String?
-    isActive         Boolean   @default(true)
-    jobPosition      String?
-    currentCompanyId String?   @unique @db.ObjectId
-    currentCompany   Company?  @relation(fields: [currentCompanyId], references: [id])
-    firebaseUid      String?   @unique
-    image            String?
-    companyIds       String[]
-    accounts         Account[]
-    sessions         Session[]
+    id                    String         @id @default(auto()) @map("_id") @db.ObjectId
+    name                  String?
+    lastName              String?
+    provider              Provider       @default(PHONE)
+    email                 String?
+    phoneNumber           String?
+    role                  UserRole       @default(OWNER)
+    password              String?
+    signature             String?
+    isActive              Boolean        @default(true)
+    jobPosition           String?
+    currentCompanyId      String?        @unique @db.ObjectId
+    currentCompany        Company?       @relation(fields: [currentCompanyId], references: [id])
+    currentSubscriptionId String?        @db.ObjectId
+    firebaseUid           String?        @unique
+    image                 String?
+    companyIds            String[]
+    accounts              Account[]
+    sessions              Session[]
+    subscriptions         Subscription[]
 
     @@map("users")
 }
@@ -115,11 +117,10 @@ model Quotations {
     workers WorkerEmbed[]
 
     // ข้อมูลเพิ่มเติม
-    created  DateTime      @default(now())
-    updated  DateTime      @updatedAt
-    warranty WarrantyEmbed
-    warrantyStatus             WarrantyStatus? @default(PENDING)  
-
+    created        DateTime        @default(now())
+    updated        DateTime        @updatedAt
+    warranty       WarrantyEmbed
+    warrantyStatus WarrantyStatus? @default(PENDING)
 
     @@map("quotations")
 }
@@ -159,8 +160,8 @@ model Invoices {
     companyId      String   @db.ObjectId
     company        Company? @relation(fields: [companyId], references: [id])
 
-    created            DateTime       @default(now())
-    updated            DateTime       @updatedAt
+    created            DateTime @default(now())
+    updated            DateTime @updatedAt
     quotationRefNumber String?
 
     @@map("invoices")
@@ -201,8 +202,8 @@ model Receipts {
     companyId      String   @db.ObjectId
     company        Company? @relation(fields: [companyId], references: [id])
 
-    created            DateTime       @default(now())
-    updated            DateTime       @updatedAt
+    created            DateTime @default(now())
+    updated            DateTime @updatedAt
     quotationRefNumber String?
 
     @@map("receipts")
@@ -216,6 +217,7 @@ model DefaultStandards {
     badStandardImage  String?
     standardShowTitle String?
     createdAt         DateTime @default(now())
+    tags              String[]
     companyId         String   @db.ObjectId
     company           Company? @relation(fields: [companyId], references: [id])
 
@@ -229,11 +231,12 @@ model DefaultMaterials {
     image       String
     created     DateTime @default(now())
     updated     DateTime @updatedAt
-    companyId   String    @db.ObjectId
+    companyId   String   @db.ObjectId
     company     Company? @relation(fields: [companyId], references: [id])
 
     @@map("default_materials")
 }
+
 model Workers {
     id           String       @id @default(auto()) @map("_id") @db.ObjectId
     name         String
@@ -269,7 +272,7 @@ model VerificationToken {
 }
 
 model Submissions {
-    id                 String           @id @default(auto()) @map("_id") @db.ObjectId
+    id                 String               @id @default(auto()) @map("_id") @db.ObjectId
     address            String
     dateOffer          DateTime
     services           ServicesEmbed[]
@@ -277,23 +280,36 @@ model Submissions {
     description        String
     beforeImages       ServiceImagesEmbed[]
     afterImages        ServiceImagesEmbed[]
-    reject           RejectEmbed?
+    reject             RejectEmbed?
     FCMToken           String?
     workers            WorkerEmbed[]
     customer           CustomerEmbed
     inspector          InspectorEmbed?
-    status             SubmissionStatus @default(PENDING)
+    status             SubmissionStatus     @default(PENDING)
     reviews            ReviewsEmbed[]
     companyName        String
     companyCode        String
     quotationRefNumber String
     reSubmissionId     String?
-    history            Boolean?         @default(false)
-    createdAt          DateTime         @default(now())
-    updatedAt          DateTime         @updatedAt
-    companyId          String           @db.ObjectId
-    company            Company?         @relation(fields: [companyId], references: [id])
+    history            Boolean?             @default(false)
+    createdAt          DateTime             @default(now())
+    updatedAt          DateTime             @updatedAt
+    companyId          String               @db.ObjectId
+    company            Company?             @relation(fields: [companyId], references: [id])
+
     @@map("submissions")
+}
+
+model Subscription {
+    id        String           @id @default(auto()) @map("_id") @db.ObjectId
+    userId    String           @db.ObjectId
+    startDate DateTime         @default(now())
+    endDate   DateTime
+    type      SubscriptionType
+    isActive  Boolean          @default(true)
+    user      User             @relation(fields: [userId], references: [id])
+
+    @@map("subscriptions")
 }
 
 type WorkerEmbed {
@@ -302,6 +318,14 @@ type WorkerEmbed {
     mainSkill    String
     workerStatus WorkerStatus
     image        String
+}
+
+enum SubscriptionType {
+    FREETRIAL
+    ONEMONTH
+    SIXMONTHS
+    ONEYEAR
+    DEMO
 }
 
 type InspectorEmbed {
@@ -320,7 +344,6 @@ type WarrantyEmbed {
     endWaranty         DateTime?
     condition          String
     pdfUrl             String?
-
 }
 
 type StandardEmbed {
@@ -729,7 +752,7 @@ enum SignatureType {
     PENDING
 }
 
-enum WarrantyStatus  {
+enum WarrantyStatus {
     ALL
     PENDING
     ACTIVE
