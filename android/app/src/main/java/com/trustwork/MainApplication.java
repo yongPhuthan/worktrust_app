@@ -13,6 +13,9 @@ import com.oblador.vectoricons.VectorIconsPackage;
 import cl.json.RNSharePackage;
 import cl.json.ShareApplication;
 import com.christopherdro.RNPrint.RNPrintPackage;
+import com.rnfs.RNFSPackage; 
+//import io.invertase.firebase.storage.ReactNativeFirebaseStoragePackage;
+
 public class MainApplication extends Application implements ReactApplication {
 
   private final ReactNativeHost mReactNativeHost =
@@ -26,13 +29,7 @@ public class MainApplication extends Application implements ReactApplication {
         protected List<ReactPackage> getPackages() {
           @SuppressWarnings("UnnecessaryLocalVariable")
           List<ReactPackage> packages = new PackageList(this).getPackages();
-        // Add this line with a semicolon at the end
-          // Packages that cannot be autolinked yet can be added manually here, for example:
-          // packages.add(new MyReactNativePackage());
-          // packages.add(new MainReactPackage());
-          // packages.add(new RNPrintPackage());
-          // packages.add(new RNSharePackage()); 
-          return packages;
+            return packages;
         }
 
         @Override
@@ -67,3 +64,5 @@ public class MainApplication extends Application implements ReactApplication {
     // ReactNativeFlipper.initializeFlipper(this, getReactNativeHost().getReactInstanceManager());
   }
 }
+
+

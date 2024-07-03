@@ -1,9 +1,8 @@
-import {BACK_END_SERVER_URL} from '@env';
-import {yupResolver} from '@hookform/resolvers/yup';
-import auth from '@react-native-firebase/auth';
-import React, {useContext, useState} from 'react';
-import {Controller, set, useForm, useWatch} from 'react-hook-form';
+import { BACK_END_SERVER_URL } from '@env';
+import React, { useContext, useState } from 'react';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import {
+  Platform,
   ActivityIndicator,
   Alert,
   Image,
@@ -14,30 +13,23 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {Appbar, TextInput} from 'react-native-paper';
+import { Appbar, TextInput } from 'react-native-paper';
 
-import {useMutation, useQueryClient} from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 
-import {faCloudUpload, faRemove} from '@fortawesome/free-solid-svg-icons';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import storage from '@react-native-firebase/storage';
+import { faCloudUpload, faRemove } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 
-import type {RouteProp} from '@react-navigation/native';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {
-  ImageLibraryOptions,
-  launchImageLibrary,
-} from 'react-native-image-picker';
-import {Button} from 'react-native-paper';
-import {useUser} from '../../providers/UserContext';
-import {Store} from '../../redux/store';
-import {ParamListBase} from '../../types/navigationType';
-import {useUploadToFirebase} from '../../hooks/useUploadtoFirebase';
-import {usePickImage} from '../../hooks/utils/image/usePickImage';
-import {useCreateToServer} from '../../hooks/useUploadToserver';
-import {usePutServer} from '../../hooks/putServer';
+import type { RouteProp } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { Button } from 'react-native-paper';
+import { CompanyState } from 'types';
 import ConfirmDeleteDialog from '../../components/ConfirmDeleteDialog';
-import {CompanyState} from 'types';
+import { usePutServer } from '../../hooks/putServer';
+import { useUploadToFirebase } from '../../hooks/useUploadtoFirebase';
+import { usePickImage } from '../../hooks/utils/image/usePickImage';
+import { Store } from '../../redux/store';
+import { ParamListBase } from '../../types/navigationType';
 
 interface MyError {
   response: object;
@@ -49,30 +41,33 @@ interface Props {
 }
 
 const EditSetting = ({navigation, route}: Props) => {
-  const {company, seller}: any = route.params || {};
-  const [isImageUpload, setIsImageUpload] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-  const errorText = 'กรุณากรอกข้อมูล';
+ 
+  const {
+    state: {code, G_logo,  G_subscription, G_company, G_user},
+    dispatch,
+  } = useContext(Store);
+  if(!G_company || !G_user) {
+    Alert.alert('เกิดข้อผิดพลาด', 'ไม่พบข้อมูลบริษัท', [{text: 'OK'}], {
+      cancelable: false,
+    });
+    return null;
+  }
   const API_URL = `${BACK_END_SERVER_URL}/api/company/updateCompanySeller?id=${encodeURIComponent(
-    company.id,
+    G_company.id,
   )}`;
 
   //   const [company, setCompany] = useState(dataProps.company);
-  const {
-    state: {code},
-    dispatch,
-  } = useContext(Store);
+
   const defaultValues = {
-    bizName: company.bizName,
-    name: seller.name,
-    logo: company.logo,
-    lastName: seller.lastName,
-    officeTel: company.officeTel,
-    address: company.address,
-    mobileTel: company.mobileTel,
-    companyTax: company.companyTax,
-    jobPosition: seller.jobPosition,
-    id: company.id,
+    bizName: G_company.bizName,
+    name: G_user.name,
+    logo: G_company.logo,
+    officeTel: G_company.officeTel,
+    address: G_company.address,
+    mobileTel: G_company.mobileTel,
+    companyTax: G_company.companyTax,
+    jobPosition: G_user.jobPosition,
+    id: G_company.id,
   };
 
   const {
@@ -100,12 +95,7 @@ const EditSetting = ({navigation, route}: Props) => {
     control,
     name: 'bizName',
   });
-  const dirtyValues = Object.keys(dirtyFields).reduce((acc, key) => {
-    if (key in watchedValues) {
-      acc[key] = watchedValues[key as keyof CompanyState];
-    }
-    return acc;
-  }, {} as any);
+
 
   const {isImagePicking, pickImage} = usePickImage((uri: string) => {
     setValue('logo', uri, {shouldDirty: true});
@@ -122,7 +112,7 @@ const EditSetting = ({navigation, route}: Props) => {
   } = useUploadToFirebase(logoPath);
   const {isLoading, error, putToServer} = usePutServer(
     API_URL,
-    'companySetting',
+    'dashboardData',
   );
   const updateCompany = async () => {
     if (dirtyFields.logo) {
@@ -238,7 +228,7 @@ const EditSetting = ({navigation, route}: Props) => {
           />
           <View
             style={{
-              flexDirection: 'row',
+              flexDirection: 'column',
               justifyContent: 'space-between',
             }}>
             <View style={{flex: 0.45, marginVertical: 5}}>
@@ -251,7 +241,7 @@ const EditSetting = ({navigation, route}: Props) => {
                   fieldState: {error},
                 }) => (
                   <TextInput
-                    label="ชื่อจริง"
+                    label="ชื่อ-นามสกุล"
                     error={!!error}
                     placeholder="ชื่อจริง"
                     multiline
@@ -265,30 +255,7 @@ const EditSetting = ({navigation, route}: Props) => {
                 )}
               />
             </View>
-            <View style={{flex: 0.45, marginVertical: 5}}>
-              <Controller
-                control={control}
-                name="lastName"
-                rules={{required: true}}
-                render={({
-                  field: {onChange, onBlur, value},
-                  fieldState: {error},
-                }) => (
-                  <TextInput
-                    label="นามสกุล"
-                    // placeholder="นามสกุล"
-                    multiline
-                    error={!!error}
-                    textAlignVertical="top"
-                    numberOfLines={1}
-                    mode="outlined"
-                    onBlur={onBlur}
-                    onChangeText={onChange}
-                    value={value}
-                  />
-                )}
-              />
-            </View>
+           
           </View>
           <Controller
             control={control}
@@ -345,11 +312,17 @@ style={styles.input}
               <TextInput
                 label="ที่อยู่"
                 error={!!error}
-                style={styles.input}
+                style={
+                  Platform.OS === 'ios' && {
+                    height: 80,
+                    textAlignVertical: 'top',
+                  }
+                }
                 // placeholder="ที่อยู่"
                 keyboardType="name-phone-pad"
                 multiline
                 textAlignVertical="top"
+                
                 numberOfLines={4}
                 mode="outlined"
                 onBlur={onBlur}
@@ -476,7 +449,7 @@ style={styles.input}
         <ConfirmDeleteDialog
           visible={visible}
           hideDialog={hideDialog}
-          company={company.bizName}
+          company={G_company.bizName}
         />
       </SafeAreaView>
 

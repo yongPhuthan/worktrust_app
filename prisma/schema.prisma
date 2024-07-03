@@ -31,7 +31,6 @@ model Account {
 model User {
     id                    String         @id @default(auto()) @map("_id") @db.ObjectId
     name                  String?
-    lastName              String?
     provider              Provider       @default(PHONE)
     email                 String?
     phoneNumber           String?
@@ -77,20 +76,21 @@ model Company {
     defaultContracts ContractsEmbed?
     defaultWarranty  WarrantyEmbed?
     submissions      Submissions[]
+    notifications    Notifications[]
 
     @@map("companies")
 }
 
 model Quotations {
-    id                   String             @id @default(auto()) @map("_id") @db.ObjectId
+    id                   String            @id @default(auto()) @map("_id") @db.ObjectId
     services             ServicesEmbed[]
     vat7                 Float
-    taxType              TaxType            @default(NOTAX)
-    taxValue             Float              @default(0)
+    taxType              TaxType           @default(NOTAX)
+    taxValue             Float             @default(0)
     summary              Float
     summaryAfterDiscount Float
-    discountType         DiscountType?      @default(PERCENT)
-    discountPercentage   Float?             @default(0)
+    discountType         DiscountType?     @default(PERCENT)
+    discountPercentage   Float?            @default(0)
     discountValue        Float?
     allTotal             Float
     dateOffer            DateTime
@@ -103,24 +103,28 @@ model Quotations {
     status               QuotationStatus
     dateApproved         DateTime?
     pdfUrl               String?
-    sellerId             String?            @db.ObjectId
+    sellerId             String?           @db.ObjectId
+    sellerEmbed           SellerEmbed
     deposit              QuotationDeposit?
+    isArchived           Boolean           @default(false) // เพิ่มฟิลด์นี้
+
     // periodPercent        Json[]
     // contract             ContractsEmbed?
     // ความสัมพันธ์กับ CompanyUser
-    companyId            String             @db.ObjectId
-    company              Company?           @relation(fields: [companyId], references: [id])
-    customer             CustomerEmbed
-    customerSign         CustomerSignEmbed?
+    companyId    String             @db.ObjectId
+    company      Company?           @relation(fields: [companyId], references: [id])
+    customer     CustomerEmbed
+    customerSign CustomerSignEmbed?
 
     // การอ้างอิงถึง Workers (ถ้าจำเป็น)
     workers WorkerEmbed[]
 
     // ข้อมูลเพิ่มเติม
-    created        DateTime        @default(now())
-    updated        DateTime        @updatedAt
+    created        DateTime              @default(now())
+    updated        DateTime              @updatedAt
     warranty       WarrantyEmbed
-    warrantyStatus WarrantyStatus? @default(PENDING)
+    warrantyStatus WarrantyStatus?       @default(PENDING)
+    events         QuotationEventsEmbed?
 
     @@map("quotations")
 }
@@ -278,10 +282,9 @@ model Submissions {
     services           ServicesEmbed[]
     workStatus         WorkStatus
     description        String
-    beforeImages       ServiceImagesEmbed[]
-    afterImages        ServiceImagesEmbed[]
     reject             RejectEmbed?
     FCMToken           String?
+    imagesPair         SubmissionImagesPairEmbed[]
     workers            WorkerEmbed[]
     customer           CustomerEmbed
     inspector          InspectorEmbed?
@@ -312,6 +315,25 @@ model Subscription {
     @@map("subscriptions")
 }
 
+model Notifications {
+    id          String           @id @default(auto()) @map("_id") @db.ObjectId
+    title       String
+    body        String?
+    data        String?
+    docId       String           @db.ObjectId
+    companyId   String           @db.ObjectId
+    screen      String?
+    type        NotificationType @default(QuotationEvent)
+    company     Company          @relation(fields: [companyId], references: [id])
+    isRead      Boolean          @default(false)
+    isArchived  Boolean          @default(false)
+    isImportant Boolean          @default(false)
+    createdAt   DateTime         @default(now())
+    updatedAt   DateTime         @updatedAt
+
+    @@map("notifications")
+}
+
 type WorkerEmbed {
     id           String
     name         String
@@ -326,6 +348,7 @@ enum SubscriptionType {
     SIXMONTHS
     ONEYEAR
     DEMO
+    EXPIRED
 }
 
 type InspectorEmbed {
@@ -337,13 +360,15 @@ type InspectorEmbed {
 }
 
 type WarrantyEmbed {
-    skillWarantyYear   Int       @default(0)
-    productWarantyYear Int
-    fixDays            Int       @default(0)
-    dateWaranty        DateTime?
-    endWaranty         DateTime?
-    condition          String
-    pdfUrl             String?
+    skillWarrantyMonth   Int       @default(0)
+    productWarrantyMonth Int
+    fixDays              Int       @default(0)
+    dateWaranty          DateTime?
+    endSkillWarranty     DateTime?
+    endProductWarranty   DateTime?
+    condition            String
+    pdfUrl               String?
+    sellerSignature      String?
 }
 
 type StandardEmbed {
@@ -426,6 +451,13 @@ type FinalInvoiceEmbed {
     updated         DateTime? @default(now())
 }
 
+enum NotificationType {
+    QuotationEvent
+    InvoiceEvent
+    ReceiptEvent
+    SubmissionEvent
+}
+
 type FinalReceiptEmbed {
     id              String
     vat7            Float
@@ -475,12 +507,35 @@ type ReceiptDepositEmbed {
     updated         DateTime? @default(now())
 }
 
+type SubmissionBeforeImagesEmbed {
+    thumbnailUrl String
+    originalUrl  String
+}
+type SubmissionAfterImagesEmbed {
+    thumbnailUrl String
+    originalUrl  String
+}
+
+type SubmissionImagesPairEmbed {
+    beforeImages SubmissionBeforeImagesEmbed[] 
+    afterImages  SubmissionAfterImagesEmbed[]
+}
+
 type CustomerEmbed {
     id          String?
     name        String
     address     String
     customerTax String?
     phone       String
+}
+
+type QuotationEventsEmbed {
+    pageView       Int      @default(0)
+    download       Int      @default(0)
+    print          Int      @default(0)
+    share          Int      @default(0)
+    createdAt      DateTime @default(now())
+    lastOccurredAt DateTime @default(now())
 }
 
 type CustomerSignEmbed {
@@ -530,6 +585,18 @@ type SubmissionEmbed {
 type RejectEmbed {
     images  String[]
     comment String
+}
+
+type SellerEmbed {
+    bizName        String
+    officeTel      String?
+    mobileTel      String?
+    companyTax     String?
+    logo           String?
+    sellerName     String?
+    email          String?
+    address        String
+ 
 }
 
 type ContractsEmbed {
@@ -670,6 +737,7 @@ enum QuotationStatus {
     CUSTOMER_APPROVED
     CUSTOMER_REJECTED
     CUSTOMER_REVIEWED
+    EXPIRED
 }
 
 enum InvoiceStatus {

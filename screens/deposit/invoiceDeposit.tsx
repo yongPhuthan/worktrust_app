@@ -38,7 +38,7 @@ interface Props {
 }
 const InvoiceDepositScreen = ({navigation}: Props) => {
   const {
-    state: {editQuotation, sellerId, companyState},
+    state: {editQuotation, sellerId, G_company: companyState},
   } = useContext(Store);
 
   const [amount, setAmount] = React.useState('');

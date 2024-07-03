@@ -10,24 +10,24 @@ import { requestNotifications } from 'react-native-permissions';
 
 function withAuthCheck<T>(WrappedComponent: ComponentType<T>) {
   return (props: T) => {
-    const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
     const [loading, setLoading] = useState(true);
     const [initialRouteName, setInitialRouteName] = useState(''); // Default initial route
     const {
       dispatch,
-    }: any = useContext(Store);
+      state: {firebase_User},
+    } = useContext(Store);
 
     useEffect(() => {
 
       const unsubscribe = auth().onAuthStateChanged(async (currentUser) => {
         if (currentUser) {
-          setUser(currentUser);
+          dispatch(stateAction.get_firebase_user(currentUser));
           setLoading(false);
           const token = await messaging().getToken();
           dispatch(stateAction.get_fcm_token(token));
           setInitialRouteName(currentUser ? 'DashboardQuotation' : 'FirstAppScreen');
         } else {
-          setUser(null);
+         dispatch(stateAction.reset_firebase_user());
           setInitialRouteName('FirstAppScreen');
           setLoading(false);
         }
@@ -47,7 +47,7 @@ function withAuthCheck<T>(WrappedComponent: ComponentType<T>) {
     }
 
     return (
-      <UserContext.Provider value={user}>
+      <UserContext.Provider value={firebase_User}>
         <WrappedComponent
           {...(props as T)}
           initialRouteName={initialRouteName}

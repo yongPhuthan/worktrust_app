@@ -1,4 +1,4 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.worktrust">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
   <!-- ให้สิทธิ์สำหรับการแจ้งเตือน (สำหรับ Android 13 และใหม่กว่า) -->
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -9,11 +9,16 @@
   <!-- ถ้าไม่จำเป็นต้องใช้กล้อง, สามารถลบบรรทัดนี้ออกได้
   <uses-permission android:name="android.permission.CAMERA" /> -->
 
-  <!-- ไม่จำเป็นสำหรับการเข้าถึงแกลลอรี่รูปภาพ สามารถลบออกถ้าไม่มีการเขียนข้อมูลลงในพื้นที่เก็บข้อมูลภายนอก
-  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /> -->
+  <!-- ไม่จำเป็นสำหรับการเข้าถึงแกลลอรี่รูปภาพ สามารถลบออกถ้าไม่มีการเขียนข้อมูลลงในพื้นที่เก็บข้อมูลภายนอก -->
+  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /> 
 
-  <!-- ให้สิทธิ์สำหรับการเข้าถึงอินเทอร์เน็ต ถ้าไม่จำเป็นสามารถลบออกได้
-  <uses-permission android:name="android.permission.INTERNET" /> -->
+  <uses-permission android:name="android.permission.DOWNLOAD_WITHOUT_NOTIFICATION" />
+<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+
+
+  <!-- ให้สิทธิ์สำหรับการเข้าถึงอินเทอร์เน็ต ถ้าไม่จำเป็นสามารถลบออกได้ -->
+  <uses-permission android:name="android.permission.INTERNET" /> 
 <queries>
         <!-- Facebook Messenger -->
         <package android:name="com.facebook.orca" />
@@ -48,6 +53,7 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
              <action android:name="android.intent.action.DOWNLOAD_COMPLETE"/>
+             
         </intent-filter>
       </activity>
     </application>

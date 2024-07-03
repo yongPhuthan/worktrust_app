@@ -53,7 +53,7 @@ const useCreateWarrantyPDF = (actions: QuotationActions) => {
     onSuccess: (responseData:any) => {
       setPdfUrl(responseData.pdfUrl);
       openPDFModal();
-      queryClient.invalidateQueries({queryKey: ['WarrantyDashboard','']});
+      queryClient.invalidateQueries({queryKey: ['WarrantyDashboard']});
     },
     onError: (error: Error) => {
       console.error("Mutation error:", error.message);

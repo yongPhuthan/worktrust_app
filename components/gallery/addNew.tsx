@@ -4,7 +4,7 @@ import {useQuery, useQueryClient} from '@tanstack/react-query';
 import {create, debounce, set} from 'lodash';
 import React, {useContext, useEffect, useState} from 'react';
 import {Controller, useForm, useWatch} from 'react-hook-form';
-import Marker, {Position} from 'react-native-image-marker';
+import Marker, {Position, ImageMarkOptions} from 'react-native-image-marker';
 import Modal from 'react-native-modal';
 
 import {
@@ -13,10 +13,13 @@ import {
   Dimensions,
   FlatList,
   Image,
+  Linking,
   Platform,
   StyleSheet,
   Text,
+  PermissionsAndroid,
   TouchableOpacity,
+  ScrollView,
   View,
 } from 'react-native';
 import {
@@ -37,6 +40,7 @@ import {useUploadToFirebase} from '../../hooks/useUploadtoFirebase';
 import {usePickImage} from '../../hooks/utils/image/usePickImage';
 import {useUser} from '../../providers/UserContext';
 import {Store} from '../../redux/store';
+import useStoragePermission from '../../hooks/utils/useStoragePermission';
 
 interface ExistingModalProps {
   isVisible: boolean;
@@ -98,16 +102,28 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
   const [brightness, setBrightness] = useState(1);
 
   const [checked, setChecked] = React.useState<string | null>(null);
-
+  const onPermissionDenied = () => {
+    setAddWatermark(false);
+  };
+  const { hasPermission, requestStoragePermission } = useStoragePermission(onPermissionDenied);
   const [watermarkPosition, setWatermarkPosition] =
     useState<string>('Bottom Right');
+    const checkImageExists = (imageUri: string): Promise<boolean> => {
+      return new Promise((resolve) => {
+        Image.getSize(
+          imageUri,
+          () => resolve(true),
+          () => resolve(false)
+        );
+      });
+    };
 
-  useEffect(() => {
-    // Call applyWatermark whenever the watermarkPosition changes
-    if (originalImage) {
-      applyWatermark();
-    }
-  }, [watermarkPosition]);
+    useEffect(() => {
+      // Call applyWatermark whenever the watermarkPosition changes
+      if (originalImage) {
+        applyWatermark();
+      }
+    }, [watermarkPosition]);
 
   const getLogoScale = async (
     backgroundImageUri: string,
@@ -119,7 +135,7 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
         getImageSize(logoUri),
       ]);
 
-      const targetLogoWidth = bgImageSize.width * 0.1; // e.g., logo is 10% of the background image width
+      const targetLogoWidth = bgImageSize.width * 0.3; // e.g., logo is 10% of the background image width
       const logoScale = targetLogoWidth / logoSize.width; // Calculate scale factor
 
       return logoScale;
@@ -140,17 +156,14 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
       );
     });
   };
-
-  const handleDeleteTag = (tagToDelete: string): void => {
-    const newTags = getValues('selectedTags').filter(
-      tag => tag !== tagToDelete,
-    );
-    setValue('selectedTags', newTags, {shouldDirty: true});
-  };
   const {
-    state: {code, logoSrc},
+    state: {code, G_logo, G_company},
     dispatch,
   } = useContext(Store);
+  if (!G_company) {
+    return null;
+  }
+
   const {
     register,
     handleSubmit,
@@ -198,7 +211,7 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
     isLoading: isFetching,
     isError,
   } = useQuery({
-    queryKey: ['tags', code],
+    queryKey: ['tags'],
     queryFn: fetchTags,
   });
   const {isImagePicking, pickImage} = usePickImage((uri: string) => {
@@ -237,7 +250,7 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
 
       // Invalidate queries related to the gallery or tags to refresh the data
       queryClient.invalidateQueries({
-        queryKey: ['tags', code],
+        queryKey: ['tags'],
       });
       setIsLoading(false);
     } catch (error) {
@@ -247,6 +260,7 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
       setIsLoading(false);
     }
   };
+
   const uploadImageWithTags = async (): Promise<void> => {
     if (!image || selectedTags.length === 0) {
       alert('Please ensure an image is selected and at least one tag is chosen.');
@@ -257,12 +271,13 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
     const db = firebase.firestore();
     const imageCollectionRef = db.collection(`${code}/gallery/images`);
     const tagsCollectionRef = db.collection(`${code}/gallery/tags`);
-  
+    console.log('image', image);
     try {
       // Create a new document in the Images collection
       const uploadedImageUrl = await uploadImage(image);
       if (!uploadedImageUrl) {
         console.error('Image upload returned null or undefined.');
+        alert('Image upload failed. Please try again.');
         return;
       }
   
@@ -273,7 +288,7 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
       });
   
       // For each tag, update or create a tag document to include the image URL
-      selectedTags.forEach(async tag => {
+      selectedTags.forEach(async (tag) => {
         const tagRef = tagsCollectionRef.doc(tag);
         const doc = await tagRef.get();
   
@@ -308,7 +323,6 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
     }
   };
   
-  
 
   const handleSelectTag = (tag: string) => {
     if (selectedTags.includes(tag)) {
@@ -337,47 +351,93 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
     setChecked(null);
     setValue('image', originalImage ?? '', {shouldDirty: true}); // Reset to original image
   };
-
-  const handleSwitchChange = (value: boolean) => {
-    setAddWatermark(value);
-    if (!value) {
-      clearWatermark();
+  
+  const applyWatermarkImage = async (
+    originalImage: string,
+    watermarkPosition: string,
+    brightness: number,
+    imageId: string,
+  ): Promise<string | undefined> => {
+    if (!originalImage || !G_logo) return;
+  
+    console.log('Original image:', originalImage);
+  
+    const originalFileExists = await checkImageExists(originalImage);
+    if (!originalFileExists) {
+      console.error('Original image does not exist:', originalImage);
+      return;
     }
-  };
-
-  const applyWatermark = async () => {
-    if (!originalImage) return;
-    // const logoScale = await getLogoScale(originalImage, logoSrc);
-    const options = {
-      // background image
+  
+    const options: ImageMarkOptions = {
       backgroundImage: {
         src: originalImage,
         scale: 1,
       },
-
       watermarkImages: [
         {
-          src: logoSrc,
-          scale: logoScale,
+          src: G_logo,
           position: {
             position: getPositionBasedOn(watermarkPosition),
           },
+          scale: logoScale,
           alpha: brightness,
         },
       ],
-      scale: 1,
       quality: 100,
       filename: imageId,
     };
-
+  
     try {
       const markedImage = await Marker.markImage(options);
-      setValue('image', markedImage, {shouldDirty: true});
+      const markedImagePath = `file://${markedImage}`;
+      console.log('Marked image path:', markedImagePath);
+  
+      const markedFileExists = await checkImageExists(markedImagePath);
+      if (!markedFileExists) {
+        console.error('Marked image does not exist:', markedImagePath);
+        return;
+      }
+  
+      return markedImagePath;
     } catch (error) {
-      console.error('Error applying watermark:', error);
+      console.error('Error applying image watermark:', error);
+      throw error;
+    }
+  };
+  
+  const applyWatermark = async () => {
+    if (!originalImage) return;
+  
+    try {
+      let markedImage: string | undefined;
+  
+      if (G_logo) {
+        markedImage = await applyWatermarkImage(originalImage, watermarkPosition, brightness, imageId);
+      } else if (G_company && G_company.bizName) {
+        markedImage = await applyWatermarkText(
+          originalImage,
+          G_company.bizName,
+          watermarkPosition,
+          logoScale,
+          brightness,
+          imageId,
+        );
+      }
+  
+      if (markedImage) {
+        const markedFileExists = await checkImageExists(markedImage);
+        if (markedFileExists) {
+          setValue('image', markedImage, { shouldDirty: true });
+        } else {
+          console.error('Marked image does not exist after watermark applied:', markedImage);
+          Alert.alert('Error', 'Failed to add watermark.');
+        }
+      }
+    } catch (error) {
       Alert.alert('Error', 'Failed to add watermark.');
     }
   };
+  
   function getPositionBasedOn(watermarkPosition: string): Position {
     switch (watermarkPosition) {
       case 'กลาง':
@@ -388,18 +448,84 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
         return Position.topCenter;
       case 'ขวา-บน':
         return Position.topRight;
-
       case 'ซ้าย-ล่าง':
         return Position.bottomLeft;
       case 'กลาง-ล่าง':
         return Position.bottomCenter;
       case 'ขวา-ล่าง':
         return Position.bottomRight;
-
       default:
         return Position.bottomRight;
     }
   }
+  const handleSwitchChange = (value: boolean) => {
+    if (value && !hasPermission) {
+
+      requestStoragePermission();
+    }
+    setAddWatermark(value);
+    if (!value) {
+      clearWatermark();
+    } else {
+      applyWatermark();
+    }
+  };
+  const applyWatermarkText = async (
+    originalImage: string,
+    companyName: string,
+    watermarkPosition: string,
+    logoScale: number,
+    brightness: number,
+    imageId: string,
+  ) => {
+    if (!originalImage || !companyName) return;
+
+    const options = {
+      backgroundImage: {
+        src: originalImage,
+        scale: 1,
+      },
+      watermarkTexts: [
+        {
+          text: companyName,
+          position: {
+            position: getPositionBasedOn(watermarkPosition),
+          },
+          style: {
+            color: '#000000',
+            fontSize: 24 + 200 * logoScale,
+            fontName: 'Sukhumvit set',
+
+            // textBackgroundStyle: {
+            //   padding: '2%',
+            //   color: '#ffffff',
+            //   cornerRadius: {
+            //     topLeft: {
+            //       x: '10%',
+            //       y: '10%',
+            //     },
+            //     topRight: {
+            //       x: '10%',
+            //       y: '10%',
+            //     },
+            //   },
+            // },
+          },
+        },
+      ],
+      scale: logoScale,
+      quality: 100,
+      filename: imageId,
+    };
+
+    try {
+      const markedImage = await Marker.markText(options);
+      return markedImage;
+    } catch (error) {
+      console.error('Error applying text watermark:', error);
+      throw error;
+    }
+  };
   return (
     <>
       <Appbar.Header
@@ -428,12 +554,8 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
       </Appbar.Header>
       <FlatList
         style={styles.container}
-        data={[{key: 'main'}]}
-        renderItem={() => (
-          <View
-            style={{
-              marginBottom: 80,
-            }}>
+        ListHeaderComponent={
+          <>
             <Controller
               control={control}
               name="image"
@@ -444,156 +566,76 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
                   style={styles.imageView}>
                   {value ? (
                     isImagePicking ? (
-                      <ActivityIndicator />
+                      <View style={styles.imageUploader}>
+                        <ActivityIndicator />
+                      </View>
                     ) : (
                       <Image source={{uri: value}} style={styles.image} />
                     )
                   ) : isImagePicking ? (
-                    <ActivityIndicator />
+                    <View style={styles.imageUploader}>
+                      <ActivityIndicator />
+                    </View>
                   ) : (
                     <View style={styles.imageUploader}>
                       <IconButton
-                        icon={'camera-plus'}
                         size={40}
-                        iconColor="#0073BA"
+                        icon="image-plus"
+                        iconColor={'#047e6e'}
                       />
+                      <Text
+                        style={{
+                          textAlign: 'center',
+                          color: '#047e6e',
+                        }}>
+                        เพิ่มรูปผลงานของคุณ
+                      </Text>
                     </View>
                   )}
                 </TouchableOpacity>
               )}
             />
             <Divider style={{marginVertical: 10}} />
-
-            <View>
-              {tags.length > 0 && (
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignContent: 'center',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                  }}>
-                  <Text style={styles.label}>เลือกหมวดหมู่</Text>
-                  <Button
-                    icon={'plus'}
-                    onPress={() => setAddNewTag(!addNewTag)}
-                    style={{
-                      width: '100%',
-                    }}>
-                    เพิ่มหมวดหมู่
-                  </Button>
-                </View>
-              )}
-
-              <FlatList
-                data={tags}
-                keyExtractor={(item, index) => index.toString()}
-                renderItem={({item}) => (
-                  <View style={styles.chipContainer}>
-                    <Chip
-                      mode={selectedTags.includes(item) ? 'outlined' : 'flat'}
-                      selected={selectedTags.includes(item)}
-                      onPress={() => handleSelectTag(item)}
-                      textStyle={
-                        selectedTags.includes(item) && styles.selectedChipText
-                      }>
-                      {item}
-                    </Chip>
-                  </View>
-                )}
-                numColumns={2}
-                ListEmptyComponent={
-                  <Button
-                    mode="outlined"
-                    icon={'plus'}
-                    onPress={() => setAddNewTag(!addNewTag)}
-                    style={{
-                      width: '50%',
-                    }}>
-                    เพิ่มหมวดหมู่
-                  </Button>
-                }
-              />
-              <Divider style={{marginVertical: 10}} />
+            <View
+              style={{
+                flexDirection: 'row',
+                alignContent: 'center',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}>
+              <Text style={styles.label}>เลือกหมวดหมู่</Text>
+              <Button
+                icon={'plus'}
+                onPress={() => setAddNewTag(!addNewTag)}
+                style={{
+                  width: '50%',
+                }}>
+                เพิ่มหมวดหมู่
+              </Button>
             </View>
-
-            <View style={styles.row}>
-              <Text style={styles.signHeader}>เพิ่มโลโก้</Text>
-              <Switch
-                trackColor={{false: '#a5d6c1', true: '#4caf82'}}
-                thumbColor={addWatermark ? '#ffffff' : '#f4f3f4'}
-                ios_backgroundColor="#3e3e3e"
-                onValueChange={handleSwitchChange}
-                value={addWatermark ? true : false}
-                style={Platform.select({
-                  ios: {
-                    transform: [{scaleX: 0.7}, {scaleY: 0.7}],
-                    marginTop: 5,
-                  },
-                  android: {},
-                })}
-              />
+          </>
+        }
+        data={tags}
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={({item}) => (
+          <>
+            <View style={styles.chipContainer}>
+              <Chip
+                mode={selectedTags.includes(item) ? 'outlined' : 'flat'}
+                selected={selectedTags.includes(item)}
+                onPress={() => handleSelectTag(item)}
+                textStyle={
+                  selectedTags.includes(item) && styles.selectedChipText
+                }>
+                {item}
+              </Chip>
             </View>
-            {addWatermark && (
-              <>
-                <FlatList
-                  data={WatermarkPositions}
-                  horizontal={true}
-                  ItemSeparatorComponent={() => <View style={{width: 10}} />}
-                  keyExtractor={(item, index) => index.toString()}
-                  renderItem={({item}) => (
-                    <View style={styles.checkBoxContainer}>
-                      <Checkbox.Android
-                        status={checked === item ? 'checked' : 'unchecked'}
-                        onPress={() => {
-                          setChecked(item);
-                          setWatermarkPosition(item);
-                        }}
-                      />
-                      <Text>{item}</Text>
-                    </View>
-                  )}
-                />
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    marginTop: 10,
-                  }}>
-                  <Text style={styles.signHeader}>ปรับขนาด</Text>
-                  <Slider
-                    style={{width: '50%', height: 40}}
-                    minimumValue={0.1}
-                    maximumValue={0.3}
-                    value={logoScale}
-                    onValueChange={value => setLogoScale(value)}
-                    onSlidingComplete={debounce(applyWatermark, 1000)}
-                    minimumTrackTintColor="#4caf82"
-                    maximumTrackTintColor="#a5d6c1"
-                    thumbTintColor="#4caf82"
-                  />
-                </View>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    marginTop: 10,
-                  }}>
-                  <Text style={styles.signHeader}>ความสว่าง</Text>
-                  <Slider
-                    style={{width: '50%', height: 40}}
-                    minimumValue={0.1}
-                    maximumValue={1}
-                    value={brightness}
-                    onValueChange={value => setBrightness(value)}
-                    onSlidingComplete={debounce(applyWatermark, 1000)}
-                    minimumTrackTintColor="#4caf82"
-                    maximumTrackTintColor="#a5d6c1"
-                    thumbTintColor="#4caf82"
-                  />
-                </View>
-              </>
-            )}
+          </>
+        )}
+        numColumns={2}
+        ListFooterComponent={
+          <>
+            <Divider style={{marginVertical: 10}} />
 
             {addNewTag && (
               <Modal
@@ -639,9 +681,93 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
                 </View>
               </Modal>
             )}
-          </View>
-        )}
-        keyExtractor={() => 'main'}
+            <View
+              style={{
+                paddingBottom: 200,
+              }}>
+              <View style={styles.row}>
+                <Text style={styles.signHeader}>เพิ่มโลโก้</Text>
+                <Switch
+                  trackColor={{false: '#a5d6c1', true: '#4caf82'}}
+                  thumbColor={addWatermark ? '#ffffff' : '#f4f3f4'}
+                  ios_backgroundColor="#3e3e3e"
+                  onValueChange={handleSwitchChange}
+                  value={addWatermark ? true : false}
+                  style={Platform.select({
+                    ios: {
+                      transform: [{scaleX: 0.7}, {scaleY: 0.7}],
+                      marginTop: 5,
+                    },
+                    android: {},
+                  })}
+                />
+              </View>
+              {addWatermark && (
+                <>
+                  <FlatList
+                    data={WatermarkPositions}
+                    horizontal={true}
+                    ItemSeparatorComponent={() => <View style={{width: 10}} />}
+                    keyExtractor={(item, index) => index.toString()}
+                    renderItem={({item}) => (
+                      <View style={styles.checkBoxContainer}>
+                        <Checkbox.Android
+                          status={checked === item ? 'checked' : 'unchecked'}
+                          onPress={() => {
+                            setChecked(item);
+                            setWatermarkPosition(item);
+                          }}
+                        />
+                        <Text>{item}</Text>
+                      </View>
+                    )}
+                  />
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      marginTop: 10,
+                    }}>
+                    <Text style={styles.signHeader}>ปรับขนาด</Text>
+                    <Slider
+                      style={{width: '50%', height: 40}}
+                      minimumValue={0.01}
+                      maximumValue={0.3}
+                      value={logoScale}
+                      onValueChange={value => setLogoScale(value)}
+                      onSlidingComplete={debounce(applyWatermark, 1000)}
+                      minimumTrackTintColor="#4caf82"
+                      maximumTrackTintColor="#a5d6c1"
+                      thumbTintColor="#4caf82"
+                    />
+                  </View>
+                  {G_logo && (
+                      <View
+                      style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        marginTop: 10,
+                      }}>
+                      <Text style={styles.signHeader}>ความสว่าง</Text>
+                      <Slider
+                        style={{width: '50%', height: 40}}
+                        minimumValue={0.1}
+                        maximumValue={1}
+                        value={brightness}
+                        onValueChange={value => setBrightness(value)}
+                        onSlidingComplete={debounce(applyWatermark, 1000)}
+                        minimumTrackTintColor="#4caf82"
+                        maximumTrackTintColor="#a5d6c1"
+                        thumbTintColor="#4caf82"
+                      />
+                    </View>
+                  )}
+                
+                </>
+              )}
+            </View>
+          </>
+        }
       />
     </>
   );
@@ -651,10 +777,11 @@ const windowHeight = Dimensions.get('window').height;
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 20,
-    paddingVertical: 20,
+    paddingTop: 20,
+    paddingBottom: 100,
     backgroundColor: '#ffffff',
     width: windowWidth,
-    height: 'auto',
+    height: windowHeight,
   },
   imageView: {
     alignItems: 'center',
@@ -667,7 +794,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     height: windowHeight * 0.3,
     width: windowWidth * 0.9,
-    borderColor: '#0073BA',
+    borderColor: '#047e6e',
+    backgroundColor: '#f5f5f5',
     borderWidth: 1,
     borderRadius: 5,
     borderStyle: 'dashed',
@@ -679,6 +807,7 @@ const styles = StyleSheet.create({
     maxHeight: windowHeight * 0.7,
     resizeMode: 'contain',
     margin: 10,
+   
   },
   input: {
     height: 40,
@@ -759,9 +888,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
-    marginTop: 10,
+    marginVertical: 10,
+    marginHorizontal: 5,
   },
   row: {
+    marginVertical: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
   },

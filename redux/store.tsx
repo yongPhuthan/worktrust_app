@@ -1,15 +1,19 @@
 import React, {createContext, useReducer} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import auth, {FirebaseAuthTypes} from '@react-native-firebase/auth';
 
 import * as contrains from './constrains';
 import {
   Company,
   ContractsEmbed,
   Invoices,
+  Notifications,
   Quotations,
   Receipts,
   ServicesEmbed,
   Submissions,
+  Subscription,
+  User,
   WarrantyEmbed,
   WorkerEmbed,
   Workers,
@@ -18,27 +22,47 @@ export type StateType = {
   companyId: string;
   code: string;
   services: ServicesEmbed[];
-  companyState: Company | null;
   existingServices: ServicesEmbed[];
   defaultContract: ContractsEmbed | null;
   defaultWarranty: WarrantyEmbed | null;
+  quotations : Quotations[] | null;
   editQuotation: Quotations | null;
   editInvoice: Invoices | null;
   editReceipt: Receipts | null;
   editSubmission: Submissions | null;
   viewSubmission: Submissions | null;
-  logoSrc: string;
   existingWorkers: Workers[];
   userSignature: string;
   sellerId: string;
   fcmToken: string;
   quotationRefNumber: string;
-  quotationId : string;
+  quotationId: string;
+  G_subscription: Subscription | null;
+  G_user: User | null;
+  G_logo: string | null;
+  G_company: Company | null;
+  firebase_User : FirebaseAuthTypes.User | null;
+  notifications : Notifications[] | null;
 };
 
 type ActionType = {
   type: string;
-  payload: string | number | object | ServicesEmbed | ServicesEmbed[] | Company | ContractsEmbed | WarrantyEmbed | Quotations | Invoices | Receipts | null |  undefined
+  payload?:
+    | string
+    | number
+    | object
+    | ServicesEmbed
+    | ServicesEmbed[]
+    | Company
+    | ContractsEmbed
+    | WarrantyEmbed
+    | Quotations
+    | Invoices
+    | Receipts
+    | null
+    | undefined
+    | boolean
+    | Subscription;
 };
 
 type ContextType = {
@@ -51,11 +75,11 @@ export const Store = createContext<ContextType>({
     companyId: '',
     code: '',
     services: [],
-    companyState: null,
+    G_company: null,
     existingServices: [],
     defaultContract: null,
     defaultWarranty: null,
-    logoSrc: '',
+    G_logo: '',
     existingWorkers: [],
     userSignature: '',
     editQuotation: null,
@@ -64,10 +88,14 @@ export const Store = createContext<ContextType>({
     editSubmission: null,
     viewSubmission: null,
     sellerId: '',
-    fcmToken:'',
+    fcmToken: '',
     quotationRefNumber: '',
     quotationId: '',
-
+    G_subscription: null,
+    G_user: null,
+    firebase_User: null,
+    notifications: null,
+    quotations: null,
   },
   dispatch: () => {},
 });
@@ -76,11 +104,9 @@ const initialState: StateType = {
   companyId: '',
   code: '',
   services: [],
-  companyState: null,
   existingServices: [],
   defaultContract: null,
   defaultWarranty: null,
-  logoSrc: '',
   existingWorkers: [],
   userSignature: '',
   editQuotation: null,
@@ -89,9 +115,16 @@ const initialState: StateType = {
   editSubmission: null,
   viewSubmission: null,
   sellerId: '',
-  fcmToken:'',
+  fcmToken: '',
   quotationRefNumber: '',
   quotationId: '',
+  G_subscription: null,
+  G_user: null,
+  G_logo: '',
+  G_company: null,
+  firebase_User: null,
+  notifications: null,
+  quotations: null,
 };
 
 function reducer(state: StateType, action: ActionType): StateType {
@@ -101,7 +134,7 @@ function reducer(state: StateType, action: ActionType): StateType {
     case contrains.GET_COMPANYID:
       return {...state, companyId: action.payload as string};
     case contrains.GET_COMPANY_STATE:
-      return {...state, companyState: action.payload as Company};
+      return {...state, G_company: action.payload as Company};
     case contrains.ADD_PRODUCT:
       return {
         ...state,
@@ -112,7 +145,7 @@ function reducer(state: StateType, action: ActionType): StateType {
     case contrains.GET_DEFAULT_CONTRACT:
       return {...state, defaultContract: action.payload as ContractsEmbed};
     case contrains.GET_LOGO:
-      return {...state, logoSrc: action.payload as string};
+      return {...state, G_logo: action.payload as string};
     case contrains.GET_DEFAULT_WARRANTY:
       return {...state, defaultWarranty: action.payload as WarrantyEmbed};
     case contrains.GET_EXISTING_WORKERS:
@@ -145,6 +178,18 @@ function reducer(state: StateType, action: ActionType): StateType {
       return {...state, quotationRefNumber: action.payload as string};
     case contrains.GET_QUOTATION_ID:
       return {...state, quotationId: action.payload as string};
+    case contrains.GET_SUBSCRIPTION:
+      return {...state, G_subscription: action.payload as Subscription};
+    case contrains.GET_USER:
+      return {...state, G_user: action.payload as User};
+    case contrains.GET_FIREBASE_USER:
+      return {...state, firebase_User: action.payload as FirebaseAuthTypes.User};
+    case contrains.RESET_FIREBASE_USER:
+      return {...state, firebase_User: null};
+    case contrains.GET_NOTIFICATION:
+      return {...state, notifications: action.payload as Notifications[]};
+    case contrains.GET_QUOTATIONS:
+      return {...state, quotations: action.payload as Quotations[]};
 
     default:
       return state;

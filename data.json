@@ -1,53 +1,7 @@
-{
-    "company": null,
-    "quotationId": "66752cd23c7db38ee9141e4a",
-    "receipt": {
-        "FCMToken": "",
-        "allTotal": 4556,
-        "companyId": "6655c91ed18684ac88f7f494",
-        "created": "2024-06-21T07:33:38.133Z",
-        "customer": {
-            "address": "ที่อยู่ใหม่",
-            "customerTax": "",
-            "id": "17514f22-6182-4a30-b65e-53a83fbdf72e",
-            "name": "ทดสอบลูกค้า",
-            "phone": ""
-        },
-        "customerSign": null,
-        "dateApproved": null,
-        "dateEnd": "2024-06-28T07:33:06.841Z",
-        "dateOffer": "2024-06-21T07:33:06.841Z",
-        "deposit": null,
-        "discountPercentage": 0,
-        "discountType": "PERCENT",
-        "discountValue": 0,
-        "docNumber": "QT20240621210",
-        "id": "66752cd23c7db38ee9141e4a",
-        "noteToCustomer": "",
-        "noteToTeam": "",
-        "pdfUrl": "http://127.0.0.1:9199/v0/b/worktrust-docs/o/879243%2Fquotations%2FQT20240621210?alt=media&token=7abfdd70-ae01-4897-9c17-3c6f3ecde36e",
-        "sellerId": "6655c888d18684ac88f7f48f",
-        "sellerSignature": "",
-        "services": [
-            [Object]
-        ],
-        "status": "PENDING",
-        "summary": 4556,
-        "summaryAfterDiscount": 4556,
-        "taxType": "NOTAX",
-        "taxValue": 0,
-        "updated": "2024-06-21T07:38:51.512Z",
-        "vat7": 0,
-        "warranty": {
-            "condition": "รับประกันคุณภาพตัวสินค้า ตามมาตรฐานในการใช้งานตามปกติเท่านั้น ขอสงวนสิทธ์การรับประกันที่เกิดจากการใช้งานสินค้าที่ไม่ถูกต้องหรือความเสียหายที่เกิดจากภัยธรรมชาติ หรือ การใช้งานผิดประเภทหรือปัญหาจากการกระทําของบคุคลอื่น เช่นความเสียหายที่เกิดจากการทำงานของผู้รับเหมาทีมอื่นหรือบุคคลที่สามโดยตั้งใจหรือไม่ได้ตั้งใจ",
-            "dateWaranty": "2024-06-21T07:38:47.861Z",
-            "endWaranty": null,
-            "fixDays": 54,
-            "pdfUrl": "http://127.0.0.1:9199/v0/b/worktrust-docs/o/879243%2Fquotations%2FQT20240621210%2Fwarranty.pdf?alt=media&token=6c992879-be52-417b-8658-597b890fa0f8",
-            "productWarantyYear": 22,
-            "skillWarantyYear": 12
-        },
-        "warrantyStatus": "ACTIVE",
-        "workers": []
-    }
-}
+[{
+    "beforeImages": [{
+        "thumbnailUrl": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/879243%2Fgallery%2Fthumbnail%2F1719974104018.webp?alt=media&token=a21efa2c-94f5-4fff-84c1-1ab38be011f1",
+        "originalUrl": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/879243%2Fgallery%2Foriginal%2F1719974103251.webp?alt=media&token=d5395d24-7abe-4795-a4ce-1114ac970d54"
+    }],
+    "afterImages": []
+}]

@@ -1,6 +1,7 @@
 import { Company, Invoices, Quotations, ServicesEmbed, User } from '@prisma/client';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {StackNavigationProp} from '@react-navigation/stack';
+import { CompanyState } from 'types';
 type InstallmentParams = {
   data: {
     projectName: string;
@@ -96,7 +97,7 @@ export type ParamListBase = {
   DocViewScreen: {id: any};
   ContractViewScreen: {id: string};
 
-  EditSetting: {company: Company,seller:User};
+  EditSetting: undefined;
   SignUpScreen: undefined;
   LoginScreen: undefined;
   CompanyUserFormScreen: undefined;
@@ -116,6 +117,7 @@ export type ParamListBase = {
   AddNewWorker: undefined;
   CreateCompanyScreen: undefined;
   FirstAppScreen: undefined;
+  NotificationScreen: undefined;
   SelectWorks: {quotationId: string};
   SendWorks: undefined,
   ViewSubmission : undefined;

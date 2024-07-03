@@ -1,41 +1,36 @@
-import React, {useContext, useEffect, useState} from 'react';
-import {Alert, Platform, StyleSheet, View} from 'react-native';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import React, { useContext, useEffect, useState } from 'react';
+import { Alert, Platform, StyleSheet, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import {
   Appbar,
   Button,
   Divider,
-  SegmentedButtons,
   Switch,
   Text,
-  TextInput,
-  TextInputAffixProps,
-  TextInputProps,
+  TextInput
 } from 'react-native-paper';
-import {v4 as uuidv4} from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 
-import {StackNavigationProp} from '@react-navigation/stack';
+import { StackNavigationProp } from '@react-navigation/stack';
 import CurrencyInput from 'react-native-currency-input';
 import DocNumber from '../../components/DocNumber';
 import DatePickerButton from '../../components/styles/DatePicker';
 import useSelectedDates from '../../hooks/quotation/create/useSelectDates';
 import useThaiDateFormatter from '../../hooks/utils/useThaiDateFormatter';
-import {TaxType} from '../../models/Tax';
-import {Store} from '../../redux/store';
-import {ParamListBase} from '../../types/navigationType';
+import { TaxType } from '../../models/Tax';
+import { Store } from '../../redux/store';
+import { ParamListBase } from '../../types/navigationType';
 
-import Decimal from 'decimal.js-light';
-import {Controller, useForm, useWatch} from 'react-hook-form';
-import PDFModalScreen from '../../components/webview/pdf';
-import useCreateNewDepositInvoice from '../../hooks/invoice/deposit/useCreateDeposit';
-import {useModal} from '../../hooks/quotation/create/useModal';
 import {
   DiscountType,
   ReceiptStatus,
   Receipts,
 } from '@prisma/client';
-import {CompanyState} from 'types';
-import { IconButton } from 'react-native-paper';
+import Decimal from 'decimal.js-light';
+import { Controller, useForm, useWatch } from 'react-hook-form';
+import { CompanyState } from 'types';
+import PDFModalScreen from '../../components/webview/pdf';
+import { useModal } from '../../hooks/quotation/create/useModal';
 import useCreateNewDepositReceipt from '../../hooks/receipt/deposit/useCreateDeposit';
 const taxLabel = [
   {label: '3%', value: 3},
@@ -46,7 +41,7 @@ interface Props {
 }
 const ReceiptDepositScreen = ({navigation}: Props) => {
   const {
-    state: {editQuotation, sellerId, companyState},
+    state: {editQuotation, sellerId, G_company: companyState},
   } = useContext(Store);
 
   const [amount, setAmount] = React.useState('');

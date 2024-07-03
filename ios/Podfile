@@ -76,6 +76,7 @@ target 'worktrust' do
     pod 'RNCPicker', :path => '../node_modules/@react-native-picker/picker'
     pod 'react-native-blob-util', :path => '../node_modules/react-native-blob-util'
     pod 'Firebase/Messaging'
+    pod 'Firebase/Crashlytics'
     # pod 'RNPDF', :path => '../node_modules/react-native-view-pdf'
     pod 'FirebaseAppCheck'
 

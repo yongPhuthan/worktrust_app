@@ -1,53 +1,38 @@
-import {
-  faBriefcase,
-  faPlus,
-  faSign,
-  faSignature,
-  faUser,
-} from '@fortawesome/free-solid-svg-icons';
+import {faBriefcase, faUser} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {yupResolver} from '@hookform/resolvers/yup';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 
 import React, {useContext, useEffect, useMemo, useState} from 'react';
 
 import {
+  Controller,
   FormProvider,
-  set,
+  Resolver,
   useFieldArray,
   useForm,
   useWatch,
-  Controller,
-  Resolver,
 } from 'react-hook-form';
 import {
   Alert,
   Dimensions,
   FlatList,
-  Image,
+  Modal,
   Platform,
-  SafeAreaView,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  ActivityIndicator,
-  Modal,
   View,
 } from 'react-native';
 import {
   Appbar,
-  Button,
-  ProgressBar,
-  Switch,
-  List,
-  Divider,
-  IconButton,
-  TextInput,
   Avatar,
-  SegmentedButtons,
+  Button,
+  Divider,
   Icon,
+  IconButton,
+  Switch,
+  TextInput,
 } from 'react-native-paper';
 import {v4 as uuidv4} from 'uuid';
 import AddServices from '../../components/AddServices';
@@ -56,45 +41,40 @@ import CardProject from '../../components/CardProject';
 import DocNumber from '../../components/DocNumber';
 import Summary from '../../components/Summary';
 import AddCustomer from '../../components/add/AddCustomer';
-import ContractModal from '../../components/contract/create';
 import SelectProductModal from '../../components/service/select';
 import DatePickerButton from '../../components/styles/DatePicker';
 // import Divider from '../../components/styles/Divider';
-import SmallDivider from '../../components/styles/SmallDivider';
-import AddCard from '../../components/ui/Button/AddCard';
-import SignatureComponent from '../../components/utils/signature/create';
-import ProjectModalScreen from '../../components/webview/project';
-import ExistingWorkers from '../../components/workers/existing';
-import useCreateQuotation from '../../hooks/quotation/create/useSaveQuotation';
-import useSelectedDates from '../../hooks/quotation/create/useSelectDates';
-import useThaiDateFormatter from '../../hooks/utils/useThaiDateFormatter';
-import {Store} from '../../redux/store';
-import {ParamListBase} from '../../types/navigationType';
-import {quotationsValidationSchema} from '../../models/validationSchema';
-import PDFModalScreen from '../../components/webview/pdf';
-import useShare from '../../hooks/webview/useShare';
-import * as yup from 'yup';
-import WarrantyModal from '../../components/warranty/create';
-import AddProductFormModal from '../../components/service/addNew';
-import {useModal} from '../../hooks/quotation/create/useModal';
 import {
-  MaterialEmbed,
   DiscountType,
   QuotationStatus,
+  SellerEmbed,
   ServicesEmbed,
-  WorkerEmbed,
-  QuotationDeposit,
+  TaxType,
+  WarrantyStatus,
   type CustomerEmbed,
   type Quotations,
   type WarrantyEmbed,
-  TaxType,
-  WarrantyStatus,
 } from '@prisma/client';
-import {JsonValue} from '@prisma/client/runtime/library';
 import {CompanyState} from 'types';
-import ShowSignature from '../../components/utils/signature/view';
-import useUpdateQuotation from '../../hooks/quotation/update/useUpdateQuotations';
+import * as yup from 'yup';
 import UpdateServiceModal from '../../components/service/update';
+import SmallDivider from '../../components/styles/SmallDivider';
+import AddCard from '../../components/ui/Button/AddCard';
+import SignatureModal from '../../components/utils/signature/select';
+import ShowSignature from '../../components/utils/signature/view';
+import WarrantyModal from '../../components/warranty/create';
+import PDFModalScreen from '../../components/webview/pdf';
+import ProjectModalScreen from '../../components/webview/project';
+import ExistingWorkers from '../../components/workers/existing';
+import {useModal} from '../../hooks/quotation/create/useModal';
+import useCreateQuotation from '../../hooks/quotation/create/useSaveQuotation';
+import useSelectedDates from '../../hooks/quotation/create/useSelectDates';
+import useUpdateQuotation from '../../hooks/quotation/update/useUpdateQuotations';
+import useThaiDateFormatter from '../../hooks/utils/useThaiDateFormatter';
+import {quotationsValidationSchema} from '../../models/validationSchema';
+import {Store} from '../../redux/store';
+import {ParamListBase} from '../../types/navigationType';
+import {defalutCustomer, initialWarranty} from '../../models/InitialState';
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'Quotation'>;
 }
@@ -102,16 +82,19 @@ interface Props {
 const Quotation = ({navigation}: Props) => {
   const {
     state: {
-      companyState,
+      G_company,
       editQuotation,
       defaultWarranty,
       sellerId,
       fcmToken,
       existingServices,
+      G_user,
     },
     dispatch,
   } = useContext(Store);
-
+  if (!G_company || !G_user) {
+    return null;
+  }
   const {
     initialDocnumber,
     initialDateOfferFormatted,
@@ -125,8 +108,6 @@ const Quotation = ({navigation}: Props) => {
   const [save, setSave] = useState<boolean>(false);
   // const [customerName, setCustomerName] = useState('');
   const [signaturePicker, setSignaturePicker] = useState(false);
-  const [openNoteToCustomer, setOpenNoteToCustomer] = useState(false);
-  const [openNoteToTeam, setOpenNoteToTeam] = useState(false);
   const [workerPicker, setWorkerpicker] = useState(false);
   const [quotationServerId, setQuotationServerId] = useState<string | null>(
     editQuotation ? editQuotation.id : null,
@@ -138,7 +119,9 @@ const Quotation = ({navigation}: Props) => {
   );
   const [isLoadingWebP, setIsLoadingWebP] = useState(false);
   const [currentValue, setCurrentValue] = useState<ServicesEmbed | null>(null);
-  const [signature, setSignature] = useState<string | null>(null);
+  const [selectedSignature, setSelectedSignature] = useState<string | null>(
+    null,
+  );
   const quotationId = uuidv4();
   const [dateOfferFormatted, setDateOfferFormatted] = useState<string>(
     initialDateOfferFormatted,
@@ -186,11 +169,6 @@ const Quotation = ({navigation}: Props) => {
     isVisible: showProjectModal,
   } = useModal();
   const {
-    openModal: openAddNewServiceModal,
-    closeModal: closeAddNewServiceModal,
-    isVisible: showAddNewService,
-  } = useModal();
-  const {
     openModal: openAddExistingServiceModal,
     closeModal: closeAddExistingServiceModal,
     isVisible: showAddExistingService,
@@ -205,23 +183,15 @@ const Quotation = ({navigation}: Props) => {
     null,
   );
 
-  const defalutCustomer: CustomerEmbed = {
-    id: uuidv4(),
-    name: '',
-    address: '',
-    customerTax: '',
-    phone: '',
-  };
-
-  const initialWarranty: WarrantyEmbed = {
-    productWarantyYear: 0,
-    skillWarantyYear: 0,
-    fixDays: 0,
-    condition:
-      'รับประกันคุณภาพตัวสินค้า ตามมาตรฐานในการใช้งานตามปกติเท่านั้น ขอสงวนสิทธ์การรับประกันที่เกิดจากการใช้งานสินค้าที่ไม่ถูกต้องหรือความเสียหายที่เกิดจากภัยธรรมชาติ หรือ การใช้งานผิดประเภทหรือปัญหาจากการกระทําของบคุคลอื่น เช่นความเสียหายที่เกิดจากการทำงานของผู้รับเหมาทีมอื่นหรือบุคคลที่สามโดยตั้งใจหรือไม่ได้ตั้งใจ',
-    dateWaranty: null,
-    endWaranty: null,
-    pdfUrl: null,
+  const sellerEmbed: SellerEmbed = {
+    bizName: G_company.bizName,
+    sellerName: G_user.name,
+    logo: G_company.logo ? G_company.logo : '',
+    address: G_company.address,
+    mobileTel: G_company.mobileTel ? G_company.mobileTel : '',
+    officeTel: G_company.officeTel ? G_company.officeTel : '',
+    companyTax: G_company.companyTax ? G_company.companyTax : '',
+    email: G_user.email ? G_user.email : '',
   };
 
   // Custom resolver
@@ -255,11 +225,13 @@ const Quotation = ({navigation}: Props) => {
     }
   };
 
-  const quotationDefaultValues: Quotations = {
+  const quotationDefaultValues: Quotations & {isArchived: boolean} = {
     id: uuidv4(),
     services: [],
+    events: null,
     customer: defalutCustomer,
-    companyId: companyState ? companyState?.id : '',
+    isArchived: false,
+    companyId: G_company.id,
     vat7: 0,
     taxType: TaxType.NOTAX,
     taxValue: 0,
@@ -275,6 +247,7 @@ const Quotation = ({navigation}: Props) => {
     dateOffer: initialDateOffer,
     noteToCustomer: '',
     noteToTeam: '',
+    sellerEmbed,
     dateEnd: initialDateEnd,
     docNumber: `QT${initialDocnumber}`,
     workers: [],
@@ -352,12 +325,17 @@ const Quotation = ({navigation}: Props) => {
   useEffect(() => {
     methods.setValue('FCMToken', fcmToken);
   }, [dateEndFormatted, fcmToken, methods]);
-
-  const handleShare = useShare({url, title: `ใบเสนอราคา ${customer.name}`});
+  const [openNoteToCustomer, setOpenNoteToCustomer] = useState(
+    noteToCustomer ? true : false,
+  );
+  const [openNoteToTeam, setOpenNoteToTeam] = useState(
+    noteToTeam ? true : false,
+  );
 
   const useSignature = () => {
     if (sellerSignature) {
       methods.setValue('sellerSignature', '', {shouldDirty: true});
+      setSelectedSignature(null);
       onCloseSignature();
     } else {
       openSignatureModal();
@@ -391,7 +369,6 @@ const Quotation = ({navigation}: Props) => {
     handleModalClose();
     setCurrentValue(currentValue);
     setServiceIndex(index);
-
   };
 
   const actions: any = {
@@ -416,7 +393,7 @@ const Quotation = ({navigation}: Props) => {
   const handleButtonPress = async () => {
     const data = {
       quotation: methods.getValues() as Quotations,
-      company: companyState as CompanyState,
+      company: G_company as CompanyState,
     };
     if (isNewQuotation) {
       mutate(data, {
@@ -432,7 +409,7 @@ const Quotation = ({navigation}: Props) => {
       };
       const data = {
         quotation: existingData as Quotations,
-        company: companyState as CompanyState,
+        company: G_company as CompanyState,
       };
       updateQuotation(data);
       setSave(true);
@@ -480,15 +457,33 @@ const Quotation = ({navigation}: Props) => {
 
     return () => clearInterval(interval);
   }, [sellerSignature, isLoadingWebP]);
-
+  useEffect(() => {
+    if (selectedSignature) {
+      methods.setValue('sellerSignature', selectedSignature, {
+        shouldDirty: true,
+      });
+    }
+  }, [selectedSignature]);
   React.useEffect(() => {
     if (currentValue) {
       openEditServiceModal();
-    } else if(!currentValue) {
+    } else {
       closeEditServiceModal();
     }
-  }, [currentValue]);
-
+    if (!openNoteToCustomer) {
+      methods.setValue('noteToCustomer', null, {shouldDirty: true});
+    }
+    if (!openNoteToTeam) {
+      methods.setValue('noteToTeam', null, {shouldDirty: true});
+    }
+  }, [
+    currentValue,
+    openNoteToCustomer,
+    openNoteToTeam,
+    openEditServiceModal,
+    closeEditServiceModal,
+    methods,
+  ]);
   return (
     <>
       <FormProvider {...methods}>
@@ -527,10 +522,9 @@ const Quotation = ({navigation}: Props) => {
           <Appbar.Content title="" />
           <IconButton
             disabled={!quotationServerId}
-          icon="navigation-variant"
+            icon="navigation-variant"
             mode="outlined"
-            iconColor='#047e6e'
-
+            iconColor="#047e6e"
             onPress={openProjectModal}
           />
 
@@ -538,7 +532,7 @@ const Quotation = ({navigation}: Props) => {
             disabled={!pdfUrl && !editQuotation?.pdfUrl}
             icon="file-document"
             mode="outlined"
-            iconColor='#047e6e'
+            iconColor="#047e6e"
             onPress={openPDFModal}
           />
           <Appbar.Content title="" />
@@ -694,6 +688,7 @@ const Quotation = ({navigation}: Props) => {
                 <FlatList
                   data={workers}
                   horizontal={true}
+                  contentContainerStyle={styles.contentContainer}
                   renderItem={({item, index}) => {
                     return (
                       <View style={styles.workers}>
@@ -715,10 +710,10 @@ const Quotation = ({navigation}: Props) => {
                           openWorkerModal();
                           // navigation.navigate('GalleryScreen', {code});
                         }}>
-                        <FontAwesomeIcon
-                          icon={faPlus}
+                        <IconButton
+                          icon="plus"
                           size={20}
-                          color="#0073BA"
+                          iconColor={'#047e6e'}
                         />
                       </TouchableOpacity>
                     ) : null
@@ -841,7 +836,7 @@ const Quotation = ({navigation}: Props) => {
                           mode="outlined"
                           numberOfLines={3}
                           multiline={true}
-                          textAlignVertical="top"
+                          textAlignVertical="center"
                           error={!!error}
                           onChangeText={onChange}
                           value={value as string}
@@ -875,32 +870,15 @@ const Quotation = ({navigation}: Props) => {
             />
           </Modal>
         </View>
-        <Modal
+        <SignatureModal
+          sellerSignature={sellerSignature ? sellerSignature : ''}
+          setLoadingWebP={setIsLoadingWebP}
+          setSelectedSignature={setSelectedSignature}
+          title="ลายเซ็นผู้เสนอราคา"
           visible={signatureModal}
-          animationType="slide"
-          style={styles.modal}
-          onDismiss={onCloseSignature}>
-          <Appbar.Header
-            mode="center-aligned"
-            style={{
-              backgroundColor: 'white',
-              width: Dimensions.get('window').width,
-            }}>
-            <Appbar.Action icon={'close'} onPress={onCloseSignature} />
-            <Appbar.Content
-              title="ลายเซ็นผู้เสนอราคา"
-              titleStyle={{fontSize: 18, fontWeight: 'bold'}}
-            />
-          </Appbar.Header>
-          <SafeAreaView style={styles.containerModal}>
-            <SignatureComponent
-              setLoadingWebP={setIsLoadingWebP}
-              onClose={closeSignatureModal}
-              setSignatureUrl={setSignature}
-              onSignatureSuccess={closeSignatureModal}
-            />
-          </SafeAreaView>
-        </Modal>
+          onClose={closeSignatureModal}
+        />
+
         <SelectProductModal
           onAddService={newProduct => append(newProduct)}
           visible={showAddExistingService}
@@ -939,7 +917,10 @@ const Quotation = ({navigation}: Props) => {
             onClose={closeEditServiceModal}
             currentValue={currentValue}
             serviceIndex={serviceIndex}
-            onUpdateService={(serviceIndex :number,updatedService : ServicesEmbed ) => update( serviceIndex,updatedService)}
+            onUpdateService={(
+              serviceIndex: number,
+              updatedService: ServicesEmbed,
+            ) => update(serviceIndex, updatedService)}
           />
         )}
       </FormProvider>
@@ -1076,6 +1057,11 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     marginRight: 15,
+  },
+  contentContainer: {
+    alignItems: 'center', // Center vertically
+    justifyContent: 'center', // Center horizontally
+    paddingHorizontal: 10,
   },
   label: {
     fontSize: 16,
@@ -1266,15 +1252,19 @@ const styles = StyleSheet.create({
   addButtonContainer: {
     width: 70,
     margin: 5,
-    marginTop: 30,
     marginLeft: 20,
+    marginBottom: 30,
+    textAlign: 'center',
     height: 70,
     justifyContent: 'center',
     alignItems: 'center',
-    borderColor: '#0073BA',
+    borderColor: '#047e6e',
+
+    // backgroundColor: '#f5f5f5',
+
     borderStyle: 'dashed',
     borderWidth: 1,
-    borderRadius: 4, // Optional, for rounded edges
+    borderRadius: 50, // Optional, for rounded edges
   },
   containerSegment: {
     flex: 1,

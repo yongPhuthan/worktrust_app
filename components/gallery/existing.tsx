@@ -189,6 +189,12 @@ const GalleryScreen = ({
     }
   };
 
+  const sortedGalleryImages = React.useMemo(() => {
+    if (!galleryImages) return [];
+    const validImages = galleryImages.filter(item => item.url && item.url.thumbnailUrl);
+    const invalidImages = galleryImages.filter(item => !item.url || !item.url.thumbnailUrl);
+    return [...validImages, ...invalidImages];
+  }, [galleryImages]);
   
   return (
     <>
@@ -265,51 +271,56 @@ const GalleryScreen = ({
                     numColumns={2}
                   /> */}
 
-                  <FlatList
-                    data={galleryImages}
-                    numColumns={3}
-                    ListEmptyComponent={
-                      <View
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          marginTop: '20%',
-                        }}>
-                        <Text
-                          style={{
-                            textAlign: 'center',
-                            color: 'gray',
-                            fontSize: 16,
-                            // fontFamily: 'Sukhumvit Set',
-                          }}>
-                          ยังไม่มีรูปภาพผลงาน
-                        </Text>
-                      </View>
-                    }
-                    renderItem={({item}) => (
-                      <View
-                        style={[
-                          styles.imageContainer,
-                          item.defaultChecked && styles.selected,
-                        ]}>
-                        <Image
-                          source={{uri: item.url.thumbnailUrl}}
-                          style={styles.image}
-                        />
-                        <View style={styles.checkboxContainer}>
-                          <CustomCheckbox
-                            checked={item.defaultChecked}
-                            onPress={() => {
-                              handleCheckbox(item.id);
-                            }}
-                          />
-                        </View>
-                      </View>
-                    )}
-                    keyExtractor={item => item.id.toString()}
-                  />
+<FlatList
+  data={sortedGalleryImages}
+  numColumns={3}
+  ListEmptyComponent={
+    <View
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: '20%',
+      }}>
+      <Text
+        style={{
+          textAlign: 'center',
+          color: 'gray',
+          fontSize: 16,
+          // fontFamily: 'Sukhumvit Set',
+        }}>
+        ยังไม่มีรูปภาพผลงาน
+      </Text>
+    </View>
+  }
+  renderItem={({ item }) => {
+    if (!item.url || !item.url.thumbnailUrl) {
+      return null; // ไม่แสดงผลถ้า url หรือ thumbnailUrl เป็น null
+    }
+    return (
+      <View
+        style={[
+          styles.imageContainer,
+          item.defaultChecked && styles.selected,
+        ]}>
+        <Image
+          source={{ uri: item.url.thumbnailUrl }}
+          style={styles.image}
+        />
+        <View style={styles.checkboxContainer}>
+          <CustomCheckbox
+            checked={item.defaultChecked}
+            onPress={() => {
+              handleCheckbox(item.id);
+            }}
+          />
+        </View>
+      </View>
+    );
+  }}
+  keyExtractor={item => item.id.toString()}
+/>
                   {galleryImages.length > 0 && (
                     <View
                       style={{

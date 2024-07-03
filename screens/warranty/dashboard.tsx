@@ -155,6 +155,7 @@ const DashboardWarranty = ({navigation}: DashboardScreenProps) => {
   }
 
   const renderItem = ({item, index}: {item: Quotations, index: number}) => (
+    console.log('item', item),
     <>
       <View key={index} style={{marginTop: 10}}>
         
@@ -163,6 +164,8 @@ const DashboardWarranty = ({navigation}: DashboardScreenProps) => {
           price={item.allTotal}
           customerName={item.customer?.name as string}
           onCardPress={() =>handleWarranty(item)}
+          endProductWaranty={item.warranty.endProductWarranty as Date}
+          endSkillwaranty={item.warranty.endSkillWarranty as Date}
         />
       </View>
     </>

@@ -56,6 +56,8 @@
 			</dict>
 		</dict>
 	</dict>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+<string>อนุญาติเข้าถึงแกลเลอรี่เพื่อบันทึกรูปภาพผลงาน</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>อนุญาติเข้าถึงอัลบัมรูปภาพเพื่ออัพโหลดผลงาน</string>
 	<key>UIAppFonts</key>

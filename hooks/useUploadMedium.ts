@@ -2,6 +2,7 @@ import {useState} from 'react';
 import firebase from '../firebase';
 import {useUser} from '../providers/UserContext';
 import ImageResizer from '@bam.tech/react-native-image-resizer';
+import {Platform} from 'react-native';
 
 type UploadResponse = {
   isUploading: boolean;
@@ -29,12 +30,14 @@ export function useUploadMedium(storagePath: string): UploadResponse {
     setError(null);
 
     try {
+      const format = Platform.OS === 'android' ? 'WEBP' : 'PNG'; // ใช้ WEBP สำหรับ Android และ PNG สำหรับอื่นๆ
+      const fileExtension = Platform.OS === 'android' ? 'webp' : 'png';
       // Resize and upload original image as WebP
       const originalResponse = await ImageResizer.createResizedImage(
         imageUri,
         900, // maxWidth for medium
         900, // maxHeight for original
-        'PNG', // compressFormat
+        format, // compressFormat
         100, // quality
         0, // rotation
         null, // outputPath
@@ -45,6 +48,7 @@ export function useUploadMedium(storagePath: string): UploadResponse {
         user.uid,
         originalResponse.uri,
         'original',
+        fileExtension,
       );
 
       // Resize and upload thumbnail as WebP
@@ -71,11 +75,17 @@ async function uploadToFirebase(
   userId: string,
   uri: string,
   type: string,
+  fileExtension: string,
 ): Promise<string> {
-  const fullPath = `${storagePath}/${userId}/${type}/${uri.split('/').pop()}`;
+  const fullPath = `${storagePath}/${type}/${Date.now()}.${fileExtension}`;
   const reference = firebase.storage().ref(fullPath);
   await reference.putFile(uri);
   const downloadURL = await reference.getDownloadURL();
-  const webpDownloadURL = downloadURL.replace('.png', '.webp');
-  return webpDownloadURL;
+  let finalDownloadURL = downloadURL;
+
+  // Convert .png download URL to .webp for iOS only
+  if (Platform.OS === 'ios') {
+    finalDownloadURL = downloadURL.replace('.png', '.webp');
+  }
+  return finalDownloadURL;
 }

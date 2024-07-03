@@ -3,8 +3,8 @@ import Slider from '@react-native-community/slider';
 import {useQuery, useQueryClient} from '@tanstack/react-query';
 import {debounce, set} from 'lodash';
 import React, {useContext, useEffect, useState} from 'react';
-import {Controller, useForm, useWatch,useFormContext} from 'react-hook-form';
-import Marker, {Position} from 'react-native-image-marker';
+import {Controller, useForm, useWatch, useFormContext} from 'react-hook-form';
+import Marker, {Position, ImageMarkOptions} from 'react-native-image-marker';
 import Modal from 'react-native-modal';
 
 import {
@@ -17,6 +17,8 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  PermissionsAndroid,
+  Linking,
   View,
 } from 'react-native';
 import {
@@ -37,42 +39,22 @@ import {useUploadToFirebase} from '../../../hooks/useUploadtoFirebase';
 import {usePickImage} from '../../../hooks/utils/image/usePickImage';
 import {useUser} from '../../../providers/UserContext';
 import {Store} from '../../../redux/store';
+import useStoragePermission from '../../../hooks/utils/useStoragePermission';
 
-interface ExistingModalProps {
+interface Props {
   isVisible: boolean;
   onClose: () => void;
+  selectedIndex: number;
+  imageType: string;
+  label: string;
+  title : string;
 }
 interface FormData {
   selectedTags: string[];
   image: string;
 }
-interface Tag {
-  id: string;
-  name: string; // ระบุว่าแต่ละ tag ต้องมีฟิลด์ name
-}
-interface ImageSize {
-  width: number;
-  height: number;
-}
 
-interface WatermarkImage {
-  src: string;
-  scale: number;
-  position: {
-    position: string;
-  };
-}
 
-interface WatermarkOptions {
-  backgroundImage: {
-    src: string;
-    scale: number;
-  };
-  watermarkImages: WatermarkImage[];
-  scale: number;
-  quality: number;
-  filename: string;
-}
 const WatermarkPositions = [
   'ซ้าย-บน',
   'ขวา-บน',
@@ -82,7 +64,13 @@ const WatermarkPositions = [
   'กลาง-ล่าง',
   'ซ้าย-ล่าง',
 ];
-const AddNewBeforeImage = ({ onClose}: ExistingModalProps) => {
+const AddNewBeforeImage = ({
+  onClose,
+  selectedIndex,
+  imageType,
+  title,
+  label,
+}: Props) => {
   const queryClient = useQueryClient();
   const [isImageUpload, setIsImageUpload] = useState(false);
   const [addNewTag, setAddNewTag] = useState(false);
@@ -96,6 +84,9 @@ const AddNewBeforeImage = ({ onClose}: ExistingModalProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [applyTrigger, setApplyTrigger] = useState(false);
   const [brightness, setBrightness] = useState(1);
+  const {hasPermission, requestStoragePermission} = useStoragePermission(() =>
+    setAddWatermark(false),
+  );
 
   const [checked, setChecked] = React.useState<string | null>(null);
 
@@ -111,21 +102,10 @@ const AddNewBeforeImage = ({ onClose}: ExistingModalProps) => {
 
   const [logoScale, setLogoScale] = useState(1);
 
-  const getImageSize = (uri: string): Promise<ImageSize> => {
-    return new Promise((resolve, reject) => {
-      Image.getSize(
-        uri,
-        (width, height) => resolve({width, height}),
-        error => reject(error),
-      );
-    });
-  };
-
-
   const {
-    state: {code, logoSrc},
+    state: {code, G_logo, G_company},
     dispatch,
-  }: any = useContext(Store);
+  } = useContext(Store);
   const {
     register,
     handleSubmit,
@@ -152,6 +132,12 @@ const AddNewBeforeImage = ({ onClose}: ExistingModalProps) => {
     control,
     name: 'selectedTags',
   });
+  const images =
+    useWatch({
+      control: context.control,
+      name: `imagesPair.${selectedIndex}.${imageType}`,
+    }) || [];
+
   const fetchTags = async () => {
     const tagsCollectionPath = `${code}/gallery/tags`;
     const tagsRef = firebase.firestore().collection(tagsCollectionPath);
@@ -174,7 +160,7 @@ const AddNewBeforeImage = ({ onClose}: ExistingModalProps) => {
     isLoading: isFetching,
     isError,
   } = useQuery({
-    queryKey: ['tags', code],
+    queryKey: ['tags'],
     queryFn: fetchTags,
   });
   const {isImagePicking, pickImage} = usePickImage((uri: string) => {
@@ -213,7 +199,7 @@ const AddNewBeforeImage = ({ onClose}: ExistingModalProps) => {
 
       // Invalidate queries related to the gallery or tags to refresh the data
       queryClient.invalidateQueries({
-        queryKey: ['tags', code],
+        queryKey: ['tags'],
       });
       setIsLoading(false);
     } catch (error) {
@@ -223,7 +209,6 @@ const AddNewBeforeImage = ({ onClose}: ExistingModalProps) => {
       setIsLoading(false);
     }
   };
-  const beforeImages = context.getValues('beforeImages');
   const uploadImageWithTags = async (): Promise<void> => {
     if (!image || selectedTags.length === 0) {
       alert(
@@ -244,10 +229,23 @@ const AddNewBeforeImage = ({ onClose}: ExistingModalProps) => {
         console.error('Image upload returned null or undefined.');
         return;
       }
-      context.setValue('beforeImages', [...beforeImages, uploadedImageUrl], {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
+      console.log('Uploaded image URL:', uploadedImageUrl);
+      const newImage = {
+        thumbnailUrl: uploadedImageUrl.thumbnailUrl,
+        originalUrl: uploadedImageUrl.originalUrl,
+      };
+      // เพิ่มการหน่วงเวลา 1.5 วินาที
+      setTimeout(() => {
+        const newImages = [...images, newImage];
+        context.setValue(
+          `imagesPair.${selectedIndex}.${imageType}`,
+          newImages,
+          {
+            shouldDirty: true,
+            shouldValidate: true,
+          },
+        );
+      }, 1500);
 
       const imageDocRef = await imageCollectionRef.add({
         url: uploadedImageUrl,
@@ -282,6 +280,15 @@ const AddNewBeforeImage = ({ onClose}: ExistingModalProps) => {
       setIsLoading(false);
     }
   };
+  const checkImageExists = (imageUri: string): Promise<boolean> => {
+    return new Promise(resolve => {
+      Image.getSize(
+        imageUri,
+        () => resolve(true),
+        () => resolve(false),
+      );
+    });
+  };
 
   const handleSelectTag = (tag: string) => {
     if (selectedTags.includes(tag)) {
@@ -312,45 +319,167 @@ const AddNewBeforeImage = ({ onClose}: ExistingModalProps) => {
   };
 
   const handleSwitchChange = (value: boolean) => {
+    if (value && !hasPermission) {
+      requestStoragePermission();
+      clearWatermark();
+      return;
+    }
     setAddWatermark(value);
     if (!value) {
       clearWatermark();
+    } else {
+      applyWatermark();
     }
   };
+  const applyWatermarkImage = async (
+    originalImage: string,
+    watermarkPosition: string,
+    brightness: number,
+    imageId: string,
+  ): Promise<string | undefined> => {
+    if (!originalImage || !G_logo) return;
 
-  const applyWatermark = async () => {
-    if (!originalImage) return;
-    // const logoScale = await getLogoScale(originalImage, logoSrc);
-    const options = {
-      // background image
+    console.log('Original image:', originalImage);
+
+    const originalFileExists = await checkImageExists(originalImage);
+    if (!originalFileExists) {
+      console.error('Original image does not exist:', originalImage);
+      return;
+    }
+
+    const options: ImageMarkOptions = {
       backgroundImage: {
         src: originalImage,
         scale: 1,
       },
-
       watermarkImages: [
         {
-          src: logoSrc,
-          scale: logoScale,
+          src: G_logo,
           position: {
             position: getPositionBasedOn(watermarkPosition),
           },
+          scale: logoScale,
           alpha: brightness,
         },
       ],
-      scale: 1,
       quality: 100,
       filename: imageId,
     };
 
     try {
       const markedImage = await Marker.markImage(options);
-      setValue('image', markedImage, {shouldDirty: true});
+      const markedImagePath = `file://${markedImage}`;
+      console.log('Marked image path:', markedImagePath);
+
+      const markedFileExists = await checkImageExists(markedImagePath);
+      if (!markedFileExists) {
+        console.error('Marked image does not exist:', markedImagePath);
+        return;
+      }
+
+      return markedImagePath;
     } catch (error) {
-      console.error('Error applying watermark:', error);
+      console.error('Error applying image watermark:', error);
+      throw error;
+    }
+  };
+  const applyWatermarkText = async (
+    originalImage: string,
+    companyName: string,
+    watermarkPosition: string,
+    logoScale: number,
+    brightness: number,
+    imageId: string,
+  ) => {
+    if (!originalImage || !companyName) return;
+
+    const options = {
+      backgroundImage: {
+        src: originalImage,
+        scale: 1,
+      },
+      watermarkTexts: [
+        {
+          text: companyName,
+          position: {
+            position: getPositionBasedOn(watermarkPosition),
+          },
+          style: {
+            color: '#000000',
+            fontSize: 24 + 200 * logoScale,
+            fontName: 'Sukhumvit set',
+
+            // textBackgroundStyle: {
+            //   padding: '2%',
+            //   color: '#ffffff',
+            //   cornerRadius: {
+            //     topLeft: {
+            //       x: '10%',
+            //       y: '10%',
+            //     },
+            //     topRight: {
+            //       x: '10%',
+            //       y: '10%',
+            //     },
+            //   },
+            // },
+          },
+        },
+      ],
+      scale: logoScale,
+      quality: 100,
+      filename: imageId,
+    };
+
+    try {
+      const markedImage = await Marker.markText(options);
+      return markedImage;
+    } catch (error) {
+      console.error('Error applying text watermark:', error);
+      throw error;
+    }
+  };
+  const applyWatermark = async () => {
+    if (!originalImage) return;
+
+    try {
+      let markedImage: string | undefined;
+
+      if (G_logo) {
+        markedImage = await applyWatermarkImage(
+          originalImage,
+          watermarkPosition,
+          brightness,
+          imageId,
+        );
+      } else if (G_company && G_company.bizName) {
+        markedImage = await applyWatermarkText(
+          originalImage,
+          G_company.bizName,
+          watermarkPosition,
+          logoScale,
+          brightness,
+          imageId,
+        );
+      }
+
+      if (markedImage) {
+        const markedFileExists = await checkImageExists(markedImage);
+        if (markedFileExists) {
+          setValue('image', markedImage, {shouldDirty: true});
+        } else {
+          console.error(
+            'Marked image does not exist after watermark applied:',
+            markedImage,
+          );
+          Alert.alert('Error', 'Failed to add watermark.');
+        }
+      }
+    } catch (error) {
       Alert.alert('Error', 'Failed to add watermark.');
     }
   };
+
   function getPositionBasedOn(watermarkPosition: string): Position {
     switch (watermarkPosition) {
       case 'กลาง':
@@ -361,14 +490,12 @@ const AddNewBeforeImage = ({ onClose}: ExistingModalProps) => {
         return Position.topCenter;
       case 'ขวา-บน':
         return Position.topRight;
-
       case 'ซ้าย-ล่าง':
         return Position.bottomLeft;
       case 'กลาง-ล่าง':
         return Position.bottomCenter;
       case 'ขวา-ล่าง':
         return Position.bottomRight;
-
       default:
         return Position.bottomRight;
     }
@@ -384,14 +511,20 @@ const AddNewBeforeImage = ({ onClose}: ExistingModalProps) => {
         }}>
         <Appbar.Action icon={'close'} onPress={() => onClose()} />
         <Appbar.Content
-          title={`เพิ่มรูปภาพใหม่`}
+          title={title}
           titleStyle={{
             fontSize: 18,
           }}
         />
         <Button
           loading={isImageUpload || isUploading}
-          disabled={!image || !selectedTags || selectedTags.length === 0 ||isImageUpload || isUploading}
+          disabled={
+            !image ||
+            !selectedTags ||
+            selectedTags.length === 0 ||
+            isImageUpload ||
+            isUploading
+          }
           mode="outlined"
           onPress={() => {
             uploadImageWithTags();
@@ -418,23 +551,29 @@ const AddNewBeforeImage = ({ onClose}: ExistingModalProps) => {
                   {value ? (
                     isImagePicking ? (
                       <View style={styles.imageUploader}>
-                      <ActivityIndicator />
-         </View>
+                        <ActivityIndicator />
+                      </View>
                     ) : (
                       <Image source={{uri: value}} style={styles.image} />
                     )
                   ) : isImagePicking ? (
                     <View style={styles.imageUploader}>
-                                 <ActivityIndicator />
+                      <ActivityIndicator />
                     </View>
-         
                   ) : (
                     <View style={styles.imageUploader}>
                       <IconButton
-                        icon={'camera-plus'}
+                        icon="image-plus"
                         size={40}
-                        iconColor="#0073BA"
+                        iconColor={'#047e6e'}
                       />
+                      <Text
+                        style={{
+                          textAlign: 'center',
+                          color: '#047e6e',
+                        }}>
+                        {label}
+                      </Text>
                     </View>
                   )}
                 </TouchableOpacity>
@@ -498,7 +637,6 @@ const AddNewBeforeImage = ({ onClose}: ExistingModalProps) => {
             <View style={styles.row}>
               <Text style={styles.signHeader}>เพิ่มโลโก้</Text>
               <Switch
-    
                 ios_backgroundColor="#3e3e3e"
                 onValueChange={handleSwitchChange}
                 value={addWatermark ? true : false}
@@ -511,39 +649,37 @@ const AddNewBeforeImage = ({ onClose}: ExistingModalProps) => {
                 })}
               />
             </View>
-     
+
             {addWatermark && (
               <>
-                     <View
+                <View
                   style={{
                     flexDirection: 'column',
                     justifyContent: 'space-between',
                     marginTop: 10,
                   }}>
-                    <Text style={styles.signHeader}>ตำแหน่ง</Text>
-                    <FlatList
-                  data={WatermarkPositions}
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  
-          
-                  ItemSeparatorComponent={() => <View style={{width: 10}} />}
-                  keyExtractor={(item, index) => index.toString()}
-                  renderItem={({item}) => (
-                    <View style={styles.checkBoxContainer}>
-                      <Checkbox.Android
-                        status={checked === item ? 'checked' : 'unchecked'}
-                        onPress={() => {
-                          setChecked(item);
-                          setWatermarkPosition(item);
-                        }}
-                      />
-                      <Text>{item}</Text>
-                    </View>
-                  )}
-                />
-                    </View>
-               
+                  <Text style={styles.signHeader}>ตำแหน่ง</Text>
+                  <FlatList
+                    data={WatermarkPositions}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    ItemSeparatorComponent={() => <View style={{width: 10}} />}
+                    keyExtractor={(item, index) => index.toString()}
+                    renderItem={({item}) => (
+                      <View style={styles.checkBoxContainer}>
+                        <Checkbox.Android
+                          status={checked === item ? 'checked' : 'unchecked'}
+                          onPress={() => {
+                            setChecked(item);
+                            setWatermarkPosition(item);
+                          }}
+                        />
+                        <Text>{item}</Text>
+                      </View>
+                    )}
+                  />
+                </View>
+
                 <View
                   style={{
                     flexDirection: 'row',
@@ -657,7 +793,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     height: windowHeight * 0.3,
     width: windowWidth * 0.9,
-    borderColor: '#0073BA',
+    borderColor: '#047e6e',
+    backgroundColor: '#f5f5f5',
     borderWidth: 1,
     borderRadius: 5,
     borderStyle: 'dashed',

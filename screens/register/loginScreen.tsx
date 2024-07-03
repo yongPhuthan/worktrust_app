@@ -8,15 +8,17 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import React, {useState} from 'react';
 import {Controller, useForm, useWatch} from 'react-hook-form';
 import {BRAND_NAME} from '@env';
+import {Appbar, Button, TextInput} from 'react-native-paper';
+
 import {
   Alert,
   SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
+  Dimensions,
   View,
 } from 'react-native';
-import {Button, TextInput, ActivityIndicator} from 'react-native-paper';
 import * as yup from 'yup';
 import {ParamListBase} from '../../types/navigationType';
 
@@ -36,6 +38,7 @@ const LoginScreen = ({navigation}: Props) => {
   const togglePasswordVisibility = () => {
     setPasswordVisible(!passwordVisible);
   };
+  const height = Dimensions.get('window').height;
 
   const {
     handleSubmit,
@@ -80,17 +83,31 @@ const LoginScreen = ({navigation}: Props) => {
   };
 
   return (
+    <>
+    <Appbar.Header
+    mode="center-aligned"
+    style={{
+      backgroundColor: 'white',
+    }}>
+    <Appbar.BackAction
+      onPress={() => {
+        navigation.goBack();
+      }}
+    />
+  </Appbar.Header>
     <SafeAreaView style={{marginTop: 10, paddingHorizontal: 10}}>
-      {/* Back Arrow Button */}
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => navigation.goBack()}>
-        <FontAwesomeIcon icon={faArrowLeft} size={26} color="#5C5F62" />
-      </TouchableOpacity>
+
       <View
-        style={{marginTop: 40, paddingHorizontal: 20, alignContent: 'center'}}>
-        <Text style={styles.title}>Worktrust</Text>
-        <Text style={styles.subtitle}>เข้าสู่ระบบ</Text>
+        style={{marginTop: height * 0.1, paddingHorizontal: 20, alignContent: 'center'}}>
+<Text
+              style={{
+                fontSize: 24,
+                marginBottom: 20,
+                fontWeight: 'bold',
+                fontFamily: 'Sukhumvit Set Bold',
+              }}>
+              เข้าสู่ระบบด้วยอีเมล
+            </Text>
 
         <Controller
           name="email"
@@ -146,6 +163,7 @@ const LoginScreen = ({navigation}: Props) => {
         </Button>
       </View>
     </SafeAreaView>
+    </>
   );
 };
 
@@ -173,6 +191,8 @@ const styles = StyleSheet.create({
     color: 'black',
     fontWeight: 'bold',
     textAlign: 'center',
+    fontFamily: 'Sukhumvit Set Bold',
+
   },
   subtitle: {
     fontSize: 18,
@@ -180,6 +200,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 32,
     textAlign: 'center',
+    fontFamily: 'Sukhumvit Set Bold',
+
   },
   errorText: {
     color: 'red',

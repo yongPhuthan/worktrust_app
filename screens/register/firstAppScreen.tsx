@@ -1,10 +1,11 @@
 // screens/FirstAppScreen.tsx
 import {FirebaseAuthTypes} from '@react-native-firebase/auth';
 import React, {useEffect, useState} from 'react';
-import {Image, Pressable, StyleSheet, View} from 'react-native';
+import {Image, Dimensions, StyleSheet, View} from 'react-native';
 import {Button, TextInput, Text} from 'react-native-paper';
 import {BRAND_NAME, BACK_END_SERVER_URL} from '@env';
 import firebase from '../../firebase';
+const { width, height } = Dimensions.get('window');
 
 const FirstAppScreen = ({navigation}: any) => {
   const [loadingUser, setLoadingUser] = useState(true);
@@ -17,18 +18,7 @@ const FirstAppScreen = ({navigation}: any) => {
   const handleRegister = () => {
     navigation.navigate('SignupMobileScreen');
   };
-  console.log('BACK_END_SERVER_URL', BACK_END_SERVER_URL);
-  //   useEffect(() => {
-  //     const unsubscribe = firebase.auth().onAuthStateChanged(user => {
-  //       if (user) {
-  //         // If there's a user, sign them out
-  //         firebase.auth().signOut();
-  //       }
 
-  //     });
-
-  //     return unsubscribe;
-  // }, []);
   const appCheck = async () => {
     try {
       const {token} = await firebase.appCheck().getToken(true);
@@ -51,23 +41,31 @@ const FirstAppScreen = ({navigation}: any) => {
         flex: 1,
         alignItems: 'center',
         flexDirection: 'column',
-        marginTop: '20%',
+        marginVertical: '15%',
+        gap: 20,
         justifyContent: 'space-between',
       }}>
-      <Text style={styles.logo}>{BRAND_NAME}</Text>
+
+         <Image
+          source={require('../../assets/images/logo.png')}
+          style={styles.logoImage}
+          />
+      {/* <Text style={styles.logo}>{BRAND_NAME}</Text> */}
       <Image
         style={styles.image}
         source={require('../../assets/images/Buildingpermit-bro.png')}
       />
+      <View>
+     
       <Text style={styles.heading}>ระบบเสนอราคาเพื่อปิดการขาย</Text>
       <Text style={styles.heading}>สำหรับช่าง-ผู้รับเหมาช่วง</Text>
-
+      </View>
       <View
         style={{
           width: '100%',
           alignItems: 'center',
           justifyContent: 'center',
-          flex: 1,
+
           marginBottom: 10,
           gap: 15,
         }}>
@@ -125,6 +123,11 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     fontWeight: 'bold',
   },
+  logoImage: {
+    width: width * 0.55,
+    height: height * 0.08,
+    resizeMode: 'contain', // เพื่อให้รูปภาพรักษาสัดส่วนของมัน
+  },
   heading: {
     fontSize: 18,
     // fontWeight: 'bold',
@@ -158,10 +161,11 @@ const styles = StyleSheet.create({
   },
 
   image: {
-    width: '80%', // Example static image path
-    height: 200, // Set your desired size
+    width: width * 0.80,
+
+    height: height * 0.30,
     resizeMode: 'contain',
-    marginBottom: 50,
+
   },
   pressable: {
     paddingVertical: 12,

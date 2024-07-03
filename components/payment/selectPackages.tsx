@@ -53,31 +53,30 @@ const {width, height} = Dimensions.get('window');
 const imageContainerWidth = width / 3 - 10;
 const SelectPackages = ({isVisible, onClose}: ExistingModalProps) => {
   const [showConfetti, setShowConfetti] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [isCheckingSlip, setIsCheckingSlip] = useState(false);
   const packages = [
     {
       id: '1',
       name: '1 เดือน',
-      price: '2',
+      price: '999',
       pricePerMonth: '999',
       save: '0',
     },
-    {
-      id: '6',
-      name: '6 เดือน',
-      price: '2',
-      // price: '5,399',
-      pricePerMonth: '899',
-      save: '595',
-    },
+    // {
+    //   id: '6',
+    //   name: '6 เดือน',
+    //   // price: '2',
+    //   price: '5,399',
+    //   pricePerMonth: '899',
+    //   save: '595',
+    // },
     {
       id: '12',
       name: '12 เดือน',
-      price: '3',
-      // price: '8,988',
-      pricePerMonth: '749',
-      save: '3,000',
+      // price: '3',
+      price: '9,990',
+      pricePerMonth: '832',
+      save: '1,998',
     },
   ];
 
@@ -141,10 +140,9 @@ const SelectPackages = ({isVisible, onClose}: ExistingModalProps) => {
             'x-authorization': SLIPOK_API_KEY,
           },
           body: JSON.stringify({
-            // data: qrString,
-            url: 'https://firebasestorage.googleapis.com/v0/b/worktrust-b9c02.appspot.com/o/slip%2FIMG_8F0AD19BD6FA-1.jpeg?alt=media&token=81371615-95ce-4b7b-b8e7-0a32dfa7a5b1',
+            // url: 'https://firebasestorage.googleapis.com/v0/b/worktrust-b9c02.appspot.com/o/slip%2FIMG_8F0AD19BD6FA-1.jpeg?alt=media&token=81371615-95ce-4b7b-b8e7-0a32dfa7a5b1',
             log: true,
-            // url: uploadImage.originalUrl,
+            url: uploadImage.originalUrl,
             amount: selectedPackage.price,
           }),
         },
@@ -196,7 +194,7 @@ const SelectPackages = ({isVisible, onClose}: ExistingModalProps) => {
 
   const {isLoading, error, createToServer} = useCreateToServer(
     url,
-    'companySetting',
+    'dashboardData',
   );
   const handleConfirmPayment = () => {
     // Function to handle confirming the payment

@@ -1,21 +1,20 @@
 import {
-  $Enums,
   Company,
   ContractUpdateLogEmbed,
   ContractsEmbed,
   Invoices,
-  MaterialEmbed,
+  Notifications,
   Quotations,
   Receipts,
-  ServiceImagesEmbed,
   ServicesEmbed,
-  StandardEmbed,
   Submissions,
+  Subscription,
   User,
   WarrantyEmbed,
-  WorkerEmbed,
   Workers,
 } from '@prisma/client';
+import {FirebaseAuthTypes} from '@react-native-firebase/auth';
+
 import * as contrains from './constrains';
 
 // ACTION => REDUCER
@@ -97,11 +96,10 @@ export const view_submission = (payload: Submissions) => ({
 
 export const reset_edit_quotation = () => ({
   type: contrains.RESET_EDIT_QUOTATION,
-  
 });
 
 export const reset_edit_invoice = () => ({
-  type:contrains.RESET_EDIT_INVOICE,
+  type: contrains.RESET_EDIT_INVOICE,
 });
 
 export const reset_edit_receipt = () => ({
@@ -111,8 +109,6 @@ export const reset_edit_receipt = () => ({
 export const reset_edit_submission = () => ({
   type: contrains.RESET_EDIT_SUBMISSION,
 });
-
-
 
 export const get_seller_id = (payload: string) => ({
   type: contrains.GET_SELLER_ID,
@@ -134,7 +130,34 @@ export const get_quotation_id = (payload: string) => ({
   payload,
 });
 
+export const get_subscription = (payload: Subscription) => ({
+  type: contrains.GET_SUBSCRIPTION,
+  payload,
+});
 
+export const get_user = (payload: User) => ({
+  type: contrains.GET_USER,
+  payload,
+});
+
+export const get_firebase_user = (payload: FirebaseAuthTypes.User) => ({
+  type: contrains.GET_FIREBASE_USER,
+  payload,
+});
+
+export const reset_firebase_user = () => ({
+  type: contrains.RESET_FIREBASE_USER,
+});
+
+export const get_notification = (payload: Notifications[]) => ({
+  type: contrains.GET_NOTIFICATION,
+  payload,
+});
+
+export const get_quotations = (payload: Quotations[]) => ({
+  type: contrains.GET_QUOTATIONS,
+  payload,
+});
 
 // COMPONENTS  => ACTION
 export const codeCompany = (payload: string) => {
@@ -211,7 +234,7 @@ export const getEditQuotation = (payload: Quotations) => {
 };
 
 export const resetEditQuotation = () => {
-  return (dispatch: (arg0: { type: string; }) => void) => {
+  return (dispatch: (arg0: {type: string}) => void) => {
     dispatch(reset_edit_quotation());
   };
 };
@@ -220,10 +243,10 @@ export const getEditInvoice = (payload: Invoices) => {
   return (dispatch: (arg0: {type: string; payload: Invoices}) => void) => {
     dispatch(get_edit_invoice(payload));
   };
-}
+};
 
 export const resetEditInvoice = () => {
-  return (dispatch: (arg0: { type: string; }) => void) => {
+  return (dispatch: (arg0: {type: string}) => void) => {
     dispatch(reset_edit_invoice());
   };
 };
@@ -232,15 +255,13 @@ export const getEditReceipt = (payload: Receipts) => {
   return (dispatch: (arg0: {type: string; payload: Receipts}) => void) => {
     dispatch(get_edit_receipt(payload));
   };
-}
+};
 
 export const resetEditReceipt = () => {
-  return (dispatch: (arg0: { type: string; }) => void) => {
+  return (dispatch: (arg0: {type: string}) => void) => {
     dispatch(reset_edit_receipt());
   };
 };
-
-
 
 export const getSellerId = (payload: string) => {
   return (dispatch: (arg0: {type: string; payload: string}) => void) => {
@@ -278,10 +299,50 @@ export const viewSubmission = (payload: Submissions) => {
   };
 };
 
-
 export const resetEditSubmission = () => {
-  return (dispatch: (arg0: { type: string; }) => void) => {
+  return (dispatch: (arg0: {type: string}) => void) => {
     dispatch(reset_edit_submission());
   };
 };
 
+export const getSubscription = (payload: Subscription) => {
+  return (dispatch: (arg0: {type: string; payload: Subscription}) => void) => {
+    dispatch(get_subscription(payload));
+  };
+};
+
+export const getUser = (payload: User) => {
+  return (dispatch: (arg0: {type: string; payload: User}) => void) => {
+    dispatch(get_user(payload));
+  };
+};
+
+export const getFirebaseUser = (payload: FirebaseAuthTypes.User) => {
+  return (
+    dispatch: (arg0: {type: string; payload: FirebaseAuthTypes.User}) => void,
+  ) => {
+    dispatch(get_firebase_user(payload));
+  };
+};
+
+export const resetFirebaseUser = () => {
+  return (dispatch: (arg0: {type: string}) => void) => {
+    dispatch(reset_firebase_user());
+  };
+};
+
+export const getNotification = (payload: Notifications[]) => {
+  return (
+    dispatch: (arg0: {type: string; payload: Notifications[]}) => void,
+  ) => {
+    dispatch(get_notification(payload));
+  };
+};
+
+export const getQuotations = (payload: Quotations[]) => {
+  return (
+    dispatch: (arg0: {type: string; payload: Quotations[]}) => void,
+  ) => {
+    dispatch(get_quotations(payload));
+  };
+};

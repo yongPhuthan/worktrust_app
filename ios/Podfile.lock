@@ -2103,6 +2103,10 @@ PODS:
     - React-debug
   - react-native-blob-util (0.19.9):
     - React-Core
+  - react-native-cameraroll (7.8.1):
+    - glog
+    - RCT-Folly (= 2022.05.16.00)
+    - React-Core
   - react-native-get-random-values (1.11.0):
     - React-Core
   - react-native-image-marker (1.2.6):
@@ -2306,10 +2310,6 @@ PODS:
     - React-Core
   - RNDateTimePicker (7.6.3):
     - React-Core
-  - RNFastImage (8.6.3):
-    - React-Core
-    - SDWebImage (~> 5.11.1)
-    - SDWebImageWebPCoder (~> 0.8.4)
   - RNFBApp (20.0.0):
     - Firebase/CoreOnly (= 10.25.0)
     - React-Core
@@ -2348,6 +2348,8 @@ PODS:
     - Firebase/Storage (= 10.25.0)
     - React-Core
     - RNFBApp
+  - RNFS (2.20.0):
+    - React-Core
   - RNGestureHandler (2.15.0):
     - glog
     - RCT-Folly (= 2022.05.16.00)
@@ -2371,8 +2373,6 @@ PODS:
     - glog
     - RCT-Folly (= 2022.05.16.00)
     - React-Core
-  - SDWebImage (5.11.1):
-    - SDWebImage/Core (= 5.11.1)
   - SDWebImage/Core (5.11.1)
   - SDWebImageWebPCoder (0.8.5):
     - libwebp (~> 1.0)
@@ -2385,6 +2385,7 @@ DEPENDENCIES:
   - DoubleConversion (from `../node_modules/react-native/third-party-podspecs/DoubleConversion.podspec`)
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
   - FBReactNativeSpec (from `../node_modules/react-native/React/FBReactNativeSpec`)
+  - Firebase/Crashlytics
   - Firebase/Messaging
   - FirebaseAppCheck
   - glog (from `../node_modules/react-native/third-party-podspecs/glog.podspec`)
@@ -2414,6 +2415,7 @@ DEPENDENCIES:
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - react-native-blob-util (from `../node_modules/react-native-blob-util`)
+  - "react-native-cameraroll (from `../node_modules/@react-native-camera-roll/camera-roll`)"
   - react-native-get-random-values (from `../node_modules/react-native-get-random-values`)
   - react-native-image-marker (from `../node_modules/react-native-image-marker`)
   - react-native-image-picker (from `../node_modules/react-native-image-picker`)
@@ -2448,7 +2450,6 @@ DEPENDENCIES:
   - "RNCClipboard (from `../node_modules/@react-native-clipboard/clipboard`)"
   - "RNCPicker (from `../node_modules/@react-native-picker/picker`)"
   - "RNDateTimePicker (from `../node_modules/@react-native-community/datetimepicker`)"
-  - RNFastImage (from `../node_modules/react-native-fast-image`)
   - "RNFBApp (from `../node_modules/@react-native-firebase/app`)"
   - "RNFBAppCheck (from `../node_modules/@react-native-firebase/app-check`)"
   - "RNFBAuth (from `../node_modules/@react-native-firebase/auth`)"
@@ -2458,6 +2459,7 @@ DEPENDENCIES:
   - "RNFBInAppMessaging (from `../node_modules/@react-native-firebase/in-app-messaging`)"
   - "RNFBMessaging (from `../node_modules/@react-native-firebase/messaging`)"
   - "RNFBStorage (from `../node_modules/@react-native-firebase/storage`)"
+  - RNFS (from `../node_modules/react-native-fs`)
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - RNPermissions (from `../node_modules/react-native-permissions`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
@@ -2568,6 +2570,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   react-native-blob-util:
     :path: "../node_modules/react-native-blob-util"
+  react-native-cameraroll:
+    :path: "../node_modules/@react-native-camera-roll/camera-roll"
   react-native-get-random-values:
     :path: "../node_modules/react-native-get-random-values"
   react-native-image-marker:
@@ -2636,8 +2640,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-picker/picker"
   RNDateTimePicker:
     :path: "../node_modules/@react-native-community/datetimepicker"
-  RNFastImage:
-    :path: "../node_modules/react-native-fast-image"
   RNFBApp:
     :path: "../node_modules/@react-native-firebase/app"
   RNFBAppCheck:
@@ -2656,6 +2658,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-firebase/messaging"
   RNFBStorage:
     :path: "../node_modules/@react-native-firebase/storage"
+  RNFS:
+    :path: "../node_modules/react-native-fs"
   RNGestureHandler:
     :path: "../node_modules/react-native-gesture-handler"
   RNPermissions:
@@ -2738,6 +2742,7 @@ SPEC CHECKSUMS:
   React-logger: 3eb80a977f0d9669468ef641a5e1fabbc50a09ec
   React-Mapbuffer: d81d930c1b7f4db284e1d721fe7fdc99230ca108
   react-native-blob-util: 18b510205c080a453574a7d2344d64673d0ad9af
+  react-native-cameraroll: ecc2a7301b75d1793fb364fd9771c7ed207bfa59
   react-native-get-random-values: 21325b2244dfa6b58878f51f9aa42821e7ba3d06
   react-native-image-marker: 01caff7bfa50f44277922cf84e7c29a732994ea8
   react-native-image-picker: 69557f178c1026142e202b8c3b8a3c130f75348d
@@ -2773,7 +2778,6 @@ SPEC CHECKSUMS:
   RNCClipboard: 0a720adef5ec193aa0e3de24c3977222c7e52a37
   RNCPicker: b18aaf30df596e9b1738e7c1f9ee55402a229dca
   RNDateTimePicker: 7b38b71bcd7c4cfa1cb95f2dff9a4f1faed2dced
-  RNFastImage: 5c9c9fed9c076e521b3f509fe79e790418a544e8
   RNFBApp: 87e1cdbf128f8574283d415bc58eac36df546a6f
   RNFBAppCheck: 52a12cd54a02ab353be8f46c072c9457fa8dadf8
   RNFBAuth: ed61486ebcb31caa7c92d6e3064773511f5f60ff
@@ -2783,6 +2787,7 @@ SPEC CHECKSUMS:
   RNFBInAppMessaging: 828de1d2e14545372e735a4b21bb76d6574ecfd1
   RNFBMessaging: 03b326b0a078c24fba5e509a913ea7d80b46609f
   RNFBStorage: d2da22d7168baf5109050f0f79dcb00ca0f49881
+  RNFS: 4ac0f0ea233904cb798630b3c077808c06931688
   RNGestureHandler: 2e3251b41d462552997c61afd680220d019fea65
   RNPermissions: 89d313f4d48612fc35842f3a21107e163f39a742
   RNReanimated: de95bb2cf26ccfa2b6fdf7e1a57158fb5c9d9515
@@ -2795,6 +2800,6 @@ SPEC CHECKSUMS:
   SocketRocket: f32cd54efbe0f095c4d7594881e52619cfe80b17
   Yoga: 805bf71192903b20fc14babe48080582fee65a80
 
-PODFILE CHECKSUM: 04ef0c517993de9ca603186aafafe312c668317f
+PODFILE CHECKSUM: 47c95c0a8d99c072c726d1f27d7fdf497f60f62c
 
 COCOAPODS: 1.15.2

@@ -5,7 +5,13 @@ import {RouteProp} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {useQueryClient} from '@tanstack/react-query';
 import React, {useCallback, useContext, useState} from 'react';
-import {Controller, FormProvider, useForm, useWatch} from 'react-hook-form';
+import {
+  Controller,
+  FormProvider,
+  useForm,
+  useWatch,
+  useFieldArray,
+} from 'react-hook-form';
 import {
   ActivityIndicator,
   Alert,
@@ -32,8 +38,11 @@ import {
 
 import {
   ServicesEmbed,
+  SubmissionImagesPairEmbed,
   SubmissionStatus,
   Submissions,
+  SubmissionBeforeImagesEmbed,
+  SubmissionAfterImagesEmbed,
   WorkStatus,
 } from '@prisma/client';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -52,6 +61,8 @@ import {Store} from '../../redux/store';
 import {ParamListBase} from '../../types/navigationType';
 import SubmissionViewScreen from '../../components/webview/submission';
 import useUpdateSubmission from '../../hooks/submission/useUpdate';
+import {initialImagePair} from '../../models/InitialState';
+import { set } from 'lodash';
 type Props = {
   navigation: StackNavigationProp<ParamListBase>;
   route: RouteProp<ParamListBase, 'SendWorks'>;
@@ -63,13 +74,7 @@ type BeforeImageLoadingStatus = {
   [index: number]: boolean;
 };
 
-const thaiDateFormatter = new Intl.DateTimeFormat('th-TH', {
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-});
-
-const width = Dimensions.get('window').width;
+const {width, height} = Dimensions.get('window');
 
 const SendWorks = (props: Props) => {
   const {route, navigation} = props;
@@ -82,7 +87,7 @@ const SendWorks = (props: Props) => {
     state: {
       code,
       editQuotation,
-      companyState,
+      G_company: companyState,
       fcmToken,
       editSubmission,
       quotationId,
@@ -95,6 +100,9 @@ const SendWorks = (props: Props) => {
   const queryClient = useQueryClient();
   const user = useUser();
   const [copied, setCopied] = useState(false);
+  const [label, setLabel] = useState<string | null>(null);
+  const [title, setTitle] = useState<string | null>(null);
+  const [imageType, setImageType] = useState<string | null>(null);
   const imageRandomId = uuidv4();
   const [submissionId, setSubmissionId] = useState<string>('');
   const [submissionServerId, setSubmissionServerId] = useState<string | null>(
@@ -116,15 +124,14 @@ const SendWorks = (props: Props) => {
     description: '',
     dateOffer: initialDateOffer,
     services: editQuotation ? editQuotation.services : [],
-    beforeImages: [],
     reject: null,
     inspector: null,
     reviews: [],
-    afterImages: [],
     workStatus: WorkStatus?.ALL,
     reSubmissionId: null,
     history: false,
     FCMToken: fcmToken,
+    imagesPair: [initialImagePair],
     quotationRefNumber: editQuotation ? editQuotation.docNumber : '',
     companyId: companyState ? companyState.id : '',
     customer: editQuotation ? editQuotation.customer : (null as any),
@@ -139,17 +146,31 @@ const SendWorks = (props: Props) => {
     mode: 'all',
     defaultValues: editSubmission ? editSubmission : initialSubmission,
   });
-  const beforeImages = useWatch({
+  const {fields, append, remove, update} = useFieldArray({
     control: methods.control,
-    name: 'beforeImages',
+    name: 'imagesPair',
+  });
+  const handleAddImagePair = () => {
+    append(initialImagePair);
+  };
+  // const beforeImages = useWatch({
+  //   control: methods.control,
+  //   name: 'beforeImages',
+  // });
+
+  const imagesPair = useWatch({
+    control: methods.control,
+    name: 'imagesPair',
   });
   const dateOffer = useWatch({control: methods.control, name: 'dateOffer'});
-  const afterImages = useWatch({control: methods.control, name: 'afterImages'});
+  // const afterImages = useWatch({control: methods.control, name: 'afterImages'});
   const {isUploading, error, uploadImages} = useUploadToFirebase();
   const [isOpenModal, setIsOpenModal] = useState(false);
-  const [isBeforeImage, setIsBeforeImage] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [checkLoading, setCheckLoading] = useState(false);
   const services = useWatch({control: methods.control, name: 'services'});
+  const [modalOpen, setModalOpen] = useState(false);
 
   const actions: any = {
     setSubmissionServerId,
@@ -185,30 +206,6 @@ const SendWorks = (props: Props) => {
     control: methods.control,
     name: 'workers',
   });
-  const removeBeforeImage = useCallback(
-    (uri: string) => {
-      // Filter out the image URI from the current state
-      const updatedImages = beforeImages.filter(
-        image => image.thumbnailUrl !== uri,
-      );
-
-      // Update the form state to reflect the change and optionally re-validate
-      methods.setValue('beforeImages', updatedImages, {shouldValidate: true});
-    },
-    [beforeImages, methods.setValue],
-  );
-  const removeAfterImage = useCallback(
-    (uri: string) => {
-      // Filter out the image URI from the current state
-      const updatedImages = afterImages.filter(
-        image => image.thumbnailUrl !== uri,
-      );
-
-      // Update the form state to reflect the change and optionally re-validate
-      methods.setValue('afterImages', updatedImages, {shouldValidate: true});
-    },
-    [afterImages, methods.setValue],
-  );
 
   const handleDone = useCallback(async () => {
     if (editSubmission) {
@@ -222,19 +219,20 @@ const SendWorks = (props: Props) => {
         quotationId,
       });
     }
-  }, [
-    beforeImages,
-    afterImages,
-    editQuotation,
-    methods.getValues,
-    mutate,
-    editSubmission,
-  ]);
-
+  }, [editQuotation, methods.getValues, mutate, editSubmission]);
+  const watchedFields = useWatch({
+    control: methods.control,
+    name: 'imagesPair',
+    defaultValue: initialSubmission.imagesPair,
+  });
   const handleStartDateSelected = (date: Date) => {
     methods.setValue('dateOffer', date);
   };
-
+  const removeImageItem = (index: number, imageType: 'beforeImages' | 'afterImages', imageItem: SubmissionAfterImagesEmbed | SubmissionBeforeImagesEmbed) => {
+    const currentImages = watchedFields[index][imageType];
+    const filteredImages = currentImages.filter(img => img.thumbnailUrl !== imageItem.thumbnailUrl);
+    methods.setValue(`imagesPair.${index}.${imageType}`, filteredImages);
+  };
   React.useEffect(() => {
     if (editQuotation) {
       if (services.length !== editQuotation.services.length) {
@@ -264,43 +262,26 @@ const SendWorks = (props: Props) => {
   }, [services]);
 
   React.useEffect(() => {
-    const interval = setInterval(() => {
-      afterImages.forEach(async (image, index) => {
-        // ตรวจสอบสถานะของรูปภาพจาก Firebase functions หรือ URL
-        if (image.thumbnailUrl && !loadingStatus[index]) {
-          try {
-            const response = await fetch(image.thumbnailUrl);
-            if (response.ok) {
-              setLoadingStatus(prev => ({...prev, [index]: false}));
-            }
-          } catch (error) {
-            console.error('Error checking image:', error);
-          }
-        }
-      });
-    }, 1500);
+    if (modalOpen) {
+      setShowUploadModal(true);
+    }
+  }, [modalOpen, showUploadModal, imageType, selectedIndex, label, title]);
+  
 
-    return () => clearInterval(interval);
-  }, [afterImages, loadingStatus]);
-  React.useEffect(() => {
-    const interval = setInterval(() => {
-      beforeImages.forEach(async (image, index) => {
-        // ตรวจสอบสถานะของรูปภาพจาก Firebase functions หรือ URL
-        if (image.thumbnailUrl && !loadingBeforeImageStatus[index]) {
-          try {
-            const response = await fetch(image.thumbnailUrl);
-            if (response.ok) {
-              setLoadingBeforeImageStatus(prev => ({...prev, [index]: false}));
-            }
-          } catch (error) {
-            console.error('Error checking image:', error);
-          }
-        }
-      });
-    }, 1500);
-
-    return () => clearInterval(interval);
-  }, [beforeImages, loadingBeforeImageStatus]);
+  const handleOpenModal = (index: number, imageType: string, label: string, title:string) => {
+    setImageType(imageType);
+    setTitle(title);
+    setLabel(label);
+    setSelectedIndex(index);
+    setModalOpen(true);
+  };
+  const handleCloseModal = () => {
+    setShowUploadModal(false);
+    setImageType(null);
+    setLabel(null);
+    setSelectedIndex(null);
+    setTitle(null);
+  };
 
   return (
     <>
@@ -484,120 +465,181 @@ const SendWorks = (props: Props) => {
                     }}
                     keyExtractor={(item, index) => index.toString()}
                   />
+                  <Divider style={{marginVertical: 20}} />
                 </View>
               )}
             </View>
-            <Divider style={{marginVertical: 20}} />
-            <View>
-              <Text style={styles.title}>รูปก่อนทำงาน</Text>
-              <FlatList
-                data={beforeImages}
-                horizontal={true}
-                renderItem={({item, index}) => (
-                  <View key={index} style={styles.imageContainer}>
-                    {loadingBeforeImageStatus[index] !== false ? (
-                      <View
-                        style={{
-                          flex: 1,
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                        }}>
-                        <ActivityIndicator />
-                      </View>
-                    ) : (
+            {fields.map((item, index) => (
+              <View
+                key={item.id}
+                style={{
+                  marginBottom: 20,
+                  padding: 10,
+                  borderColor: 'gray',
+                  borderWidth: 0.5,
+                  borderRadius: 8,
+                }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: 10,
+                  }}>
+                  <Text style={styles.title}> หน้างานจุดที่ {index + 1}</Text>
+                  <IconButton
+                    icon="delete"
+                    size={20}
+                    iconColor="gray"
+                    onPress={() => remove(index)}
+                  />
+                </View>
+                <Text style={styles.subTitle}>
+                  รูปก่อนทำงาน จุดที่ {index + 1}
+                </Text>
+                <FlatList
+                  data={watchedFields[index]?.beforeImages || []}
+                  horizontal={true}
+                  renderItem={({item: imageItem}) => (
+                    <View style={styles.imageContainer}>
                       <Image
-                        source={{uri: item.thumbnailUrl}}
+                        source={{uri: imageItem.thumbnailUrl}}
                         style={styles.image}
                       />
-                    )}
-                    <TouchableOpacity
-                      style={styles.closeIcon}
-                      onPress={() => removeBeforeImage(item.thumbnailUrl)}>
-                      <FontAwesomeIcon icon={faClose} size={15} color="white" />
-                    </TouchableOpacity>
-                  </View>
-                )}
-                keyExtractor={(item, index) => index.toString()}
-                ListFooterComponent={
-                  beforeImages.length > 0 ? (
-                    <IconButton
-                      icon={'plus'}
-                      iconColor={'#047e6e'}
-                      // loading={pickingBeforeImage}
-                      style={styles.addButtonContainer}
-                      onPress={() => {
-                        setIsBeforeImage(true);
-                      }}></IconButton>
-                  ) : null
-                }
-                ListEmptyComponent={
-                  <IconButton
-                    icon={'plus'}
-                    iconColor={'#047e6e'}
-                    // loading={pickingBeforeImage}
-                    style={styles.addButtonContainer}
-                    onPress={() => {
-                      setCheckLoading(true);
-
-                      setIsBeforeImage(true);
-                    }}></IconButton>
-                }
-              />
-            </View>
-            <Divider style={{marginVertical: 10}} />
-            <View>
-              <Text style={styles.title}>รูปหลังทำงาน</Text>
-              <FlatList
-                data={afterImages}
-                horizontal={true}
-                renderItem={({item, index}) => (
-                  <View key={index} style={styles.imageContainer}>
-                    {loadingStatus[index] !== false ? (
-                      <View
-                        style={{
-                          flex: 1,
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                        }}>
-                        <ActivityIndicator />
+                      {imageItem && (
+                        <TouchableOpacity
+                          style={styles.closeIcon}
+                          onPress={() => removeImageItem(index, 'beforeImages', imageItem)}                          >
+                          <FontAwesomeIcon
+                            icon={faClose}
+                            size={15}
+                            color="white"
+                          />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  )}
+                  keyExtractor={(imageItem, imageIndex) =>
+                    imageIndex.toString()
+                  }
+                  ListFooterComponent={
+                    watchedFields[index]?.beforeImages?.length > 0 ? (
+                      <View style={styles.addButtonContainer}>
+                        <IconButton
+                          icon={'plus'}
+                          iconColor={'#047e6e'}
+                          onPress={() =>
+                            handleOpenModal(
+                              index,
+                              'beforeImages',
+                              'เพิ่มรูปหน้างานก่อนติดตั้ง',
+                              'หน้างานก่อนติดตั้ง'
+                            )
+                          }
+                        />
                       </View>
-                    ) : (
+                    ) : null
+                  }
+                  ListEmptyComponent={
+                    <View style={styles.addButtonContainer}>
+                      <IconButton
+                        icon={'plus'}
+                        iconColor={'#047e6e'}
+                        onPress={() =>
+                          handleOpenModal(
+                            index,
+                            'beforeImages',
+                            'เพิ่มรูปหน้างานก่อนติดตั้ง',
+                            'หน้างานก่อนติดตั้ง'
+
+                          )
+                        }
+                      />
+                    </View>
+                  }
+                />
+                <Divider style={{marginVertical: 10}} />
+                <Text style={styles.subTitle}>
+                  รูปหลังทำงาน จุดที่ {index + 1}
+                </Text>
+                <FlatList
+                  data={watchedFields[index]?.afterImages || []}
+                  horizontal={true}
+                  renderItem={({item: imageItem}) => (
+                    <View style={styles.imageContainer}>
                       <Image
-                        source={{uri: item.thumbnailUrl}}
+                        source={{uri: imageItem.thumbnailUrl}}
                         style={styles.image}
                       />
-                    )}
-                    <TouchableOpacity
-                      style={styles.closeIcon}
-                      onPress={() => removeAfterImage(item.thumbnailUrl)}>
-                      <FontAwesomeIcon icon={faClose} size={15} color="white" />
-                    </TouchableOpacity>
-                  </View>
-                )}
-                keyExtractor={(item, index) => index.toString()}
-                ListFooterComponent={
-                  afterImages.length > 0 ? (
-                    <IconButton
-                      icon={'plus'}
-                      iconColor={'#047e6e'}
-                      // loading={pickingAfterImage}
-                      style={styles.addButtonContainer}
-                      onPress={() => setIsOpenModal(true)}></IconButton>
-                  ) : null
-                }
-                ListEmptyComponent={
-                  <IconButton
-                    icon={'plus'}
-                    iconColor={'#047e6e'}
-                    // loading={pickingAfterImage}
-                    style={styles.addButtonContainer}
-                    onPress={() => setIsOpenModal(true)}></IconButton>
-                }
-              />
-            </View>
-            <Divider style={{marginVertical: 10}} />
+                      {imageItem && (
+                        <TouchableOpacity
+                          style={styles.closeIcon}
+                          onPress={() => removeImageItem(index, 'afterImages', imageItem)}
+                          >
+                          <FontAwesomeIcon
+                            icon={faClose}
+                            size={15}
+                            color="white"
+                          />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  )}
+                  keyExtractor={(imageItem, imageIndex) =>
+                    imageIndex.toString()
+                  }
+                  ListFooterComponent={
+                    watchedFields[index]?.afterImages?.length > 0 ? (
+                      <View style={styles.addButtonContainer}>
+                        <IconButton
+                          icon={'plus'}
+                          iconColor={'#047e6e'}
+                          onPress={() =>
+                            handleOpenModal(
+                              index,
+                              'afterImages',
+                              'เพิ่มรูปผลงานหลังติดตั้ง',
+                                        'ผลงานหลังติดตั้ง'
+                            )
+                          }
+                        />
+                      </View>
+                    ) : null
+                  }
+                  ListEmptyComponent={
+                    <View style={styles.addButtonContainer}>
+                      <IconButton
+                        icon={'plus'}
+                        iconColor={'#047e6e'}
+                        onPress={() =>
+                          handleOpenModal(
+                            index,
+                            'afterImages',
+                            'เพิ่มรูปผลงานหลังติดตั้ง',
+                            'ผลงานหลังติดตั้ง'
 
-            <View style={{alignSelf: 'flex-start', marginVertical: 10}}>
+                          )
+                        }
+                      />
+                    </View>
+                  }
+                />
+              </View>
+            ))}
+
+            <Button
+              style={{
+                width: width * 0.45,
+                alignSelf: 'flex-end',
+                marginTop: -20,
+              }}
+              mode="text"
+              icon={'plus'}
+              onPress={handleAddImagePair}>
+              เพิ่มรูปหน้างานจุดที่ {fields.length + 1}
+            </Button>
+
+            <View style={{alignSelf: 'flex-start', marginVertical: 20}}>
               <Text style={styles.title}>รายละเอียดงานที่ส่ง</Text>
               <Controller
                 control={methods.control}
@@ -635,24 +677,22 @@ const SendWorks = (props: Props) => {
             />
           </>
         )}
-        <Modal
-          isVisible={isOpenModal}
-          style={styles.modal}
-          onBackdropPress={() => setIsOpenModal(false)}>
-          <AddNewImage
-            isVisible={isOpenModal}
-            onClose={() => setIsOpenModal(false)}
-          />
-        </Modal>
-        <Modal
-          isVisible={isBeforeImage}
-          style={styles.modal}
-          onBackdropPress={() => setIsOpenModal(false)}>
-          <AddNewBeforeImage
-            isVisible={isBeforeImage}
-            onClose={() => setIsBeforeImage(false)}
-          />
-        </Modal>
+
+        {label && imageType && title && selectedIndex !== null && (
+          <Modal
+            isVisible={showUploadModal}
+            style={styles.modal}
+            onBackdropPress={handleCloseModal}>
+            <AddNewBeforeImage
+            title={title}
+              label={label}
+              selectedIndex={selectedIndex}
+              imageType={imageType}
+              isVisible={showUploadModal}
+              onClose={handleCloseModal}
+            />
+          </Modal>
+        )}
       </FormProvider>
     </>
   );
@@ -777,7 +817,7 @@ const styles = StyleSheet.create({
     width: width / 3 - 10,
     position: 'relative',
 
-    marginTop: 20,
+    marginTop: 10,
 
     flexDirection: 'column',
     margin: 5,
@@ -921,6 +961,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: 'bold',
+    textAlign: 'left',
+  },
+  subTitle: {
+    fontSize: 14,
+    // fontWeight: 'bold',
+
     color: '#19232e',
   },
   listTitle: {
@@ -931,10 +977,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   addButtonContainer: {
-    width: 100,
+    width: width / 4 - 10,
     margin: 5,
-    marginTop: 20,
-    height: 110,
+    marginTop: 10,
+    height: height / 8,
+
     backgroundColor: '#f5f5f5',
     justifyContent: 'center',
     alignItems: 'center',

@@ -23,9 +23,7 @@ export function usePutServer(
   const [error, setError] = useState<Error | null>(null);
   const user = useUser();
   const queryClient = useQueryClient();
-  const {
-    state: {code},
-  } = useContext(Store);
+
 
   const putToServer = async (data: any) => {
     if (!user || !user.uid) {
@@ -54,13 +52,9 @@ export function usePutServer(
         throw new Error(errorMessage);
       }
 
-      // Optionally handle the response data here
-      console.log('queryKey:', queryKey);
-      console.log('code:', code);
-
       // Invalidate queries or refetch data as needed
       queryClient.invalidateQueries({
-        queryKey: [queryKey, code],
+        queryKey: [queryKey],
       });
     } catch (err) {
       console.error('An error occurred:', err);

@@ -30,6 +30,8 @@ import {useFilteredReceiptsData} from '../../hooks/dashboard/useFilteredData';
 import {useUser} from '../../providers/UserContext';
 import * as stateAction from '../../redux/actions';
 import {Store} from '../../redux/store';
+import useCheckSubscription from '../../hooks/useCheckSubscription';
+import SelectPackages from '../../components/payment/selectPackages';
 
 import {DashboardScreenProps} from '../../types/navigationType';
 
@@ -74,12 +76,17 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     closeModal: closeProjectModal,
     isVisible: showProjectModal,
   } = useModal();
-  const {dispatch}: any = useContext(Store);
+  const {dispatch,
+    state: {G_subscription},
+  
+  } = useContext(Store);
   const {data, isLoading, isError, error} = useFetchDashboardReceipt();
   const {activeFilter, updateActiveFilter} = useActiveReceiptFilter();
   const {width, height} = Dimensions.get('window');
   const [isLoadingAction, setIsLoadingAction] = useState(false);
   const queryClient = useQueryClient();
+  const { isVisible, setIsVisible, checkSubscription } = useCheckSubscription();
+
   const [isModalSignContract, setIsModalSignContract] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Receipts | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -127,6 +134,10 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   };
 
   const removeReceipt = async (id: string) => {
+    if (!checkSubscription()) {
+      return;
+    }
+
     handleModalClose();
     setIsLoadingAction(true);
     if (!user || !user.uid) {
@@ -170,6 +181,9 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
 
   const confirmRemoveReceipt = (id: string, customerName: string) => {
     setShowModal(false);
+    if (!checkSubscription()) {
+      return;
+    }
     Alert.alert(
       'ยืนยันลบเอกสาร',
       `ลูกค้า ${customerName}`,
@@ -231,7 +245,12 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     setShowModal(false);
   };
   const editReceipt = async (services: ServicesEmbed[], receipt: Receipts) => {
+    if (!checkSubscription()) {
+      return;
+    }
+
     setIsLoadingAction(true);
+    
     dispatch(stateAction.get_companyID(receipt.companyId));
     dispatch(stateAction.get_edit_receipt(receipt));
     setIsLoadingAction(false);
@@ -355,6 +374,9 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   );
 
   const createNewReceipt = () => {
+    if (!checkSubscription()) {
+      return;
+    }
     dispatch(stateAction.reset_edit_receipt());
 
     navigation.navigate('CreateNewReceipt');
@@ -402,7 +424,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
           ) : (
             <>
               <View>
-                <FlatList
+                {/* <FlatList
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   data={filtersToShow}
@@ -416,7 +438,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                     />
                   )}
                   keyExtractor={item => item}
-                />
+                /> */}
               </View>
               {isLoading || isLoadingAction ? (
                 <View style={styles.loadingContainer}>
@@ -463,6 +485,8 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
           
         </Portal>
       </PaperProvider>
+      <SelectPackages isVisible={isVisible} onClose={() => setIsVisible(false)} />
+
     </>
   );
 };

@@ -460,7 +460,7 @@ const EditQuotation = ({navigation, route}: Props) => {
                 <SafeAreaView style={styles.containerModal}>
                   <SignatureComponent
                     onClose={() => setSignatureModal(false)}
-                    setSignatureUrl={setSignature}
+                    setSelectedSignature={setSignature}
                     onSignatureSuccess={handleSignatureSuccess}
                   />
                 </SafeAreaView>

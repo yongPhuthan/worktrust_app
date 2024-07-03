@@ -10,14 +10,13 @@ import {useContext} from 'react';
 import {useUser} from '../../../providers/UserContext';
 import * as stateAction from '../../../redux/actions';
 import {Store} from '../../../redux/store';
-import {Company, Quotations} from '@prisma/client';
-import { CompanyQuery } from 'types';
+import {Company, Quotations, Subscription} from '@prisma/client';
+import {CompanyQuery} from 'types';
 
 interface ErrorResponse {
   message: string;
   action: 'logout' | 'redirectToCreateCompany' | 'contactSupport' | 'retry';
 }
-
 
 const useFetchDashboard = (): UseQueryResult<CompanyQuery, ErrorResponse> => {
   const user = useUser();
@@ -31,7 +30,6 @@ const useFetchDashboard = (): UseQueryResult<CompanyQuery, ErrorResponse> => {
     if (!user) {
       throw new Error('User not authenticated.');
     }
-
     const token = await user.getIdToken();
 
     const response = await fetch(
@@ -52,18 +50,21 @@ const useFetchDashboard = (): UseQueryResult<CompanyQuery, ErrorResponse> => {
     }
 
     const data = await response.json();
-
-const company = data.company;
-const quotations = company.quotations;
-const services = quotations.flatMap((quotation : Quotations) => quotation.services.slice(0, 10));
+    const quotations = data.company.quotations;
+    const services = quotations.flatMap((quotation: Quotations) =>
+      quotation.services.slice(0, 10),
+    );
     dispatch(stateAction.code_company(data.company.code));
     dispatch(stateAction.get_logo(data.company.logo));
     dispatch(stateAction.get_default_contract(data.company.defaultContract));
     dispatch(stateAction.get_default_warranty(data.company.defaultWarranty));
+    dispatch(stateAction.get_notification(data.notifications));
     dispatch(stateAction.get_existing_workers(data.company.workers));
     dispatch(stateAction.get_existing_services(services));
-    dispatch(stateAction.get_user_signature(data.userSignature));
-    dispatch(stateAction.get_seller_id(data.sellerId));
+    dispatch(stateAction.get_user_signature(data.user.signature));
+    dispatch(stateAction.get_seller_id(data.user.id));
+    dispatch(stateAction.get_subscription(data.subscription));
+    dispatch(stateAction.get_user(data.user));
 
     return data;
   };
@@ -73,7 +74,7 @@ const services = quotations.flatMap((quotation : Quotations) => quotation.servic
   const queryOptions: UseQueryOptions<CompanyQuery, ErrorResponse> = {
     queryKey: queryKey,
     queryFn: fetchDashboard,
-    retry: 3,
+    retry: 2,
     staleTime: 5 * 60 * 1000,
     enabled: !!user,
   };

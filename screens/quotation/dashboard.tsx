@@ -3,7 +3,6 @@ import messaging from '@react-native-firebase/messaging';
 import {DrawerActions} from '@react-navigation/native';
 import {useQueryClient} from '@tanstack/react-query';
 import * as contrains from '../../redux/constrains';
-
 import React, {useContext, useEffect, useState, useCallback} from 'react';
 import {
   Alert,
@@ -13,7 +12,9 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Image,
   RefreshControl,
+  DevSettings,
 } from 'react-native';
 import Modal from 'react-native-modal';
 import CardDashBoard from '../../components/CardDashBoard';
@@ -44,6 +45,7 @@ import useFetchDashboard from '../../hooks/quotation/dashboard/useFetchDashboard
 
 import {
   CustomerEmbed,
+  NotificationType,
   QuotationStatus,
   Quotations,
   ServicesEmbed,
@@ -52,6 +54,8 @@ import {CompanyOnly, CompanyState} from 'types';
 import {useModal} from '../../hooks/quotation/create/useModal';
 import useResetQuotation from '../../hooks/quotation/update/resetStatus';
 import FABButton from '../../components/ui/Button/FAB';
+import useCheckSubscription from '../../hooks/useCheckSubscription';
+import SelectPackages from '../../components/payment/selectPackages';
 
 interface ErrorResponse {
   message: string;
@@ -59,6 +63,7 @@ interface ErrorResponse {
 }
 const Dashboard = ({navigation}: DashboardScreenProps) => {
   const [showModal, setShowModal] = useState(true);
+  const {isVisible, setIsVisible, checkSubscription} = useCheckSubscription();
   const user = useUser();
   const {
     openModal: openPDFModal,
@@ -72,25 +77,23 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   } = useModal();
   const {
     dispatch,
-    state: {sellerId, companyId},
+    state: {quotations},
   } = useContext(Store);
   const {data, isLoading, isError, error, refetch} = useFetchDashboard();
   const {activeFilter, updateActiveFilter} = useActiveFilter();
   const {width, height} = Dimensions.get('window');
   const [refreshing, setRefreshing] = useState(false);
-
+  const [checkSelctPackage, setCheckSelctPackage] = useState(false);
   const [isLoadingAction, setIsLoadingAction] = useState(false);
   const queryClient = useQueryClient();
   const [isModalSignContract, setIsModalSignContract] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Quotations | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  const [originalData, setOriginalData] = useState<Quotations[] | null>(null);
   const filteredData = useFilteredData(
-    originalData,
+    quotations,
     activeFilter as QuotationStatus,
   );
   const [companyData, setCompanyData] = useState<CompanyState | null>(null);
-  const [quotationData, setQuotationData] = useState<Quotations[] | null>(null);
 
   const handleLogout = async () => {
     try {
@@ -117,7 +120,10 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   const handleErrorResponse = (error: ErrorResponse) => {
     switch (error.message) {
       case 'logout':
+        console.log('Unhandled error logout action:', error.message);
+        dispatch(stateAction.reset_firebase_user());
         handleLogout();
+        DevSettings.reload();
         break;
       case 'redirectToCreateCompany':
         navigation.navigate('CreateCompanyScreen');
@@ -129,6 +135,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
       default:
         console.log('Unhandled error action:', error.message);
         handleLogout();
+        DevSettings.reload();
     }
   };
 
@@ -146,6 +153,9 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
 
   const removeQuotation = async (id: string) => {
     handleModalClose();
+    if (!checkSubscription()) {
+      return;
+    }
     setIsLoadingAction(true);
     if (!user || !user.uid) {
       console.error('User or user email is not available');
@@ -188,6 +198,9 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
 
   const confirmRemoveQuotation = (id: string, customer: CustomerEmbed) => {
     setShowModal(false);
+    if (!checkSubscription()) {
+      return;
+    }
     Alert.alert(
       'ยืนยันลบเอกสาร',
       `ลูกค้า ${customer}`,
@@ -206,6 +219,9 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   const {mutate: resetStatus, isPending: isReseting} = useResetQuotation();
   const confirmResetQuotation = (id: string, customerName: string) => {
     setShowModal(false);
+    if (!checkSubscription()) {
+      return;
+    }
     Alert.alert(
       'ยืนยันการรีเซ็ตสถานะ',
       `ลูกค้า ${customerName}`,
@@ -225,25 +241,22 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     if (data) {
       // If data[0] exists and has a non-null `code`, proceed with your logic
       const companyOnly: CompanyState = {
-        ...data.company ,
+        ...data.company,
         quotations: [],
-        workers:[],
-        invoices  :[],
-        receipts:[],
-        defaultWarranty:null,
-        submissions :[],
+        workers: [],
+        invoices: [],
+        receipts: [],
+        defaultWarranty: null,
+        submissions: [],
         defaultContracts: null,
-        defaultStandards:[],
-        defaultMaterials:[],
-        users:[],
-        
+        defaultStandards: [],
+        defaultMaterials: [],
+        users: [],
       };
       setCompanyData(companyOnly);
       dispatch(stateAction.get_company_state(companyOnly));
 
-      dispatch(
-        stateAction.get_companyID(companyOnly.id ),
-      );
+      dispatch(stateAction.get_companyID(companyOnly.id));
       dispatch(stateAction.get_seller_id(data.sellerId));
 
       // Sort the quotations by the most recently updated date
@@ -252,9 +265,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
         const dateB = new Date(b.updated);
         return dateB.getTime() - dateA.getTime();
       });
-
-      setQuotationData(sortedQuotations);
-      setOriginalData(sortedQuotations);
+      dispatch(stateAction.get_quotations(sortedQuotations));
     }
   }, [data]);
 
@@ -302,17 +313,26 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
 
     const handleNavigation = (
       data:
-        | {eventType: string; submissionId: string}
+        | {eventType: string; docId: string}
         | {[key: string]: string | object},
     ) => {
-      const {eventType, submissionId} = data;
+      const {eventType, docId} = data;
       switch (eventType) {
-        case 'REVIEW_SUBMITTED':
+        case NotificationType.SubmissionEvent:
           navigation.navigate('DashboardSubmit');
           break;
-        // case 'OTHER_EVENT':
-        //   navigation.navigate('OtherScreen', { submissionId });
-        //   break;
+        case NotificationType.QuotationEvent:
+          const quotation: Quotations | undefined = quotations?.find(
+            q => q.id === docId,
+          );
+          if (quotation) {
+            dispatch(stateAction.get_edit_quotation(quotation));
+            navigation.navigate('CreateQuotation');
+          } else {
+            return;
+          }
+
+          break;
         // default:
         //   navigation.navigate('DefaultScreen', { submissionId });
         // break;
@@ -347,16 +367,17 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   const filtersToShow = [
     QuotationStatus.ALL,
     QuotationStatus.PENDING,
-    QuotationStatus.APPROVED,
-    QuotationStatus.INVOICE_DEPOSIT,
-    QuotationStatus.RECEIPT_DEPOSIT,
+    // QuotationStatus.APPROVED,
+    // QuotationStatus.INVOICE_DEPOSIT,
+    // QuotationStatus.RECEIPT_DEPOSIT,
     QuotationStatus.SUBMITTED,
+    QuotationStatus.EXPIRED,
   ];
   const handleCreateContract = (index: number) => {
     if (
       companyData &&
-      quotationData &&
-      quotationData.length > 0 &&
+      // quotationData &&
+      // quotationData.length > 0 &&
       selectedItem
     ) {
       navigation.navigate('ContractOptions', {
@@ -380,10 +401,10 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     setSelectedIndex(null);
     setShowModal(false);
   };
-  const editQuotation = async (
-    services: ServicesEmbed[],
-    quotation: Quotations,
-  ) => {
+  const editQuotation = async (quotation: Quotations) => {
+    if (!checkSubscription()) {
+      return;
+    }
     setIsLoadingAction(true);
     dispatch(stateAction.get_edit_quotation(quotation));
     setIsLoadingAction(false);
@@ -401,6 +422,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
         <CardDashBoard
           status={item.status}
           date={item.dateOffer}
+          events={item.events}
           end={item.dateEnd}
           price={item.allTotal}
           customerName={item.customer?.name as string}
@@ -463,12 +485,13 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
 
                   <Divider />
 
-                  {selectedItem?.status === QuotationStatus.PENDING && (
+                  {(selectedItem.status === QuotationStatus.PENDING ||
+                    selectedItem.status === QuotationStatus.EXPIRED) && (
                     <>
                       <List.Item
                         onPress={() => {
                           setShowModal(false);
-                          editQuotation(selectedItem.services, selectedItem);
+                          editQuotation(selectedItem);
                         }}
                         title="แก้ไข"
                         titleStyle={{textAlign: 'center', color: 'black'}}
@@ -608,10 +631,13 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   );
 
   const createNewQuotation = () => {
+    if (!checkSubscription()) {
+      return;
+    }
     if (!companyData) {
       navigation.navigate('CreateCompanyScreen');
     }
-    dispatch(stateAction.reset_edit_quotation() as any);
+    dispatch(stateAction.reset_edit_quotation());
     navigation.navigate('CreateQuotation');
   };
   return (
@@ -639,7 +665,9 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
             />
             {/* <Appbar.Action
               icon="bell-outline"
-
+              onPress={() => {
+                navigation.navigate('NotificationScreen');
+              }}
             /> */}
           </Appbar.Header>
           {isLoadingAction ? (
@@ -683,42 +711,63 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                     alignItems: 'center',
                     backgroundColor: '#f5f5f5',
                   }}>
-                  <FlatList
-                    data={filteredData}
-                    refreshControl={
-                      <RefreshControl
-                        refreshing={refreshing}
-                        onRefresh={onRefresh}
-                      />
-                    }
-                    onRefresh={onRefresh}
-                    renderItem={renderItem}
-                    refreshing={refreshing}
-                    keyExtractor={item => item.id}
-                    ListEmptyComponent={
-                      <View
-                        style={{
-                          flex: 1,
-                          justifyContent: 'flex-start',
-                          height: height,
-                          width: width,
+                  <>
+                    {activeFilter === QuotationStatus.EXPIRED &&
+                      filteredData &&
+                      filteredData.length > 0 && (
+                        <Text
+                          style={{
+                            textAlign: 'center',
+                            marginVertical: height * 0.02,
+                          }}>
+                          เอกสารหมดอายุจะถูกลบภายใน 30 วัน
+                        </Text>
+                      )}
+                    <FlatList
+                      data={filteredData}
+                      refreshControl={
+                        <RefreshControl
+                          refreshing={refreshing}
+                          onRefresh={onRefresh}
+                        />
+                      }
+                      onRefresh={onRefresh}
+                      renderItem={renderItem}
+                      refreshing={refreshing}
+                      keyExtractor={item => item.id}
+                      ListEmptyComponent={
+                        <View
+                          style={{
+                            flex: 1,
+                            justifyContent: 'flex-start',
+                            height: height,
+                            width: width,
 
-                          alignItems: 'center',
-                          marginTop: height * 0.2,
-                        }}>
-                        <Icon source="inbox" color={'gray'} size={80} />
-                        <Text style={{marginTop: 10, color: 'gray'}}>
-                          ยังไม่มีเอกสาร
-                        </Text>
-                        <Text style={{marginTop: 10, color: 'gray'}}>
-                          กดปุ่ม + ด้านล่างเพื่อสร้างใบเสนอราคา
-                        </Text>
-                      </View>
-                    }
-                    contentContainerStyle={
-                      quotationData?.length === 0 && {flex: 1}
-                    }
-                  />
+                            alignItems: 'center',
+                          }}>
+                          <Image
+                            source={require('../../assets/images/Audit-amico.png')}
+                            width={width * 0.5}
+                            height={height * 0.3}
+                            style={{
+                              width: width * 0.5,
+                              height: height * 0.3,
+                            }}
+                          />
+                          {/* <Icon source="inbox" color={'gray'} size={80} /> */}
+                          <Text style={{marginTop: 10, color: 'gray'}}>
+                            ยังไม่มีเอกสาร
+                          </Text>
+                          {/* <Text style={{marginTop: 10, color: 'gray'}}>
+                            กดปุ่ม + ด้านล่างเพื่อสร้างใบเสนอราคา
+                          </Text> */}
+                        </View>
+                      }
+                      contentContainerStyle={
+                        quotations?.length === 0 && {flex: 1}
+                      }
+                    />
+                  </>
                 </View>
               )}
               <FABButton createNewFunction={createNewQuotation} />
@@ -770,6 +819,10 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
           </Dialog>
         </Portal>
       </PaperProvider>
+      <SelectPackages
+        isVisible={isVisible}
+        onClose={() => setIsVisible(false)}
+      />
     </>
   );
 };

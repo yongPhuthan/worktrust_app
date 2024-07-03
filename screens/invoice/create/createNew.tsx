@@ -62,6 +62,8 @@ import {TaxType} from '../../../models/Tax';
 import {Store} from '../../../redux/store';
 import {ParamListBase} from '../../../types/navigationType';
 import UpdateServiceModal from '../../../components/service/update';
+import {set} from 'lodash';
+import SignatureModal from '../../../components/utils/signature/select';
 
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'CreateNewInvoice'>;
@@ -69,7 +71,13 @@ interface Props {
 
 const CreateNewInvoice = ({navigation}: Props) => {
   const {
-    state: {companyState, editInvoice, sellerId, quotationRefNumber, editQuotation},
+    state: {
+      G_company: companyState,
+      editInvoice,
+      sellerId,
+      quotationRefNumber,
+      editQuotation,
+    },
     dispatch,
   } = useContext(Store);
 
@@ -99,7 +107,7 @@ const CreateNewInvoice = ({navigation}: Props) => {
     null,
   );
   const [currentValue, setCurrentValue] = useState<ServicesEmbed | null>(null);
-  const [signature, setSignature] = useState<string | null>(null);
+  const [selectedSignature, setSelectedSignature] = useState<string | null>(null);
   const quotationId = uuidv4();
   const [dateOfferFormatted, setDateOfferFormatted] = useState<string>(
     initialDateOfferFormatted,
@@ -196,7 +204,11 @@ const CreateNewInvoice = ({navigation}: Props) => {
   };
   const methods = useForm<Invoices | Quotations>({
     mode: 'all',
-    defaultValues: editInvoice ? editInvoice : editQuotation ? editQuotation :   invoiceDefaultValue,
+    defaultValues: editInvoice
+      ? editInvoice
+      : editQuotation
+      ? editQuotation
+      : invoiceDefaultValue,
   });
   const {fields, append, remove, update} = useFieldArray({
     control: methods.control,
@@ -235,6 +247,7 @@ const CreateNewInvoice = ({navigation}: Props) => {
   const useSignature = () => {
     if (sellerSignature) {
       methods.setValue('sellerSignature', '', {shouldDirty: true});
+      setSelectedSignature(null);
       onCloseSignature();
     } else {
       openSignatureModal();
@@ -303,7 +316,29 @@ const CreateNewInvoice = ({navigation}: Props) => {
       methods.setValue('docNumber', `BL${initialDocnumber}`);
     }
   }, [openNoteToCustomer, openNoteToTeam]);
-  console.log('editInvoice PDF', editInvoice?.pdfUrl);
+  useEffect(() => {
+    if (selectedSignature) {
+      methods.setValue('sellerSignature', selectedSignature, {shouldDirty: true});
+    }
+  }, [selectedSignature]);
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      if (sellerSignature && isLoadingWebP) {
+        try {
+          const response = await fetch(sellerSignature);
+          if (response.ok) {
+            setIsLoadingWebP(false);
+          }
+        } catch (error) {
+          console.error('Error checking SignatureImage:', error);
+        }
+      }
+    }, 1500);
+    return () => clearInterval(interval);
+  }, [sellerSignature, isLoadingWebP]);
+
+  console.log('sellerSignature', sellerSignature);
   return (
     <>
       <Appbar.Header
@@ -419,8 +454,6 @@ const CreateNewInvoice = ({navigation}: Props) => {
               <View style={styles.signatureRow}>
                 <Text style={styles.signHeader}>เพิ่มลายเซ็น</Text>
                 <Switch
-                  trackColor={{false: '#a5d6c1', true: '#4caf82'}}
-                  thumbColor={sellerSignature ? '#ffffff' : '#f4f3f4'}
                   ios_backgroundColor="#3e3e3e"
                   onValueChange={useSignature}
                   value={sellerSignature ? true : false}
@@ -548,6 +581,7 @@ const CreateNewInvoice = ({navigation}: Props) => {
               )}
             </View>
           </KeyboardAwareScrollView>
+         
           <Modal
             visible={addCustomerModal}
             animationType="slide"
@@ -556,53 +590,43 @@ const CreateNewInvoice = ({navigation}: Props) => {
             <AddCustomer onClose={() => closeAddCustomerModal()} />
           </Modal>
         </View>
-        <Modal
-          visible={signatureModal}
-          animationType="slide"
-          style={styles.modal}
-          onDismiss={onCloseSignature}>
-          <Appbar.Header
-            mode="center-aligned"
-            style={{
-              backgroundColor: 'white',
-              width: Dimensions.get('window').width,
-            }}>
-            <Appbar.Action icon={'close'} onPress={onCloseSignature} />
-            <Appbar.Content
-              title="ลายเซ็นผู้เสนอราคา"
-              titleStyle={{fontSize: 18, fontWeight: 'bold'}}
-            />
-          </Appbar.Header>
-          <SafeAreaView style={styles.containerModal}>
-            <SignatureComponent
-              setLoadingWebP={setIsLoadingWebP}
-              onClose={closeSignatureModal}
-              setSignatureUrl={setSignature}
-              onSignatureSuccess={closeSignatureModal}
-            />
-          </SafeAreaView>
-        </Modal>
+        <SignatureModal 
+            visible={signaturePicker}
+            onClose={onCloseSignature}
+            sellerSignature={sellerSignature  ? sellerSignature : ''}
+            setLoadingWebP={setIsLoadingWebP}
+            title="ลายเซ็นผู้ขาย"
+            setSelectedSignature={setSelectedSignature}
+          />
         <SelectProductModal
           onAddService={newProduct => append(newProduct)}
-
           visible={showAddExistingService}
           onClose={closeAddExistingServiceModal}
         />
         <PDFModalScreen
-              fileType="BL"
-              fileName={customer.name}
-              visible={showPDFModal}
-              onClose={closePDFModal}
-              pdfUrl={editInvoice? editInvoice.pdfUrl ? editInvoice.pdfUrl : '' : pdfUrl || ''}
-            />
-       {currentValue && (
+          fileType="BL"
+          fileName={customer.name}
+          visible={showPDFModal}
+          onClose={closePDFModal}
+          pdfUrl={
+            editInvoice
+              ? editInvoice.pdfUrl
+                ? editInvoice.pdfUrl
+                : ''
+              : pdfUrl || ''
+          }
+        />
+        {currentValue && (
           <UpdateServiceModal
             visible={showEditServiceModal}
             resetUpdateService={() => setCurrentValue(null)}
             onClose={closeEditServiceModal}
             currentValue={currentValue}
             serviceIndex={serviceIndex}
-            onUpdateService={(serviceIndex :number,updatedService : ServicesEmbed ) => update( serviceIndex,updatedService)}
+            onUpdateService={(
+              serviceIndex: number,
+              updatedService: ServicesEmbed,
+            ) => update(serviceIndex, updatedService)}
           />
         )}
       </FormProvider>

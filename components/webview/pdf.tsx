@@ -159,7 +159,8 @@ const PDFModalScreen = (props: Props) => {
         <SafeAreaView style={{flex: 1}}>
           <View style={{flex: 1}}>
             <Pdf
-              source={source}
+            source={{ uri: pdfUrl, cache: false }}
+              
               onLoadComplete={(numberOfPages, filePath) => {
                 console.log(`Number of pages: ${numberOfPages}`);
               }}

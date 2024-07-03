@@ -9,7 +9,7 @@ interface ImageUploadProps {
   isUploading: boolean;
   pickImage: () => void;
   label: string;
-  width: number;
+  width: number 
 height: number;
 }
 

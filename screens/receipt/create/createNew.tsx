@@ -69,6 +69,7 @@ import {
 import {CompanyState} from 'types';
 import ShowSignature from '../../../components/utils/signature/view';
 import useUpdateReceipt from '../../../hooks/receipt/update/useUpdateReceipt';
+import SignatureModal from '../../../components/utils/signature/select';
 
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'CreateNewReceipt'>;
@@ -77,7 +78,7 @@ interface Props {
 const CreateNewReceipt = ({navigation}: Props) => {
   const {
     state: {
-      companyState,
+      G_company: companyState,
       sellerId,
       editReceipt,
       defaultWarranty,
@@ -98,6 +99,9 @@ const CreateNewReceipt = ({navigation}: Props) => {
 
   const thaiDateFormatter = useThaiDateFormatter();
   const [addNewService, setAddNewService] = useState(false);
+  const [selectedSignature, setSelectedSignature] = useState<string | null>(
+    null,
+  );
 
   // const [customerName, setCustomerName] = useState('');
   const [signaturePicker, setSignaturePicker] = useState(false);
@@ -223,7 +227,11 @@ const CreateNewReceipt = ({navigation}: Props) => {
   };
   const methods = useForm<Receipts | Quotations>({
     mode: 'all',
-    defaultValues: editReceipt ? editReceipt : editQuotation ? editQuotation : receiptDefaultValue ,
+    defaultValues: editReceipt
+      ? editReceipt
+      : editQuotation
+      ? editQuotation
+      : receiptDefaultValue,
   });
   const {fields, append, remove, update} = useFieldArray({
     control: methods.control,
@@ -255,6 +263,7 @@ const CreateNewReceipt = ({navigation}: Props) => {
   const useSignature = () => {
     if (sellerSignature) {
       methods.setValue('sellerSignature', '', {shouldDirty: true});
+      setSelectedSignature(null);
       onCloseSignature();
     } else {
       openSignatureModal();
@@ -277,7 +286,6 @@ const CreateNewReceipt = ({navigation}: Props) => {
     openPDFModal,
     setReceiptServerId,
   };
-
 
   const {mutate, isPending} = useCreateNewReceipt(actions);
   const {mutate: updateReceipt, isUpdating: isUpdatePending} =
@@ -358,6 +366,13 @@ const CreateNewReceipt = ({navigation}: Props) => {
       methods.setValue('docNumber', `IV${initialDocnumber}`);
     }
   }, [openNoteToCustomer, openNoteToTeam]);
+  useEffect(() => {
+    if (selectedSignature) {
+      methods.setValue('sellerSignature', selectedSignature, {
+        shouldDirty: true,
+      });
+    }
+  }, [selectedSignature]);
   return (
     <>
       <Appbar.Header
@@ -368,7 +383,13 @@ const CreateNewReceipt = ({navigation}: Props) => {
         }}>
         <Appbar.BackAction onPress={() => navigation.goBack()} />
         <Appbar.Content title="" />
-        <Appbar.Action    disabled={editReceipt ? !editReceipt.pdfUrl : !pdfUrl}  iconColor='#047e6e'  mode='outlined'      icon="file-document"onPress={openPDFModal} />
+        <Appbar.Action
+          disabled={editReceipt ? !editReceipt.pdfUrl : !pdfUrl}
+          iconColor="#047e6e"
+          mode="outlined"
+          icon="file-document"
+          onPress={openPDFModal}
+        />
         <Appbar.Content title="" />
         <Button
           loading={isPending || isUpdatePending}
@@ -604,51 +625,33 @@ const CreateNewReceipt = ({navigation}: Props) => {
             <AddCustomer onClose={() => closeAddCustomerModal()} />
           </Modal>
         </View>
-        <Modal
+        <SignatureModal
           visible={signatureModal}
-          animationType="slide"
-          style={styles.modal}
-          onDismiss={onCloseSignature}>
-          <Appbar.Header
-            mode="center-aligned"
-            style={{
-              backgroundColor: 'white',
-              width: Dimensions.get('window').width,
-            }}>
-            <Appbar.Action icon={'close'} onPress={onCloseSignature} />
-            <Appbar.Content
-              title="ลายเซ็นผู้เสนอราคา"
-              titleStyle={{fontSize: 18, fontWeight: 'bold'}}
-            />
-          </Appbar.Header>
-          <SafeAreaView style={styles.containerModal}>
-            <SignatureComponent
-              setLoadingWebP={setIsLoadingWebP}
-              onClose={closeSignatureModal}
-              setSignatureUrl={setSignature}
-              onSignatureSuccess={closeSignatureModal}
-            />
-          </SafeAreaView>
-        </Modal>
+          onClose={closeSignatureModal}
+          sellerSignature={sellerSignature ? sellerSignature : ''}
+          setLoadingWebP={setIsLoadingWebP}
+          title="ลายเซ็นผู้ขาย"
+          setSelectedSignature={setSelectedSignature}
+        />
         <SelectProductModal
           onAddService={newProduct => append(newProduct)}
           visible={showAddExistingService}
           onClose={closeAddExistingServiceModal}
         />
-      <PDFModalScreen
-                fileType="IV"
-                fileName={customer.name}
-                visible={showPDFModal}
-                onClose={closePDFModal}
-                pdfUrl={
-                  editReceipt
-                    ? editReceipt.pdfUrl
-                      ? editReceipt.pdfUrl
-                      : ''
-                    : pdfUrl || ''
-                }
-              />
-      
+        <PDFModalScreen
+          fileType="IV"
+          fileName={customer.name}
+          visible={showPDFModal}
+          onClose={closePDFModal}
+          pdfUrl={
+            editReceipt
+              ? editReceipt.pdfUrl
+                ? editReceipt.pdfUrl
+                : ''
+              : pdfUrl || ''
+          }
+        />
+
         {currentValue && (
           <UpdateServiceModal
             visible={showEditServiceModal}
@@ -656,7 +659,10 @@ const CreateNewReceipt = ({navigation}: Props) => {
             onClose={closeEditServiceModal}
             currentValue={currentValue}
             serviceIndex={serviceIndex}
-            onUpdateService={(serviceIndex :number,updatedService : ServicesEmbed ) => update( serviceIndex,updatedService)}
+            onUpdateService={(
+              serviceIndex: number,
+              updatedService: ServicesEmbed,
+            ) => update(serviceIndex, updatedService)}
           />
         )}
       </FormProvider>

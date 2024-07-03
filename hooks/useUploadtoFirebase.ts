@@ -1,28 +1,21 @@
 import ImageResizer from '@bam.tech/react-native-image-resizer';
 import storage from '@react-native-firebase/storage';
-import firebase from '../firebase';
+import { useState } from 'react';
+import { useUser } from '../providers/UserContext';
+import { Platform } from 'react-native';
 
-import {useState} from 'react';
-import {useUser} from '../providers/UserContext';
 type UploadResponse = {
   isUploading: boolean;
   error: Error | null;
-  uploadImage: (
-    imageUri: string,
-  ) => Promise<{originalUrl?: string; thumbnailUrl?: string}>;
+  uploadImage: (imageUri: string) => Promise<{ originalUrl?: string; thumbnailUrl?: string }>;
 };
-interface SignedUrlResponse {
-  url: string;
-}
 
 export function useUploadToFirebase(storagePath: string): UploadResponse {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const user = useUser();
 
-  const uploadImage = async (
-    imageUri: string,
-  ): Promise<{originalUrl?: string; thumbnailUrl?: string}> => {
+  const uploadImage = async (imageUri: string): Promise<{ originalUrl?: string; thumbnailUrl?: string }> => {
     if (!user || !user.uid) {
       console.error('User or user UID is not available');
       setError(new Error('User or user UID is not available'));
@@ -33,11 +26,14 @@ export function useUploadToFirebase(storagePath: string): UploadResponse {
     setError(null);
 
     try {
+      const format = Platform.OS === 'android' ? 'WEBP' : 'PNG'; // ใช้ WEBP สำหรับ Android และ PNG สำหรับอื่นๆ
+      const fileExtension = Platform.OS === 'android' ? 'webp' : 'png';
+
       const originalResponse = await ImageResizer.createResizedImage(
         imageUri,
         1800,
         1800,
-        'PNG',
+        format,
         100,
         0,
         null,
@@ -48,13 +44,14 @@ export function useUploadToFirebase(storagePath: string): UploadResponse {
         user.uid,
         originalResponse.uri,
         'original',
+        fileExtension,
       );
 
       const thumbnailResponse = await ImageResizer.createResizedImage(
         imageUri,
         300,
         200,
-        'PNG',
+        format,
         80,
         0,
         null,
@@ -65,10 +62,11 @@ export function useUploadToFirebase(storagePath: string): UploadResponse {
         user.uid,
         thumbnailResponse.uri,
         'thumbnail',
+        fileExtension,
       );
 
       setIsUploading(false);
-      return {originalUrl, thumbnailUrl};
+      return { originalUrl, thumbnailUrl };
     } catch (err) {
       console.error('Error during image processing or upload:', err);
       setError(err as Error);
@@ -83,31 +81,21 @@ export function useUploadToFirebase(storagePath: string): UploadResponse {
     uploadImage,
   };
 }
-
 async function uploadToFirebase(
   storagePath: string,
   userId: string,
   uri: string,
   type: string,
+  fileExtension: string,
 ): Promise<string> {
   try {
-    const fileName = `${storagePath}/${type}/${Date.now()}.png`;
+    console.log(`Uploading ${type} image to Firebase from URI: ${uri}`);
+
+    const fileName = `${storagePath}/${type}/${Date.now()}.${fileExtension}`;
     const reference = storage().ref(fileName);
-    // const reference = firebase
-    //   .app()
-    //   .storage('gs://worktrust-images')
-    //   .ref(fileName);
-    // const reference = firebase.storage().ref(fileName);
-
-    const base64DataString = await uriToBase64(uri);
-
-    // Remove the prefix from base64 string
-    const base64Data = base64DataString.split(',')[1];
-
-    // Upload base64 string directly
-    const uploadTask = reference.putString(base64Data, 'base64', {
-      contentType: 'image/png',
-    });
+    
+    // Upload file directly from URI
+    const uploadTask = reference.putFile(uri);
 
     // Monitor the upload progress
     return new Promise((resolve, reject) => {
@@ -134,22 +122,24 @@ async function uploadToFirebase(
           // Handle successful uploads on complete
           try {
             const downloadURL = await reference.getDownloadURL();
+            let finalDownloadURL = downloadURL;
 
-            // Convert .png download URL to .webp
-            const webpDownloadURL = downloadURL.replace('.png', '.webp');
+            // Convert .png download URL to .webp for iOS only
+            if (Platform.OS === 'ios') {
+              finalDownloadURL = downloadURL.replace('.png', '.webp');
+            }
 
-      
-            resolve(webpDownloadURL);
+            resolve(finalDownloadURL);
           } catch (error) {
             if (error instanceof Error) {
               console.error('Firebase Download URL error:', error);
-              throw new Error(`Firebase Download URL error: ${error.message}`);
+              reject(new Error(`Firebase Download URL error: ${error.message}`));
             } else {
               console.error(
                 'Firebase Download URL error with unknown error:',
                 error,
               );
-              throw new Error('Firebase Download URL error with unknown error');
+              reject(new Error('Firebase Download URL error with unknown error'));
             }
           }
         },
@@ -165,6 +155,12 @@ async function uploadToFirebase(
     }
   }
 }
+function convertToWebpURL(url: string): string {
+  if (url.endsWith('.png')) {
+    return url.replace('.png', '.webp');
+  }
+  return url;
+}
 
 async function uriToBase64(uri: string): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -175,10 +171,10 @@ async function uriToBase64(uri: string): Promise<string> {
         reader.onloadend = function () {
           resolve(reader.result as string);
         };
-        reader.onerror = function (e) {
+        reader.onerror = function () {
           reject(new Error('Failed to convert Blob to base64'));
         };
-        reader.readAsDataURL(xhr.response); // Convert Blob to base64
+        reader.readAsDataURL(xhr.response);
       } else {
         reject(new Error(`Failed to load file: ${xhr.status}`));
       }

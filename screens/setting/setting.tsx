@@ -1,8 +1,10 @@
-import {BACK_END_SERVER_URL} from '@env';
-import {faChevronRight, faRemove} from '@fortawesome/free-solid-svg-icons';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import React, {useContext, useState} from 'react';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import React, { useContext, useState,useEffect } from 'react';
 
+import { SubscriptionType, User } from '@prisma/client';
+import { DrawerActions } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
 import {
   Alert,
   Image,
@@ -12,18 +14,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {Divider, ActivityIndicator, Appbar, Button} from 'react-native-paper';
-import firebase from '../../firebase';
-import {ParamListBase} from '../../types/navigationType';
-import {Store} from '../../redux/store';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {useQuery} from '@tanstack/react-query';
-import {launchImageLibrary, MediaType} from 'react-native-image-picker';
-import {useUser} from '../../providers/UserContext';
-import {CompanyState} from 'types';
-import {Subscription, SubscriptionType, User} from '@prisma/client';
-import {DrawerActions} from '@react-navigation/native';
+import { Appbar, Button, Divider } from 'react-native-paper';
 import SelectPackages from '../../components/payment/selectPackages';
+import firebase from '../../firebase';
+import { useUser } from '../../providers/UserContext';
+import { Store } from '../../redux/store';
+import { ParamListBase } from '../../types/navigationType';
 const thaiDateFormatter = new Intl.DateTimeFormat('th-TH', {
   year: 'numeric',
   month: '2-digit',
@@ -34,19 +30,31 @@ interface SettingScreenProps {
   navigation: StackNavigationProp<ParamListBase, 'TopUpScreen'>;
 }
 
+const getSubscriptionStyle = (type: SubscriptionType, isActive: boolean) => {
+  if (!isActive) {
+    return {color: 'red'};
+  }
+
+  switch (type) {
+    case SubscriptionType.ONEMONTH:
+      return {color: '#f0ad4e'}; // สีส้มสำหรับ 1 เดือน
+    case SubscriptionType.SIXMONTHS:
+      return {color: '#5bc0de'}; // สีฟ้าสำหรับ 6 เดือน
+    case SubscriptionType.ONEYEAR:
+      return {color: '#5cb85c'}; // สีเขียวสำหรับ 1 ปี
+    default:
+      return {color: '#333'}; // สีเริ่มต้น
+  }
+};
+
 const SettingsScreen = ({navigation}: SettingScreenProps) => {
-  const [company, setCompany] = useState<CompanyState>();
-  const [subscription, setSubscription] = useState<Subscription>();
-  const user = useUser();
-  const [seller, setSeller] = useState<User>();
   const {
-    state: {code},
+    state: {code, G_logo,  G_subscription, G_company,G_user},
     dispatch,
   } = useContext(Store);
-  const [logo, setLogo] = useState<string | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
   const [isVisible, setIsVisible] = useState(false);
 
+  const subscriptionStyle = G_subscription && getSubscriptionStyle(G_subscription.type, G_subscription.isActive);
   const toggleLogoutModal = () => {
     Alert.alert(
       'Logout', // หัวข้อ
@@ -64,36 +72,7 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
       ],
     );
   };
-  const fetchCompanyUser = async () => {
-    if (!user) {
-      throw new Error('User not authenticated');
-    } else {
-      const idToken = await user.getIdToken(true);
-      const {uid} = user;
-      if (!uid) {
-        throw new Error('User not found');
-      }
-      let url = `${BACK_END_SERVER_URL}/api/company/getCompanySeller`;
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${idToken}`,
-        },
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.statusText || 'Network response was not ok');
-      }
-      const data = await response.json();
-      setCompany(data.company);
-      setLogo(data.company.logo);
-      setSeller(data.user);
-      setSubscription(data.subscription);
 
-      return data;
-    }
-  };
 
   const handleLogout = async () => {
     try {
@@ -106,39 +85,6 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
       console.error('Failed to sign out: ', error);
     }
   };
-  const {data, isLoading, isError, error} = useQuery({
-    queryKey: ['companySetting'],
-    queryFn: fetchCompanyUser,
-  });
-  if (isError) {
-    if (error.message === 'Subscription Expired') {
-      Alert.alert('บัญชีหมดอายุ', 'กรุณาต่ออายุแพคเกจเพื่อใช้งานต่อ', [
-        {
-          text: 'ต่ออายุแพคเกจ',
-          onPress: () => setIsVisible(true), // เปลี่ยนเป็นชื่อของหน้าที่คุณใช้สำหรับการชำระเงิน
-        },
-      ]);
-    }
-    if (error.message === 'Not Found for companySeller') {
-      Alert.alert('ไม่พบข้อมูล', 'กรุณาล็อคอินอีกครั้ง', [
-        {
-          text: 'ตกลง',
-          onPress: () => handleLogout(), // เปลี่ยนเป็นชื่อของหน้าที่คุณใช้สำหรับการชำระเงิน
-        },
-      ]);
-    }
-
-    // else {
-    //   Alert.alert('Error', error.message);
-    // }
-  }
-
-  if (!isAuthenticated) {
-    return null;
-  }
-  if (data) {
-    console.log('subscription', subscription);
-  }
 
   return (
     <>
@@ -162,13 +108,7 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
           }}
         />
       </Appbar.Header>
-      {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size={'large'} />
-        </View>
-      ) : (
-        <>
-          {company && seller && subscription && (
+      {G_company && G_user && G_subscription && (
             <ScrollView style={{flex: 1, backgroundColor: '#f5f5f5'}}>
               {/* Business Details */}
               <View
@@ -179,11 +119,11 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
                   paddingTop: 30,
                   flexDirection: 'column',
                 }}>
-                <View style={{flexDirection: logo ? 'row' : 'column', gap: 10}}>
-                  {logo && (
+                <View style={{flexDirection: G_logo ? 'row' : 'column', gap: 10}}>
+                  {G_logo && (
                     <Image
                       source={{
-                        uri: logo,
+                        uri: G_logo,
                       }}
                       style={{
                         alignSelf: 'center',
@@ -194,7 +134,7 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
                     />
                   )}
                   {/* Business Name and Address */}
-                  <View style={{alignItems: logo ? 'flex-start' : 'center'}}>
+                  <View style={{alignItems: G_logo ? 'flex-start' : 'center'}}>
                     <Text
                       style={{
                         fontSize: 14,
@@ -202,7 +142,7 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
                         fontWeight: '600',
                         color: '#333',
                       }}>
-                      คุณ {seller?.name} {seller?.lastName}
+                      คุณ {G_user?.name}
                     </Text>
                     <Text
                       style={{
@@ -211,7 +151,7 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
 
                         color: '#333',
                       }}>
-                      ตำแหน่ง: {seller?.jobPosition}
+                      ตำแหน่ง: {G_user?.jobPosition}
                     </Text>
 
                     <Text
@@ -221,26 +161,43 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
 
                         color: '#333',
                       }}>
-                      รหัสลูกค้า : {company?.code}
+                      รหัสลูกค้า : {code}
                     </Text>
                     <Divider />
-                    {subscription.type !== SubscriptionType.DEMO && (
+                    {G_subscription.type !== SubscriptionType.DEMO && (
                       <>
-                        <Text
+                        <View
                           style={{
-                            fontSize: 14,
-                            marginBottom: 10,
-                            color: '#333',
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'flex-start',
+                            gap: 5,
                           }}>
-                          แพคเกจปัจจุบัน :{' '}
-                          {subscription.type === SubscriptionType.ONEMONTH
-                            ? ' 1 เดือน'
-                            : subscription?.type === SubscriptionType.SIXMONTHS
-                            ? ' 6 เดือน'
-                            : subscription?.type === SubscriptionType.ONEYEAR
-                            ? ' 1 ปี'
-                            : ''}
-                        </Text>
+                          <Text
+                            style={{
+                              fontSize: 14,
+                              marginBottom: 10,
+                              color: '#333',
+                            }}>
+                            แพคเกจปัจจุบัน:
+                          </Text>
+                          <Text
+                            style={[
+                              styles.subscriptionText,
+                              subscriptionStyle,
+                            ]}>
+                            {G_subscription.type === SubscriptionType.ONEMONTH
+                              ? ' 1 เดือน'
+                              : G_subscription.type === SubscriptionType.SIXMONTHS
+                              ? ' 6 เดือน'
+                              : G_subscription.type === SubscriptionType.ONEYEAR
+                              ? ' 1 ปี'
+                              : G_subscription.type === SubscriptionType.EXPIRED
+                              ? 'หมดอายุ'
+                              : ''}
+                          </Text>
+                        </View>
+
                         <Text
                           style={{
                             fontSize: 14,
@@ -250,17 +207,17 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
                           }}>
                           หมดอายุ :{' '}
                           {thaiDateFormatter.format(
-                            new Date(subscription.endDate),
+                            new Date(G_subscription.endDate),
                           )}
                         </Text>
                       </>
                     )}
                   </View>
                 </View>
-                {subscription.type !== SubscriptionType.DEMO && (
+                {G_subscription.type !== SubscriptionType.DEMO && (
                   <Button
                     icon={'crown'}
-                    mode={!logo ? 'contained' : 'outlined'}
+                    mode={'outlined'}
                     style={{marginTop: 10}}
                     // #FFBF47
                     onPress={() => setIsVisible(true)}>
@@ -269,7 +226,7 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
                         fontSize: 14,
 
                         fontWeight: 'bold',
-                        color: !logo ? '#fff' : '#333',
+                        color: '#333',
                         //  fontFamily: 'Sukhumvit Set Bold',
                       }}>
                       ต่ออายุแพคเกจ
@@ -278,11 +235,11 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
                 )}
               </View>
               <View style={{backgroundColor: '#fff', marginTop: 10}}>
-                {company && seller && (
+                {G_company && G_user && (
                   <TouchableOpacity
                     style={{paddingVertical: 15, paddingHorizontal: 24}}
                     onPress={() =>
-                      navigation.navigate('EditSetting', {company, seller})
+                      navigation.navigate('EditSetting')
                     }>
                     <View
                       style={{
@@ -420,8 +377,6 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
             isVisible={isVisible}
             onClose={() => setIsVisible(false)}
           />
-        </>
-      )}
     </>
   );
 };
@@ -433,5 +388,9 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  subscriptionText: {
+    fontSize: 14,
+    marginBottom: 10,
   },
 });

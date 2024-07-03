@@ -12,11 +12,28 @@ type Props = {
   price: number;
   status: string;
   onCardPress?: () => void;
+  endProductWaranty: Date | null;
+  endSkillwaranty: Date | null;
 };
 
 const windowWidth = Dimensions.get('window').width;
 
 const CardDashBoard = (props: Props) => {
+  function convertDateToDDMMYYYY(dateString: string) {
+    const date = new Date(dateString);
+
+    // Get the day, month, and year from the date object
+    const day = date.getDate();
+    const month = date.getMonth() + 1; // getMonth() returns month from 0 to 11
+    const year = date.getFullYear();
+
+    // Pad the day and month with zeros if they are less than 10
+    const formattedDay = day < 10 ? '0' + day : day;
+    const formattedMonth = month < 10 ? '0' + month : month;
+
+    // Return the formatted date string
+    return `${formattedDay}/${formattedMonth}/${year}`;
+  }
   return (
     <TouchableOpacity onPress={props.onCardPress} style={styles.subContainer}>
       <View style={styles.summary}>
@@ -63,16 +80,25 @@ const CardDashBoard = (props: Props) => {
           </Text>
         </View>
       )}
-      {/* {props.status === WarrantyStatus.ACTIVE && (
-        <View style={styles.telAndTax}>
-          <Text style={styles.summaryPrice}>
-            วันที่เริ่มรับประกัน {convertDateToDDMMYYYY(props.date.toString())}
-          </Text>
-          <Text style={styles.summaryPrice}>
-            สิ้นสุด {convertDateToDDMMYYYY(props.end.toString())}
-          </Text>
-        </View>
-      )} */}
+      {props.status === WarrantyStatus.ACTIVE &&
+        props.customerName &&
+        props.endSkillwaranty &&
+        props.endProductWaranty && (
+          <>
+            <View style={styles.telAndTax}>
+              <Text style={styles.summaryPrice}>ประกันงานติดตั้งถึง</Text>
+              <Text style={styles.summaryPrice}>
+                {convertDateToDDMMYYYY(props.endSkillwaranty.toString())}
+              </Text>
+            </View>
+            <View style={styles.telAndTax}>
+              <Text style={styles.summaryPrice}>ประกันวัสดุอุปกรณ์ถึง</Text>
+              <Text style={styles.summaryPrice}>
+                {convertDateToDDMMYYYY(props.endProductWaranty.toString())}
+              </Text>
+            </View>
+          </>
+        )}
     </TouchableOpacity>
   );
 };
@@ -124,7 +150,7 @@ const styles = StyleSheet.create({
   },
   summaryText: {
     fontSize: 16,
-
+    maxWidth: '70%',
     color: '#19232e',
   },
   summaryPrice: {

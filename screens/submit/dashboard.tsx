@@ -45,6 +45,7 @@ import {
 } from 'react-native-paper';
 import {requestNotifications} from 'react-native-permissions';
 import useFetchSubmissions from '../../hooks/submission/useFetchDashboard'; // adjust the path as needed
+import useCheckSubscription from '../../hooks/useCheckSubscription';
 
 import ProjectModalScreen from '../../components/webview/project';
 import {useModal} from '../../hooks/quotation/create/useModal';
@@ -83,7 +84,10 @@ const DashboardSubmit = ({navigation}: Props) => {
     closeModal: closeProjectModal,
     isVisible: showProjectModal,
   } = useModal();
-  const {dispatch}: any = useContext(Store);
+  const {dispatch,
+    state: {G_subscription},
+  
+  }= useContext(Store);
   const {data, isLoading, isError, error} = useFetchSubmissions();
   const {activeFilter, updateActiveFilter} = useActiveSubmissionFilter();
   const {width, height} = Dimensions.get('window');
@@ -91,6 +95,8 @@ const DashboardSubmit = ({navigation}: Props) => {
   const queryClient = useQueryClient();
   const [selectedItem, setSelectedItem] = useState<Submissions | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const { isVisible, setIsVisible, checkSubscription } = useCheckSubscription();
+
   const [originalData, setOriginalData] = useState<Submissions[] | null>(null);
   const filteredData = useFilteredSubmissionsData(
     originalData,
@@ -137,6 +143,9 @@ const DashboardSubmit = ({navigation}: Props) => {
   };
 
   const removeSubmission = async (id: string) => {
+    if (!checkSubscription()) {
+      return;
+    }
     handleModalClose();
     setIsLoadingAction(true);
     if (!user || !user.uid) {
@@ -180,6 +189,24 @@ const DashboardSubmit = ({navigation}: Props) => {
 
   const confirmRemoveSubmission = (id: string, customerName: string) => {
     setShowModal(false);
+    if (!checkSubscription()) {
+      return;
+    }
+    if(!G_subscription?.isActive){
+      Alert.alert('แพคเกจหมดอายุ','กรุณาต่ออายุแพคเกจเพื่อใช้บริการ',[
+        {
+          text: 'ต่ออายุ',
+          onPress: () => {
+            navigation.navigate('SettingsScreen');
+          },
+        },
+        {
+          text: 'ยกเลิก',
+          onPress: () => {},
+          style: 'cancel',
+        },
+      ]);
+    }
     Alert.alert(
       'ยืนยันลบใบส่งงาน',
       `ลูกค้า ${customerName}`,
@@ -198,6 +225,9 @@ const DashboardSubmit = ({navigation}: Props) => {
   const {mutate: resetStatus, isPending: isReseting} = useResetQuotation();
   const confirmResetQuotation = (id: string, customerName: string) => {
     setShowModal(false);
+    if (!checkSubscription()) {
+      return;
+    }
     Alert.alert(
       'ยืนยันการรีเซ็ตสถานะ',
       `ลูกค้า ${customerName}`,
@@ -268,6 +298,9 @@ const DashboardSubmit = ({navigation}: Props) => {
     setShowModal(false);
   };
   const editSubmission = async (submission: Submissions) => {
+    if (!checkSubscription()) {
+      return;
+    }
     setIsLoadingAction(true);
     dispatch(stateAction.get_edit_submission(submission));
     setIsLoadingAction(false);
@@ -277,6 +310,9 @@ const DashboardSubmit = ({navigation}: Props) => {
   };
 
   const viewSubmission = async (submission: Submissions) => {
+    if (!checkSubscription()) {
+      return;
+    }
     setIsLoadingAction(true);
     dispatch(stateAction.view_submission(submission));
     setIsLoadingAction(false);

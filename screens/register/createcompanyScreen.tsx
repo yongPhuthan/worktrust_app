@@ -39,8 +39,8 @@ import {useUser} from '../../providers/UserContext';
 import {ParamListBase} from '../../types/navigationType';
 import {useUploadToFirebase} from '../../hooks/useUploadtoFirebase';
 import {usePickImage} from '../../hooks/utils/image/usePickImage';
-import {companyValidationSchema} from '../../models/validationSchema';
 import {useCreateToServer} from '../../hooks/useUploadToserver';
+import { User,Company, Account } from '@prisma/client';
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'RegisterScreen'>;
 }
@@ -77,24 +77,21 @@ const CreateCompanyScreen = ({navigation}: Props) => {
     control,
     getValues,
     formState: {isValid, isDirty, errors},
-  } = useForm({
+  } = useForm<User | Company | Account>({
     mode: 'onChange',
     defaultValues: {
       bizName: '',
-      userName: '',
-      userLastName: '',
-      userPosition: '',
-      categoryId: '',
+      name: '',
+      jobPosition: '',
       address: '',
       officeTel: '',
       mobileTel: '',
       bizType: '',
       logo: '',
       companyTax: '',
-      platform: Platform.OS,
       code: '',
     },
-    resolver: yupResolver(companyValidationSchema),
+    // resolver: yupResolver(companyValidationSchema),
   });
 
   const logo = useWatch({
@@ -109,15 +106,10 @@ const CreateCompanyScreen = ({navigation}: Props) => {
     control,
     name: 'bizName',
   });
-  const userName = useWatch({
+  const name = useWatch({
     control,
 
-    name: 'userName',
-  });
-  const userLastName = useWatch({
-    control,
-
-    name: 'userLastName',
+    name: 'name',
   });
 
   const bizType = useWatch({
@@ -130,15 +122,12 @@ const CreateCompanyScreen = ({navigation}: Props) => {
 
     name: 'companyTax',
   });
-  const categoryId = useWatch({
-    control,
-    name: 'categoryId',
-  });
 
-  const userPosition = useWatch({
+
+  const jobPosition = useWatch({
     control,
 
-    name: 'userPosition',
+    name: 'jobPosition',
   });
   const address = useWatch({
     control,
@@ -183,7 +172,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
       if (isLogoError) {
         throw new Error('There was an error uploading the images');
       }
-      if (!downloadUrl) {
+      if (!downloadUrl || !downloadUrl.originalUrl) {
         throw new Error('ไม่สามาถอัพโหลดรูปภาพได้');
       }
       setValue('logo', downloadUrl.originalUrl);
@@ -203,9 +192,8 @@ const CreateCompanyScreen = ({navigation}: Props) => {
   };
 
   const isNextDisabledPage1 =
-    !bizName || !userName || !userLastName || !userPosition || !bizType;
+    !bizName || !name  || !jobPosition || !bizType;
 
-  // !bizName || !userName || !userLastName || !selectedCategories.length;
   const isNextDisabledPage2 = !address || !mobileTel;
   useEffect(() => {
     setValue('code', Math.floor(100000 + Math.random() * 900000).toString());
@@ -239,12 +227,9 @@ const CreateCompanyScreen = ({navigation}: Props) => {
   const handleSave = async () => {
     const data = {
       bizName,
-      userName,
-      userLastName,
-      platform: Platform.OS,
+      userName: name,
       code,
-      userPosition,
-      categoryId,
+      userPosition: jobPosition,
       address,
       officeTel,
       mobileTel,
@@ -371,7 +356,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
                 <View style={{flex: 0.45}}>
                   <Controller
                     control={control}
-                    name="userName"
+                    name="name"
                     render={({
                       field: {onChange, value, onBlur},
                       fieldState: {error},
@@ -381,32 +366,8 @@ const CreateCompanyScreen = ({navigation}: Props) => {
                           mode="outlined"
                           onBlur={onBlur}
                           error={!!error}
-                          label="ชื่อจริงผู้ใช้งาน"
-                          value={value}
-                          onChangeText={onChange}
-                        />
-                        {error && (
-                          <Text style={styles.errorText}>{error.message}</Text>
-                        )}
-                      </View>
-                    )}
-                  />
-                </View>
-                <View style={{flex: 0.45}}>
-                  <Controller
-                    control={control}
-                    name="userLastName"
-                    render={({
-                      field: {onChange, value, onBlur},
-                      fieldState: {error},
-                    }) => (
-                      <View style={{marginBottom: 20}}>
-                        <TextInput
-                          mode="outlined"
-                          onBlur={onBlur}
-                          error={!!error}
-                          label="นามสกุล"
-                          value={value}
+                          label="ชื่อจริง-นามสกุล ผู้ใช้งาน"
+                          value={String(value) }
                           onChangeText={onChange}
                         />
                         {error && (
@@ -419,7 +380,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
               </View>
               <Controller
                 control={control}
-                name="userPosition"
+                name="jobPosition"
                 render={({
                   field: {onChange, value, onBlur},
                   fieldState: {error},
@@ -430,7 +391,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
                       onBlur={onBlur}
                       error={!!error}
                       label="ตำแหน่ง"
-                      value={value}
+                      value={String(value)}
                       onChangeText={onChange}
                     />
                     {error && (
@@ -561,7 +522,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
                           error={!!error}
                           label="เบอร์โทรบริษัท"
                           keyboardType="number-pad"
-                          value={value}
+                          value={String(value)}
                           onChangeText={onChange}
                         />
                         {error && (
@@ -586,7 +547,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
                           error={!!error}
                           label="เบอร์มือถือ"
                           keyboardType="number-pad"
-                          value={value}
+                          value={value ? value.toString() : ''}
                           onChangeText={onChange}
                         />
                         {error && (
@@ -611,7 +572,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
                       error={!!error}
                       keyboardType="number-pad"
                       label="เลขภาษี(ถ้ามี)"
-                      value={value}
+                      value={ value ? value.toString() : ''}
                       onChangeText={onChange}
                     />
                     {error && (

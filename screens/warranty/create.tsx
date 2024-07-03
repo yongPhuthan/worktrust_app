@@ -2,7 +2,7 @@ import {RouteProp} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {useQueryClient} from '@tanstack/react-query';
 import React, {useContext, useState} from 'react';
-import {Resolver, useForm} from 'react-hook-form';
+import {Resolver, useForm, useWatch, FormProvider} from 'react-hook-form';
 import * as yup from 'yup';
 import {
   Alert,
@@ -11,6 +11,7 @@ import {
   SafeAreaView,
   StyleSheet,
   Text,
+  Modal,
   View,
 } from 'react-native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
@@ -19,6 +20,7 @@ import {
   Button,
   Divider,
   IconButton,
+  Switch,
   TextInput,
   Text as TextPaper,
 } from 'react-native-paper';
@@ -36,6 +38,9 @@ import {Quotations} from '@prisma/client';
 import useCreateWarrantyPDF from '../../hooks/warranty/useCreateWarranty';
 import PDFModalScreen from '../../components/webview/pdf';
 import {CompanyState} from 'types';
+import ShowSignature from '../../components/utils/signature/view';
+import SignatureComponent from '../../components/utils/signature/create';
+import SignatureModal from '../../components/utils/signature/select';
 type Props = {
   navigation: StackNavigationProp<ParamListBase>;
   route: RouteProp<ParamListBase, 'CreateWarranty'>;
@@ -51,11 +56,16 @@ const CreateWarranty = (props: Props) => {
     initialDateOffer,
   } = useSelectedDates();
   const {
-    state: {code, editQuotation, companyState, defaultWarranty},
+    openModal: openSignatureModal,
+    closeModal: closeSignatureModal,
+    isVisible: signatureModal,
+  } = useModal();
+  const {
+    state: {code, editQuotation, G_company, defaultWarranty},
     dispatch,
   } = useContext(Store);
 
-  if (!editQuotation || !companyState || !editQuotation.customer) {
+  if (!editQuotation || !G_company || !editQuotation.customer) {
     Alert.alert('ไม่พบข้อมูลใบเสนอราคา');
     navigation.goBack();
     return null;
@@ -72,11 +82,15 @@ const CreateWarranty = (props: Props) => {
   const user = useUser();
   const [copied, setCopied] = useState(false);
   const imageRandomId = uuidv4();
+  const [isLoadingWebP, setIsLoadingWebP] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(
     editQuotation.warranty.pdfUrl ? editQuotation.warranty.pdfUrl : null,
   );
   const [submissionId, setSubmissionId] = useState<string>('');
   const [submissionServerId, setSubmissionServerId] = useState<string | null>(
+    null,
+  );
+  const [selectedSignature, setSelectedSignature] = useState<string | null>(
     null,
   );
 
@@ -118,34 +132,45 @@ const CreateWarranty = (props: Props) => {
     }
   };
 
-  const {
-    control,
-    getValues,
-    setValue,
-    watch,
-    formState: {isValid, errors},
-  } = useForm<Quotations>({
+  const methods = useForm<Quotations>({
     mode: 'all',
     defaultValues: editQuotation,
     resolver,
   });
 
-  const dateWarranty = watch('warranty.dateWaranty');
+  const dateWarranty = methods.watch('warranty.dateWaranty');
 
   const {mutate, isPending} = useCreateWarrantyPDF(actions);
 
   const handleStartDateSelected = (date: Date) => {
-    setValue('warranty.dateWaranty', date, {
+    methods.setValue('warranty.dateWaranty', date, {
       shouldValidate: true,
       shouldDirty: true,
     });
   };
   const handleButtonPress = async () => {
     const data = {
-      quotation: getValues() as Quotations,
-      company: companyState as CompanyState,
+      quotation: methods.getValues() as Quotations,
+      company: G_company as CompanyState,
     };
+    console.log('data', data);
     mutate(data);
+  };
+  const sellerSignature = useWatch({
+    control: methods.control,
+    name: 'warranty.sellerSignature',
+  });
+  const onCloseSignature = () => {
+    closeSignatureModal();
+  };
+  const useSignature = () => {
+    if (sellerSignature) {
+      methods.setValue('warranty.sellerSignature', '', {shouldDirty: true});
+      setSelectedSignature(null);
+      onCloseSignature();
+    } else {
+      openSignatureModal();
+    }
   };
   const renderWanranty = (
     label: string,
@@ -178,12 +203,34 @@ const CreateWarranty = (props: Props) => {
   );
   React.useEffect(() => {
     if (!dateWarranty) {
-      setValue('warranty.dateWaranty', new Date(), {shouldDirty: true});
+      methods.setValue('warranty.dateWaranty', new Date(), {shouldDirty: true});
     }
   }, [dateWarranty]);
+  React.useEffect(() => {
+    const interval = setInterval(async () => {
+      if (sellerSignature && isLoadingWebP) {
+        try {
+          const response = await fetch(sellerSignature);
+          if (response.ok) {
+            setIsLoadingWebP(false);
+          }
+        } catch (error) {
+          console.error('Error checking SignatureImage:', error);
+        }
+      }
+    }, 1500);
 
+    return () => clearInterval(interval);
+  }, [sellerSignature, isLoadingWebP]);
+  React.useEffect(() => {
+    if (selectedSignature) {
+      methods.setValue('sellerSignature', selectedSignature, {
+        shouldDirty: true,
+      });
+    }
+  }, [selectedSignature]);
   return (
-    <View>
+    <FormProvider {...methods}>
       <Appbar.Header
         style={{
           backgroundColor: 'white',
@@ -191,9 +238,8 @@ const CreateWarranty = (props: Props) => {
         elevated
         mode="center-aligned">
         <Appbar.BackAction
-        
           onPress={() => {
-            dispatch(stateAction.reset_edit_quotation() as any);
+            dispatch(stateAction.reset_edit_quotation());
             navigation.goBack();
           }}
         />
@@ -229,11 +275,15 @@ const CreateWarranty = (props: Props) => {
       </Appbar.Header>
 
       <KeyboardAwareScrollView
-        contentContainerStyle={{paddingBottom: 50, margin: 10,marginHorizontal:20}}>
+        contentContainerStyle={{
+          paddingBottom: 200,
+          margin: 10,
+          marginHorizontal: 20,
+        }}>
         {editQuotation.warranty && dateWarranty ? (
           <SafeAreaView style={{flex: 1}}>
             <View style={styles.containerForm}>
-              <TextPaper variant="headlineSmall">การรับประกัน</TextPaper>
+              <TextPaper variant="headlineSmall">ใบรับประกัน</TextPaper>
               <Divider style={{marginTop: 10}} />
 
               <View
@@ -241,28 +291,29 @@ const CreateWarranty = (props: Props) => {
                   flexDirection: 'row',
                   justifyContent: 'space-between',
                   alignItems: 'center',
+                  paddingVertical: 10,
                 }}>
-                <Text style={styles.titleDate}>ลูกค้า</Text>
+                <Text style={styles.signHeader}>ลูกค้า</Text>
                 <View style={{marginTop: 10, marginLeft: 10}}>
                   <TextPaper>{editQuotation.customer.name}</TextPaper>
                 </View>
               </View>
               <DatePickerButton
-                    title="วันที่เริ่มประกัน"
-                    label="วันที่เริ่มประกัน"
-                    date={new Date(dateWarranty)}
-                    onDateSelected={handleStartDateSelected}
-                  />
+                title="วันที่เริ่มประกัน"
+                label="วันที่เริ่มประกัน"
+                date={new Date(dateWarranty)}
+                onDateSelected={handleStartDateSelected}
+              />
 
               <View style={styles.formInput}>
                 {renderWanranty(
                   'รับประกันวัสดุอุปกรณ์',
-                  safeToString(editQuotation.warranty.productWarantyYear),
+                  safeToString(editQuotation.warranty.skillWarrantyMonth),
                   'เดือน',
                 )}
                 {renderWanranty(
                   'รับประกันงานติดตั้ง',
-                  safeToString(editQuotation.warranty.skillWarantyYear),
+                  safeToString(editQuotation.warranty.skillWarrantyMonth),
                   'เดือน',
                 )}
                 {renderWanranty(
@@ -272,6 +323,31 @@ const CreateWarranty = (props: Props) => {
                 )}
               </View>
             </View>
+            <Divider style={{marginVertical: 10}} />
+            <View style={styles.signatureRow}>
+              <Text style={styles.signHeader}>เพิ่มลายเซ็น</Text>
+              <Switch
+                ios_backgroundColor="#3e3e3e"
+                onValueChange={useSignature}
+                value={sellerSignature ? true : false}
+                style={Platform.select({
+                  ios: {
+                    transform: [{scaleX: 0.7}, {scaleY: 0.7}],
+                    marginTop: 5,
+                  },
+                  android: {},
+                })}
+              />
+            </View>
+            {sellerSignature && (
+              <ShowSignature
+                sellerSignature={sellerSignature}
+                isLoadingWebP={isLoadingWebP}
+                setIsLoadingWebP={setIsLoadingWebP}
+              />
+            )}
+            <Divider style={{marginVertical: 10}} />
+
             <View style={styles.containerForm}>
               <TextPaper variant="headlineSmall">
                 เงื่อนไข-ข้อยกเว้นในการรับประกัน
@@ -288,11 +364,19 @@ const CreateWarranty = (props: Props) => {
           <TextPaper>ไม่พบข้อมูลการรับประกัน</TextPaper>
         )}
       </KeyboardAwareScrollView>
+      <SignatureModal
+        visible={signatureModal}
+        onClose={onCloseSignature}
+        sellerSignature={sellerSignature ? sellerSignature : ''}
+        setLoadingWebP={setIsLoadingWebP}
+        title="ลายเซ็นของผู้ขาย"
+        setSelectedSignature={setSelectedSignature}
+      />
 
       {pdfUrl && (
         <>
           <PDFModalScreen
-          fileType='ใบรับประกัน'
+            fileType="ใบรับประกัน"
             fileName={editQuotation.customer.name}
             visible={showPDFModal}
             onClose={closePDFModal}
@@ -300,19 +384,19 @@ const CreateWarranty = (props: Props) => {
           />
         </>
       )}
-    </View>
+    </FormProvider>
   );
 };
 
 export default CreateWarranty;
 
-const {width} = Dimensions.get('window');
+const {width, height} = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   containerForm: {
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 5,
-    marginTop: 40,
+    marginTop: 10,
   },
   container: {
     backgroundColor: '#FFFFFF',
@@ -334,7 +418,7 @@ const styles = StyleSheet.create({
   },
   formCondition: {
     marginTop: 5,
-    paddingBottom: 200,
+    paddingBottom: 20,
   },
   rowForm: {
     flexDirection: 'row',
@@ -357,6 +441,12 @@ const styles = StyleSheet.create({
   },
   whiteText: {
     color: '#FFFFFF',
+  },
+  containerModal: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#fff',
+    width,
   },
   submitButton: {
     backgroundColor: '#0073BA',
@@ -463,6 +553,16 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginTop: 20,
   },
+  signatureRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  signHeader: {
+    flexDirection: 'row',
+    marginTop: 10,
+    fontSize: 16,
+    color: '#19232e',
+  },
   buttonPrevContainerForm: {
     marginTop: 20,
     borderColor: '#0073BA',
@@ -507,6 +607,14 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginTop: 20,
   },
+  modal: {
+    marginTop: 10,
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    borderRadius: 10,
+    height: height * 0.2,
+  },
+
   previousButtonForm: {
     borderColor: '#0073BA',
     backgroundColor: 'white',

@@ -24,7 +24,6 @@ import SettingsScreen from '../screens/setting/setting';
 import Selectworks from '../screens/submit/selectworks';
 import SendWorks from '../screens/submit/sendWorks';
 import Installment from '../screens/utils/installment';
-import TopUpScreen from '../screens/utils/topup';
 import DashboardDrawer from './dashboardDrawer';
 // import BootSplash from "react-native-bootsplash";
 import ContractViewScreen from '../screens/contract/webview';
@@ -45,6 +44,7 @@ import EditMaterials from '../screens/setting/materials/edit';
 import EditGallery from '../screens/setting/gallery/edit';
 import EditStandard from '../screens/setting/standards/edit';
 import DashboardSubmit from '../screens/submit/dashboard';
+import NotificationScreen from '../screens/utils/notifications';
 
 const Theme = {
   ...DefaultTheme,
@@ -188,20 +188,8 @@ const Navigation = ({initialRouteName}: {initialRouteName: keyof ParamListBase |
             headerTintColor: 'black',
           }}
         />
-        <Stack.Screen
-          name="TopUpScreen"
-          component={TopUpScreen}
-          options={{
-            ...commonScreenOptions,
-            headerShown: true,
-            title: 'เติมเครดิต',
-            headerBackTitleVisible: false,
-            headerStyle: {
-              backgroundColor: '#ffffff',
-            },
-            headerTintColor: 'black',
-          }}
-        />
+       
+    
         <Stack.Screen
           name="SendWorks"
           component={SendWorks}
@@ -290,6 +278,20 @@ const Navigation = ({initialRouteName}: {initialRouteName: keyof ParamListBase |
               <Stack.Screen
           name="EditGallery"
           component={EditGallery}
+          options={{
+            ...commonScreenOptions,
+            headerShown: false,
+            title: 'แก้ไขรูปภาพ',
+            headerBackTitleVisible: false,
+            headerStyle: {
+              backgroundColor: '#ffffff',
+            },
+            headerTintColor: 'black',
+          }}
+        />
+          <Stack.Screen
+          name="NotificationScreen"
+          component={NotificationScreen}
           options={{
             ...commonScreenOptions,
             headerShown: false,

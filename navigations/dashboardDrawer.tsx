@@ -5,19 +5,22 @@ import {
   DrawerContentComponentProps,
 } from '@react-navigation/drawer';
 import React from 'react';
-import {SafeAreaView, Text, TouchableOpacity, View} from 'react-native';
+import {SafeAreaView, Dimensions, Image, View} from 'react-native';
 import 'react-native-gesture-handler';
-import {Divider, Drawer as PaperDrawer} from 'react-native-paper';
+import {Divider, IconButton, Drawer as PaperDrawer} from 'react-native-paper';
 import DashboardContract from '../screens/contract/dashboardContract';
 import Dashboard from '../screens/quotation/dashboard';
 import {ParamListBase} from '../types/navigationType';
+
 import DashboardSubmit from '../screens/submit/dashboard';
 import {BRAND_NAME} from '@env';
-import { NavigationContainer, useNavigation } from '@react-navigation/native';
+import {NavigationContainer, useNavigation} from '@react-navigation/native';
 import InvoiceDashboard from '../screens/invoice/dashboard';
 import ReceiptDashboard from '../screens/receipt/dashboard';
 import DashboardWarranty from '../screens/warranty/dashboard';
 import SettingsScreen from '../screens/setting/setting';
+const {width, height} = Dimensions.get('window');
+
 const Drawer = createDrawerNavigator<ParamListBase>();
 const commonScreenOptions = {
   headerTitleStyle: {
@@ -39,15 +42,21 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
     <SafeAreaView style={{flex: 1}}>
       <View
         style={{
-          paddingTop: 20,
-          paddingBottom: 20,
           paddingLeft: 20,
           backgroundColor: '#ffffff',
           alignItems: 'flex-start',
         }}>
-        <Text style={{fontSize: 20, fontWeight: 'bold', color: '#012b20'}}>
+        <Image
+          source={require('../assets/images/logo.png')}
+          style={{
+            height: height * 0.1,
+            width: width * 0.35,
+            resizeMode: 'contain',
+          }}
+        />
+        {/* <Text style={{fontSize: 20, fontWeight: 'bold', color: '#012b20'}}>
           {BRAND_NAME}
-        </Text>
+        </Text> */}
       </View>
       <Divider style={{marginBottom: 20}} />
       <PaperDrawer.Section>
@@ -73,7 +82,6 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
               text: props.state.index === 1 ? 'white' : inactiveTintColor,
             },
           }}
-
         />
         <PaperDrawer.Item
           label="ใบเสร็จรับเงิน"
@@ -85,11 +93,10 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
               text: props.state.index === 2 ? 'white' : inactiveTintColor,
             },
           }}
-
         />
-                <PaperDrawer.Item
+        <PaperDrawer.Item
           label="ใบรับประกัน"
-          icon="file-sign"
+          icon="shield-plus-outline"
           active={props.state.index === 3}
           onPress={() => props.navigation.navigate('DashboardWarranty')}
           theme={{
@@ -98,7 +105,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
             },
           }}
         />
-       <PaperDrawer.Item
+        <PaperDrawer.Item
           label="ส่งงานทั้งหมด"
           icon="file-sign"
           active={props.state.index === 4}
@@ -122,7 +129,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
   );
 }
 
-function DashboardDrawer() {
+function DashboardDrawer(props: DrawerContentComponentProps) {
   return (
     <Drawer.Navigator
       initialRouteName="Dashboard"
@@ -136,72 +143,80 @@ function DashboardDrawer() {
 
           title: 'ใบเสนอราคา',
 
-          // headerRight: () => (
-          //   <TouchableOpacity
-          //     style={{marginRight: 10}}
-          //     onPress={() => {
-          //       /* handle press */
-          //     }}>
-          //     <FontAwesomeIcon icon={faBell} color="#1f303cff" size={22} />
-          //   </TouchableOpacity>
-          // ),
+          headerRight: () => (
+            <IconButton
+              icon="bell"
+              iconColor="#1f303cff"
+              size={22}
+              onPress={() => {
+               props.navigation.navigate('NotificationScreen');
+              }}
+            />
+          ),
           // ... other common options ...
         }}
       />
-    
-            <Drawer.Screen
+
+      <Drawer.Screen
         name="DashboardInvoice"
         component={InvoiceDashboard}
         options={{
           ...commonScreenOptions,
           headerShown: false,
           title: 'ใบวางบิล',
-          // headerRight: () => (
-          //   <TouchableOpacity
-          //     style={{marginRight: 10}}
-          //     onPress={() => {
-          //       /* handle press */
-          //     }}>
-          //     <FontAwesomeIcon icon={faBell} color="#1f303cff" size={22} />
-          //   </TouchableOpacity>
-          // ),
+          headerRight: () => (
+            <IconButton
+              icon="bell"
+              iconColor="#1f303cff"
+              size={22}
+              onPress={() => {
+                props.navigation.navigate('NotificationScreen');
+
+              }}
+            />
+          ),
           // ... other common options ...
         }}
       />
-                  <Drawer.Screen
+      <Drawer.Screen
         name="DashboardReceipt"
         component={ReceiptDashboard}
         options={{
           ...commonScreenOptions,
           headerShown: false,
           title: 'ใบเสร็จรับเงิน',
-          // headerRight: () => (
-          //   <TouchableOpacity
-          //     style={{marginRight: 10}}
-          //     onPress={() => {
-          //       /* handle press */
-          //     }}>
-          //     <FontAwesomeIcon icon={faBell} color="#1f303cff" size={22} />
-          //   </TouchableOpacity>
-          // ),
+          headerRight: () => (
+            <IconButton
+              icon="bell"
+              iconColor="#1f303cff"
+              size={22}
+              onPress={() => {
+                props.navigation.navigate('NotificationScreen');
+
+              }}
+            />
+          ),
           // ... other common options ...
         }}
       />
-        <Drawer.Screen
+      <Drawer.Screen
         name="DashboardWarranty"
         component={DashboardWarranty}
         options={{
           ...commonScreenOptions,
           headerShown: false,
-          title: 'ใบรับประกัน', 
-          // headerRight: () => (
-          //   <TouchableOpacity
-          //     style={{marginRight: 10}}
-          //     onPress={() => {
-          //     }}>
-          //     <FontAwesomeIcon icon={faBell} color="#1f303cff" size={22} />
-          //   </TouchableOpacity>
-          // ),
+          title: 'ใบรับประกัน',
+          headerRight: () => (
+            <IconButton
+              icon="bell"
+              iconColor="#1f303cff"
+              size={22}
+              onPress={() => {
+                props.navigation.navigate('NotificationScreen');
+
+              }}
+            />
+          ),
         }}
       />
       <Drawer.Screen
@@ -211,18 +226,20 @@ function DashboardDrawer() {
           ...commonScreenOptions,
           headerShown: false,
           title: 'ส่งงาน',
-          // headerRight: () => (
-          //   <TouchableOpacity
-          //     style={{marginRight: 10}}
-          //     onPress={() => {
-  
-          //     }}>
-          //     <FontAwesomeIcon icon={faBell} color="#1f303cff" size={22} />
-          //   </TouchableOpacity>
-          // ),
+          headerRight: () => (
+            <IconButton
+              icon="bell"
+              iconColor="#1f303cff"
+              size={22}
+              onPress={() => {
+                props.navigation.navigate('NotificationScreen');
+
+              }}
+            />
+          ),
         }}
       />
-       <Drawer.Screen
+      <Drawer.Screen
         name="SettingsScreen"
         component={SettingsScreen}
         options={{
@@ -233,7 +250,7 @@ function DashboardDrawer() {
           //   <TouchableOpacity
           //     style={{marginRight: 10}}
           //     onPress={() => {
-  
+
           //     }}>
           //     <FontAwesomeIcon icon={faBell} color="#1f303cff" size={22} />
           //   </TouchableOpacity>

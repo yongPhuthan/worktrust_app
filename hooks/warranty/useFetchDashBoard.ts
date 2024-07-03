@@ -55,7 +55,7 @@ const useFetchDashboard = (): UseQueryResult<CompanyQuery, ErrorResponse> => {
     return data;
   };
 
-  const queryKey: QueryKey = ['WarrantyDashboard','dashboardData'];
+  const queryKey: QueryKey = ['WarrantyDashboard'];
 
   const queryOptions: UseQueryOptions<CompanyQuery, ErrorResponse> = {
     queryKey: queryKey,

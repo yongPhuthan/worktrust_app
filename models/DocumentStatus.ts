@@ -8,7 +8,7 @@ import {
 
 export const QuotationsFilterLabels: {[key in QuotationStatus]: string} = {
   [QuotationStatus.ALL]: 'ทั้งหมด',
-  [QuotationStatus.PENDING]: 'รออนุมัติ',
+  [QuotationStatus.PENDING]: 'เสนอราคาแล้ว',
   [QuotationStatus.APPROVED]: 'อนุมัติแล้ว',
   [QuotationStatus.INVOICE_DEPOSIT]: 'มัดจำใบวางบิล',
   [QuotationStatus.RECEIPT_DEPOSIT]: 'มัดจำใบเสร็จ',
@@ -16,6 +16,7 @@ export const QuotationsFilterLabels: {[key in QuotationStatus]: string} = {
   [QuotationStatus.CUSTOMER_APPROVED]: 'ลูกค้าอนุมัติแล้ว',
   [QuotationStatus.CUSTOMER_REJECTED]: 'รอแก้ไข',
   [QuotationStatus.CUSTOMER_REVIEWED]: 'ส่งงานผ่าน-ได้รับรีวิว',
+  [QuotationStatus.EXPIRED]: 'หมดอายุ',
 };
 
 export const InvoicesFilterLabels: {[key in InvoiceStatus]: string} = {

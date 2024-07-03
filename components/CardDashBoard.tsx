@@ -1,4 +1,9 @@
-import {InvoiceStatus, QuotationStatus} from '@prisma/client';
+import {
+  InvoiceStatus,
+  NotificationType,
+  QuotationEventsEmbed,
+  QuotationStatus,
+} from '@prisma/client';
 import React from 'react';
 import {
   Dimensions,
@@ -7,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import {Icon, IconButton} from 'react-native-paper';
 type Props = {
   customerName: string;
   price: number;
@@ -14,6 +20,7 @@ type Props = {
   end: Date;
   status: string;
   onCardPress?: () => void;
+  events?: QuotationEventsEmbed;
 };
 
 const windowWidth = Dimensions.get('window').width;
@@ -51,7 +58,7 @@ const CardDashBoard = (props: Props) => {
             backgroundColor:
               props.status === QuotationStatus.PENDING ||
               props.status === QuotationStatus.CUSTOMER_REJECTED
-                ? '#ccc'
+                ? '#ffdfdf'
                 : props.status === QuotationStatus.APPROVED ||
                   props.status === QuotationStatus.CUSTOMER_REVIEWED
                 ? '#43a047'
@@ -61,7 +68,10 @@ const CardDashBoard = (props: Props) => {
                 ? '#1079ae'
                 : props.status === QuotationStatus.SUBMITTED
                 ? 'orange'
+                : props.status === QuotationStatus.EXPIRED
+                ? '#ccc'
                 : '#ccc',
+
             borderRadius: 4,
             paddingHorizontal: 8,
             paddingVertical: 4,
@@ -70,13 +80,17 @@ const CardDashBoard = (props: Props) => {
           }}>
           <Text
             style={{
-              color: props.status === QuotationStatus.PENDING ? '#000' : '#fff',
+              color:
+                props.status === QuotationStatus.PENDING ||
+                props.status === QuotationStatus.EXPIRED
+                  ? 'black'
+                  : 'white',
               fontSize: 12,
               fontWeight: 'bold',
               textTransform: 'uppercase',
             }}>
             {props.status === QuotationStatus.PENDING
-              ? 'รออนุมัติ'
+              ? 'เสนอราคาแล้ว'
               : props.status === QuotationStatus.APPROVED
               ? 'อนุมัติแล้ว'
               : props.status === QuotationStatus.INVOICE_DEPOSIT
@@ -91,15 +105,66 @@ const CardDashBoard = (props: Props) => {
               ? 'ลูกค้ารีวิวแล้ว'
               : props.status === QuotationStatus.CUSTOMER_APPROVED
               ? 'ลูกค้าอนุมัติแล้ว'
+              : props.status === QuotationStatus.EXPIRED
+              ? 'หมดอายุ'
               : ''}
           </Text>
         </View>
       )}
 
       <View style={styles.telAndTax}>
-        <Text style={styles.summaryPrice}>
+        {props.events && (
+          <View
+            style={{
+              flexDirection: 'row',
+              gap: 25,
+              marginTop: 10,
+            }}>
+            {props.events.pageView > 0 && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'flex-start',
+                  gap: 10,
+                }}>
+                <Icon source="eye" color="gray" size={20} />
+                <Text>{props.events.pageView}</Text>
+              </View>
+            )}
+
+            {props.events.download > 0 && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'flex-start',
+
+                  gap: 10,
+                }}>
+                <Icon source="download" color="gray" size={20} />
+                <Text>{props.events.download}</Text>
+              </View>
+            )}
+            {props.events.print > 0 && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'flex-start',
+
+                  gap: 10,
+                }}>
+                <Icon source="printer" color="gray" size={20} />
+                <Text>{props.events.print}</Text>
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* <Text style={styles.summaryPrice}>
           วันที่ {convertDateToDDMMYYYY(props.date.toString())}
-        </Text>
+        </Text> */}
         <Text style={styles.summaryPrice}>
           สิ้นสุด {convertDateToDDMMYYYY(props.end.toString())}
         </Text>
@@ -155,7 +220,7 @@ const styles = StyleSheet.create({
   },
   summaryText: {
     fontSize: 16,
-
+    maxWidth: '70%',
     color: '#19232e',
   },
   summaryPrice: {

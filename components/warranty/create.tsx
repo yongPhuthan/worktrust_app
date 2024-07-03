@@ -144,13 +144,13 @@ const isDisbled =  warranty.productWarantyYear === 0 || warranty.skillWarantyYea
 
               <View style={styles.formInput}>
                 {renderWanranty(
-                  'warranty.productWarantyYear',
+                  'warranty.productWarrantyMonth',
                   'รับประกันวัสดุอุปกรณ์กี่เดือน',
                   safeToString(warranty.productWarantyYear),
                   'เดือน',
                 )}
                 {renderWanranty(
-                  'warranty.skillWarantyYear',
+                  'warranty.skillWarrantyMonth',
                   'รับประกันงานติดตั้งกี่เดือน',
                   safeToString(warranty.skillWarantyYear),
                   'เดือน',

@@ -45,7 +45,7 @@ const CardDashBoard = (props: Props) => {
 
         {/* <FontAwesomeIcon icon={faChevronRight} size={24} color="#19232e" /> */}
       </View>
-      {props.status?.length > 0 && (
+      {/* {props.status?.length > 0 && (
         <View
           style={{
             backgroundColor:
@@ -78,7 +78,7 @@ const CardDashBoard = (props: Props) => {
               : ''}
           </Text>
         </View>
-      )}
+      )} */}
 
       <View style={styles.telAndTax}>
         <Text style={styles.summaryPrice}>

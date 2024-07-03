@@ -20,7 +20,7 @@ interface Props {
   route: RouteProp<ParamListBase, 'PDFViewScreen'>;
 }
 const PDFViewScreen = ({navigation, route}: Props) => {
-  const {pdfUrl, fileName,fileType} = route.params;
+  const {pdfUrl, fileName, fileType} = route.params;
 
   const [isLoading, setIsLoading] = useState(false);
   const source = {uri: pdfUrl, cache: false};
@@ -45,12 +45,12 @@ const PDFViewScreen = ({navigation, route}: Props) => {
   };
   const handleShareFile = async () => {
     let dirs = ReactNativeBlobUtil.fs.dirs;
-    
+
     const type = 'application/pdf'; // MIME type
     const configOptions = {
       fileCache: true,
       path: `${dirs.DocumentDir}/${fileType}_${fileName}.pdf`,
-      
+
       addAndroidDownloads: {
         useDownloadManager: true,
         notification: true,
@@ -68,7 +68,6 @@ const PDFViewScreen = ({navigation, route}: Props) => {
           type: type,
           url: 'file://' + filePath,
           fileName: `${fileType}_${fileName}.pdf`,
-
         };
 
         await Share.open(options);
@@ -139,19 +138,15 @@ const PDFViewScreen = ({navigation, route}: Props) => {
             fontFamily: 'Sukhumvit Set Bold',
           }}
         />
-        <Appbar.Action  icon="download"  onPress={downloadFile} />
-        <Appbar.Action  icon="printer" onPress={printRemotePDF} />
-        <Appbar.Action
-          
-            icon="share-variant"
-            onPress={handleShareFile}
-          />
+        <Appbar.Action icon="download" onPress={downloadFile} />
+        <Appbar.Action icon="printer" onPress={printRemotePDF} />
+        <Appbar.Action icon="share-variant" onPress={handleShareFile} />
       </Appbar.Header>
 
       <SafeAreaView style={{flex: 1}}>
         <View style={{flex: 1}}>
           <Pdf
-            source={source}
+            source={{uri: pdfUrl, cache: false}}
             onLoadComplete={(numberOfPages, filePath) => {
               console.log(`Number of pages: ${numberOfPages}`);
             }}
