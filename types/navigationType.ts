@@ -77,6 +77,7 @@ export type ParamListBase = {
     data: Quotations;
     quotationId: string;
   };
+  
   DashboardQuotation: undefined;
   SelectDoc: undefined;
   DashboardInvoice: undefined;

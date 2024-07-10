@@ -118,6 +118,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
       });
   }, [refetch]);
   const handleErrorResponse = (error: ErrorResponse) => {
+
     switch (error.message) {
       case 'logout':
         console.log('Unhandled error logout action:', error.message);

@@ -23,6 +23,7 @@ import {
   WorkerStatus,
   DefaultStandards,
   WarrantyStatus,
+  QuotationEventsEmbed,
 } from '@prisma/client';
 import { first } from 'lodash';
 import * as yup from 'yup';
@@ -40,12 +41,22 @@ export const customerSchemas: yup.ObjectSchema<CustomerEmbed> = yup.object({
   phone: yup.string().required('ระบุเบอร์โทรศัพท์'),
 });
 
+
 export const inspectorValidationSchema: yup.ObjectSchema<InspectorEmbed> = yup.object().shape({
   name: yup.string().required('ระบุชื่อผู้ตรวจสอบ'),
   image: yup.string().required('ระบุรูปภาพของผู้ตรวจสอบ'),
   provider: yup.string().required('ระบุผู้ให้บริการ'),
   providerAccountId: yup.string().required('ระบุ Provider Account ID'),
   email: yup.string().email('รูปแบบอีเมลไม่ถูกต้อง').required('ระบุอีเมล'),
+});
+
+export const quotationEventsEmbed : yup.ObjectSchema<QuotationEventsEmbed> = yup.object().shape({
+  pageView : yup.number().default(0),
+  download : yup.number().default(0),
+  print : yup.number().default(0),
+  share : yup.number().default(0),
+  createdAt: yup.date().default(() => new Date()),
+  lastOccurredAt: yup.date().default(() => new Date()),
 });
 
 export const rejectValidationSchema: yup.ObjectSchema<RejectEmbed> = yup.object().shape({
@@ -165,16 +176,18 @@ export const serviceValidationSchema: yup.ObjectSchema<ServicesEmbed> =
 
 export const warrantySchemas: yup.ObjectSchema<WarrantyEmbed> = yup.object({
   id: yup.string().required('ระบุ ID'),
-  productWarantyYear: yup
+  sellerSignature: yup.string().nullable().default(null),
+  productWarrantyMonth: yup
     .number()
     .default(0)
     .required('ระบุระยะเวลาประกันสินค้า'),
-  skillWarantyYear: yup.number().required('ระบุระยะเวลาประกันบริการ'),
+  skillWarrantyMonth: yup.number().required('ระบุระยะเวลาประกันบริการ'),
   pdfUrl : yup.string().nullable().default(null),
   fixDays: yup.number().default(0).required('ระบุจำนวนวันซ่อม'),
   condition: yup.string().required('ระบุเงื่อนไขการรับประกัน'),
   dateWaranty: yup.date().nullable().default(null),
-  endWaranty: yup.date().nullable().default(null),
+  endProductWarranty: yup.date().nullable().default(null),
+  endSkillWarranty: yup.date().nullable().default(null),
 });
 
 
@@ -203,6 +216,19 @@ export const quotationsValidationSchema: yup.ObjectSchema<QuotationWithoutArrays
     customer: customerSchemas.required(),
     customerSign : customerSignSchema,
     vat7: yup.number().default(0),
+    sellerEmbed: yup.object({
+      bizName : yup.string().required('ระบุชื่อบริษัท'),
+      officeTel : yup.string().nullable().default(null),
+      mobileTel : yup.string().nullable().default(null),
+      companyTax : yup.string().nullable().default(null),
+      logo : yup.string().nullable().default(null),
+      sellerName : yup.string().nullable().default(null),
+      email : yup.string().email().nullable().default(null),
+      address : yup.string().required('ระบุที่อยู่'),
+
+    }),
+    isArchived: yup.boolean().default(false),
+    events: quotationEventsEmbed,
     taxType: yup.mixed<TaxType>().oneOf(Object.values(TaxType)).required('ระบุประเภทภาษี').default(TaxType.NOTAX),
     taxValue: yup.number().required().default(0),
     summary: yup.number().required(),

@@ -44,6 +44,7 @@ const useFetchDashboard = (): UseQueryResult<CompanyQuery, ErrorResponse> => {
     );
 
     if (!response.ok) {
+      console.error('Error from server:', response.statusText);
       const errorData: ErrorResponse = await response.json();
       queryClient.setQueryData(queryKey, {error: errorData});
       throw new Error(errorData.action);

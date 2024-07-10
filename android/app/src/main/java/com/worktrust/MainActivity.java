@@ -2,6 +2,10 @@ package com.worktrust;
 
 import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactActivityDelegate;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.appcheck.FirebaseAppCheck;
+import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory;
+
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint;
 import com.facebook.react.defaults.DefaultReactActivityDelegate;
 import android.os.Bundle;
@@ -35,5 +39,12 @@ public class MainActivity extends ReactActivity {
   protected void onCreate(Bundle savedInstanceState) {
     // RNBootSplash.init(this, R.style.BootTheme); // ⬅️ initialize the splash screen
     super.onCreate(savedInstanceState); // super.onCreate(null) with react-native-screens
+     // Initialize Firebase App
+    FirebaseApp.initializeApp(/*context=*/ this);
+
+    // Initialize Firebase App Check
+    FirebaseAppCheck firebaseAppCheck = FirebaseAppCheck.getInstance();
+    firebaseAppCheck.installAppCheckProviderFactory(
+        PlayIntegrityAppCheckProviderFactory.getInstance());
   }
 }

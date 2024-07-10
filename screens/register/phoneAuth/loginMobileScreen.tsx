@@ -4,7 +4,6 @@ import React, {useRef, useState} from 'react';
 import {Dimensions, SafeAreaView, StyleSheet, View, Alert} from 'react-native';
 import {Appbar, Button, Text, TextInput} from 'react-native-paper';
 import firebase from '../../../firebase';
-
 import {FirebaseAuthTypes} from '@react-native-firebase/auth';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {Controller, set, useForm} from 'react-hook-form';
@@ -64,20 +63,19 @@ const LoginMobileScreen = ({navigation}: Props) => {
     }
     return phoneNumber; // return the original if it doesn't start with '0'
   };
-  const signInWithPhoneNumber = handleSubmit(async data => {
+  const signInWithPhoneNumber = handleSubmit(async (data) => {
     try {
       setIsLoading(true);
-      const {phoneNumber} = data; // destructuring phoneNumber from the form data
+      const { phoneNumber } = data; // destructuring phoneNumber from the form data
       const formattedPhoneNumber = formatPhoneNumber(phoneNumber); // Format the phone number
-
-      const confirmation = await firebase
-        .auth()
-        .signInWithPhoneNumber(formattedPhoneNumber);
+  
+      const confirmation = await firebase.auth().signInWithPhoneNumber(formattedPhoneNumber);
       // Proceed with the confirmation process
       setConfirm(confirmation);
-      //get refId from sms
+  
+      // Start the timer
       setInterval(() => {
-        setTimer(prevTimer => (prevTimer > 0 ? prevTimer - 1 : 0));
+        setTimer((prevTimer) => (prevTimer > 0 ? prevTimer - 1 : 0));
       }, 1000);
     } catch (error) {
       console.error(error);
@@ -86,7 +84,6 @@ const LoginMobileScreen = ({navigation}: Props) => {
       setIsLoading(false);
     }
   });
-
   const resendCode = async () => {
     if (code) {
      setCode('');
@@ -143,7 +140,6 @@ const LoginMobileScreen = ({navigation}: Props) => {
     setOtp(newOtp);
   };
   const isOtpComplete = otp.every(digit => digit.trim().length === 1);
-
   // Function to focus the previous input
   const focusPreviousInput = (key: string, index: number) => {
     if (key === 'Backspace' && index > 0) {

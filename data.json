@@ -1,7 +1,83 @@
-[{
-    "beforeImages": [{
-        "thumbnailUrl": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/879243%2Fgallery%2Fthumbnail%2F1719974104018.webp?alt=media&token=a21efa2c-94f5-4fff-84c1-1ab38be011f1",
-        "originalUrl": "http://127.0.0.1:9199/v0/b/worktrust-b9c02.appspot.com/o/879243%2Fgallery%2Foriginal%2F1719974103251.webp?alt=media&token=d5395d24-7abe-4795-a4ce-1114ac970d54"
+{
+    "FCMToken": "c7oNHFFCRaSxzI6OSPNJbY:APA91bH1kgcTfmT3EdvNCGDvKmHT8AA-ZXJBQC_fhrzbYRGThydufbjwwl3dwNqcSn54OfYPQxedPYZYDf5l-WDtb_DGvlNQRbSAG9-wi9ICjxam3gBsjXhRedeRvjLCbwA5lcKTHpxT",
+    "allTotal": 8990,
+    "companyId": "66506d9e0788fe9d482f9dc7",
+    "created": 2024 - 07 - 10 T15: 43: 05.419 Z,
+    "customer": {
+        "address": "Address2",
+        "customerTax": "",
+        "id": "445ed571-c966-45f8-83df-0037f267078d",
+        "name": "Customer2",
+        "phone": "05354467"
+    },
+    "customerSign": null,
+    "dateApproved": null,
+    "dateEnd": 2024 - 07 - 17 T15: 43: 05.409 Z,
+    "dateOffer": 2024 - 07 - 10 T15: 43: 05.409 Z,
+    "deposit": null,
+    "discountPercentage": 0,
+    "discountType": "PERCENT",
+    "discountValue": 0,
+    "docNumber": "QT20240710937",
+    "events": null,
+    "id": "f853f857-5a78-4bbe-acda-5a9b58a6a323",
+    "isArchived": false,
+    "noteToCustomer": "Customer note",
+    "noteToTeam": null,
+    "pdfUrl": null,
+    "sellerEmbed": {
+        "address": "7/44 หมู่ 5 ต.อ้อมใหญ่  อ.เมือง จะ.เชียงใหม่",
+        "bizName": "Doubledoor engineering",
+        "companyTax": "1100800667422",
+        "email": "example@email.com",
+        "logo": "https://firebasestorage.googleapis.com/v0/b/worktrust-images/o/logo%2FDoubledoor%20engineering%7D%2Foriginal%2F1716786130728.webp?alt=media&token=4f1f695e-ea9d-43f7-908d-6a504e1ac5e8",
+        "mobileTel": "",
+        "officeTel": "053306426",
+        "sellerName": "Phuthan"
+    },
+    "sellerId": undefined,
+    "sellerSignature": "https://firebasestorage.googleapis.com/v0/b/worktrust-b9c02.appspot.com/o/348098%2Fsignature%2Fsignature348098d66e7672-16d8-40f0-9ca6-7a1e55e047d5.webp?alt=media&token=6727d1a6-05ff-4661-9f7c-ece4b79110bb",
+    "services": [{
+        "created": "2024-06-06T07:49:23.255Z",
+        "description": "กระจกเทมเปอร์เขียวตัดแสง",
+        "discountType": "NONE",
+        "discountValue": 0,
+        "id": "1bc2c260-642f-4701-8551-2d8a7b0042f0",
+        "materials": [Array],
+        "qty": 1,
+        "serviceImages": [Array],
+        "standards": [Array],
+        "title": "ประตูบานเฟี้ยมอลูมิเนียม",
+        "total": 8990,
+        "unit": "ชุด",
+        "unitPrice": 8990
     }],
-    "afterImages": []
-}]
+    "status": "PENDING",
+    "summary": 8990,
+    "summaryAfterDiscount": 8990,
+    "taxType": "NOTAX",
+    "taxValue": 0,
+    "updated": 2024 - 07 - 10 T15: 43: 05.419 Z,
+    "vat7": 0,
+    "warranty": {
+        "condition": "รับประกันคุณภาพตัวสินค้า ตามมาตรฐานในการใช้งานตามปกติเท่านั้น ขอสงวนสิทธ์การรับประกันที่เกิดจากการใช้งานสินค้าที่ไม่ถูกต้องหรือความเสียหายที่เกิดจากภัยธรรมชาติ หรือ การใช้งานผิดประเภทหรือปัญหาจากการกระทําของบคุคลอื่น เช่นความเสียหายที่เกิดจากการทำงานของผู้รับเหมาทีมอื่นหรือบุคคลที่สามโดยตั้งใจหรือไม่ได้ตั้งใจ",
+        "dateWaranty": null,
+        "endWaranty": null,
+        "fixDays": 12,
+        "pdfUrl": null,
+        "productWarantyYear": 24,
+        "productWarrantyMonth": 24,
+        "sellerSignature": null,
+        "skillWarantyYear": 12,
+        "skillWarrantyMonth": 24
+    },
+    "warrantyStatus": "PENDING",
+    "workers": [{
+        "companyId": "66506d9e0788fe9d482f9dc7",
+        "id": "667fa871d96442a95df92c5c",
+        "image": "https://firebasestorage.googleapis.com/v0/b/worktrust-b9c02.appspot.com/o/users%2F348098%2Fimages%2Fworkers%2FPhillips%20Foldden%2Foriginal%2F1719618243525.webp?alt=media&token=923e2f2f-832d-438b-9c96-74694504a2ce",
+        "mainSkill": "Aluminium",
+        "name": "Phillips Foldden2",
+        "workerStatus": "MAINWORKER"
+    }]
+}

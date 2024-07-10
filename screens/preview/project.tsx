@@ -1,27 +1,23 @@
-import {RouteProp} from '@react-navigation/native';
-import {StackNavigationProp} from '@react-navigation/stack';
-import React, {useState} from 'react';
+import { RouteProp } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import React from 'react';
 import {
-  Alert,
-  Dimensions,
-  SafeAreaView,
-  StyleSheet,
-  Platform,
+  SafeAreaView
 } from 'react-native';
-import {FAB, Appbar, Button} from 'react-native-paper';
-import {WebView} from 'react-native-webview';
-import {ParamListBase} from '../../types/navigationType';
-import Share from 'react-native-share';
-import ReactNativeBlobUtil from 'react-native-blob-util';
+import { Appbar } from 'react-native-paper';
+import { WebView } from 'react-native-webview';
 import useShare from '../../hooks/webview/useShare';
+import { ParamListBase } from '../../types/navigationType';
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'ProjectViewScreen'>;
   route: RouteProp<ParamListBase, 'ProjectViewScreen'>;
 }
 const ProjectViewScreen = ({navigation, route}: Props) => {
   const {id,fileName} = route.params;
-  const [url, setUrl] = useState(`https://www.worktrust.co/preview/${id}`);
-  const handleShare = useShare({url, title: `ใบเสนอราคา ${fileName}`});
+  let urlPreview = `https://project.worktrust.co/preview/seller/${id}`;
+  let urlShare = `https://project.worktrust.co/preview/${id}`;
+  
+  const handleShare = useShare({url:urlShare, title: `ใบเสนอราคา ${fileName}`});
   return (
     <>
       <Appbar.Header
@@ -62,7 +58,7 @@ const ProjectViewScreen = ({navigation, route}: Props) => {
             const {nativeEvent} = syntheticEvent;
             console.error('HTTP error status code: ', nativeEvent.statusCode);
           }}
-          source={{uri: url}}
+          source={{uri: urlPreview}}
         />
       </SafeAreaView>
     </>

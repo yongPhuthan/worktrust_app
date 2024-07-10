@@ -5,7 +5,6 @@ import {ActivityIndicator, StyleSheet, View} from 'react-native';
 import {useUser} from '../providers/UserContext';
 import DefaultContract from '../screens/contract/defaultContract';
 import AddCustomer from '../screens/customer/addCustomer';
-import AddProductForm from '../screens/products/addProduct';
 import Quotation from '../screens/quotation/create';
 import DocViewScreen from '../screens/quotation/webview';
 import CreateCompanyScreen from '../screens/register/createcompanyScreen';
@@ -145,20 +144,7 @@ const Navigation = ({initialRouteName}: {initialRouteName: keyof ParamListBase |
         <Stack.Screen name="PDFViewScreen" component={PDFViewScreen} />
         <Stack.Screen name="ProjectViewScreen" component={ProjectViewScreen} />
 
-        <Stack.Screen
-          name="AddProduct"
-          component={AddProductForm}
-          options={{
-            ...commonScreenOptions,
-            headerShown: false,
-            title: 'เพิ่มรายการ-สินค้า',
-            headerBackTitleVisible: false,
-            headerStyle: {
-              backgroundColor: '#ffffff',
-            },
-            headerTintColor: 'black',
-          }}
-        />
+        
 
         <Stack.Screen
           name="SelectWorks"

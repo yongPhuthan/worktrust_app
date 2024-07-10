@@ -7,12 +7,17 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:993294654596:android:c7fd5bcbc2a7134800f6d1",
+        "mobilesdk_app_id": "1:993294654596:android:f6526a7f67532fbb00f6d1",
         "android_client_info": {
           "package_name": "com.worktrust"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "993294654596-at4fr7q39r27pljt1ebk1e8a0griabj3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyC12hYu9FV7wEI9DCeGGIJ7RWzC2TbDv88"
@@ -20,7 +25,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "993294654596-at4fr7q39r27pljt1ebk1e8a0griabj3.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

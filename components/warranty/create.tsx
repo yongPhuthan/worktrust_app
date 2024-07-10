@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, {useContext,useMemo} from 'react';
 import {
   Dimensions,
   Modal,
@@ -8,17 +8,18 @@ import {
   Text,
   View,
 } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {
   Appbar,
   Button,
   Divider,
   TextInput,
-  Text as TextPaper
+  Text as TextPaper,
 } from 'react-native-paper';
-import { Store } from '../../redux/store';
+import {Store} from '../../redux/store';
 
-import { Controller, useFormContext } from 'react-hook-form';
+import {Controller, useFormContext} from 'react-hook-form';
+import {WarrantyEmbed} from '@prisma/client';
 
 type Props = {
   onClose: () => void;
@@ -32,25 +33,23 @@ const WarrantyModal = (props: Props) => {
     state: {defaultWarranty},
   } = useContext(Store);
 
-
   const context = useFormContext();
 
-  const {
-    register,
-    control,
-    getValues,
-    setValue,
-    watch,
-    
-  } = context 
+  const {register, control, getValues, setValue, watch} = context;
 
-  const warranty = watch('warranty');
+  const warranty: WarrantyEmbed = watch('warranty');
 
   function safeToString(value: string | number | null | undefined) {
     return value !== undefined && value !== null ? value.toString() : '';
   }
 
-const isDisbled =  warranty.productWarantyYear === 0 || warranty.skillWarantyYear === 0 || warranty.fixDays === 0 || warranty.condition === ''
+  const isDisabled = useMemo(() => 
+    warranty.productWarrantyMonth === 0 ||
+    warranty.skillWarrantyMonth === 0 ||
+    warranty.fixDays === 0 ||
+    warranty.condition === '',
+    [warranty.productWarrantyMonth, warranty.skillWarrantyMonth, warranty.fixDays, warranty.condition]
+  );
 
   const renderWanranty = (
     name: string,
@@ -99,7 +98,7 @@ const isDisbled =  warranty.productWarantyYear === 0 || warranty.skillWarantyYea
               />
             </View>
           )}
-          name={name as any}
+          name={name}
         />
       </View>
     </>
@@ -126,10 +125,9 @@ const isDisbled =  warranty.productWarantyYear === 0 || warranty.skillWarantyYea
           }}
         />
         <Button
-          disabled={isDisbled}
+          disabled={isDisabled}
           mode="outlined"
-          onPress={()=> onClose()
-          }
+          onPress={() => onClose()}
           style={{marginRight: 5}}>
           {'บันทึก'}
         </Button>
@@ -146,13 +144,13 @@ const isDisbled =  warranty.productWarantyYear === 0 || warranty.skillWarantyYea
                 {renderWanranty(
                   'warranty.productWarrantyMonth',
                   'รับประกันวัสดุอุปกรณ์กี่เดือน',
-                  safeToString(warranty.productWarantyYear),
+                  safeToString(warranty.productWarrantyMonth),
                   'เดือน',
                 )}
                 {renderWanranty(
                   'warranty.skillWarrantyMonth',
                   'รับประกันงานติดตั้งกี่เดือน',
-                  safeToString(warranty.skillWarantyYear),
+                  safeToString(warranty.skillWarrantyMonth),
                   'เดือน',
                 )}
                 {renderWanranty(
@@ -215,13 +213,13 @@ const isDisbled =  warranty.productWarantyYear === 0 || warranty.skillWarantyYea
 
               <View style={styles.formInput}>
                 {renderWanranty(
-                  'warranty.productWarantyYear',
+                  'warranty.productWarrantyMonth',
                   'รับประกันวัสดุอุปกรณ์กี่เดือน',
                   '',
                   'เดือน',
                 )}
                 {renderWanranty(
-                  'warranty.skillWarantyYear',
+                  'warranty.skillWarrantyMonth',
                   'รับประกันงานติดตั้งกี่เดือน',
                   '',
                   'เดือน',
@@ -258,13 +256,12 @@ const isDisbled =  warranty.productWarantyYear === 0 || warranty.skillWarantyYea
                       )}
                       <TextInput
                         style={{
-                          
                           width: Dimensions.get('window').width * 0.9,
-                        height: Dimensions.get('window').height * 0.3
+                          height: Dimensions.get('window').height * 0.3,
                         }}
                         textAlign="center"
-                        defaultValue='
-                        รับประกันคุณภาพตัวสินค้า ตามมาตรฐานในการใช้งานตามปกติเท่านั้น ขอสงวนสิทธ์การรับประกันที่เกิดจากการใช้งานสินค้าที่ไม่ถูกต้องหรือความเสียหายที่เกิดจากภัยธรรมชาติ หรือ การใช้งานผิดประเภทหรือปัญหาจากการกระทําของบคุคลอื่น เช่นความเสียหายที่เกิดจากการทำงานของผู้รับเหมาทีมอื่นหรือบุคคลที่สามโดยตั้งใจหรือไม่ได้ตั้งใจ'
+                        defaultValue="
+                        รับประกันคุณภาพตัวสินค้า ตามมาตรฐานในการใช้งานตามปกติเท่านั้น ขอสงวนสิทธ์การรับประกันที่เกิดจากการใช้งานสินค้าที่ไม่ถูกต้องหรือความเสียหายที่เกิดจากภัยธรรมชาติ หรือ การใช้งานผิดประเภทหรือปัญหาจากการกระทําของบคุคลอื่น เช่นความเสียหายที่เกิดจากการทำงานของผู้รับเหมาทีมอื่นหรือบุคคลที่สามโดยตั้งใจหรือไม่ได้ตั้งใจ"
                         multiline
                         numberOfLines={4}
                         error={!!error}

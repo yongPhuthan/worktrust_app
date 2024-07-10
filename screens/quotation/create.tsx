@@ -136,7 +136,7 @@ const Quotation = ({navigation}: Props) => {
 
   const [serviceIndex, setServiceIndex] = useState<number>(0);
 
-  const url = `https://www.worktrust.co/preview/${quotationServerId}`;
+  const url = `https://project.worktrust.co/preview/seller/${quotationServerId}`;
 
   const {
     openModal: openAddCustomerModal,
@@ -182,7 +182,6 @@ const Quotation = ({navigation}: Props) => {
   const [visibleModalIndex, setVisibleModalIndex] = useState<number | null>(
     null,
   );
-
   const sellerEmbed: SellerEmbed = {
     bizName: G_company.bizName,
     sellerName: G_user.name,
@@ -321,10 +320,13 @@ const Quotation = ({navigation}: Props) => {
     return customer.name === '' && customer.address === '';
   }, [customer.name, customer.address]);
 
-  const isDisabled = !customer.name || services.length === 0;
-  useEffect(() => {
+  const isDisabled = useMemo(() => 
+    !customer.name || services.length === 0 || warranty.productWarrantyMonth <= 0 || warranty.skillWarrantyMonth <= 0,
+    [customer.name, services.length, warranty.productWarrantyMonth, warranty.skillWarrantyMonth]
+  );  useEffect(() => {
     methods.setValue('FCMToken', fcmToken);
   }, [dateEndFormatted, fcmToken, methods]);
+
   const [openNoteToCustomer, setOpenNoteToCustomer] = useState(
     noteToCustomer ? true : false,
   );
@@ -539,7 +541,7 @@ const Quotation = ({navigation}: Props) => {
 
           <Button
             loading={isPending || isUpdatePending}
-            disabled={isDisabled || isPending || isUpdatePending}
+            disabled={isDisabled || isPending || isUpdatePending  }
             testID="submited-button"
             mode="contained"
             onPress={handleButtonPress}>
@@ -631,10 +633,10 @@ const Quotation = ({navigation}: Props) => {
 
                 {warranty ? (
                   <Button
+                  icon={'plus'}
                     onPress={() => {
                       openContractModal();
                     }}
-                    // icon={'visible'}
                     children="รายละเอียดการรับประกัน"
                     mode="outlined"
                   />

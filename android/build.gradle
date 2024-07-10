@@ -2,15 +2,13 @@
 
 buildscript {
     ext {
-        buildToolsVersion = "33.0.0"
-   pdfViewerVersion = "3.2.0-beta.1"
-           pdfViewerRepo = "com.github.mhiew"
+        buildToolsVersion = "34.0.0"
+        pdfViewerVersion = "3.2.0-beta.1"
+        pdfViewerRepo = "com.github.mhiew"
         minSdkVersion = 23
         compileSdkVersion = 34
         targetSdkVersion = 34
-        
-googlePlayServicesAuthVersion = "19.2.0" 
-        // We use NDK 23 which has both M1 support and is the side-by-side NDK version from AGP.
+        googlePlayServicesAuthVersion = "20.2.0" // อัปเดตเวอร์ชัน
         ndkVersion = "23.1.7779620"
     }
     repositories {
@@ -18,10 +16,9 @@ googlePlayServicesAuthVersion = "19.2.0"
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle")
-        classpath 'com.google.gms:google-services:4.4.1'
+        classpath("com.android.tools.build:gradle:8.0.2") // อัปเดตเวอร์ชัน
         classpath 'com.google.firebase:firebase-crashlytics-gradle:2.9.9'
-        classpath("com.facebook.react:react-native-gradle-plugin")
-
+        classpath 'com.google.gms:google-services:4.4.2'
+        classpath("com.facebook.react:react-native-gradle-plugin:0.72.3") // อัปเดตเวอร์ชัน
     }
 }
