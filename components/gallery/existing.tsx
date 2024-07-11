@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {ActivityIndicator, Appbar, Button,Checkbox} from 'react-native-paper';
+import {ActivityIndicator, Appbar, Button, Checkbox} from 'react-native-paper';
 import firebase from '../../firebase';
 import {useUser} from '../../providers/UserContext';
 
@@ -89,7 +89,6 @@ const GalleryScreen = ({
     dispatch,
   } = useContext(Store);
 
-
   const handleCheckbox = (id: string) => {
     const updatedData = galleryImages.map(img => {
       if (img.id === id) {
@@ -104,7 +103,7 @@ const GalleryScreen = ({
       .map(img => img.url);
     setValue('serviceImages', urls, {shouldDirty: true});
   };
-    const toggleTag = (tag: string) => {
+  const toggleTag = (tag: string) => {
     setSelectedTags(prev =>
       prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag],
     );
@@ -177,7 +176,7 @@ const GalleryScreen = ({
     // Filter gallery images based on AND logic for multiple tags
     if (newSelectedTags.length > 0) {
       const filteredImages = initialGalleryImages.filter(image =>
-        newSelectedTags.every(tag => image.tags.includes(tag))
+        newSelectedTags.every(tag => image.tags.includes(tag)),
       );
       setGalleryImages(filteredImages);
       setValue('serviceImages', [], {shouldDirty: true});
@@ -185,17 +184,20 @@ const GalleryScreen = ({
       // No tags are selected, show all images
       setGalleryImages(initialGalleryImages);
       setValue('serviceImages', [], {shouldDirty: true});
-
     }
   };
 
   const sortedGalleryImages = React.useMemo(() => {
     if (!galleryImages) return [];
-    const validImages = galleryImages.filter(item => item.url && item.url.thumbnailUrl);
-    const invalidImages = galleryImages.filter(item => !item.url || !item.url.thumbnailUrl);
+    const validImages = galleryImages.filter(
+      item => item.url && item.url.thumbnailUrl,
+    );
+    const invalidImages = galleryImages.filter(
+      item => !item.url || !item.url.thumbnailUrl,
+    );
     return [...validImages, ...invalidImages];
   }, [galleryImages]);
-  
+
   return (
     <>
       <Modal
@@ -237,90 +239,79 @@ const GalleryScreen = ({
                     gap: 10,
                     paddingBottom: '35%',
                   }}>
-                  <Button
-                    onPress={() => setOpenFilter(true)}
-                    mode="outlined"
-                    icon={'tune-variant'}
-                    style={{
-                      width: '50%',
-                      marginTop: 5,
-                    }}
-                    contentStyle={{
-                      flexDirection: 'row-reverse',
-                      justifyContent: 'space-between',
-                    }}
-                    children={'กรองหมวดหมู่'}
-                  />
+                  {sortedGalleryImages.length > 0 && (
+                     <Button
+                     onPress={() => setOpenFilter(true)}
+                     mode="outlined"
+                     icon={'tune-variant'}
+                     style={{
+                       width: '50%',
+                       marginVertical: 5,
+                     }}
+                     contentStyle={{
+                       flexDirection: 'row-reverse',
+                       justifyContent: 'space-between',
+                     }}
+                     children={'กรองหมวดหมู่'}
+                   />
+                  )}
+                 
 
-                  {/* <FlatList
-                    data={tags}
-                    keyExtractor={item => item.id.toString()}
-                    renderItem={({item}) => (
-                      <View style={styles.tagItem}>
-                        <Checkbox.Android
-                          status={
-                            selectedTags.includes(item.id)
-                              ? 'checked'
-                              : 'unchecked'
-                          }
-                          onPress={() => handleSelectTag(item.id)}
+                  <FlatList
+                    data={sortedGalleryImages}
+                    numColumns={3}
+                    ListEmptyComponent={
+                      <View
+                        style={{
+                          flex: 1,
+                          justifyContent: 'flex-start',
+                          height: height,
+                          width: width,
+
+                          alignItems: 'center',
+                        }}>
+                        <Image
+                          source={require('../../assets/images/Catalogue-pana.png')}
+                          width={width * 0.5}
+                          height={height * 0.3}
+                          style={{
+                            width: width * 0.5,
+                            height: height * 0.3,
+                          }}
                         />
-                        <Text style={styles.tagText}>{item.name}</Text>
+                        <Text style={{marginTop: 10, color: 'gray'}}>
+                          ยังไม่ได้เพิ่มรูปภาพผลงาน
+                        </Text>
+           
                       </View>
-                    )}
-                    numColumns={2}
-                  /> */}
-
-<FlatList
-  data={sortedGalleryImages}
-  numColumns={3}
-  ListEmptyComponent={
-    <View
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: '20%',
-      }}>
-      <Text
-        style={{
-          textAlign: 'center',
-          color: 'gray',
-          fontSize: 16,
-          // fontFamily: 'Sukhumvit Set',
-        }}>
-        ยังไม่มีรูปภาพผลงาน
-      </Text>
-    </View>
-  }
-  renderItem={({ item }) => {
-    if (!item.url || !item.url.thumbnailUrl) {
-      return null; // ไม่แสดงผลถ้า url หรือ thumbnailUrl เป็น null
-    }
-    return (
-      <View
-        style={[
-          styles.imageContainer,
-          item.defaultChecked && styles.selected,
-        ]}>
-        <Image
-          source={{ uri: item.url.thumbnailUrl }}
-          style={styles.image}
-        />
-        <View style={styles.checkboxContainer}>
-          <CustomCheckbox
-            checked={item.defaultChecked}
-            onPress={() => {
-              handleCheckbox(item.id);
-            }}
-          />
-        </View>
-      </View>
-    );
-  }}
-  keyExtractor={item => item.id.toString()}
-/>
+                    }
+                    renderItem={({item}) => {
+                      if (!item.url || !item.url.thumbnailUrl) {
+                        return null; // ไม่แสดงผลถ้า url หรือ thumbnailUrl เป็น null
+                      }
+                      return (
+                        <View
+                          style={[
+                            styles.imageContainer,
+                            item.defaultChecked && styles.selected,
+                          ]}>
+                          <Image
+                            source={{uri: item.url.thumbnailUrl}}
+                            style={styles.image}
+                          />
+                          <View style={styles.checkboxContainer}>
+                            <CustomCheckbox
+                              checked={item.defaultChecked}
+                              onPress={() => {
+                                handleCheckbox(item.id);
+                              }}
+                            />
+                          </View>
+                        </View>
+                      );
+                    }}
+                    keyExtractor={item => item.id.toString()}
+                  />
                   {galleryImages.length > 0 && (
                     <View
                       style={{
@@ -378,7 +369,7 @@ const GalleryScreen = ({
         </Modal>
         <FilterModal
           selectedTags={selectedTags}
-          handleSelectTag ={handleFilterGalleryImages} 
+          handleSelectTag={handleFilterGalleryImages}
           isVisible={openFilter}
           onClose={() => setOpenFilter(false)}
           tags={tags}

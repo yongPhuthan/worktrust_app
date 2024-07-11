@@ -8,12 +8,13 @@ type Props = {
   fileName: string;
   onClose: () => void;
   visible: boolean;
-  url : string;
+  urlPreview : string;
+  urlShare : string;
 };
 const ProjectModalScreen = (props: Props) => {
-  const {fileName, onClose, visible, url} = props;
+  const {fileName, onClose, visible, urlPreview, urlShare} = props;
 
-  const handleShare = useShare({url, title: `เสนอราคา ลูกค้า ${fileName}`});
+  const handleShare = useShare({url:urlShare, title: `เสนอราคา ลูกค้า ${fileName}`});
 
 
   return (
@@ -57,7 +58,7 @@ const ProjectModalScreen = (props: Props) => {
             const {nativeEvent} = syntheticEvent;
             console.error('HTTP error status code: ', nativeEvent.statusCode);
           }}
-          source={{uri: url}}
+          source={{uri: urlPreview}}
         />
       </SafeAreaView>
 

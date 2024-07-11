@@ -289,156 +289,158 @@ const SelectPackages = ({isVisible, onClose}: ExistingModalProps) => {
               <Divider style={styles.divider} />
             </View>
           ))}
-          <View
-            style={{
-              padding: 16,
-            }}>
+          {selectedPackage && (
             <View
               style={{
-                flexDirection: 'row',
-                gap: 5,
-                marginBottom: 20,
-                borderRadius: 5,
-                padding: 10,
-                justifyContent: 'space-between',
-                backgroundColor: '#f2f7f1',
+                padding: 16,
               }}>
               <View
                 style={{
                   flexDirection: 'row',
-
-                  justifyContent: 'flex-start',
-                  backgroundColor: '#f2f7f1',
                   gap: 5,
+                  marginBottom: 20,
+                  borderRadius: 5,
+                  padding: 10,
+                  justifyContent: 'space-between',
+                  backgroundColor: '#f2f7f1',
                 }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+
+                    justifyContent: 'flex-start',
+                    backgroundColor: '#f2f7f1',
+                    gap: 5,
+                  }}>
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      // fontWeight: 'bold',
+                    }}>
+                    ยอดชำระ
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      // fontWeight: 'bold',
+                    }}>
+                    {selectedPackage.price} บาท
+                  </Text>
+                </View>
                 <Text
                   style={{
                     fontSize: 14,
-                    // fontWeight: 'bold',
                   }}>
-                  ยอดชำระ
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 14,
-                    // fontWeight: 'bold',
-                  }}>
-                  {selectedPackage?.price} บาท
+                  ได้รับ {selectedPackage.name}
                 </Text>
               </View>
-              <Text
-                style={{
-                  fontSize: 14,
-                }}>
-                ได้รับ {selectedPackage?.name}
-              </Text>
-            </View>
-            <View
-              style={{
-                backgroundColor: '#e7f0fe',
-                flexDirection: 'row',
-                padding: 10,
-                paddingVertical: 20,
-                gap: 10,
-                borderRadius: 5,
-              }}>
-              <Image
-                source={require('../../assets/images/kbank.jpg')}
-                style={{
-                  width: 50,
-                  height: 50,
-                  margin: 10,
-                  borderRadius: 10,
-                }}
-              />
               <View
                 style={{
-                  flexDirection: 'column',
+                  backgroundColor: '#e7f0fe',
+                  flexDirection: 'row',
+                  padding: 10,
+                  paddingVertical: 20,
+                  gap: 10,
+                  borderRadius: 5,
                 }}>
+                <Image
+                  source={require('../../assets/images/kbank.jpg')}
+                  style={{
+                    width: 50,
+                    height: 50,
+                    margin: 10,
+                    borderRadius: 10,
+                  }}
+                />
                 <View
                   style={{
                     flexDirection: 'column',
-                    gap: 5,
-
-                    alignItems: 'flex-start',
                   }}>
-                  <Text>ธนาคารกสิกรไทย </Text>
-                  <Text
+                  <View
                     style={{
-                      fontSize: 12,
-                    }}>
-                    สาขา บิ๊กซีอ้อมใหญ่
-                  </Text>
-                  <Text>หจก สยามเซฟตี้เอ็นจิเนียริ่ง (กรุ๊ป) </Text>
-                </View>
+                      flexDirection: 'column',
+                      gap: 5,
 
-                <View
-                  style={{
-                    flexDirection: 'column',
-                    gap: 5,
-                    alignItems: 'flex-start',
-                    marginVertical: 5,
-                  }}>
-                  <Text
+                      alignItems: 'flex-start',
+                    }}>
+                    <Text>ธนาคารกสิกรไทย </Text>
+                    <Text
+                      style={{
+                        fontSize: 12,
+                      }}>
+                      สาขา บิ๊กซีอ้อมใหญ่
+                    </Text>
+                    <Text>หจก สยามเซฟตี้เอ็นจิเนียริ่ง (กรุ๊ป) </Text>
+                  </View>
+
+                  <View
                     style={{
-                      fontSize: 18,
-                      color: '#00674a',
+                      flexDirection: 'column',
+                      gap: 5,
+                      alignItems: 'flex-start',
+                      marginVertical: 5,
                     }}>
-                    เลขที่ 123-4-56789-0
-                  </Text>
-                  {/* {copied && (
-              <Badge  style={styles.badge}>copied</Badge>
-            )}
-                  <IconButton
-                    icon="content-copy"
-        
-                    size={14}
-                    onPress={() => copyToClipboard(accountNumber)}
-
-                  />
-                   */}
+                    <Text
+                      style={{
+                        fontSize: 18,
+                        color: '#00674a',
+                      }}>
+                      เลขที่ 123-4-56789-0
+                    </Text>
+                    {/* {copied && (
+                 <Badge  style={styles.badge}>copied</Badge>
+               )}
+                     <IconButton
+                       icon="content-copy"
+           
+                       size={14}
+                       onPress={() => copyToClipboard(accountNumber)}
+   
+                     />
+                      */}
+                  </View>
                 </View>
               </View>
-            </View>
-            <View
-              style={{
-                paddingTop: 20,
-                width: '50%',
-                flexDirection: 'column',
-                gap: 15,
-              }}>
-              <Text
+              <View
                 style={{
-                  fontSize: 16,
-                  color: 'black',
-                  fontWeight: 'bold',
+                  paddingTop: 20,
+                  width: '50%',
+                  flexDirection: 'column',
+                  gap: 15,
                 }}>
-                สลิปโอนเงิน
-              </Text>
-              <UploadImage
-                control={control}
-                name="paymentSlip"
-                label="อัพโหลดสลิปโอนเงิน"
-                isUploading={isImagePicking}
-                pickImage={pickImage}
-                width={150}
-                height={150}
-              />
+                <Text
+                  style={{
+                    fontSize: 16,
+                    color: 'black',
+                    fontWeight: 'bold',
+                  }}>
+                  สลิปโอนเงิน
+                </Text>
+                <UploadImage
+                  control={control}
+                  name="paymentSlip"
+                  label="อัพโหลดสลิปโอนเงิน"
+                  isUploading={isImagePicking}
+                  pickImage={pickImage}
+                  width={150}
+                  height={150}
+                />
+              </View>
+              <Button
+                loading={isLoading || isCheckingSlip}
+                disabled={isLoading || isCheckingSlip}
+                mode="contained"
+                style={{
+                  borderRadius: 5,
+                  padding: 5,
+                  width: '100%',
+                  marginTop: 40,
+                }}
+                onPress={handleConfirmPayment}>
+                <Text style={styles.saveText}>แจ้งชำระเงิน</Text>
+              </Button>
             </View>
-            <Button
-              loading={isLoading || isCheckingSlip}
-              disabled={isLoading || isCheckingSlip}
-              mode="contained"
-              style={{
-                borderRadius: 5,
-                padding: 5,
-                width: '100%',
-                marginTop: 40,
-              }}
-              onPress={handleConfirmPayment}>
-              <Text style={styles.saveText}>แจ้งชำระเงิน</Text>
-            </Button>
-          </View>
+          )}
         </View>
       </ScrollView>
       {showConfetti && (

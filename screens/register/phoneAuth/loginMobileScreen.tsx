@@ -288,7 +288,7 @@ const LoginMobileScreen = ({navigation}: Props) => {
               textAlign="center"
               textAlignVertical="center"
               keyboardType="numeric"
-              
+              pointerEvents="auto"
               inputMode="numeric"
               textContentType="oneTimeCode"
               maxLength={6}

@@ -162,8 +162,8 @@ const CreateStandard = (props: Props) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Appbar.Header
+    <>
+          <Appbar.Header
         mode="center-aligned"
         elevated
         style={{
@@ -189,173 +189,177 @@ const CreateStandard = (props: Props) => {
           {'บันทึก'}
         </Button>
       </Appbar.Header>
-      <ScrollView>
-        <View
-          style={{
-            paddingHorizontal: 20,
-            paddingVertical: 30,
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            alignContent: 'center',
-            
-    
-          }}>
-           
-          <Text
-            variant="titleLarge"
-            style={{
-              fontFamily: 'Sukhumvit set',
-              fontWeight: 'bold',
-              marginBottom: 10,
-            }}>
-            มาตรฐานของคุณ
-          </Text>
+      <SafeAreaView style={styles.container}>
 
-          {/* <Text style={{marginBottom: 10}}>ชื่อมาตรฐาน</Text> */}
-          <View style={{
-             flexDirection: 'column',
-             justifyContent: 'space-between',
-             alignContent: 'center',
-             gap: 20,
-          }}>
+<ScrollView>
+  <View
+    style={{
+      paddingHorizontal: 20,
+      paddingVertical: 30,
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+      alignContent: 'center',
+      
 
-   
-          <Controller
-            control={control}
-            name="standardShowTitle"
+    }}>
+     
+    <Text
+      variant="titleLarge"
+      style={{
+        fontFamily: 'Sukhumvit set',
+        fontWeight: 'bold',
+        marginBottom: 10,
+      }}>
+      มาตรฐานของคุณ
+    </Text>
 
-            render={({
-              field: {onChange, value, onBlur},
-              fieldState: {error},
-            }) => (
-              <View>
-                <TextInput
-                  mode="outlined"
-                  onBlur={onBlur}
-                  error={!!error}
-                  label={'ชื่อมาตรฐาน'}
-                  placeholder="เช่น การป้องกันน้ำรั่วซึม..."
-                  value={value || ''}
-                  onChangeText={onChange}
-                />
-                {error && <Text style={styles.errorText}>{error.message}</Text>}
-              </View>
-            )}
+    {/* <Text style={{marginBottom: 10}}>ชื่อมาตรฐาน</Text> */}
+    <View style={{
+       flexDirection: 'column',
+       justifyContent: 'space-between',
+       alignContent: 'center',
+       gap: 20,
+    }}>
+
+
+    <Controller
+      control={control}
+      name="standardShowTitle"
+
+      render={({
+        field: {onChange, value, onBlur},
+        fieldState: {error},
+      }) => (
+        <View>
+          <TextInput
+            mode="outlined"
+            onBlur={onBlur}
+            error={!!error}
+            label={'ชื่อมาตรฐาน'}
+            placeholder="เช่น การป้องกันน้ำรั่วซึม..."
+            value={value || ''}
+            onChangeText={onChange}
           />
-        <UploadImage
-            width={width * 0.6}
-            height={width * 0.6}
-            control={control}
-            name="image"
-            isUploading={isStandardImageUploading}
-            pickImage={pickStandardImage}
-            label="อัพโหลดภาพมาตรฐานของคุณ"
-          />
-          {/* <Text style={{marginBottom: 10}}>รายละเอียด</Text> */}
-          <Controller
-            control={control}
-            name="content"
-            render={({
-              field: {onChange, value, onBlur},
-              fieldState: {error},
-            }) => (
-              <View>
-                <TextInput
-                  mode="outlined"
-                  numberOfLines={5}
-                  multiline={true}
-                  onBlur={onBlur}
-                  error={!!error}
-                  style={
-                    Platform.OS === 'ios'
-                      ? {height: 100, textAlignVertical: 'top'}
-                      : {}
-                  }
-                  placeholder="อธิบายประโยชน์ที่ลูกค้าได้รับจากมาตรฐานการทำงานนี้..."
-                  value={value}
-                  onChangeText={onChange}
-                />
-                {error && <Text style={styles.errorText}>{error.message}</Text>}
-              </View>
-            )}
-          />
+          {error && <Text style={styles.errorText}>{error.message}</Text>}
         </View>
-        </View>
-        <Divider
-          style={{
-            width: '90%',
-            alignSelf: 'center',
-          }}
-        />
-        <View
-          style={{
-            // backgroundColor: '#dddddd',
-            paddingHorizontal: 20,
-            paddingVertical: 20,
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            alignContent: 'center',
-            paddingBottom: 30,
-            marginBottom: 30,
-          }}>
-          <Text
-            variant="titleLarge"
-            style={{
-              marginBottom: 10,
-              fontFamily: 'Sukhumvit set',
-              fontWeight: 'bold',
-              lineHeight: 30,
-            }}>
-            ตัวอย่างงานที่ไม่ได้มาตรฐาน
-          </Text>
-          <View style={{
-             flexDirection: 'column',
-             justifyContent: 'space-between',
-             alignContent: 'center',
-             gap: 20,
-          }}>
-          <UploadImage
-            width={width * 0.6}
-            height={width * 0.6}
-            control={control}
-            name="badStandardImage"
-            isUploading={isBadStandardImageUploading}
-            pickImage={pickBadStandardImage}
-            label="อัพโหลดรูปภาพตัวอย่างงานที่ไม่ได้มาตรฐาน"
+      )}
+    />
+  <UploadImage
+      width={width * 0.6}
+      height={width * 0.6}
+      control={control}
+      name="image"
+      isUploading={isStandardImageUploading}
+      pickImage={pickStandardImage}
+      label="อัพโหลดภาพมาตรฐานของคุณ"
+    />
+    {/* <Text style={{marginBottom: 10}}>รายละเอียด</Text> */}
+    <Controller
+      control={control}
+      name="content"
+      render={({
+        field: {onChange, value, onBlur},
+        fieldState: {error},
+      }) => (
+        <View>
+          <TextInput
+            mode="outlined"
+            numberOfLines={5}
+            multiline={true}
+            onBlur={onBlur}
+            error={!!error}
+            style={
+              Platform.OS === 'ios'
+                ? {height: 100, textAlignVertical: 'top'}
+                : {}
+            }
+            placeholder="อธิบายประโยชน์ที่ลูกค้าได้รับจากมาตรฐานการทำงานนี้..."
+            value={value}
+            onChangeText={onChange}
           />
-          {/* <Text style={{marginBottom: 10}}>ผลกระทบจากงานที่ไม่ได้มาตรฐาน</Text> */}
-          <Controller
-            control={control}
-            name="badStandardEffect"
-            render={({
-              field: {onChange, value, onBlur},
-              fieldState: {error},
-            }) => (
-              <View style={{marginBottom: 100}}>
-                <TextInput
-                  mode="outlined"
-                  numberOfLines={5}
-                  multiline={true}
-                  // label={'ผลกระทบจากงานที่ไม่ได้มาตรฐาน'}
-                  onBlur={onBlur}
-                  error={!!error}
-                  style={
-                    Platform.OS === 'ios'
-                      ? {height: 100, textAlignVertical: 'top'}
-                      : {}
-                  }
-                  placeholder="อธิบายความเสี่ยงที่ลูกค้าอาจพบเจอจากงานที่ไม่ได้มาตรฐาน..."
-                  value={value || ''}
-                  onChangeText={onChange}
-                />
-                {error && <Text style={styles.errorText}>{error.message}</Text>}
-              </View>
-            )}
-          />
-          </View>
+          {error && <Text style={styles.errorText}>{error.message}</Text>}
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      )}
+    />
+  </View>
+  </View>
+  <Divider
+    style={{
+      width: '90%',
+      alignSelf: 'center',
+    }}
+  />
+  <View
+    style={{
+      // backgroundColor: '#dddddd',
+      paddingHorizontal: 20,
+      paddingVertical: 20,
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+      alignContent: 'center',
+      paddingBottom: 30,
+      marginBottom: 30,
+    }}>
+    <Text
+      variant="titleLarge"
+      style={{
+        marginBottom: 10,
+        fontFamily: 'Sukhumvit set',
+        fontWeight: 'bold',
+        lineHeight: 30,
+      }}>
+      ตัวอย่างงานที่ไม่ได้มาตรฐาน
+    </Text>
+    <View style={{
+       flexDirection: 'column',
+       justifyContent: 'space-between',
+       alignContent: 'center',
+       gap: 20,
+    }}>
+    <UploadImage
+      width={width * 0.6}
+      height={width * 0.6}
+      control={control}
+      name="badStandardImage"
+      isUploading={isBadStandardImageUploading}
+      pickImage={pickBadStandardImage}
+      label="อัพโหลดรูปภาพตัวอย่างงานที่ไม่ได้มาตรฐาน"
+    />
+    {/* <Text style={{marginBottom: 10}}>ผลกระทบจากงานที่ไม่ได้มาตรฐาน</Text> */}
+    <Controller
+      control={control}
+      name="badStandardEffect"
+      render={({
+        field: {onChange, value, onBlur},
+        fieldState: {error},
+      }) => (
+        <View style={{marginBottom: 100}}>
+          <TextInput
+            mode="outlined"
+            numberOfLines={5}
+            multiline={true}
+            // label={'ผลกระทบจากงานที่ไม่ได้มาตรฐาน'}
+            onBlur={onBlur}
+            error={!!error}
+            style={
+              Platform.OS === 'ios'
+                ? {height: 100, textAlignVertical: 'top'}
+                : {}
+            }
+            placeholder="อธิบายความเสี่ยงที่ลูกค้าอาจพบเจอจากงานที่ไม่ได้มาตรฐาน..."
+            value={value || ''}
+            onChangeText={onChange}
+          />
+          {error && <Text style={styles.errorText}>{error.message}</Text>}
+        </View>
+      )}
+    />
+    </View>
+  </View>
+</ScrollView>
+</SafeAreaView>
+    </>
+
   );
 };
 
@@ -367,7 +371,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   container: {
-    marginVertical: 20,
     backgroundColor: '#ffffff',
     width: width,
   },

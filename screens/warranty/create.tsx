@@ -224,7 +224,7 @@ const CreateWarranty = (props: Props) => {
   }, [sellerSignature, isLoadingWebP]);
   React.useEffect(() => {
     if (selectedSignature) {
-      methods.setValue('sellerSignature', selectedSignature, {
+      methods.setValue('warranty.sellerSignature', selectedSignature, {
         shouldDirty: true,
       });
     }

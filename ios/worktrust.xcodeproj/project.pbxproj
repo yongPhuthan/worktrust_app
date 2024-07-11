@@ -539,7 +539,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 33;
+				CURRENT_PROJECT_VERSION = 36;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 92GKXCZ693;
 				ENABLE_BITCODE = NO;
@@ -573,7 +573,7 @@
 				CODE_SIGN_ENTITLEMENTS = worktrust/worktrust.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
-				CURRENT_PROJECT_VERSION = 33;
+				CURRENT_PROJECT_VERSION = 36;
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 92GKXCZ693;
 				INFOPLIST_FILE = worktrust/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (

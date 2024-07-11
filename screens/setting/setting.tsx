@@ -52,6 +52,10 @@ const SettingsScreen = ({navigation}: SettingScreenProps) => {
     state: {code, G_logo,  G_subscription, G_company,G_user},
     dispatch,
   } = useContext(Store);
+  // console.log('GUSER',G_user)
+  // console.log('GCOMPANY',G_company)
+  // console.log('GLOGO',G_logo)
+  // console.log('GSUBSCRIPTION',G_subscription)
   const [isVisible, setIsVisible] = useState(false);
 
   const subscriptionStyle = G_subscription && getSubscriptionStyle(G_subscription.type, G_subscription.isActive);

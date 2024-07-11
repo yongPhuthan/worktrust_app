@@ -111,7 +111,7 @@ const EditWorkers = ({navigation, route}: Props) => {
   if (isError) {
     console.log('error', error);
   }
-  const handleAddNewProduct = () => {
+  const handleAddNewWorker = () => {
     setIsAddNewModal(true);
   };
   return (
@@ -128,7 +128,7 @@ const EditWorkers = ({navigation, route}: Props) => {
           title="ทีมช่างทั้งหมด"
           titleStyle={{fontSize: 18, fontWeight: 'bold'}}
         />
-        <Appbar.Action icon={'plus'}  onPress={handleAddNewProduct} />
+        <Appbar.Action icon={'plus'}  onPress={handleAddNewWorker} />
       </Appbar.Header>
       <View style={styles.container}>
         {isLoading || isDeleting  ? (
@@ -189,23 +189,46 @@ const EditWorkers = ({navigation, route}: Props) => {
               <View
                 style={{
                   flex: 1,
-                  justifyContent: 'center',
-                  height: height * 0.5,
-
+                  justifyContent: 'flex-start',
+                  height: height,
+                  width: width*0.9,
                   alignItems: 'center',
                 }}>
-                <Button
-                  onPress={() => handleAddNewProduct()}
-                  mode="contained"
-                  icon={'plus'}>
-                  <Text
-                    variant="titleMedium"
-                    style={{color: 'white'}}>
-                    เพิ่มช่างใหม่
-                  </Text>
-                </Button>
+                <Image
+                  source={require('../../../assets/images/ConstructionWorker-bro.png')}
+                  width={width * 0.5}
+                  height={height * 0.3}
+                  style={{
+                    width: width * 0.6,
+                    height: height * 0.3,
+                  }}
+                />
+                <Text style={{marginTop: 20, color: 'gray'}}>
+                  ยังไม่ได้เพิ่มทีมช่าง
+                </Text>
               </View>
             }
+            // ListEmptyComponent={
+            //   <View
+            //     style={{
+            //       flex: 1,
+            //       justifyContent: 'center',
+            //       height: height * 0.5,
+
+            //       alignItems: 'center',
+            //     }}>
+            //     <Button
+            //       onPress={() => handleAddNewWorker()}
+            //       mode="contained"
+            //       icon={'plus'}>
+            //       <Text
+            //         variant="titleMedium"
+            //         style={{color: 'white'}}>
+            //         เพิ่มช่างใหม่
+            //       </Text>
+            //     </Button>
+            //   </View>
+            // }
             keyExtractor={item => item.id}
           />
         )}

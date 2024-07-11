@@ -118,7 +118,6 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
       });
   }, [refetch]);
   const handleErrorResponse = (error: ErrorResponse) => {
-
     switch (error.message) {
       case 'logout':
         console.log('Unhandled error logout action:', error.message);
@@ -755,13 +754,10 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                               height: height * 0.3,
                             }}
                           />
-                          {/* <Icon source="inbox" color={'gray'} size={80} /> */}
                           <Text style={{marginTop: 10, color: 'gray'}}>
                             ยังไม่มีเอกสาร
                           </Text>
-                          {/* <Text style={{marginTop: 10, color: 'gray'}}>
-                            กดปุ่ม + ด้านล่างเพื่อสร้างใบเสนอราคา
-                          </Text> */}
+             
                         </View>
                       }
                       contentContainerStyle={

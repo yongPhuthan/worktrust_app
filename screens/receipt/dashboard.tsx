@@ -7,16 +7,15 @@ import React, {useContext, useEffect, useState} from 'react';
 import {
   Alert,
   Dimensions,
+  Image,
   FlatList,
   StyleSheet,
   Text,
   View,
-
 } from 'react-native';
 import Modal from 'react-native-modal';
 import CardDashBoard from '../../components/ui/invoice/CardDashboard';
 import {
-  
   QuotationsFilterButton,
   ReceiptsFilterButton,
 } from '../../components/ui/Dashboard/FilterButton'; // Adjust the import path as necessary
@@ -76,16 +75,16 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     closeModal: closeProjectModal,
     isVisible: showProjectModal,
   } = useModal();
-  const {dispatch,
+  const {
+    dispatch,
     state: {G_subscription},
-  
   } = useContext(Store);
   const {data, isLoading, isError, error} = useFetchDashboardReceipt();
   const {activeFilter, updateActiveFilter} = useActiveReceiptFilter();
   const {width, height} = Dimensions.get('window');
   const [isLoadingAction, setIsLoadingAction] = useState(false);
   const queryClient = useQueryClient();
-  const { isVisible, setIsVisible, checkSubscription } = useCheckSubscription();
+  const {isVisible, setIsVisible, checkSubscription} = useCheckSubscription();
 
   const [isModalSignContract, setIsModalSignContract] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Receipts | null>(null);
@@ -250,7 +249,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     }
 
     setIsLoadingAction(true);
-    
+
     dispatch(stateAction.get_companyID(receipt.companyId));
     dispatch(stateAction.get_edit_receipt(receipt));
     setIsLoadingAction(false);
@@ -261,22 +260,21 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   // if (isError && error) {
   //   handleErrorResponse(error);
   // }
-  const renderItem = ({item, index}: {item: Receipts, index: number}) => (
+  const renderItem = ({item, index}: {item: Receipts; index: number}) => (
     <>
-    {item.status && (
-      <View style={{marginTop: 10}}>
-      <CardDashBoard
-        status={item.status}
-        date={item.dateOffer}
-        end={null}
-        price={item.allTotal}
-        customerName={item.customer.name }
-        // onCardPress={()=>handleModal(item, index)}
-        onCardPress={() => handleModalOpen(item, index)}
-      />
-    </View>
-    )}
-      
+      {item.status && (
+        <View style={{marginTop: 10}}>
+          <CardDashBoard
+            status={item.status}
+            date={item.dateOffer}
+            end={null}
+            price={item.allTotal}
+            customerName={item.customer.name}
+            // onCardPress={()=>handleModal(item, index)}
+            onCardPress={() => handleModalOpen(item, index)}
+          />
+        </View>
+      )}
 
       {selectedIndex === index && selectedItem && (
         <>
@@ -315,7 +313,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                     title="ดูเอกสาร PDF"
                     titleStyle={{textAlign: 'center'}}
                   />
-        <Divider />
+                  <Divider />
 
                   {selectedItem?.status === ReceiptStatus.PENDING && (
                     <>
@@ -329,7 +327,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                       />
 
                       <Divider />
-                 
+
                       <List.Item
                         onPress={() => {
                           dispatch(stateAction.get_edit_receipt(selectedItem));
@@ -339,10 +337,9 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                         title="เปิดบิลแล้ว"
                         titleStyle={{textAlign: 'center'}}
                       />
-          
                     </>
                   )}
-                
+
                   {selectedItem?.status === ReceiptStatus.BILLED && (
                     <>
                       <Divider />
@@ -417,10 +414,10 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
             /> */}
           </Appbar.Header>
           {isLoadingAction ? (
-             <View
-             style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-                  <ActivityIndicator color='#047e6e' size={'large'}  />
-           </View>
+            <View
+              style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+              <ActivityIndicator color="#047e6e" size={'large'} />
+            </View>
           ) : (
             <>
               <View>
@@ -442,8 +439,8 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
               </View>
               {isLoading || isLoadingAction ? (
                 <View style={styles.loadingContainer}>
-              <ActivityIndicator  color='#047e6e' size={'large'} />
-              </View>
+                  <ActivityIndicator color="#047e6e" size={'large'} />
+                </View>
               ) : (
                 <View
                   style={{
@@ -465,9 +462,16 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                           width: width,
 
                           alignItems: 'center',
-                          marginTop: height * 0.2,
                         }}>
-                        <Icon source="inbox" color={'gray'} size={80} />
+                        <Image
+                          source={require('../../assets/images/Audit-amico.png')}
+                          width={width * 0.5}
+                          height={height * 0.3}
+                          style={{
+                            width: width * 0.5,
+                            height: height * 0.3,
+                          }}
+                        />
                         <Text style={{marginTop: 10, color: 'gray'}}>
                           ยังไม่มีใบเสร็จรับเงิน
                         </Text>
@@ -479,14 +483,15 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                   />
                 </View>
               )}
-             <FABButton createNewFunction={createNewReceipt} />
+              <FABButton createNewFunction={createNewReceipt} />
             </>
           )}
-          
         </Portal>
       </PaperProvider>
-      <SelectPackages isVisible={isVisible} onClose={() => setIsVisible(false)} />
-
+      <SelectPackages
+        isVisible={isVisible}
+        onClose={() => setIsVisible(false)}
+      />
     </>
   );
 };

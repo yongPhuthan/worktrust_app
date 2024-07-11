@@ -398,21 +398,35 @@ const EditGallery = ({navigation, route}: Props) => {
             style={{
               flexDirection: 'column',
               gap: 20,
+              
               // paddingBottom: '15%',
             }}>
             <FlatList
               data={sortedGalleryImages}
               numColumns={3}
               ListEmptyComponent={
-                <Text
+                <View
                   style={{
-                    textAlign: 'center',
-                    color: 'gray',
-                    fontSize: 16,
-                    fontFamily: 'Sukhumvit Set',
+                    flex: 1,
+                    justifyContent: 'flex-start',
+                    height: height,
+                    width: width,
+                    alignItems: 'center',
                   }}>
-                  ยังไม่มีรูปภาพ กด+เพิ่มรูปภาพ
-                </Text>
+                  <Image
+                    source={require('../../../assets/images/Catalogue-pana2.png')}
+                    width={width * 0.5}
+                    height={height * 0.3}
+                    style={{
+                      width: width * 0.5,
+                      height: height * 0.3,
+                    }}
+                  />
+                  <Text style={{marginTop: 10, color: 'gray'}}>
+                  ยังไม่ได้เพิ่มรูปภาพผลงาน
+                  </Text>
+     
+                </View>
               }
               renderItem={({item, index}) => {
                 if (!item.url || !item.url.thumbnailUrl) {

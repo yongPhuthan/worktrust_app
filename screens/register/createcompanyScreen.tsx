@@ -1,4 +1,11 @@
+import {BACK_END_SERVER_URL} from '@env';
+import {faCloudUpload} from '@fortawesome/free-solid-svg-icons';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {Account, Company, Provider, SellerEmbed, User, UserRole} from '@prisma/client';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {useMutation} from '@tanstack/react-query';
 import React, {useEffect, useState} from 'react';
+import {Controller, useForm, useWatch} from 'react-hook-form';
 import {
   Alert,
   Dimensions,
@@ -10,37 +17,21 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import {Asset, ImagePickerResponse} from 'react-native-image-picker';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {
+  ActivityIndicator,
   Appbar,
   Button,
   Checkbox,
-  ActivityIndicator,
   ProgressBar,
   TextInput,
 } from 'react-native-paper';
-import {useQuery} from '@tanstack/react-query';
-import {faCloudUpload} from '@fortawesome/free-solid-svg-icons';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {useMutation} from '@tanstack/react-query';
-import {Controller, useForm, useWatch} from 'react-hook-form';
-import {
-  Asset,
-  ImageLibraryOptions,
-  ImagePickerResponse,
-  MediaType,
-  launchImageLibrary,
-} from 'react-native-image-picker';
-import firebase from '../../firebase';
-import {BACK_END_SERVER_URL} from '@env';
-import {yupResolver} from '@hookform/resolvers/yup';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {useUser} from '../../providers/UserContext';
-import {ParamListBase} from '../../types/navigationType';
+import {useCreateToServer} from '../../hooks/useUploadToserver';
 import {useUploadToFirebase} from '../../hooks/useUploadtoFirebase';
 import {usePickImage} from '../../hooks/utils/image/usePickImage';
-import {useCreateToServer} from '../../hooks/useUploadToserver';
-import { User,Company, Account } from '@prisma/client';
+import {useUser} from '../../providers/UserContext';
+import {ParamListBase} from '../../types/navigationType';
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'RegisterScreen'>;
 }
@@ -123,7 +114,6 @@ const CreateCompanyScreen = ({navigation}: Props) => {
     name: 'companyTax',
   });
 
-
   const jobPosition = useWatch({
     control,
 
@@ -161,38 +151,33 @@ const CreateCompanyScreen = ({navigation}: Props) => {
     error: errorServer,
     createToServer,
   } = useCreateToServer(API_URL, 'dashboardQuotation');
-  const createCompanySeller = async ({data}: any) => {
-    if (!user || !user.uid) {
-      throw new Error('User or user email is not available');
+  const createCompanySeller = async ({ seller, company, token }: any) => {
+    if (!token) {
+      throw new Error('User or user UID is not available');
     }
-    if (logo) {
-      const downloadUrl = await uploadImage(logo as string);
-
-      // Additional validation if URLs are required
-      if (isLogoError) {
-        throw new Error('There was an error uploading the images');
-      }
+    if (company.logo) {
+      const downloadUrl = await uploadImage(company.logo as string);
+  
       if (!downloadUrl || !downloadUrl.originalUrl) {
         throw new Error('ไม่สามาถอัพโหลดรูปภาพได้');
       }
-      setValue('logo', downloadUrl.originalUrl);
+      company.logo = downloadUrl.originalUrl;
     }
-
+  
     try {
       const formData = {
-        ...getValues(),
+        seller,
+        company,
+        token,
       };
       await createToServer(formData);
-
-      // return await response.json(); // Assuming the response is JSON
     } catch (error) {
       console.error('Error:', error);
       throw new Error('There was an error processing the request');
     }
   };
 
-  const isNextDisabledPage1 =
-    !bizName || !name  || !jobPosition || !bizType;
+  const isNextDisabledPage1 = !bizName || !name || !jobPosition || !bizType;
 
   const isNextDisabledPage2 = !address || !mobileTel;
   useEffect(() => {
@@ -225,20 +210,42 @@ const CreateCompanyScreen = ({navigation}: Props) => {
   });
 
   const handleSave = async () => {
-    const data = {
-      bizName,
-      userName: name,
+    const seller: User = {
+      name,
+      email: user?.email || '',
+      jobPosition,
+      signature: null,
+      id: '',
+      provider: user?.email ? Provider.EMAIL : Provider.PHONE,
+      phoneNumber: null,
+      role: UserRole.OWNER,
+      password: null,
+      isActive: false,
+      currentCompanyId: null,
+      currentSubscriptionId: null,
+      firebaseUid: null,
+      image: null,
+      companyIds: []
+    };
+
+    const company : Company = {
+      id: '',
       code,
-      userPosition: jobPosition,
+      bizName,
       address,
       officeTel,
       mobileTel,
-      email: user?.email,
+      companyTax,
       bizType,
       logo,
-      companyTax,
+      isActive: false,
+      signature: null,
+      defaultContracts: null,
+      defaultWarranty: null,
+      userIds: [],
+      bankAccounts: [],
     };
-    mutate({data, token: user?.uid});
+    mutate({seller, company, token: user?.uid});
   };
 
   if (isLodingServer) {
@@ -248,6 +255,8 @@ const CreateCompanyScreen = ({navigation}: Props) => {
       </View>
     );
   }
+
+  const width = Dimensions.get('window').width;
 
   const renderPage = () => {
     switch (page) {
@@ -347,36 +356,29 @@ const CreateCompanyScreen = ({navigation}: Props) => {
                 )}
               />
 
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  gap: 5,
-                }}>
-                <View style={{flex: 0.45}}>
-                  <Controller
-                    control={control}
-                    name="name"
-                    render={({
-                      field: {onChange, value, onBlur},
-                      fieldState: {error},
-                    }) => (
-                      <View style={{marginBottom: 10}}>
-                        <TextInput
-                          mode="outlined"
-                          onBlur={onBlur}
-                          error={!!error}
-                          label="ชื่อจริง-นามสกุล ผู้ใช้งาน"
-                          value={String(value) }
-                          onChangeText={onChange}
-                        />
-                        {error && (
-                          <Text style={styles.errorText}>{error.message}</Text>
-                        )}
-                      </View>
-                    )}
-                  />
-                </View>
+              <View>
+                <Controller
+                  control={control}
+                  name="name"
+                  render={({
+                    field: {onChange, value, onBlur},
+                    fieldState: {error},
+                  }) => (
+                    <View style={{marginBottom: 10}}>
+                      <TextInput
+                        mode="outlined"
+                        onBlur={onBlur}
+                        error={!!error}
+                        label="ชื่อจริง-นามสกุล"
+                        value={String(value)}
+                        onChangeText={onChange}
+                      />
+                      {error && (
+                        <Text style={styles.errorText}>{error.message}</Text>
+                      )}
+                    </View>
+                  )}
+                />
               </View>
               <Controller
                 control={control}
@@ -385,7 +387,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
                   field: {onChange, value, onBlur},
                   fieldState: {error},
                 }) => (
-                  <View style={{marginBottom: 20}}>
+                  <View style={{marginBottom: 20, width: width * 0.5}}>
                     <TextInput
                       mode="outlined"
                       onBlur={onBlur}
@@ -572,7 +574,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
                       error={!!error}
                       keyboardType="number-pad"
                       label="เลขภาษี(ถ้ามี)"
-                      value={ value ? value.toString() : ''}
+                      value={value ? value.toString() : ''}
                       onChangeText={onChange}
                     />
                     {error && (

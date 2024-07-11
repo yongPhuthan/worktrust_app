@@ -35,10 +35,12 @@ import SignatureComponent from '../../components/utils/signature/create';
 import useThaiDateFormatter from '../../hooks/utils/useThaiDateFormatter';
 import {Store} from '../../redux/store';
 import {ParamListBase} from '../../types/navigationType';
+import {useModal} from '../../hooks/quotation/create/useModal';
 
 import ExistingWorkers from '../../components/workers/existing';
 import {quotationsValidationSchema} from '../../models/validationSchema';
-import { ServicesEmbed } from '@prisma/client';
+import {ServicesEmbed} from '@prisma/client';
+import SignatureModal from '../../components/utils/signature/select';
 
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'EditQuotation'>;
@@ -63,6 +65,10 @@ const EditInvoice = ({navigation, route}: Props) => {
   const [singatureModal, setSignatureModal] = useState(false);
   const [signature, setSignature] = useState<string | null>(null);
   const [serviceIndex, setServiceIndex] = useState(0);
+  const [isLoadingWebP, setIsLoadingWebP] = useState(false);
+  const [selectedSignature, setSelectedSignature] = useState<string | null>(
+    null,
+  );
   const [showEditServiceModal, setShowEditServiceModal] = useState(false);
   const [visibleModalIndex, setVisibleModalIndex] = useState<number | null>(
     null,
@@ -123,6 +129,10 @@ const EditInvoice = ({navigation, route}: Props) => {
     control: methods.control,
     name: 'id',
   });
+  const dateOffer = useWatch({
+    control: methods.control,
+    name: 'dateOffer',
+  });
   const isCustomerDisabled = useMemo(() => {
     return customer.name === '' && customer.address === '';
   }, [customer.name, customer.address]);
@@ -131,7 +141,11 @@ const EditInvoice = ({navigation, route}: Props) => {
   const [pickerVisible, setPickerVisible] = useState(
     sellerSignature !== '' ? true : false,
   );
-
+  const {
+    openModal: openSignatureModal,
+    closeModal: closeSignatureModal,
+    isVisible: signatureModal,
+  } = useModal();
   const useSignature = () => {
     // Toggle the state of the picker and accordingly set the modal visibility
     setPickerVisible(prevPickerVisible => {
@@ -274,9 +288,9 @@ const EditInvoice = ({navigation, route}: Props) => {
           <ScrollView style={styles.container}>
             <View style={styles.subContainerHead}>
               <DatePickerButton
-                title="วันที่เสนอราคา"
-                label="วันที่เสนอราคา"
-                date="today"
+                title="วันที่"
+                label="วันที่"
+                date={new Date(dateOffer)}
                 onDateSelected={handleStartDateSelected}
               />
               <DocNumber
@@ -284,12 +298,12 @@ const EditInvoice = ({navigation, route}: Props) => {
                 onChange={handleInvoiceNumberChange}
                 value={methods.watch('docNumber')}
               />
-              <DatePickerButton
+              {/* <DatePickerButton
                 title="ยืนราคาถึงวันที่ี"
                 label="ยืนราคาถึงวันที่ี"
                 date="sevenDaysFromNow"
                 onDateSelected={handleEndDateSelected}
-              />
+              /> */}
             </View>
             <View style={styles.subContainer}>
               {!isCustomerDisabled ? (
@@ -447,30 +461,14 @@ const EditInvoice = ({navigation, route}: Props) => {
                   isVisible={workerModal}
                 />
               </Modal>
-              <Modal
-                isVisible={singatureModal}
-                style={styles.modal}
-                onBackdropPress={onCloseSignature}>
-                <Appbar.Header
-                  mode="center-aligned"
-                  style={{
-                    backgroundColor: 'white',
-                    width: Dimensions.get('window').width,
-                  }}>
-                  <Appbar.Action icon={'close'} onPress={onCloseSignature} />
-                  <Appbar.Content
-                    title="ลายเซ็นผู้เสนอราคา"
-                    titleStyle={{fontSize: 18, fontWeight: 'bold'}}
-                  />
-                </Appbar.Header>
-                <SafeAreaView style={styles.containerModal}>
-                  <SignatureComponent
-                    onClose={() => setSignatureModal(false)}
-                    setSelectedSignature={setSignature}
-                    onSignatureSuccess={handleSignatureSuccess}
-                  />
-                </SafeAreaView>
-              </Modal>
+              <SignatureModal
+                sellerSignature={sellerSignature ? sellerSignature : ''}
+                setLoadingWebP={setIsLoadingWebP}
+                setSelectedSignature={setSelectedSignature}
+                title="ลายเซ็นผู้เสนอราคา"
+                visible={signatureModal}
+                onClose={closeSignatureModal}
+              />
             </View>
           </ScrollView>
           <Modal

@@ -7,8 +7,10 @@ import {
   Dimensions,
   FlatList,
   StyleSheet,
+  Image,
   Text,
   View
+
 } from 'react-native';
 import CardDashBoard from '../../components/warranty/CardDashBoard';
 import { QuotationsFilterButton, WarrantyFilterButton } from '../../components/ui/Dashboard/FilterButton'; // Adjust the import path as necessary
@@ -239,7 +241,30 @@ const DashboardWarranty = ({navigation}: DashboardScreenProps) => {
                     data={filteredData}
                     renderItem={renderItem}
                     keyExtractor={item => item.id}
- 
+                    ListEmptyComponent={
+                      <View
+                        style={{
+                          flex: 1,
+                          justifyContent: 'flex-start',
+                          height: height,
+                          width: width*0.9,
+                          alignItems: 'center',
+                          marginTop: 20
+                        }}>
+                        <Image
+                          source={require('../../assets/images/Certification-amico.png')}
+                          width={width * 0.5}
+                          height={height * 0.3}
+                          style={{
+                            width: width * 0.6,
+                            height: height * 0.3,
+                          }}
+                        />
+                        <Text style={{marginTop: 20, color: 'gray'}}>
+                          ยังไม่มีใบรับประกัน
+                        </Text>
+                      </View>
+                    }
                   />
                 </View>
               )}

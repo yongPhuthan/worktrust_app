@@ -7,6 +7,7 @@ import {
   Alert,
   Dimensions,
   FlatList,
+  Image,
   StyleSheet,
   Text,
   View,
@@ -397,7 +398,9 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     if (!checkSubscription()) {
       return;
     }
-    navigation.navigate('SelectDoc');
+    dispatch(stateAction.reset_edit_invoice());
+    navigation.navigate('CreateNewInvoice');
+    // navigation.navigate('SelectDoc');
   };
   if (isError) {
     return (
@@ -483,12 +486,20 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                           width: width,
 
                           alignItems: 'center',
-                          marginTop: height * 0.2,
                         }}>
-                        <Icon source="inbox" color={'gray'} size={80} />
+                        <Image
+                          source={require('../../assets/images/Audit-amico.png')}
+                          width={width * 0.5}
+                          height={height * 0.3}
+                          style={{
+                            width: width * 0.5,
+                            height: height * 0.3,
+                          }}
+                        />
                         <Text style={{marginTop: 10, color: 'gray'}}>
                           ยังไม่มีใบวางบิล
                         </Text>
+           
                       </View>
                     }
                     contentContainerStyle={

@@ -8,14 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {
-  TextInput,
-  Button,
-  Text,
-  Appbar,
-  Snackbar,
-
-} from 'react-native-paper';
+import {TextInput, Button, Text, Appbar, Snackbar} from 'react-native-paper';
 
 import {Controller, useForm, useWatch} from 'react-hook-form';
 
@@ -66,7 +59,7 @@ const RegisterScreen = ({navigation}: Props) => {
   const user = useUser();
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-  
+
   const [error, setError] =
     useState<FirebaseAuthTypes.NativeFirebaseAuthError | null>(null);
 
@@ -173,21 +166,7 @@ const RegisterScreen = ({navigation}: Props) => {
     setPasswordVisible(!passwordVisible);
   };
 
-  async function testFirestoreConnection() {
-    try {
-      await firebase
-        .firestore()
-        .collection('TestCollection')
-        .doc('TestDocument')
-        .set({
-          message: 'Hello, this is a test document!',
-          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-        });
-      console.log('Document successfully written to the Firestore emulator!');
-    } catch (error) {
-      console.error('Error writing document to Firestore emulator:', error);
-    }
-  }
+
   return (
     <>
       <Appbar.Header
@@ -309,22 +288,19 @@ const RegisterScreen = ({navigation}: Props) => {
             disabled={!isValid}>
             <Text style={styles.pressableText}>ลงทะเบียน</Text>
           </Button>
-
         </View>
-
       </SafeAreaView>
       <Snackbar
-      visible={snackbarVisible}
-      onDismiss={() => setSnackbarVisible(false)}
-      action={{
-        label: 'OK',
-        onPress: () => {
-          // Possibly clear input or focus email input for correction
-        },
-      }}
-    >
-      {snackbarMessage}
-    </Snackbar>
+        visible={snackbarVisible}
+        onDismiss={() => setSnackbarVisible(false)}
+        action={{
+          label: 'OK',
+          onPress: () => {
+            // Possibly clear input or focus email input for correction
+          },
+        }}>
+        {snackbarMessage}
+      </Snackbar>
     </>
   );
 };

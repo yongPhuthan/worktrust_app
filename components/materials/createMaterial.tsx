@@ -122,8 +122,8 @@ const CreateMaterial = (props: Props) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Appbar.Header
+    <>
+          <Appbar.Header
         mode="center-aligned"
         elevated
         style={{
@@ -139,154 +139,158 @@ const CreateMaterial = (props: Props) => {
           }}
         />
       </Appbar.Header>
-      <ScrollView>
-        <View
+      <SafeAreaView style={styles.container}>
+
+<ScrollView>
+  <View
+    style={{
+      marginBottom: 30,
+      paddingHorizontal: 20,
+      paddingVertical: 20,
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+      alignContent: 'center',
+      gap: 20,
+    }}>
+      <UploadImage 
+        control={control}
+        name="image"
+        label="อัพโหลดรูปวัสดุ-อุปกรณ์"
+        isUploading={isStandardImageUploading}
+        pickImage={pickStandardImage}
+        width={200}
+        height={200}
+      />
+    {/* <Controller
+      control={control}
+      name="image"
+      render={({field: {onChange, value}}) => (
+        <TouchableOpacity
           style={{
-            marginBottom: 30,
-            paddingHorizontal: 20,
-            paddingVertical: 20,
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            alignContent: 'center',
-            gap: 20,
-          }}>
-            <UploadImage 
-              control={control}
-              name="image"
-              label="อัพโหลดรูปวัสดุ-อุปกรณ์"
-              isUploading={isStandardImageUploading}
-              pickImage={pickStandardImage}
-              width={200}
-              height={200}
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          onPress={() => pickStandardImage()}>
+          {value ? (
+            <Image
+              source={{uri: value}}
+              style={{
+                width: 200,
+                aspectRatio: 1,
+                resizeMode: 'contain',
+              }}
+              onError={e =>
+                console.log('Failed to load image:', e.nativeEvent.error)
+              }
             />
-          {/* <Controller
-            control={control}
-            name="image"
-            render={({field: {onChange, value}}) => (
+          ) : (
+            <View>
               <TouchableOpacity
                 style={{
-                  alignItems: 'center',
                   justifyContent: 'center',
+                  alignItems: 'center',
+                  marginBottom: 5,
+                  borderColor: '#0073BA',
+                  borderWidth: 1,
+                  borderRadius: 5,
+                  borderStyle: 'dashed',
+                  marginVertical: 20,
+                  padding: 10,
+                  height: 150,
+                  width: 200,
                 }}
-                onPress={() => pickStandardImage()}>
-                {value ? (
-                  <Image
-                    source={{uri: value}}
-                    style={{
-                      width: 200,
-                      aspectRatio: 1,
-                      resizeMode: 'contain',
-                    }}
-                    onError={e =>
-                      console.log('Failed to load image:', e.nativeEvent.error)
-                    }
-                  />
+                onPress={() => {
+                  pickStandardImage();
+                }}>
+                {isStandardImageUploading ? (
+                  <ActivityIndicator size="small" color="gray" />
                 ) : (
-                  <View>
-                    <TouchableOpacity
-                      style={{
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        marginBottom: 5,
-                        borderColor: '#0073BA',
-                        borderWidth: 1,
-                        borderRadius: 5,
-                        borderStyle: 'dashed',
-                        marginVertical: 20,
-                        padding: 10,
-                        height: 150,
-                        width: 200,
-                      }}
-                      onPress={() => {
-                        pickStandardImage();
-                      }}>
-                      {isStandardImageUploading ? (
-                        <ActivityIndicator size="small" color="gray" />
-                      ) : (
-                        <IconButton
-                          icon="image-plus"
-                          iconColor={'#0073BA'}
-                          size={40}
-                          onPress={() => pickStandardImage()}
-                        />
-                      )}
-                    </TouchableOpacity>
-                    <Text
-                      style={{
-                        textAlign: 'center',
-                        color: '#0073BA',
-                        fontFamily: 'Sukhumvit set',
-                      }}>
-                      อัพโหลดรูปภาพวัสดุ-อุปกรณ์
-                    </Text>
-                  </View>
+                  <IconButton
+                    icon="image-plus"
+                    iconColor={'#0073BA'}
+                    size={40}
+                    onPress={() => pickStandardImage()}
+                  />
                 )}
               </TouchableOpacity>
-            )}
-          /> */}
-          <Controller
-            control={control}
-            name="name"
-            render={({
-              field: {onChange, value, onBlur},
-              fieldState: {error},
-            }) => (
-              <View>
-                <TextInput
-                  mode="outlined"
-                  label={'ชื่อ'}
-                  onBlur={onBlur}
-                  error={!!error}
-                  placeholder="เช่น บานพับปีกผีเสื้อ..."
-                  value={value}
-                  onChangeText={onChange}
-                />
-                {error && <Text style={styles.errorText}>{error.message}</Text>}
-              </View>
-            )}
+              <Text
+                style={{
+                  textAlign: 'center',
+                  color: '#0073BA',
+                  fontFamily: 'Sukhumvit set',
+                }}>
+                อัพโหลดรูปภาพวัสดุ-อุปกรณ์
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      )}
+    /> */}
+    <Controller
+      control={control}
+      name="name"
+      render={({
+        field: {onChange, value, onBlur},
+        fieldState: {error},
+      }) => (
+        <View>
+          <TextInput
+            mode="outlined"
+            label={'ชื่อ'}
+            onBlur={onBlur}
+            error={!!error}
+            placeholder="เช่น บานพับปีกผีเสื้อ..."
+            value={value}
+            onChangeText={onChange}
           />
-
-          <Controller
-            control={control}
-            name="description"
-            render={({
-              field: {onChange, value, onBlur},
-              fieldState: {error},
-            }) => (
-              <View>
-                <TextInput
-                  mode="outlined"
-                  numberOfLines={4}
-                  label={'รายละเอียด'}
-                  multiline={true}
-                  onBlur={onBlur}
-                  error={!!error}
-                  style={
-                    Platform.OS === 'ios'
-                      ? {height: 100, textAlignVertical: 'top'}
-                      : {}
-                  }
-                  placeholder="จุดเด่นหรือรายละเอียดของวัสดุ-อุปกรณ์..."
-                  value={value}
-                  onChangeText={onChange}
-                />
-                {error && <Text style={styles.errorText}>{error.message}</Text>}
-              </View>
-            )}
-          />
+          {error && <Text style={styles.errorText}>{error.message}</Text>}
         </View>
-        <Button
-          loading={isLoading || isUploading}
-          disabled={!isValid}
-          style={{width: '90%', alignSelf: 'center', marginBottom: 20}}
-          mode="contained"
-          onPress={() => {
-            handleSubmit();
-          }}>
-          {'บันทึก'}
-        </Button>
-      </ScrollView>
-    </SafeAreaView>
+      )}
+    />
+
+    <Controller
+      control={control}
+      name="description"
+      render={({
+        field: {onChange, value, onBlur},
+        fieldState: {error},
+      }) => (
+        <View>
+          <TextInput
+            mode="outlined"
+            numberOfLines={4}
+            label={'รายละเอียด'}
+            multiline={true}
+            onBlur={onBlur}
+            error={!!error}
+            style={
+              Platform.OS === 'ios'
+                ? {height: 100, textAlignVertical: 'top'}
+                : {}
+            }
+            placeholder="จุดเด่นหรือรายละเอียดของวัสดุ-อุปกรณ์..."
+            value={value}
+            onChangeText={onChange}
+          />
+          {error && <Text style={styles.errorText}>{error.message}</Text>}
+        </View>
+      )}
+    />
+  </View>
+  <Button
+    loading={isLoading || isUploading}
+    disabled={!isValid}
+    style={{width: '90%', alignSelf: 'center', marginBottom: 20}}
+    mode="contained"
+    onPress={() => {
+      handleSubmit();
+    }}>
+    {'บันทึก'}
+  </Button>
+</ScrollView>
+</SafeAreaView>
+    </>
+
   );
 };
 
@@ -298,7 +302,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   container: {
-    marginVertical: 20,
+
     backgroundColor: '#ffffff',
     width: width,
     height: height,

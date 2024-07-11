@@ -9,6 +9,7 @@ import {
   Dimensions,
   FlatList,
   StyleSheet,
+  Image,
   Text,
   TouchableOpacity,
   View,
@@ -499,14 +500,21 @@ const DashboardSubmit = ({navigation}: Props) => {
                           flex: 1,
                           justifyContent: 'flex-start',
                           height: height,
-                          width: width,
-
+                          width: width*0.9,
                           alignItems: 'center',
-                          marginTop: height * 0.2,
+                          marginTop: 20
                         }}>
-                        <Icon source="inbox" color={'gray'} size={80} />
-                        <Text style={{marginTop: 10, color: 'gray'}}>
-                          ยังไม่มีเอกสาร
+                        <Image
+                          source={require('../../assets/images/BuildingPermit-pana.png')}
+                          width={width * 0.8}
+                          height={height * 0.3}
+                          style={{
+                            width: width * 0.7,
+                            height: height * 0.3,
+                          }}
+                        />
+                        <Text style={{marginTop: 20, color: 'gray'}}>
+                          ยังไม่มีงานที่แจ้งส่ง
                         </Text>
                       </View>
                     }

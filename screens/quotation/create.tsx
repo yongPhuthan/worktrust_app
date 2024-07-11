@@ -136,7 +136,9 @@ const Quotation = ({navigation}: Props) => {
 
   const [serviceIndex, setServiceIndex] = useState<number>(0);
 
-  const url = `https://project.worktrust.co/preview/seller/${quotationServerId}`;
+  // const url = `https://project.worktrust.co/preview/seller/${quotationServerId}`;
+  let urlPreview = `https://project.worktrust.co/preview/seller/${quotationServerId}`;
+  let urlShare = `https://project.worktrust.co/preview/${quotationServerId}`;
 
   const {
     openModal: openAddCustomerModal,
@@ -270,9 +272,7 @@ const Quotation = ({navigation}: Props) => {
     control: methods.control,
     name: 'services',
   });
-  const onSubmit = (data: Quotations) => {
-    console.log('Form data:', data);
-  };
+
 
   const customer = useWatch({
     control: methods.control,
@@ -893,7 +893,8 @@ const Quotation = ({navigation}: Props) => {
           fileName={customer.name}
           visible={showProjectModal}
           onClose={closeProjectModal}
-          url={url}
+          urlPreview={urlPreview}
+          urlShare={urlShare}
         />
         <PDFModalScreen
           fileType="QT"

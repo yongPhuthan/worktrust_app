@@ -183,22 +183,25 @@ const ExistingWorkers = ({isVisible, onClose}: ExistingModalProps) => {
           ListEmptyComponent={
             <View
               style={{
-                flex: 1,
-                justifyContent: 'center',
-                height: height * 0.5,
-
+                justifyContent: 'flex-start',
+                height: height,
+                width: width*0.9,
                 alignItems: 'center',
               }}>
-              <Button
-                onPress={() => handleAddNewProduct()}
-                mode="contained"
-                icon={'plus'}>
-                <Text
-                  variant="titleMedium"
-                  style={{color: 'white', fontFamily: 'Sukhumvit set'}}>
-                  เพิ่มทีมงานใหม่
-                </Text>
-              </Button>
+              <Image
+                source={require('../../assets/images/ConstructionWorker-bro.png')}
+                width={width * 0.5}
+                height={height * 0.3}
+                style={{
+                  width: width * 0.5,
+                  height: height * 0.3,
+
+                }}
+              />
+              <Text style={{marginTop: 10, color: 'gray'}}>
+              ยังไม่ได้เพิ่มทีมช่าง
+              </Text>
+ 
             </View>
           }
           keyExtractor={item => item.id}
