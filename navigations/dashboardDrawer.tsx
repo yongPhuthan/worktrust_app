@@ -5,7 +5,7 @@ import {
   DrawerContentComponentProps,
 } from '@react-navigation/drawer';
 import React from 'react';
-import {SafeAreaView, Dimensions, Image, View} from 'react-native';
+import {SafeAreaView, Dimensions, Image, View,Text} from 'react-native';
 import 'react-native-gesture-handler';
 import {Divider, IconButton, Drawer as PaperDrawer} from 'react-native-paper';
 import DashboardContract from '../screens/contract/dashboardContract';
@@ -42,21 +42,25 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
     <SafeAreaView style={{flex: 1}}>
       <View
         style={{
+          // flex: 1,
           paddingLeft: 20,
           backgroundColor: '#ffffff',
           alignItems: 'flex-start',
+          marginVertical: '5%',
+          gap: 10,
+       
         }}>
-        <Image
-          source={require('../assets/images/logo.png')}
+        {/* <Image
+          source={require('../assets/images/blacklogo.png')}
           style={{
             height: height * 0.1,
-            width: width * 0.35,
+            
             resizeMode: 'contain',
           }}
-        />
-        {/* <Text style={{fontSize: 20, fontWeight: 'bold', color: '#012b20'}}>
+        /> */}
+        <Text style={{fontSize: 20, fontWeight: 'bold', color: '#012b20'}}>
           {BRAND_NAME}
-        </Text> */}
+        </Text>
       </View>
       <Divider style={{marginBottom: 20}} />
       <PaperDrawer.Section>

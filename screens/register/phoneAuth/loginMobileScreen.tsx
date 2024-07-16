@@ -63,19 +63,21 @@ const LoginMobileScreen = ({navigation}: Props) => {
     }
     return phoneNumber; // return the original if it doesn't start with '0'
   };
-  const signInWithPhoneNumber = handleSubmit(async (data) => {
+  const signInWithPhoneNumber = handleSubmit(async data => {
     try {
       setIsLoading(true);
-      const { phoneNumber } = data; // destructuring phoneNumber from the form data
+      const {phoneNumber} = data; // destructuring phoneNumber from the form data
       const formattedPhoneNumber = formatPhoneNumber(phoneNumber); // Format the phone number
-  
-      const confirmation = await firebase.auth().signInWithPhoneNumber(formattedPhoneNumber);
+
+      const confirmation = await firebase
+        .auth()
+        .signInWithPhoneNumber(formattedPhoneNumber);
       // Proceed with the confirmation process
       setConfirm(confirmation);
-  
+
       // Start the timer
       setInterval(() => {
-        setTimer((prevTimer) => (prevTimer > 0 ? prevTimer - 1 : 0));
+        setTimer(prevTimer => (prevTimer > 0 ? prevTimer - 1 : 0));
       }, 1000);
     } catch (error) {
       console.error(error);
@@ -86,7 +88,7 @@ const LoginMobileScreen = ({navigation}: Props) => {
   });
   const resendCode = async () => {
     if (code) {
-     setCode('');
+      setCode('');
     }
     const phoneNumber = getValues('phoneNumber');
     const formattedPhoneNumber = formatPhoneNumber(phoneNumber);
@@ -105,7 +107,6 @@ const LoginMobileScreen = ({navigation}: Props) => {
     setIsLoading(true);
     try {
       // Combine all OTP digits into a single string
-   
 
       if (confirm) {
         await confirm.confirm(code);
@@ -282,19 +283,19 @@ const LoginMobileScreen = ({navigation}: Props) => {
         <Text style={styles.timerText2}> {phoneNumber}</Text>
 
         <View style={styles.otpContainer}>
-        <TextInput
-              mode="outlined"
-              style={styles.otpInput}
-              textAlign="center"
-              textAlignVertical="center"
-              keyboardType="numeric"
-              pointerEvents="auto"
-              inputMode="numeric"
-              textContentType="oneTimeCode"
-              maxLength={6}
-              onChangeText={value => setCode(value)}
-              value={code}
-            />
+          <TextInput
+            mode="outlined"
+            style={styles.otpInput}
+            textAlign="center"
+            textAlignVertical="center"
+            keyboardType="numeric"
+            pointerEvents="auto"
+            inputMode="numeric"
+            textContentType="oneTimeCode"
+            maxLength={6}
+            onChangeText={value => setCode(value)}
+            value={code}
+          />
         </View>
         <Button
           loading={isLoading}

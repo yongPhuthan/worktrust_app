@@ -374,8 +374,9 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     if (!checkSubscription()) {
       return;
     }
+    dispatch(stateAction.reset_edit_invoice());
     dispatch(stateAction.reset_edit_receipt());
-
+    dispatch(stateAction.reset_edit_quotation());
     navigation.navigate('CreateNewReceipt');
   };
   if (isError) {

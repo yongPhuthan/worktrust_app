@@ -2,7 +2,7 @@
 import {FirebaseAuthTypes} from '@react-native-firebase/auth';
 import React, {useEffect, useState} from 'react';
 import {Image, Dimensions, StyleSheet, View} from 'react-native';
-import {Button, TextInput, Text} from 'react-native-paper';
+import {Button, TextInput, Text, Divider} from 'react-native-paper';
 import {BRAND_NAME, BACK_END_SERVER_URL} from '@env';
 import firebase from '../../firebase';
 const { width, height } = Dimensions.get('window');
@@ -45,12 +45,22 @@ const FirstAppScreen = ({navigation}: any) => {
         gap: 20,
         justifyContent: 'space-between',
       }}>
+        <View></View>
+              <Text style={styles.logo}>{BRAND_NAME}</Text>
 
-         <Image
-          source={require('../../assets/images/logo.png')}
+{/* <View style={{
+  flexDirection: 'row',
+ 
+  alignItems: 'center',
+}}>
+ <Image
+          source={require('../../assets/images/blacklogo.png')}
           style={styles.logoImage}
           />
-      {/* <Text style={styles.logo}>{BRAND_NAME}</Text> */}
+          <View style={styles.divider} />
+      <Text style={styles.logo}>{BRAND_NAME}</Text>
+</View> */}
+        
       <Image
         style={styles.image}
         source={require('../../assets/images/Buildingpermit-bro.png')}
@@ -116,16 +126,15 @@ const FirstAppScreen = ({navigation}: any) => {
 
 const styles = StyleSheet.create({
   logo: {
-    fontSize: 32,
+    fontSize: 30,
     color: '#5C5F62',
 
     // color: '#012b20',
-    marginBottom: 32,
     fontWeight: 'bold',
   },
   logoImage: {
-    width: width * 0.55,
-    height: height * 0.08,
+    width: width * 0.2,
+    height: height * 0.1,
     resizeMode: 'contain', // เพื่อให้รูปภาพรักษาสัดส่วนของมัน
   },
   heading: {
@@ -186,6 +195,11 @@ const styles = StyleSheet.create({
     fontFamily: 'SukhumvitSet-Bold',
 
     textAlign: 'center', // Ensure text is centered within the full width buttons
+  },
+  divider: {
+    width: 1, // Thickness of the divider
+    backgroundColor: '#000', // Color of the divider
+    height: '100%', // Full height of the container
   },
   pressableTextLogin: {
     color: '#5C5F62',

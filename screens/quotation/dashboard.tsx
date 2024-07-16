@@ -77,7 +77,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   } = useModal();
   const {
     dispatch,
-    state: {quotations},
+    state: {quotations,sellerId},
   } = useContext(Store);
   const {data, isLoading, isError, error, refetch} = useFetchDashboard();
   const {activeFilter, updateActiveFilter} = useActiveFilter();
@@ -257,8 +257,6 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
       dispatch(stateAction.get_company_state(companyOnly));
 
       dispatch(stateAction.get_companyID(companyOnly.id));
-      dispatch(stateAction.get_seller_id(data.sellerId));
-
       // Sort the quotations by the most recently updated date
       const sortedQuotations = data.company?.quotations.sort((a, b) => {
         const dateA = new Date(a.updated);
@@ -415,6 +413,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   if (isError && error) {
     handleErrorResponse(error);
   }
+  console.log('sellerId',sellerId)
 
   const renderItem = ({item, index}: any) => (
     <>

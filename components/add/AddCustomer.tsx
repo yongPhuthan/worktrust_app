@@ -25,7 +25,6 @@ const customer = watch('customer');
     // setValue('customer.id', uuidv4());
     onClose();
   };
-console.log('customer', customer)
   return (
     <>
       <Appbar.Header
@@ -37,7 +36,7 @@ console.log('customer', customer)
         <Appbar.Action icon={'close'} onPress={() => onClose()} />
         <Appbar.Content
           title="เพิ่มลูกค้า"
-          titleStyle={{fontSize: 20, fontWeight: 'bold'}}
+          titleStyle={{fontSize: 18}}
         />
       </Appbar.Header>
       <View style={styles.subContainer}>

@@ -338,9 +338,6 @@ const AddNewBeforeImage = ({
     imageId: string,
   ): Promise<string | undefined> => {
     if (!originalImage || !G_logo) return;
-
-    console.log('Original image:', originalImage);
-
     const originalFileExists = await checkImageExists(originalImage);
     if (!originalFileExists) {
       console.error('Original image does not exist:', originalImage);
@@ -689,7 +686,7 @@ const AddNewBeforeImage = ({
                   <Text style={styles.signHeader}>ปรับขนาด</Text>
                   <Slider
                     style={{width: '50%', height: 40}}
-                    minimumValue={0.1}
+                    minimumValue={0.01}
                     maximumValue={0.3}
                     value={logoScale}
                     onValueChange={value => setLogoScale(value)}

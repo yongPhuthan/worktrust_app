@@ -9,6 +9,8 @@ import {
   useForm,
   useWatch,
 } from 'react-hook-form';
+import * as stateAction from '../../../redux/actions';
+
 import {
   Alert,
   Dimensions,
@@ -64,6 +66,7 @@ import {ParamListBase} from '../../../types/navigationType';
 import UpdateServiceModal from '../../../components/service/update';
 import {set} from 'lodash';
 import SignatureModal from '../../../components/utils/signature/select';
+import SignatureSection from '../../../components/ui/SignatureSection';
 
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'CreateNewInvoice'>;
@@ -90,15 +93,7 @@ const CreateNewInvoice = ({navigation}: Props) => {
   } = useSelectedDates();
 
   const thaiDateFormatter = useThaiDateFormatter();
-  const [addNewService, setAddNewService] = useState(false);
 
-  // const [customerName, setCustomerName] = useState('');
-  const [signaturePicker, setSignaturePicker] = useState(false);
-
-  const [isNewInvoice, setIsNewInvoice] = useState(editInvoice ? false : true);
-
-  const [save, setSave] = useState<boolean>(false);
-  const [isLoadingWebP, setIsLoadingWebP] = useState(false);
   const [invoiceServerId, setInvoiceServerId] = useState<string | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>('');
   const [openNoteToCustomer, setOpenNoteToCustomer] = useState(false);
@@ -107,8 +102,6 @@ const CreateNewInvoice = ({navigation}: Props) => {
     null,
   );
   const [currentValue, setCurrentValue] = useState<ServicesEmbed | null>(null);
-  const [selectedSignature, setSelectedSignature] = useState<string | null>(null);
-  const quotationId = uuidv4();
   const [dateOfferFormatted, setDateOfferFormatted] = useState<string>(
     initialDateOfferFormatted,
   );
@@ -126,11 +119,6 @@ const CreateNewInvoice = ({navigation}: Props) => {
     isVisible: addCustomerModal,
   } = useModal();
 
-  const {
-    openModal: openSignatureModal,
-    closeModal: closeSignatureModal,
-    isVisible: signatureModal,
-  } = useModal();
 
   const {
     openModal: openPDFModal,
@@ -242,17 +230,8 @@ const CreateNewInvoice = ({navigation}: Props) => {
     methods.setValue('FCMToken', fcmToken);
   }, [dateEndFormatted, dateOfferFormatted, fcmToken, methods]);
 
-  const handleShare = useShare({url, title: `ใบเสนอราคา ${customer.name}`});
 
-  const useSignature = () => {
-    if (sellerSignature) {
-      methods.setValue('sellerSignature', '', {shouldDirty: true});
-      setSelectedSignature(null);
-      onCloseSignature();
-    } else {
-      openSignatureModal();
-    }
-  };
+
 
   const handleModalClose = () => {
     setVisibleModalIndex(null);
@@ -279,9 +258,15 @@ const CreateNewInvoice = ({navigation}: Props) => {
       quotation: methods.getValues() as Invoices,
       company: companyState as CompanyState,
     };
-    mutate(data);
-    setSave(true);
-  };
+    mutate(data,{
+      onSuccess: (response) => {
+        dispatch(stateAction.get_edit_invoice(data.invoice));
+        methods.reset(data.invoice);
+
+    },
+
+  });
+};
 
   const handleInvoiceNumberChange = (text: string) => {
     methods.setValue('docNumber', text);
@@ -297,11 +282,6 @@ const CreateNewInvoice = ({navigation}: Props) => {
     remove(index);
   };
 
-  const onCloseSignature = () => {
-    setSignaturePicker(false);
-    closeSignatureModal();
-    // methods.setValue('sellerSignature', '', {shouldDirty: true});
-  };
 
   const handleQuotationRefNumberChange = (text: string) => {
     methods.setValue('quotationRefNumber', text);
@@ -316,29 +296,7 @@ const CreateNewInvoice = ({navigation}: Props) => {
       methods.setValue('docNumber', `BL${initialDocnumber}`);
     }
   }, [openNoteToCustomer, openNoteToTeam]);
-  useEffect(() => {
-    if (selectedSignature) {
-      methods.setValue('sellerSignature', selectedSignature, {shouldDirty: true});
-    }
-  }, [selectedSignature]);
-
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      if (sellerSignature && isLoadingWebP) {
-        try {
-          const response = await fetch(sellerSignature);
-          if (response.ok) {
-            setIsLoadingWebP(false);
-          }
-        } catch (error) {
-          console.error('Error checking SignatureImage:', error);
-        }
-      }
-    }, 1500);
-    return () => clearInterval(interval);
-  }, [sellerSignature, isLoadingWebP]);
-
-  console.log('sellerSignature', sellerSignature);
+console.log('pdfUrl',pdfUrl)
   return (
     <>
       <Appbar.Header
@@ -352,14 +310,14 @@ const CreateNewInvoice = ({navigation}: Props) => {
 
         <IconButton
           mode="outlined"
-          disabled={editInvoice ? !editInvoice.pdfUrl : !pdfUrl}
+          disabled={!pdfUrl && !editInvoice?.pdfUrl}
           icon="file-document"
           onPress={openPDFModal}
         />
         <Appbar.Content title="" />
         <Button
           loading={isPending}
-          disabled={isDisabled}
+          disabled={isDisabled || isPending || !methods.formState.isDirty}
           testID="submited-button"
           mode="contained"
           onPress={handleButtonPress}>
@@ -451,28 +409,8 @@ const CreateNewInvoice = ({navigation}: Props) => {
               />
 
               <SmallDivider />
-              <View style={styles.signatureRow}>
-                <Text style={styles.signHeader}>เพิ่มลายเซ็น</Text>
-                <Switch
-                  ios_backgroundColor="#3e3e3e"
-                  onValueChange={useSignature}
-                  value={sellerSignature ? true : false}
-                  style={Platform.select({
-                    ios: {
-                      transform: [{scaleX: 0.7}, {scaleY: 0.7}],
-                      marginTop: 5,
-                    },
-                    android: {},
-                  })}
-                />
-              </View>
-              {sellerSignature && (
-                <ShowSignature
-                  sellerSignature={sellerSignature}
-                  isLoadingWebP={isLoadingWebP}
-                  setIsLoadingWebP={setIsLoadingWebP}
-                />
-              )}
+              <SignatureSection fieldName="sellerSignature" title="เพิ่มลายเซ็น" />
+
               <SmallDivider />
               <View style={styles.signatureRow}>
                 <Text style={styles.signHeader}>หมายเหตุ</Text>
@@ -590,14 +528,6 @@ const CreateNewInvoice = ({navigation}: Props) => {
             <AddCustomer onClose={() => closeAddCustomerModal()} />
           </Modal>
         </View>
-        <SignatureModal 
-            visible={signaturePicker}
-            onClose={onCloseSignature}
-            sellerSignature={sellerSignature  ? sellerSignature : ''}
-            setLoadingWebP={setIsLoadingWebP}
-            title="ลายเซ็นผู้ขาย"
-            setSelectedSignature={setSelectedSignature}
-          />
         <SelectProductModal
           onAddService={newProduct => append(newProduct)}
           visible={showAddExistingService}
@@ -608,13 +538,8 @@ const CreateNewInvoice = ({navigation}: Props) => {
           fileName={customer.name}
           visible={showPDFModal}
           onClose={closePDFModal}
-          pdfUrl={
-            editInvoice
-              ? editInvoice.pdfUrl
-                ? editInvoice.pdfUrl
-                : ''
-              : pdfUrl || ''
-          }
+          pdfUrl={pdfUrl ? pdfUrl : editInvoice?.pdfUrl || ''}
+
         />
         {currentValue && (
           <UpdateServiceModal

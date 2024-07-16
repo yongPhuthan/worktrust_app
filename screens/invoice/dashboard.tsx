@@ -399,6 +399,8 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
       return;
     }
     dispatch(stateAction.reset_edit_invoice());
+    dispatch(stateAction.reset_edit_receipt());
+    dispatch(stateAction.reset_edit_quotation());
     navigation.navigate('CreateNewInvoice');
     // navigation.navigate('SelectDoc');
   };

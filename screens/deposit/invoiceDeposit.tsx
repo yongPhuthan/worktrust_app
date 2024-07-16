@@ -27,11 +27,13 @@ import {
   Invoices
 } from '@prisma/client';
 import Decimal from 'decimal.js-light';
-import { Controller, useForm, useWatch } from 'react-hook-form';
+import { Controller, useForm, useWatch, FormProvider} from 'react-hook-form';
 import { CompanyState } from 'types';
 import PDFModalScreen from '../../components/webview/pdf';
 import useCreateNewDepositInvoice from '../../hooks/invoice/deposit/useCreateDeposit';
 import { useModal } from '../../hooks/quotation/create/useModal';
+import SignatureModal from '../../components/utils/signature/select';
+import SignatureSection from '../../components/ui/SignatureSection';
 
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'InvoiceDepositScreen'>;
@@ -40,7 +42,12 @@ const InvoiceDepositScreen = ({navigation}: Props) => {
   const {
     state: {editQuotation, sellerId, G_company: companyState},
   } = useContext(Store);
-
+  const {
+    openModal: openSignatureModal,
+    closeModal: closeSignatureModal,
+    isVisible: signatureModal,
+  } = useModal();
+  const [isLoadingWebP, setIsLoadingWebP] = useState(false);
   const [amount, setAmount] = React.useState('');
   const [pickerVisible, setPickerVisible] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>('');
@@ -63,6 +70,9 @@ const InvoiceDepositScreen = ({navigation}: Props) => {
   const [dateOfferFormatted, setDateOfferFormatted] = useState<string>(
     initialDateOfferFormatted,
   );
+  const [selectedSignature, setSelectedSignature] = useState<string | null>(
+    null,
+  );
   const {
     openModal: openPDFModal,
     closeModal: closePDFModal,
@@ -81,6 +91,7 @@ const InvoiceDepositScreen = ({navigation}: Props) => {
     summaryAfterDiscount: 0,
     paymentMethod: '',
     paymentStatus: '',
+    
     depositPaid: true,
     depositApplied:
       editQuotation?.deposit?.firstDeposit! > 0
@@ -95,6 +106,7 @@ const InvoiceDepositScreen = ({navigation}: Props) => {
     netAmount: 0,
     remaining: 0,
     dateOffer: initialDateOffer,
+    
     noteToCustomer: '',
     noteToTeam: '',
     docNumber: `IV${initialDocnumber}`,
@@ -107,10 +119,13 @@ const InvoiceDepositScreen = ({navigation}: Props) => {
 
     customerSign: null,
   };
-console.log('sellerId',sellerId)
   const methods = useForm({
     defaultValues: depositInviceDefaultValue,
     mode: 'onChange',
+  });
+  const sellerSignature = useWatch({
+    control: methods.control,
+    name: 'sellerSignature',
   });
   const depositApplied = useWatch({
     control: methods.control,
@@ -236,8 +251,42 @@ console.log('sellerId',sellerId)
     navigation.goBack();
     return null;
   }
+  const useSignature = () => {
+    if (sellerSignature) {
+      methods.setValue('sellerSignature', '', {shouldDirty: true});
+      setSelectedSignature(null);
+      closeSignatureModal();
+    } else {
+      openSignatureModal();
+    }
+  };
+
+  React.useEffect(() => {
+    if (selectedSignature) {
+      methods.setValue('sellerSignature', selectedSignature, {
+        shouldDirty: true,
+      });
+    }
+  }, [selectedSignature]);
+  React.useEffect(() => {
+    const interval = setInterval(async () => {
+      if (sellerSignature && isLoadingWebP) {
+        try {
+          const response = await fetch(sellerSignature);
+          if (response.ok) {
+            setIsLoadingWebP(false);
+          }
+        } catch (error) {
+          console.error('Error checking SignatureImage:', error);
+        }
+      }
+    }, 1500);
+
+    return () => clearInterval(interval);
+  }, [sellerSignature, isLoadingWebP]);
   return (
     <>
+         <FormProvider {...methods}>
       <Appbar.Header
         elevated
         mode="small"
@@ -420,54 +469,7 @@ console.log('sellerId',sellerId)
               )}
             />
           </View>
-          {/* <View style={styles.summary}>
-          <Text style={styles.summaryTaxVat}>หัก ณ ที่จ่าย</Text>
-          <Switch
-            trackColor={{false: '#767577', true: '#81b0ff'}}
-            thumbColor={pickerVisible ? '#ffffff' : '#f4f3f4'}
-            ios_backgroundColor="#3e3e3e"
-            onValueChange={() => setPickerVisible(!pickerVisible)}
-            value={pickerVisible}
-            style={Platform.select({
-              ios: {
-                transform: [{scaleX: 0.7}, {scaleY: 0.7}],
-                marginTop: 5,
-              },
-              android: {},
-            })}
-          />
-        </View> */}
-          {/* {pickerVisible && (
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-            }}>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                gap: 10,
-              }}>
-              {taxLabel.map(tax => (
-                <View
-                  key={tax.value}
-                  style={{flexDirection: 'row', alignItems: 'center'}}>
-                  <Checkbox.Android
-                    status={
-                      selectedValue === tax.value ? 'checked' : 'unchecked'
-                    }
-                    onPress={() => setSelectedValue(tax.value)}
-                  />
-                  <Text>{tax.label}</Text>
-                </View>
-              ))}
-            </View>
-            <Text style={styles.summaryText}>
-              {new Intl.NumberFormat().format(taxValue)}
-            </Text>
-          </View>
-        )} */}
+
           <Divider />
           <View style={styles.summary}>
             <Text style={[styles.summaryTaxVat]}>ภาษีมูลค่าเพิ่ม </Text>
@@ -531,6 +533,8 @@ console.log('sellerId',sellerId)
               }).format(Number(remaining))}
             </Text>
           </View>
+          <Divider />
+          <SignatureSection fieldName="sellerSignature" title="เพิ่มลายเซ็น" />
           <Divider />
           <View style={styles.signatureRow}>
             <Text style={styles.signHeader}>หมายเหตุ</Text>
@@ -654,6 +658,15 @@ console.log('sellerId',sellerId)
        
         </>
       )}
+      <SignatureModal
+        visible={signatureModal}
+        onClose={()=>    closeSignatureModal()        }
+        sellerSignature={sellerSignature ? sellerSignature : ''}
+        setLoadingWebP={setIsLoadingWebP}
+        title="ลายเซ็นของผู้ขาย"
+        setSelectedSignature={setSelectedSignature}
+      />
+      </FormProvider>
     </>
   );
 };

@@ -2,6 +2,7 @@ import {faBriefcase, faUser} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import * as stateAction from '../../redux/actions';
 
 import React, {useContext, useEffect, useMemo, useState} from 'react';
 
@@ -75,6 +76,7 @@ import {quotationsValidationSchema} from '../../models/validationSchema';
 import {Store} from '../../redux/store';
 import {ParamListBase} from '../../types/navigationType';
 import {defalutCustomer, initialWarranty} from '../../models/InitialState';
+import SignatureSection from '../../components/ui/SignatureSection';
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'Quotation'>;
 }
@@ -104,25 +106,16 @@ const Quotation = ({navigation}: Props) => {
   } = useSelectedDates();
 
   const thaiDateFormatter = useThaiDateFormatter();
-  const [addNewService, setAddNewService] = useState(false);
-  const [save, setSave] = useState<boolean>(false);
-  // const [customerName, setCustomerName] = useState('');
-  const [signaturePicker, setSignaturePicker] = useState(false);
   const [workerPicker, setWorkerpicker] = useState(false);
   const [quotationServerId, setQuotationServerId] = useState<string | null>(
     editQuotation ? editQuotation.id : null,
   );
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-  const [viewResult, setViewResult] = React.useState('');
-  const [selectService, setSelectService] = useState<ServicesEmbed | null>(
-    null,
-  );
+
   const [isLoadingWebP, setIsLoadingWebP] = useState(false);
   const [currentValue, setCurrentValue] = useState<ServicesEmbed | null>(null);
-  const [selectedSignature, setSelectedSignature] = useState<string | null>(
-    null,
-  );
-  const quotationId = uuidv4();
+
+  
   const [dateOfferFormatted, setDateOfferFormatted] = useState<string>(
     initialDateOfferFormatted,
   );
@@ -132,7 +125,6 @@ const Quotation = ({navigation}: Props) => {
   const [isNewQuotation, setIsNewQuotation] = useState(
     editQuotation ? false : true,
   );
-  const [savedInvoiceData, setSavedInvoiceData] = useState<any>(null);
 
   const [serviceIndex, setServiceIndex] = useState<number>(0);
 
@@ -186,6 +178,7 @@ const Quotation = ({navigation}: Props) => {
   );
   const sellerEmbed: SellerEmbed = {
     bizName: G_company.bizName,
+    jobPosition: G_user.jobPosition,
     sellerName: G_user.name,
     logo: G_company.logo ? G_company.logo : '',
     address: G_company.address,
@@ -321,7 +314,7 @@ const Quotation = ({navigation}: Props) => {
   }, [customer.name, customer.address]);
 
   const isDisabled = useMemo(() => 
-    !customer.name || services.length === 0 || warranty.productWarrantyMonth <= 0 || warranty.skillWarrantyMonth <= 0,
+    !customer.name || services.length === 0 || warranty.productWarrantyMonth <= 0 || warranty.skillWarrantyMonth <= 0 ,
     [customer.name, services.length, warranty.productWarrantyMonth, warranty.skillWarrantyMonth]
   );  useEffect(() => {
     methods.setValue('FCMToken', fcmToken);
@@ -333,27 +326,6 @@ const Quotation = ({navigation}: Props) => {
   const [openNoteToTeam, setOpenNoteToTeam] = useState(
     noteToTeam ? true : false,
   );
-
-  const useSignature = () => {
-    if (sellerSignature) {
-      methods.setValue('sellerSignature', '', {shouldDirty: true});
-      setSelectedSignature(null);
-      onCloseSignature();
-    } else {
-      openSignatureModal();
-    }
-  };
-  const useNotetoCustomer = () => {
-    if (noteToCustomer) {
-      methods.setValue('noteToCustomer', '', {shouldDirty: true});
-    }
-  };
-
-  const useNotetoTeam = () => {
-    if (noteToTeam) {
-      methods.setValue('noteToTeam', '', {shouldDirty: true});
-    }
-  };
 
   const useWorkers = () => {
     if (workers.length > 0) {
@@ -383,15 +355,6 @@ const Quotation = ({navigation}: Props) => {
   const {mutate: updateQuotation, isPending: isUpdatePending} =
     useUpdateQuotation(actions);
 
-  // const handleButtonPress = async () => {
-  //   const data = {
-  //     quotation: methods.getValues() as Quotations,
-  //     company: companyState as CompanyState,
-  //   };
-  //   mutate(data);
-  //   setSave(true);
-
-  // };
   const handleButtonPress = async () => {
     const data = {
       quotation: methods.getValues() as Quotations,
@@ -400,8 +363,8 @@ const Quotation = ({navigation}: Props) => {
     if (isNewQuotation) {
       mutate(data, {
         onSuccess: response => {
-          setIsNewQuotation(false);
-          setSavedInvoiceData(data); // เก็บค่าที่บันทึก
+          dispatch(stateAction.get_edit_quotation(data.quotation))
+          methods.reset(data.quotation)
         },
       });
     } else {
@@ -414,9 +377,7 @@ const Quotation = ({navigation}: Props) => {
         company: G_company as CompanyState,
       };
       updateQuotation(data);
-      setSave(true);
     }
-    setSave(true);
   };
   const handleInvoiceNumberChange = (text: string) => {
     methods.setValue('docNumber', text);
@@ -427,11 +388,7 @@ const Quotation = ({navigation}: Props) => {
     remove(index);
   };
 
-  const onCloseSignature = () => {
-    setSignaturePicker(false);
-    closeSignatureModal();
-    // methods.setValue('sellerSignature', '', {shouldDirty: true});
-  };
+ 
 
   const handleStartDateSelected = (date: Date) => {
     setDateOfferFormatted(thaiDateFormatter(date));
@@ -443,29 +400,6 @@ const Quotation = ({navigation}: Props) => {
     methods.setValue('dateEnd', date);
   };
 
-  React.useEffect(() => {
-    const interval = setInterval(async () => {
-      if (sellerSignature && isLoadingWebP) {
-        try {
-          const response = await fetch(sellerSignature);
-          if (response.ok) {
-            setIsLoadingWebP(false);
-          }
-        } catch (error) {
-          console.error('Error checking SignatureImage:', error);
-        }
-      }
-    }, 1500);
-
-    return () => clearInterval(interval);
-  }, [sellerSignature, isLoadingWebP]);
-  useEffect(() => {
-    if (selectedSignature) {
-      methods.setValue('sellerSignature', selectedSignature, {
-        shouldDirty: true,
-      });
-    }
-  }, [selectedSignature]);
   React.useEffect(() => {
     if (currentValue) {
       openEditServiceModal();
@@ -497,7 +431,7 @@ const Quotation = ({navigation}: Props) => {
           }}>
           <Appbar.BackAction
             onPress={() => {
-              if (!save) {
+              if (methods.formState.isDirty) {
                 Alert.alert(
                   'ปิดหน้าต่าง',
                   'ยืนยันไม่บันทึกข้อมูลและปิดหน้าต่าง',
@@ -541,7 +475,7 @@ const Quotation = ({navigation}: Props) => {
 
           <Button
             loading={isPending || isUpdatePending}
-            disabled={isDisabled || isPending || isUpdatePending  }
+            disabled={isDisabled || isPending || isUpdatePending || !methods.formState.isDirty }
             testID="submited-button"
             mode="contained"
             onPress={handleButtonPress}>
@@ -631,15 +565,17 @@ const Quotation = ({navigation}: Props) => {
                   <Text style={styles.label}>การรับประกัน</Text>
                 </View>
 
-                {warranty ? (
-                  <Button
-                  icon={'plus'}
-                    onPress={() => {
-                      openContractModal();
-                    }}
-                    children="รายละเอียดการรับประกัน"
-                    mode="outlined"
-                  />
+                {warranty.productWarrantyMonth > 0 || warranty.skillWarrantyMonth > 0 ? (
+                 <Button
+                 icon="chevron-right"
+                 contentStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between' }}
+                 onPress={() => {
+                   openContractModal();
+                 }}
+                 mode="outlined"
+               >
+                 รายละเอียดการรับประกัน
+               </Button>
                 ) : (
                   <View
                     style={{
@@ -723,28 +659,8 @@ const Quotation = ({navigation}: Props) => {
                 />
               )}
               <SmallDivider />
-              <View style={styles.signatureRow}>
-                <Text style={styles.signHeader}>เพิ่มลายเซ็น</Text>
-                <Switch
-                  ios_backgroundColor="#3e3e3e"
-                  onValueChange={useSignature}
-                  value={sellerSignature ? true : false}
-                  style={Platform.select({
-                    ios: {
-                      transform: [{scaleX: 0.7}, {scaleY: 0.7}],
-                      marginTop: 5,
-                    },
-                    android: {},
-                  })}
-                />
-              </View>
-              {sellerSignature && (
-                <ShowSignature
-                  sellerSignature={sellerSignature}
-                  isLoadingWebP={isLoadingWebP}
-                  setIsLoadingWebP={setIsLoadingWebP}
-                />
-              )}
+              <SignatureSection fieldName="sellerSignature" title="เพิ่มลายเซ็น" />
+
 
               <SmallDivider />
               <View style={styles.signatureRow}>
@@ -872,14 +788,7 @@ const Quotation = ({navigation}: Props) => {
             />
           </Modal>
         </View>
-        <SignatureModal
-          sellerSignature={sellerSignature ? sellerSignature : ''}
-          setLoadingWebP={setIsLoadingWebP}
-          setSelectedSignature={setSelectedSignature}
-          title="ลายเซ็นผู้เสนอราคา"
-          visible={signatureModal}
-          onClose={closeSignatureModal}
-        />
+
 
         <SelectProductModal
           onAddService={newProduct => append(newProduct)}

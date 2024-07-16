@@ -58,8 +58,8 @@ const SelectPackages = ({isVisible, onClose}: ExistingModalProps) => {
     {
       id: '1',
       name: '1 เดือน',
-      price: '999',
-      pricePerMonth: '999',
+      price: '799',
+      pricePerMonth: '799',
       save: '0',
     },
     // {
@@ -74,9 +74,9 @@ const SelectPackages = ({isVisible, onClose}: ExistingModalProps) => {
       id: '12',
       name: '12 เดือน',
       // price: '3',
-      price: '9,990',
-      pricePerMonth: '832',
-      save: '1,998',
+      price: '7,990',
+      pricePerMonth: '665',
+      save: '1,598',
     },
   ];
 
@@ -385,7 +385,7 @@ const SelectPackages = ({isVisible, onClose}: ExistingModalProps) => {
                         fontSize: 18,
                         color: '#00674a',
                       }}>
-                      เลขที่ 123-4-56789-0
+                      เลขที่ 053-8-56738-8
                     </Text>
                     {/* {copied && (
                  <Badge  style={styles.badge}>copied</Badge>

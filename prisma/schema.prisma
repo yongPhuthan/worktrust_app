@@ -221,6 +221,7 @@ model DefaultStandards {
     badStandardImage  String?
     standardShowTitle String?
     createdAt         DateTime @default(now())
+    tags              String[]
     companyId         String   @db.ObjectId
     company           Company? @relation(fields: [companyId], references: [id])
 
@@ -353,6 +354,7 @@ enum SubscriptionType {
 type InspectorEmbed {
     name              String
     image             String
+    position          String?
     provider          String
     providerAccountId String
     email             String
@@ -360,7 +362,6 @@ type InspectorEmbed {
 
 type WarrantyEmbed {
     skillWarrantyMonth   Int       @default(0)
-    
     productWarrantyMonth Int
     fixDays              Int       @default(0)
     dateWaranty          DateTime?
@@ -559,8 +560,10 @@ type ReviewsEmbed {
     comment             String?
     socialProvider      Provider? @default(LINE)
     inspectorName       String?
+    inspectorPosition   String?
     inspectorImage      String?
     inspectorEmail      String?
+    inspectorSocialName String?
     periodIndex         Int?
     createdAt           DateTime  @default(now())
 }
@@ -596,6 +599,7 @@ type SellerEmbed {
     sellerName     String?
     email          String?
     address        String
+    jobPosition    String?
  
 }
 

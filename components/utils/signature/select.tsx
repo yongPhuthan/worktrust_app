@@ -35,7 +35,7 @@ const SignatureModal = ({
         <Appbar.Action icon={'close'} onPress={onClose} />
         <Appbar.Content
           title={title}
-          titleStyle={{ fontSize: 18, fontWeight: 'bold' }}
+          titleStyle={{ fontSize: 18,  }}
         />
       </Appbar.Header>
       <SafeAreaView style={styles.containerModal}>
