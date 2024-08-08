@@ -1,15 +1,13 @@
 import {faBriefcase, faUser} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {StackNavigationProp} from '@react-navigation/stack';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-import * as stateAction from '../../redux/actions';
-
 import React, {useContext, useEffect, useMemo, useState} from 'react';
-
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import firebase from '../../firebase';
+import * as stateAction from '../../redux/actions';
 import {
   Controller,
   FormProvider,
-  Resolver,
   useFieldArray,
   useForm,
   useWatch,
@@ -35,7 +33,6 @@ import {
   Switch,
   TextInput,
 } from 'react-native-paper';
-import {v4 as uuidv4} from 'uuid';
 import AddServices from '../../components/AddServices';
 import CardClient from '../../components/CardClient';
 import CardProject from '../../components/CardProject';
@@ -45,50 +42,52 @@ import AddCustomer from '../../components/add/AddCustomer';
 import SelectProductModal from '../../components/service/select';
 import DatePickerButton from '../../components/styles/DatePicker';
 // import Divider from '../../components/styles/Divider';
-import {
-  DiscountType,
-  QuotationStatus,
-  SellerEmbed,
-  ServicesEmbed,
-  TaxType,
-  WarrantyStatus,
-  type CustomerEmbed,
-  type Quotations,
-  type WarrantyEmbed,
-} from '@prisma/client';
+import {yupResolver} from '@hookform/resolvers/yup';
+
 import {CompanyState} from 'types';
-import * as yup from 'yup';
+import {ValidationError} from 'yup';
 import UpdateServiceModal from '../../components/service/update';
 import SmallDivider from '../../components/styles/SmallDivider';
 import AddCard from '../../components/ui/Button/AddCard';
-import SignatureModal from '../../components/utils/signature/select';
-import ShowSignature from '../../components/utils/signature/view';
+import SignatureSection from '../../components/ui/SignatureSection';
 import WarrantyModal from '../../components/warranty/create';
 import PDFModalScreen from '../../components/webview/pdf';
 import ProjectModalScreen from '../../components/webview/project';
 import ExistingWorkers from '../../components/workers/existing';
+import useCreateQuotation from '../../hooks/firestore/quotations/useSaveQuotation';
 import {useModal} from '../../hooks/quotation/create/useModal';
-import useCreateQuotation from '../../hooks/quotation/create/useSaveQuotation';
 import useSelectedDates from '../../hooks/quotation/create/useSelectDates';
 import useUpdateQuotation from '../../hooks/quotation/update/useUpdateQuotations';
 import useThaiDateFormatter from '../../hooks/utils/useThaiDateFormatter';
-import {quotationsValidationSchema} from '../../models/validationSchema';
+import {
+  DiscountType,
+  QuotationStatus,
+  TaxType,
+  WarrantyStatus,
+} from '../../types/enums';
+
 import {Store} from '../../redux/store';
 import {ParamListBase} from '../../types/navigationType';
-import {defalutCustomer, initialWarranty} from '../../models/InitialState';
-import SignatureSection from '../../components/ui/SignatureSection';
+import {nanoid} from 'nanoid';
+import { IServiceEmbed } from 'types/interfaces/ServicesEmbed';
+import { IQuotations } from '../../models/Quotations';
+import { IQuotationEventsEmbed } from 'types/interfaces/QuotationEventsEmbed';
+import { ISellerEmbed } from 'types/interfaces/SellerEmbed';
+import { CreateQuotationSchema, CreateQuotationSchemaType } from '../../validation/quotations/create';
+import { defalutCustomer, initialWarranty } from '../../models/InitialState';
 interface Props {
-  navigation: StackNavigationProp<ParamListBase, 'Quotation'>;
+  navigation: StackNavigationProp<ParamListBase, 'CreateQuotation'>;
 }
 
-const Quotation = ({navigation}: Props) => {
+const CreateQuotation = ({navigation}: Props) => {
   const {
     state: {
       G_company,
       editQuotation,
       defaultWarranty,
-      sellerId,
+      sellerUid,
       fcmToken,
+      companyId,
       existingServices,
       G_user,
     },
@@ -110,12 +109,13 @@ const Quotation = ({navigation}: Props) => {
   const [quotationServerId, setQuotationServerId] = useState<string | null>(
     editQuotation ? editQuotation.id : null,
   );
+  const {firestore} = firebase;
+
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
   const [isLoadingWebP, setIsLoadingWebP] = useState(false);
-  const [currentValue, setCurrentValue] = useState<ServicesEmbed | null>(null);
+  const [currentValue, setCurrentValue] = useState<IServiceEmbed | null>(null);
 
-  
   const [dateOfferFormatted, setDateOfferFormatted] = useState<string>(
     initialDateOfferFormatted,
   );
@@ -176,10 +176,10 @@ const Quotation = ({navigation}: Props) => {
   const [visibleModalIndex, setVisibleModalIndex] = useState<number | null>(
     null,
   );
-  const sellerEmbed: SellerEmbed = {
+  const sellerEmbed: ISellerEmbed = {
     bizName: G_company.bizName,
-    jobPosition: G_user.jobPosition,
-    sellerName: G_user.name,
+    jobPosition: G_user.jobPosition ? G_user.jobPosition : '',
+    sellerName: G_user.name ? G_user.name : '',
     logo: G_company.logo ? G_company.logo : '',
     address: G_company.address,
     mobileTel: G_company.mobileTel ? G_company.mobileTel : '',
@@ -187,55 +187,35 @@ const Quotation = ({navigation}: Props) => {
     companyTax: G_company.companyTax ? G_company.companyTax : '',
     email: G_user.email ? G_user.email : '',
   };
+  const eventEmbed: IQuotationEventsEmbed = {
+    pageView: 0,
+    download: 0,
+    print: 0,
+    share: 0,
+    createdAt: new Date(),
+    lastOccurredAt: new Date(),
 
-  // Custom resolver
-  const resolver: Resolver<Quotations> = async values => {
-    try {
-      const validatedValues = await quotationsValidationSchema.validate(
-        values,
-        {
-          abortEarly: false,
-        },
-      );
-      return {
-        values: validatedValues,
-        errors: {},
-      };
-    } catch (err) {
-      const validationErrors = err as yup.ValidationError;
-
-      return {
-        values: {},
-        errors: validationErrors.inner.reduce((allErrors, currentError) => {
-          if (currentError.path) {
-            allErrors[currentError.path] = {
-              type: currentError.type ?? 'validation',
-              message: currentError.message,
-            };
-          }
-          return allErrors;
-        }, {} as Record<string, {type: string; message: string}>),
-      };
-    }
   };
 
-  const quotationDefaultValues: Quotations & {isArchived: boolean} = {
-    id: uuidv4(),
-    services: [],
-    events: null,
-    customer: defalutCustomer,
+  const quotationDefaultValues: CreateQuotationSchemaType = {
+    id: nanoid(),
     isArchived: false,
-    companyId: G_company.id,
+    created: null,
+    updated: null,
+    services: [],
+    // events: null,
+    customer: defalutCustomer,
+    // customerSign: null,
+    companyId : G_user.currentCompanyId,
     vat7: 0,
     taxType: TaxType.NOTAX,
     taxValue: 0,
     summary: 0,
     warrantyStatus: WarrantyStatus.PENDING,
     summaryAfterDiscount: 0,
-    deposit: null,
-    sellerId,
+    sellerUid : sellerUid? sellerUid: G_user.uid,
     discountType: DiscountType.PERCENT,
-    discountPercentage: 0,
+    discountPercentage: 3,
     discountValue: 0,
     allTotal: 0,
     dateOffer: initialDateOffer,
@@ -249,23 +229,18 @@ const Quotation = ({navigation}: Props) => {
     sellerSignature: '',
     warranty: defaultWarranty ? defaultWarranty : initialWarranty,
     status: QuotationStatus.PENDING, // Set the status to a valid QuotationStatus value
-    dateApproved: null,
     pdfUrl: null,
-    updated: new Date(),
-    created: new Date(),
-    customerSign: null,
   };
 
-  const methods = useForm<Quotations>({
+  const methods = useForm<CreateQuotationSchemaType>({
     mode: 'onChange',
     defaultValues: editQuotation ? editQuotation : quotationDefaultValues,
-    resolver,
+    resolver: yupResolver(CreateQuotationSchema),
   });
   const {fields, append, remove, update} = useFieldArray({
     control: methods.control,
     name: 'services',
   });
-
 
   const customer = useWatch({
     control: methods.control,
@@ -313,10 +288,20 @@ const Quotation = ({navigation}: Props) => {
     return customer.name === '' && customer.address === '';
   }, [customer.name, customer.address]);
 
-  const isDisabled = useMemo(() => 
-    !customer.name || services.length === 0 || warranty.productWarrantyMonth <= 0 || warranty.skillWarrantyMonth <= 0 ,
-    [customer.name, services.length, warranty.productWarrantyMonth, warranty.skillWarrantyMonth]
-  );  useEffect(() => {
+  const isDisabled = useMemo(
+    () =>
+      !customer.name ||
+      services.length === 0 ||
+      warranty.productWarrantyMonth <= 0 ||
+      warranty.skillWarrantyMonth <= 0,
+    [
+      customer.name,
+      services.length,
+      warranty.productWarrantyMonth,
+      warranty.skillWarrantyMonth,
+    ],
+  );
+  useEffect(() => {
     methods.setValue('FCMToken', fcmToken);
   }, [dateEndFormatted, fcmToken, methods]);
 
@@ -339,7 +324,7 @@ const Quotation = ({navigation}: Props) => {
   const handleModalClose = () => {
     setVisibleModalIndex(null);
   };
-  const handleEditService = (index: number, currentValue: ServicesEmbed) => {
+  const handleEditService = (index: number, currentValue: IServiceEmbed) => {
     handleModalClose();
     setCurrentValue(currentValue);
     setServiceIndex(index);
@@ -350,33 +335,46 @@ const Quotation = ({navigation}: Props) => {
     setPdfUrl,
     openProjectModal,
   };
+  console.log('COMPANY ID', G_company);
 
-  const {mutate, isPending} = useCreateQuotation(actions);
   const {mutate: updateQuotation, isPending: isUpdatePending} =
     useUpdateQuotation(actions);
+  const {createQuotationHandler} = useCreateQuotation(actions);
 
   const handleButtonPress = async () => {
-    const data = {
-      quotation: methods.getValues() as Quotations,
-      company: G_company as CompanyState,
-    };
-    if (isNewQuotation) {
-      mutate(data, {
-        onSuccess: response => {
-          dispatch(stateAction.get_edit_quotation(data.quotation))
-          methods.reset(data.quotation)
-        },
-      });
-    } else {
-      const existingData = {
-        ...methods.getValues(),
-        id: quotationServerId,
-      };
-      const data = {
-        quotation: existingData as Quotations,
-        company: G_company as CompanyState,
-      };
-      updateQuotation(data);
+    try {
+      if (isNewQuotation) {
+        // const varidatedQuotation = await QuotationValidationSchema.validate(
+        //   methods.getValues(),
+        // );
+        const success = await createQuotationHandler(
+          methods.getValues(),
+        );
+        if (!success) {
+          Alert.alert('ข้อผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้');
+        }
+        console.log('GOOD QUERY')
+        // await fetchQuotations(G_user.uid, navigation, dispatch, stateAction);
+      } else {
+        const existingData = {
+          ...methods.getValues(),
+          id: quotationServerId,
+        };
+        const data = {
+          quotation: existingData as IQuotations,
+          company: G_company as CompanyState,
+        };
+        // updateQuotation(data);
+      }
+    } catch (error: any) {
+      if (error instanceof ValidationError) {
+        // Handle validation errors
+        Alert.alert('Validation Error', error.errors.join('\n'));
+      } else {
+        // Handle other types of errors
+        console.log('error', error);
+        Alert.alert('ข้อผิดพลาด', error.message);
+      }
     }
   };
   const handleInvoiceNumberChange = (text: string) => {
@@ -388,8 +386,6 @@ const Quotation = ({navigation}: Props) => {
     remove(index);
   };
 
- 
-
   const handleStartDateSelected = (date: Date) => {
     setDateOfferFormatted(thaiDateFormatter(date));
     methods.setValue('dateOffer', date);
@@ -397,7 +393,7 @@ const Quotation = ({navigation}: Props) => {
 
   const handleEndDateSelected = (date: Date) => {
     setDateEndFormatted(thaiDateFormatter(date));
-    methods.setValue('dateEnd', date);
+    methods.setValue('dateEnd', date, {shouldValidate: true});
   };
 
   React.useEffect(() => {
@@ -420,6 +416,7 @@ const Quotation = ({navigation}: Props) => {
     closeEditServiceModal,
     methods,
   ]);
+
   return (
     <>
       <FormProvider {...methods}>
@@ -464,18 +461,20 @@ const Quotation = ({navigation}: Props) => {
             onPress={openProjectModal}
           />
 
-          <IconButton
+          {/* <IconButton
             disabled={!pdfUrl && !editQuotation?.pdfUrl}
             icon="file-document"
             mode="outlined"
             iconColor="#047e6e"
             onPress={openPDFModal}
-          />
+          /> */}
           <Appbar.Content title="" />
 
           <Button
-            loading={isPending || isUpdatePending}
-            disabled={isDisabled || isPending || isUpdatePending || !methods.formState.isDirty }
+            loading={isUpdatePending}
+            disabled={
+              isDisabled || isUpdatePending || !methods.formState.isDirty
+            }
             testID="submited-button"
             mode="contained"
             onPress={handleButtonPress}>
@@ -491,14 +490,14 @@ const Quotation = ({navigation}: Props) => {
               <DatePickerButton
                 label="วันที่เสนอราคา"
                 title="วันที่เสนอราคา"
-                date={new Date(dateOffer)}
+                date={dateOffer}
                 onDateSelected={handleStartDateSelected}
               />
 
               <DatePickerButton
                 label="ยืนราคาถึงวันที่ี"
                 title="ยืนราคาถึงวันที่ี"
-                date={new Date(dateEnd)}
+                date={dateEnd}
                 onDateSelected={handleEndDateSelected}
               />
               <DocNumber
@@ -534,7 +533,7 @@ const Quotation = ({navigation}: Props) => {
                 <Text style={styles.label}>บริการ-สินค้า</Text>
               </View>
               {fields.length > 0 &&
-                fields.map((field, index: number) => (
+                fields.map((field :any , index: number) => (
                   <CardProject
                     handleModalClose={handleModalClose}
                     visibleModalIndex={visibleModalIndex === index}
@@ -565,17 +564,20 @@ const Quotation = ({navigation}: Props) => {
                   <Text style={styles.label}>การรับประกัน</Text>
                 </View>
 
-                {warranty.productWarrantyMonth > 0 || warranty.skillWarrantyMonth > 0 ? (
-                 <Button
-                 icon="chevron-right"
-                 contentStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between' }}
-                 onPress={() => {
-                   openContractModal();
-                 }}
-                 mode="outlined"
-               >
-                 รายละเอียดการรับประกัน
-               </Button>
+                {warranty.productWarrantyMonth > 0 ||
+                warranty.skillWarrantyMonth > 0 ? (
+                  <Button
+                    icon="chevron-right"
+                    contentStyle={{
+                      flexDirection: 'row-reverse',
+                      justifyContent: 'space-between',
+                    }}
+                    onPress={() => {
+                      openContractModal();
+                    }}
+                    mode="outlined">
+                    รายละเอียดการรับประกัน
+                  </Button>
                 ) : (
                   <View
                     style={{
@@ -659,8 +661,10 @@ const Quotation = ({navigation}: Props) => {
                 />
               )}
               <SmallDivider />
-              <SignatureSection fieldName="sellerSignature" title="เพิ่มลายเซ็น" />
-
+              <SignatureSection
+                fieldName="sellerSignature"
+                title="เพิ่มลายเซ็น"
+              />
 
               <SmallDivider />
               <View style={styles.signatureRow}>
@@ -770,7 +774,7 @@ const Quotation = ({navigation}: Props) => {
             visible={addCustomerModal}
             animationType="slide"
             style={styles.modalFull}
-            onDismiss={closeAddCustomerModal}>
+            onDismiss={() => closeAddCustomerModal()}>
             <AddCustomer onClose={() => closeAddCustomerModal()} />
           </Modal>
 
@@ -788,7 +792,6 @@ const Quotation = ({navigation}: Props) => {
             />
           </Modal>
         </View>
-
 
         <SelectProductModal
           onAddService={newProduct => append(newProduct)}
@@ -831,7 +834,7 @@ const Quotation = ({navigation}: Props) => {
             serviceIndex={serviceIndex}
             onUpdateService={(
               serviceIndex: number,
-              updatedService: ServicesEmbed,
+              updatedService: IServiceEmbed,
             ) => update(serviceIndex, updatedService)}
           />
         )}
@@ -840,7 +843,7 @@ const Quotation = ({navigation}: Props) => {
   );
 };
 
-export default Quotation;
+export default CreateQuotation;
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
 const imageContainerWidth = windowWidth / 3 - 10;

@@ -1,0 +1,113 @@
++--------------------------+
+|        Start             |
++------------+-------------+
+             |
+             v
++------------+-------------+
+| Check user data in       |
+|  AsyncStorage using      |
+|   userId (user_${userId})|
++------------+-------------+
+             |
+             | Exists?
+             +-------------+
+             |             |
+       Yes   v             | No
+             |             v
++------------+-----+   +------------+-----+
+| Fetch user data  |   | Fetch user data  |
+| from AsyncStorage|   | from Firestore   |
++------------+-----+   +------------+-----+
+             |                   |
+             |                   | Exists?
+             |                   +-------------+
+             |                   |             |
+             |                   | Yes         | No
+             |                   v             |
+             |       +--------------+----------+--+
+             |       | Save user data to       |  |
+             |       |  AsyncStorage (user_${userId})|
+             |       +--------------+----------+--+
+             |                                 |
+             v                                 v
++------------+-------------+         +------------+-------------+
+| Get companyId from       |         | Return navigation to     |
+| user data                |         | FirstAppScreen and end   |
++------------+-------------+         +------------+-------------+
+             |
+             v
++------------+-------------+
+| Check company data in    |
+|  AsyncStorage using      |
+|   companyId (company_${companyId})|
++------------+-------------+
+             |
+             | Exists?
+             +-------------+
+             |             |
+       Yes   v             | No
+             |             v
++------------+-----+   +------------+-----+
+| Fetch company   |   | Fetch company   |
+| data from       |   | data from       |
+| AsyncStorage    |   | Firestore       |
++------------+-----+   +------------+-----+
+             |                   |
+             |                   | Exists?
+             |                   +-------------+
+             |                   |             |
+             |                   | Yes         | No
+             |                   v             |
+             |       +--------------+----------+--+
+             |       | Save company data to    |  |
+             |       |  AsyncStorage (company_${companyId})|
+             |       +--------------+----------+--+
+             |                                 |
+             v                                 v
++------------+-------------+         +------------+-------------+
+| Get quotationBatches     |         | Return navigation to     |
+|  from company data       |         | CreateCompanyScreen and  |
++------------+-------------+         | end                      |
+             |                       +------------+-------------+
+             v
++------------+-------------+
+| For each batchId in      |
+| quotationBatches:        |
+|  Check batch data in     |
+|  AsyncStorage using      |
+|   batchId (batch_${batchId}) |
++------------+-------------+
+             |
+             | Exists?
+             +-------------+
+             |             |
+       Yes   v             | No
+             |             v
++------------+-----+   +------------+-----+
+| Fetch batch      |   | Fetch batch      |
+| data from        |   | data from        |
+| AsyncStorage     |   | Firestore        |
++------------+-----+   +------------+-----+
+             |                   |
+             |                   v
+             |   +--------------+--------------+
+             |   | Save batch data to          |
+             |   |  AsyncStorage (batch_${batchId})|
+             |   +--------------+--------------+
+             |
+             v
++------------+-------------+
+| Combine quotations from  |
+| all batch data           |
++------------+-------------+
+             |
+             v
++------------+-------------+
+| Update Redux state with  |
+| combined quotations      |
++------------+-------------+
+             |
+             v
++------------+-------------+
+|       End                 |
++--------------------------+

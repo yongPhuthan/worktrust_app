@@ -46,7 +46,19 @@ const FirstAppScreen = ({navigation}: any) => {
         justifyContent: 'space-between',
       }}>
         <View></View>
-              <Text style={styles.logo}>{BRAND_NAME}</Text>
+        <View 
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 0,
+        }}
+        
+        >
+        <Text style={styles.logo}>Work</Text>
+        <Text style={styles.logo}>Standard</Text>
+
+        </View>
 
 {/* <View style={{
   flexDirection: 'row',
@@ -63,7 +75,7 @@ const FirstAppScreen = ({navigation}: any) => {
         
       <Image
         style={styles.image}
-        source={require('../../assets/images/Buildingpermit-bro.png')}
+        source={require('../../assets/images/BuildingPermit.png')}
       />
       <View>
      
@@ -126,10 +138,11 @@ const FirstAppScreen = ({navigation}: any) => {
 
 const styles = StyleSheet.create({
   logo: {
-    fontSize: 30,
-    color: '#5C5F62',
+    fontSize: 28,
+    // color: '#5C5F62',
+    fontFamily:'sans-serif',
 
-    // color: '#012b20',
+    color: '#00084c',
     fontWeight: 'bold',
   },
   logoImage: {

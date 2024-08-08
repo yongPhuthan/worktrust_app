@@ -1,7 +1,7 @@
 // FilterButton.tsx
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { InvoicesFilterLabels, QuotationsFilterLabels, ReceiptsFilterLabels, SubmissionFilterLabels, WarrantyFilterLabels } from '../../../models/DocumentStatus'; // Adjust the import path as necessary
+import { InvoicesFilterLabels, QuotationsFilterLabels, ReceiptsFilterLabels, SubmissionFilterLabels, WarrantyFilterLabels } from '../../../modelse/DocumentStatus'; // Adjust the import path as necessary
 import { InvoiceStatus, QuotationStatus, ReceiptStatus, SubmissionStatus, WarrantyStatus } from '@prisma/client';
 
 type QuotationsFilterButtonProps = {

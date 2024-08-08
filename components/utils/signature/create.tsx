@@ -1,4 +1,5 @@
 // SignatureComponent.js
+import storage from '@react-native-firebase/storage';
 import React, {
   useCallback,
   useContext,
@@ -6,28 +7,24 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {v4 as uuidv4} from 'uuid';
-import firebase from '../../../firebase';
 import * as stateAction from '../../../redux/actions';
-import storage from '@react-native-firebase/storage';
 
-import {BACK_END_SERVER_URL} from '@env';
-import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
-import {useFormContext, useWatch} from 'react-hook-form';
+import { BACK_END_SERVER_URL } from '@env';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { nanoid } from 'nanoid';
 import {
   Alert,
+  Dimensions,
   Image,
   StyleSheet,
-  Dimensions,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import {ActivityIndicator, Button} from 'react-native-paper';
+import { ActivityIndicator, Button } from 'react-native-paper';
 import Signature from 'react-native-signature-canvas';
-import {useUser} from '../../../providers/UserContext';
-import {Store} from '../../../redux/store';
-import {useUploadToFirebase} from '../../../hooks/useUploadtoFirebase';
+import { useUser } from '../../../providers/UserContext';
+import { Store } from '../../../redux/store';
 interface SignaturePadProps {
   setSelectedSignature: React.Dispatch<React.SetStateAction<string | null>>;
   onClose: () => void;
@@ -46,7 +43,7 @@ setLoadingWebP,
   const [isSigned, setIsSigned] = useState(false);
   const queryClient = useQueryClient();
   const [createNewSignature, setCreateNewSignature] = useState<boolean>(false);
-  const imageId = uuidv4();
+  const imageId = nanoid();
   const user = useUser();
   const [isSignatureUpload, setIsSignatureUpload] = useState<boolean>(false);
 const {width, height} = Dimensions.get('window');

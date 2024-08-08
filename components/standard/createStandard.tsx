@@ -3,7 +3,6 @@ import React, {useContext, useState, useEffect} from 'react';
 import {useQueryClient, QueryClient} from '@tanstack/react-query';
 import {BACK_END_SERVER_URL} from '@env';
 import {Store} from '../../redux/store';
-import {v4 as uuidv4} from 'uuid';
 
 import {Controller, useForm, useWatch} from 'react-hook-form';
 import {
@@ -28,14 +27,13 @@ import {
   TextInput,
 } from 'react-native-paper';
 import {usePickImage} from '../../hooks/utils/image/usePickImage';
-import {useUploadToFirebase} from '../../hooks/useUploadtoFirebase';
+import {useUploadToCloudflare} from '../../hooks/useUploadtoCloudflare';
 import {useCreateToServer} from '../../hooks/useUploadToserver';
-import {
-  defaulatStandardSchema,
-  standardEmbedSchema,
-} from '../../models/validationSchema';
-import {DefaultStandards, StandardEmbed} from '@prisma/client';
+
 import UploadImage from '../../components/ui/UploadImage';
+import { nanoid } from 'nanoid';
+import { IDefaultStandards } from '../../models/DefaultStandards';
+import { defaulatStandardSchema } from '../../models/validationSchema';
 type Props = {
   isVisible: boolean;
   onClose: () => void;
@@ -50,8 +48,8 @@ const CreateStandard = (props: Props) => {
   const {width, height} = Dimensions.get('window');
   const [isError, setError] = React.useState('');
   const queryClient = useQueryClient();
-  const defaultStandard: DefaultStandards = {
-    id: uuidv4(),
+  const defaultStandard: IDefaultStandards = {
+    id: nanoid(),
     standardShowTitle: null,
     image: '',
     content: '',
@@ -66,7 +64,7 @@ const CreateStandard = (props: Props) => {
     setValue,
     getValues,
     formState: {errors, isValid},
-  } = useForm<DefaultStandards>({
+  } = useForm<IDefaultStandards>({
     mode: 'onChange',
     defaultValues: defaultStandard,
     resolver: yupResolver(defaulatStandardSchema),
@@ -101,7 +99,9 @@ const CreateStandard = (props: Props) => {
     isUploading: isStandardUploading,
     error: isStandardImageError,
     uploadImage: uploadStandardImage,
-  } = useUploadToFirebase(standardStoragePath);
+  } = useUploadToCloudflare(
+    code, 'standards'
+  );
   const badStandardStoragePath = `${code}/badStandard/${getValues(
     'standardShowTitle',
   )}/badStandard`;
@@ -109,7 +109,9 @@ const CreateStandard = (props: Props) => {
     isUploading: isBadStandardUploading,
     error: isBadStandardImageError,
     uploadImage: uploadBadStandardImage,
-  } = useUploadToFirebase(badStandardStoragePath);
+  } = useUploadToCloudflare(
+    code, 'badStandard'
+  );
 
   const url = `${BACK_END_SERVER_URL}/api/services/createStandards`;
   const {isLoading, error, createToServer} = useCreateToServer(

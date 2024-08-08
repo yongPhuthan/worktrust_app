@@ -1,47 +1,38 @@
-import {yupResolver} from '@hookform/resolvers/yup';
-import React, {useContext, useState, useCallback} from 'react';
-import {useQueryClient, QueryClient} from '@tanstack/react-query';
-import {BACK_END_SERVER_URL} from '@env';
-import {Store} from '../../redux/store';
-import {v4 as uuidv4} from 'uuid';
+import { BACK_END_SERVER_URL } from '@env';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { useQueryClient } from '@tanstack/react-query';
+import React, { useCallback, useContext } from 'react';
+import { Store } from '../../redux/store';
 
-import {Controller, useForm, useWatch} from 'react-hook-form';
+import { IDefaultStandards } from '../../models/DefaultStandards';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import {
   Alert,
   Dimensions,
-  Image,
   Platform,
   SafeAreaView,
   ScrollView,
   StyleSheet,
-  TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import {
-  ActivityIndicator,
   Appbar,
   Button,
   Divider,
-  IconButton,
-  Snackbar,
   Text,
-  TextInput,
+  TextInput
 } from 'react-native-paper';
-import {usePickImage} from '../../hooks/utils/image/usePickImage';
-import {useUploadToFirebase} from '../../hooks/useUploadtoFirebase';
-import {useCreateToServer} from '../../hooks/useUploadToserver';
-import {
-  defaulatStandardSchema,
-  standardEmbedSchema,
-} from '../../models/validationSchema';
-import {DefaultStandards, StandardEmbed} from '@prisma/client';
 import UploadImage from '../../components/ui/UploadImage';
 import { usePutServer } from '../../hooks/standard/update';
+import { useUploadToCloudflare } from '../../hooks/useUploadtoCloudflare';
+import { usePickImage } from '../../hooks/utils/image/usePickImage';
+
 import { useUser } from '../../providers/UserContext';
+import { defaulatStandardSchema } from '../../models/validationSchema';
 
 type Props = {
     onClose: () => void;
-  standard : DefaultStandards;
+  standard : IDefaultStandards;
 };
 
 const UpdateStandard = (props: Props) => {
@@ -62,7 +53,7 @@ const UpdateStandard = (props: Props) => {
     setValue,
     getValues,
     formState: {errors, isValid,isDirty},
-  } = useForm<DefaultStandards>({
+  } = useForm<IDefaultStandards>({
     mode: 'onChange',
     defaultValues: standard,
     resolver: yupResolver(defaulatStandardSchema),
@@ -97,7 +88,9 @@ const UpdateStandard = (props: Props) => {
     isUploading: isStandardUploading,
     error: isStandardImageError,
     uploadImage: uploadStandardImage,
-  } = useUploadToFirebase(standardStoragePath);
+  } = useUploadToCloudflare(
+    code, 'standards'
+  );
   const badStandardStoragePath = `${code}/badStandard/${getValues(
     'standardShowTitle',
   )}/badStandard`;
@@ -105,7 +98,9 @@ const UpdateStandard = (props: Props) => {
     isUploading: isBadStandardUploading,
     error: isBadStandardImageError,
     uploadImage: uploadBadStandardImage,
-  } = useUploadToFirebase(badStandardStoragePath);
+  } = useUploadToCloudFlare(
+    code, 'badStandard'
+  );
 
   const url = `${BACK_END_SERVER_URL}/api/company/updateStandard`;
   const {isLoading, error, putToServer} = usePutServer(

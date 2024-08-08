@@ -3,46 +3,44 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import auth, {FirebaseAuthTypes} from '@react-native-firebase/auth';
 
 import * as contrains from './constrains';
-import {
-  Company,
-  ContractsEmbed,
-  Invoices,
-  Notifications,
-  Quotations,
-  Receipts,
-  ServicesEmbed,
-  Submissions,
-  Subscription,
-  User,
-  WarrantyEmbed,
-  WorkerEmbed,
-  Workers,
-} from '@prisma/client';
+import { Company } from '@prisma/client';
+import { CreateQuotationSchemaType } from 'validation/quotations/create';
+import { IServiceEmbed } from 'types/interfaces/ServicesEmbed';
+import { IWarrantyEmbed } from 'types/interfaces/WarrantyEmbed';
+import { IQuotations } from 'models/Quotations';
+import { IInvoices } from '../models/Invoices';
+import { IReceipts } from '../models/Receipts';
+import { ISubmissions } from '../models/Submissions';
+import { ISubscription } from '../models/Subscription';
+import { IUser } from 'models/User';
+import { NotificationType } from 'types/enums';
+import { Schema, model, Document, Types } from 'mongoose';
+import { IWorkerEmbed } from 'types/interfaces/WorkerEmbed';
+
 export type StateType = {
-  companyId: string;
+  companyId: Types.ObjectId | string;
   code: string;
-  services: ServicesEmbed[];
-  existingServices: ServicesEmbed[];
-  defaultContract: ContractsEmbed | null;
-  defaultWarranty: WarrantyEmbed | null;
-  quotations : Quotations[] | null;
-  editQuotation: Quotations | null;
-  editInvoice: Invoices | null;
-  editReceipt: Receipts | null;
-  editSubmission: Submissions | null;
-  viewSubmission: Submissions | null;
-  existingWorkers: Workers[];
+  services: IServiceEmbed[];
+  existingServices: IServiceEmbed[];
+  defaultWarranty: IWarrantyEmbed | null;
+  quotations : IQuotations[] | null;
+  editQuotation: CreateQuotationSchemaType | null;
+  editInvoice: IInvoices | null;
+  editReceipt: IReceipts | null;
+  editSubmission: ISubmissions | null;
+  viewSubmission: ISubmissions | null;
+  existingWorkers: IWorkerEmbed[];
   userSignature: string;
-  sellerId: string;
+  sellerUid: string;
   fcmToken: string;
   quotationRefNumber: string;
   quotationId: string;
-  G_subscription: Subscription | null;
-  G_user: User | null;
+  G_subscription: ISubscription | null;
+  G_user: IUser | null;
   G_logo: string | null;
   G_company: Company | null;
   firebase_User : FirebaseAuthTypes.User | null;
-  notifications : Notifications[] | null;
+  notifications : NotificationType[] | null;
 };
 
 type ActionType = {
@@ -51,18 +49,18 @@ type ActionType = {
     | string
     | number
     | object
-    | ServicesEmbed
-    | ServicesEmbed[]
+    | IServiceEmbed[]
     | Company
-    | ContractsEmbed
-    | WarrantyEmbed
-    | Quotations
-    | Invoices
-    | Receipts
+    | NotificationType
+    | IWarrantyEmbed
+    | IQuotations
+    | IInvoices
+    | IReceipts
     | null
     | undefined
     | boolean
-    | Subscription;
+    | ISubmissions
+    |CreateQuotationSchemaType
 };
 
 type ContextType = {
@@ -77,7 +75,6 @@ export const Store = createContext<ContextType>({
     services: [],
     G_company: null,
     existingServices: [],
-    defaultContract: null,
     defaultWarranty: null,
     G_logo: '',
     existingWorkers: [],
@@ -87,7 +84,7 @@ export const Store = createContext<ContextType>({
     editReceipt: null,
     editSubmission: null,
     viewSubmission: null,
-    sellerId: '',
+    sellerUid: '',
     fcmToken: '',
     quotationRefNumber: '',
     quotationId: '',
@@ -105,7 +102,6 @@ const initialState: StateType = {
   code: '',
   services: [],
   existingServices: [],
-  defaultContract: null,
   defaultWarranty: null,
   existingWorkers: [],
   userSignature: '',
@@ -114,7 +110,7 @@ const initialState: StateType = {
   editReceipt: null,
   editSubmission: null,
   viewSubmission: null,
-  sellerId: '',
+  sellerUid: '',
   fcmToken: '',
   quotationRefNumber: '',
   quotationId: '',
@@ -138,34 +134,32 @@ function reducer(state: StateType, action: ActionType): StateType {
     case contrains.ADD_PRODUCT:
       return {
         ...state,
-        services: [...state.services, action.payload as ServicesEmbed],
+        services: [...state.services, action.payload ],
       };
     case contrains.GET_EXISTING_SERVICES:
-      return {...state, existingServices: action.payload as ServicesEmbed[]};
-    case contrains.GET_DEFAULT_CONTRACT:
-      return {...state, defaultContract: action.payload as ContractsEmbed};
+      return {...state, existingServices: action.payload };
     case contrains.GET_LOGO:
       return {...state, G_logo: action.payload as string};
     case contrains.GET_DEFAULT_WARRANTY:
-      return {...state, defaultWarranty: action.payload as WarrantyEmbed};
+      return {...state, defaultWarranty: action.payload };
     case contrains.GET_EXISTING_WORKERS:
-      return {...state, existingWorkers: action.payload as Workers[]};
+      return {...state, existingWorkers: action.payload};
     case contrains.GET_USER_SIGNATURE:
-      return {...state, userSignature: action.payload as string};
+      return {...state, userSignature: action.payload };
     case contrains.GET_EDIT_QUOTATION:
-      return {...state, editQuotation: action.payload as Quotations};
+      return {...state, editQuotation: action.payload};
     case contrains.GET_EDIT_INVOICE:
-      return {...state, editInvoice: action.payload as Invoices};
+      return {...state, editInvoice: action.payload };
     case contrains.GET_EDIT_RECEIPT:
-      return {...state, editReceipt: action.payload as Receipts};
+      return {...state, editReceipt: action.payload };
     case contrains.GET_EDIT_SUBMISSION:
-      return {...state, editSubmission: action.payload as Submissions};
+      return {...state, editSubmission: action.payload };
     case contrains.VIEW_SUBMISSION:
-      return {...state, viewSubmission: action.payload as Submissions};
-    case contrains.GET_SELLER_ID:
-      return {...state, sellerId: action.payload as string};
+      return {...state, viewSubmission: action.payload };
+    case contrains.GET_SELLER_UID:
+      return {...state, sellerUid: action.payload };
     case contrains.GET_FCM_TOKEN:
-      return {...state, fcmToken: action.payload as string};
+      return {...state, fcmToken: action.payload };
     case contrains.RESET_EDIT_QUOTATION:
       return {...state, editQuotation: null};
     case contrains.RESET_EDIT_INVOICE:
@@ -175,21 +169,21 @@ function reducer(state: StateType, action: ActionType): StateType {
     case contrains.RESET_EDIT_SUBMISSION:
       return {...state, editSubmission: null};
     case contrains.GET_QUOTATION_REF_NUMBER:
-      return {...state, quotationRefNumber: action.payload as string};
+      return {...state, quotationRefNumber: action.payload };
     case contrains.GET_QUOTATION_ID:
-      return {...state, quotationId: action.payload as string};
+      return {...state, quotationId: action.payload };
     case contrains.GET_SUBSCRIPTION:
-      return {...state, G_subscription: action.payload as Subscription};
+      return {...state, G_subscription: action.payload };
     case contrains.GET_USER:
-      return {...state, G_user: action.payload as User};
+      return {...state, G_user: action.payload };
     case contrains.GET_FIREBASE_USER:
-      return {...state, firebase_User: action.payload as FirebaseAuthTypes.User};
+      return {...state, firebase_User: action.payload};
     case contrains.RESET_FIREBASE_USER:
       return {...state, firebase_User: null};
     case contrains.GET_NOTIFICATION:
-      return {...state, notifications: action.payload as Notifications[]};
+      return {...state, notifications: action.payload };
     case contrains.GET_QUOTATIONS:
-      return {...state, quotations: action.payload as Quotations[]};
+      return {...state, quotations: action.payload };
 
     default:
       return state;

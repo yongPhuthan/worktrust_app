@@ -1,37 +1,27 @@
 // LoginScreen.tsx
-import {faArrowLeft} from '@fortawesome/free-solid-svg-icons';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {yupResolver} from '@hookform/resolvers/yup';
+import { yupResolver } from '@hookform/resolvers/yup';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import auth from '@react-native-firebase/auth';
-import {StackNavigationProp} from '@react-navigation/stack';
-import React, {useState} from 'react';
-import {Controller, useForm, useWatch} from 'react-hook-form';
-import {BRAND_NAME} from '@env';
-import {Appbar, Button, TextInput} from 'react-native-paper';
-
+import { StackNavigationProp } from '@react-navigation/stack';
+import React, { useState } from 'react';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import {
   Alert,
+  Dimensions,
   SafeAreaView,
   StyleSheet,
   Text,
-  TouchableOpacity,
-  Dimensions,
-  View,
+  View
 } from 'react-native';
-import * as yup from 'yup';
-import {ParamListBase} from '../../types/navigationType';
+import { Appbar, Button, TextInput } from 'react-native-paper';
+import { ValidationError } from 'yup';
+import { ParamListBase } from '../../types/navigationType';
+import { LoginEmailSchema, LoginEmailSchemaType } from '../../models/validationSchema/register/loginScreen';
 
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'LoginScreen'>;
 }
-const schema = yup.object().shape({
-  email: yup
-    .string()
-    .email('รูปแบบอีเมลล์ไม่ถูกต้อง')
-    .required('กรุณากรอกอีเมลล์'),
-  password: yup.string().required('กรุณากรอกรหัสผ่าน'),
-});
+
 const LoginScreen = ({navigation}: Props) => {
   const [isLoading, setIsLoading] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -44,13 +34,9 @@ const LoginScreen = ({navigation}: Props) => {
     handleSubmit,
     control,
     formState: {isValid, isDirty, errors},
-  } = useForm({
+  } = useForm<LoginEmailSchemaType>({
     mode: 'onChange',
-    defaultValues: {
-      email: '',
-      password: '',
-    },
-    resolver: yupResolver(schema),
+    resolver: yupResolver(LoginEmailSchema),
   });
   const email = useWatch({control, name: 'email'});
   const password = useWatch({control, name: 'password'});
@@ -58,9 +44,13 @@ const LoginScreen = ({navigation}: Props) => {
     setIsLoading(true);
 
     try {
-      const userCredential = await auth().signInWithEmailAndPassword(
+      const loginValidated = await LoginEmailSchema.validate({
         email,
         password,
+      });
+      const userCredential = await auth().signInWithEmailAndPassword(
+        loginValidated.email,
+        loginValidated.password,
       );
       const user = userCredential.user;
       const token = await user.getIdToken();
@@ -75,11 +65,29 @@ const LoginScreen = ({navigation}: Props) => {
         console.error('Token is undefined after login');
         setIsLoading(false);
       }
-    } catch (error) {
-      Alert.alert('Login Error', 'อีเมลหรือรหัสผ่านไม่ถูกต้อง');
-
-      setIsLoading(false);
-    }
+    } catch (error: unknown) {
+        setIsLoading(false);
+    
+        if (error instanceof ValidationError) {
+          Alert.alert('เกิดข้อผิดพลาด', error.message);
+        } else if (error instanceof Error && (error as any).code) {
+          const errorCode = (error as any).code;
+    
+          let errorMessage = 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ';
+          if (errorCode === 'auth/wrong-password') {
+            errorMessage = 'รหัสผ่านไม่ถูกต้อง';
+          } else if (errorCode === 'auth/user-not-found') {
+            errorMessage = 'ไม่พบผู้ใช้งาน';
+          } else if (errorCode === 'auth/invalid-email') {
+            errorMessage = 'อีเมลไม่ถูกต้อง';
+          }
+          console.error('Login error:', error);
+          Alert.alert('เกิดข้อผิดพลาด', errorMessage);
+        } else {
+          console.error('Unexpected error:', error);
+          Alert.alert('เกิดข้อผิดพลาด', 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
+        }
+      }
   };
 
   return (

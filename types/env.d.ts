@@ -12,6 +12,9 @@ declare module '@env' {
   export const DEBUG_TOKEN:string
   export const SLIPOK_BRANCH_ID:string
 export const SLIPOK_API_KEY:string
+export const FIREBASE_STORAGE_PDF_BUCKET :string
+export const CLOUDFLARE_WORKER_URL :string
+export const CLOUDFLARE_R2_PUBLIC_URL :string
     // Add more environment variables if needed
   }
   

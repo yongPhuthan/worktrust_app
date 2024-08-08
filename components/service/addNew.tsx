@@ -2,65 +2,52 @@ import React, {useEffect, useMemo, useState} from 'react';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 
 import {
-  ActivityIndicator,
   Alert,
   Dimensions,
   FlatList,
   Image,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  Modal,
 } from 'react-native';
 
 import {Controller, FormProvider, useForm, useWatch} from 'react-hook-form';
 
-import {
-  faChevronLeft,
-  faChevronRight,
-  faImages,
-  faPlus,
-  faPlusCircle,
-} from '@fortawesome/free-solid-svg-icons';
+import {faPlus} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {yupResolver} from '@hookform/resolvers/yup';
-import {RouteProp} from '@react-navigation/native';
-import {StackNavigationProp} from '@react-navigation/stack';
+import Decimal from 'decimal.js-light';
+import {DiscountType} from '../../types/enums';
 import CurrencyInput from 'react-native-currency-input';
 import {
   Appbar,
   Button,
-  TextInput,
-  Text as TextPaper,
-  Chip,
   Divider,
   IconButton,
+  TextInput,
+  Text as TextPaper,
 } from 'react-native-paper';
 import GalleryScreen from '../gallery/existing';
 import ExistingMaterials from '../materials/existing';
 import SelectStandard from '../standard/selectStandard';
-import SmallDivider from '../styles/SmallDivider';
-import {ParamListBase} from '../../types/navigationType';
-import {serviceValidationSchema} from '../../models/validationSchema';
-import Decimal from 'decimal.js-light';
-import ProjectModalScreen from 'components/webview/project';
-import {v4 as uuidv4} from 'uuid';
+import firebase from '../../firebase';
+import {nanoid} from 'nanoid';
 import {
-  DefaultMaterials,
-  DiscountType,
-  MaterialEmbed,
-  ServicesEmbed,
-  StandardEmbed,
-} from '@prisma/client';
+  IMaterialEmbed,
+  IServiceEmbed,
+  IStandardEmbed,
+} from 'types/interfaces/ServicesEmbed';
+import {serviceValidationSchema} from 'validation/quotations/create';
 
 type Props = {
-  onAddService: (data: ServicesEmbed) => void;
+  onAddService: (data: IServiceEmbed) => void;
   onClose: () => void;
   visible: boolean;
-  selectService: ServicesEmbed | null;
+  selectService: IServiceEmbed | null;
   resetSelectService: () => void;
   resetAddNewService: () => void;
 };
@@ -83,7 +70,7 @@ const AddProductFormModal = (props: Props) => {
   // const {isImageUpload, imageUrl, handleLogoUpload} = useImageUpload();
   const [serviceID, setServiceID] = useState<string>('');
   const handleDone = () => {
-    methods.setValue('id', uuidv4());
+    methods.setValue('id', nanoid());
     onAddService(methods.watch());
     onClose();
     methods.reset();
@@ -91,8 +78,8 @@ const AddProductFormModal = (props: Props) => {
     resetAddNewService();
   };
 
-  const defaultService: ServicesEmbed = {
-    id: uuidv4(),
+  const defaultService: IServiceEmbed = {
+    id: nanoid(),
     title: '',
     description: '',
     unitPrice: 0,
@@ -106,7 +93,7 @@ const AddProductFormModal = (props: Props) => {
     materials: [],
     created: new Date(),
   };
-  const methods = useForm<ServicesEmbed>({
+  const methods = useForm<IServiceEmbed>({
     mode: 'onChange',
     defaultValues: selectService ? selectService : defaultService,
     resolver: yupResolver(serviceValidationSchema),
@@ -206,8 +193,9 @@ const AddProductFormModal = (props: Props) => {
           }}
         />
         <Button
+          icon={'check'}
           disabled={!isButtonDisbled}
-          mode="outlined"
+          // mode="outlined"
           onPress={handleDone}>
           {'บันทึก'}
         </Button>
@@ -246,7 +234,7 @@ const AddProductFormModal = (props: Props) => {
                     }}
                     keyExtractor={(item, index) => index.toString()}
                     ListFooterComponent={
-                      serviceImages.length > 0 ? (
+                      serviceImages && serviceImages.length > 0 ? (
                         <TouchableOpacity
                           style={styles.addButtonContainer}
                           onPress={() => {
@@ -475,7 +463,7 @@ const AddProductFormModal = (props: Props) => {
                       }}>
                       มาตรฐานของบริการนี้
                     </Text>
-                    {methods.watch('standards')?.length > 0 ? (
+                    {methods.watch('standards')?.length ?? 0 > 0 ? (
                       <View
                         style={{
                           flexDirection: 'column',
@@ -486,7 +474,7 @@ const AddProductFormModal = (props: Props) => {
                           style={styles.cardContainer}>
                           {methods
                             .watch('standards')
-                            ?.map((item: StandardEmbed) => (
+                            ?.map((item: IStandardEmbed) => (
                               <Text key={item.id}>
                                 {item.standardShowTitle}
                               </Text>
@@ -527,14 +515,14 @@ const AddProductFormModal = (props: Props) => {
                       }}>
                       วัสดุอุปกรณ์ที่ใช้
                     </Text>
-                    {methods.watch('materials')?.length > 0 ? (
+                    {methods.watch('materials')?.length ?? 0 > 0 ? (
                       <>
                         <TouchableOpacity
                           onPress={() => setIsModalMaterialsVisible(true)}
                           style={styles.cardContainer}>
                           {methods
                             .watch('materials')
-                            ?.map((item: MaterialEmbed, index: number) => (
+                            ?.map((item: IMaterialEmbed, index: number) => (
                               <Text key={index}>{item.name}</Text>
                             ))}
                         </TouchableOpacity>
@@ -574,11 +562,13 @@ const AddProductFormModal = (props: Props) => {
                 isVisible={isModalMaterialsVisible}
                 onClose={() => setIsModalMaterialsVisible(false)}
               />
-              <GalleryScreen
-                isVisible={isModalImagesVisible}
-                onClose={() => setModalImagesVisible(false)}
-                serviceImages={serviceImages}
-              />
+              {serviceImages && serviceImages.length > 0 && (
+                <GalleryScreen
+                  isVisible={isModalImagesVisible}
+                  onClose={() => setModalImagesVisible(false)}
+                  serviceImages={serviceImages}
+                />
+              )}
             </ScrollView>
           </View>
         </KeyboardAwareScrollView>

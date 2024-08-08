@@ -17,7 +17,7 @@ import {useFormContext, useForm} from 'react-hook-form';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {ParamListBase} from '../../../types/navigationType';
 import type {RouteProp} from '@react-navigation/native';
-import {DefaultStandards} from '@prisma/client';
+
 import Modal from 'react-native-modal';
 import {useDeleteMaterial} from '../../../hooks/materials/delete';
 
@@ -36,6 +36,7 @@ import {useUser} from '../../../providers/UserContext';
 import CreateStandard from '../../../components/standard/createStandard';
 import {useDeleteStandard} from '../../../hooks/standard/delete';
 import UpdateStandard from '../../../components/standard/update';
+import { DefaultStandard } from 'models/schema';
 
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'EditStandard'>;
@@ -50,10 +51,10 @@ const EditStandard = ({navigation, route}: Props) => {
   const [isUpdateModal, setIsUpdateModal] = useState<boolean>(false);
   const [visibleMenuIndex, setVisibleMenuIndex] = useState<number | null>(null);
   const user = useUser();
-  const [selectStandard, setSelectStandard] = useState<DefaultStandards | null>(
+  const [selectStandard, setSelectStandard] = useState<DefaultStandard | null>(
     null,
   );
-  const [standardDatas, setStandardDatas] = useState<DefaultStandards[] | null>(
+  const [standardDatas, setStandardDatas] = useState<DefaultStandard[] | null>(
     null,
   );
 
@@ -62,7 +63,7 @@ const EditStandard = ({navigation, route}: Props) => {
     dispatch,
   } = useContext(Store);
 
-  const initialStandard: DefaultStandards = {
+  const initialStandard: DefaultStandard = {
     id: '',
     standardShowTitle: '',
     image: '',
@@ -78,7 +79,7 @@ const EditStandard = ({navigation, route}: Props) => {
     setValue,
     watch,
     formState: {errors},
-  } = useForm<DefaultStandards>({
+  } = useForm<DefaultStandard>({
     defaultValues: initialStandard,
   });
   const fetchStandards = async () => {
@@ -96,7 +97,7 @@ const EditStandard = ({navigation, route}: Props) => {
           Authorization: `Bearer ${idToken}`,
         },
       });
-      const data: DefaultStandards[] = await response.json();
+      const data: DefaultStandard[] = await response.json();
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }

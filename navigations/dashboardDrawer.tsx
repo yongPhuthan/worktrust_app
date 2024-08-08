@@ -8,16 +8,12 @@ import React from 'react';
 import {SafeAreaView, Dimensions, Image, View,Text} from 'react-native';
 import 'react-native-gesture-handler';
 import {Divider, IconButton, Drawer as PaperDrawer} from 'react-native-paper';
-import DashboardContract from '../screens/contract/dashboardContract';
 import Dashboard from '../screens/quotation/dashboard';
 import {ParamListBase} from '../types/navigationType';
 
 import DashboardSubmit from '../screens/submit/dashboard';
 import {BRAND_NAME} from '@env';
 import {NavigationContainer, useNavigation} from '@react-navigation/native';
-import InvoiceDashboard from '../screens/invoice/dashboard';
-import ReceiptDashboard from '../screens/receipt/dashboard';
-import DashboardWarranty from '../screens/warranty/dashboard';
 import SettingsScreen from '../screens/setting/setting';
 const {width, height} = Dimensions.get('window');
 
@@ -58,7 +54,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
             resizeMode: 'contain',
           }}
         /> */}
-        <Text style={{fontSize: 20, fontWeight: 'bold', color: '#012b20'}}>
+        <Text style={{fontSize: 16, fontWeight: 'bold', color: '#012b20'}}>
           {BRAND_NAME}
         </Text>
       </View>
@@ -158,69 +154,6 @@ function DashboardDrawer(props: DrawerContentComponentProps) {
             />
           ),
           // ... other common options ...
-        }}
-      />
-
-      <Drawer.Screen
-        name="DashboardInvoice"
-        component={InvoiceDashboard}
-        options={{
-          ...commonScreenOptions,
-          headerShown: false,
-          title: 'ใบวางบิล',
-          headerRight: () => (
-            <IconButton
-              icon="bell"
-              iconColor="#1f303cff"
-              size={22}
-              onPress={() => {
-                props.navigation.navigate('NotificationScreen');
-
-              }}
-            />
-          ),
-          // ... other common options ...
-        }}
-      />
-      <Drawer.Screen
-        name="DashboardReceipt"
-        component={ReceiptDashboard}
-        options={{
-          ...commonScreenOptions,
-          headerShown: false,
-          title: 'ใบเสร็จรับเงิน',
-          headerRight: () => (
-            <IconButton
-              icon="bell"
-              iconColor="#1f303cff"
-              size={22}
-              onPress={() => {
-                props.navigation.navigate('NotificationScreen');
-
-              }}
-            />
-          ),
-          // ... other common options ...
-        }}
-      />
-      <Drawer.Screen
-        name="DashboardWarranty"
-        component={DashboardWarranty}
-        options={{
-          ...commonScreenOptions,
-          headerShown: false,
-          title: 'ใบรับประกัน',
-          headerRight: () => (
-            <IconButton
-              icon="bell"
-              iconColor="#1f303cff"
-              size={22}
-              onPress={() => {
-                props.navigation.navigate('NotificationScreen');
-
-              }}
-            />
-          ),
         }}
       />
       <Drawer.Screen

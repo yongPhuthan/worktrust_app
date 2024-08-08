@@ -14,18 +14,18 @@ import {ActivityIndicator, Appbar, Button, Checkbox} from 'react-native-paper';
 import firebase from '../../firebase';
 import {useUser} from '../../providers/UserContext';
 
-import {ServiceImagesEmbed} from '@prisma/client';
 import {useFormContext} from 'react-hook-form';
 import Modal from 'react-native-modal';
 import CustomCheckbox from '../../components/CustomCheckbox';
 import {Store} from '../../redux/store';
 import AddNewImage from './addNew';
 import FilterModal from './filterModal';
+import { IServiceImage } from 'types/interfaces/ServicesEmbed';
 
 interface ImageModalProps {
   isVisible: boolean;
   onClose: () => void;
-  serviceImages: ServiceImagesEmbed[];
+  serviceImages: IServiceImage[];
 }
 
 interface Tag {

@@ -3,8 +3,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import React, { useCallback, useContext } from 'react';
 import { Store } from '../../redux/store';
-
-import { DefaultMaterials } from '@prisma/client';
+import { IDefaultMaterials } from '../../models/DefaultMaterials';
 import { usePutServer } from '../../hooks/materials/useUpdate';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import {
@@ -26,7 +25,7 @@ import {
     Text,
     TextInput
 } from 'react-native-paper';
-import { useUploadToFirebase } from '../../hooks/useUploadtoFirebase';
+import { useUploadToCloudflare } from '../../hooks/useUploadtoCloudflare';
 import { usePickImage } from '../../hooks/utils/image/usePickImage';
 import { useUser } from '../../providers/UserContext';
 import { materialSchema } from '../../models/validationSchema';
@@ -54,7 +53,7 @@ const UpdateMaterial = (props: Props) => {
     setValue,
     getValues,
     formState: {errors, isValid,isDirty},
-  } = useForm<DefaultMaterials>({
+  } = useForm<IDefaultMaterials>({
     mode: 'onChange',
     defaultValues: material,
     resolver: yupResolver(materialSchema),
@@ -76,7 +75,9 @@ const UpdateMaterial = (props: Props) => {
     isUploading,
     error: uploadError,
     uploadImage,
-  } = useUploadToFirebase(materialStoragePath);
+  } = useUploadToCloudflare(
+    code, 'materials'
+  );
 
   const url = `${BACK_END_SERVER_URL}/api/company/updateMaterial`;
 

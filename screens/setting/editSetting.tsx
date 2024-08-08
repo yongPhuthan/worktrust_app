@@ -26,7 +26,7 @@ import { Button } from 'react-native-paper';
 import { CompanyState } from 'types';
 import ConfirmDeleteDialog from '../../components/ConfirmDeleteDialog';
 import { usePutServer } from '../../hooks/putServer';
-import { useUploadToFirebase } from '../../hooks/useUploadtoFirebase';
+import { useUploadToFirebase } from '../../hooks/useUploadtoCloudflare';
 import { usePickImage } from '../../hooks/utils/image/usePickImage';
 import { Store } from '../../redux/store';
 import { ParamListBase } from '../../types/navigationType';

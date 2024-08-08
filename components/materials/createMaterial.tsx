@@ -1,10 +1,8 @@
 import { BACK_END_SERVER_URL } from '@env';
 import { yupResolver } from '@hookform/resolvers/yup';
 import React, { useContext } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import { Store } from '../../redux/store';
 
-import { DefaultMaterials } from '@prisma/client';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import {
   Alert,
@@ -23,9 +21,12 @@ import {
 } from 'react-native-paper';
 import UploadImage from '../../components/ui/UploadImage';
 import { useCreateToServer } from '../../hooks/useUploadToserver';
-import { useUploadToFirebase } from '../../hooks/useUploadtoFirebase';
+import { useUploadToCloudflare } from '../../hooks/useUploadtoCloudflare';
 import { usePickImage } from '../../hooks/utils/image/usePickImage';
 import { materialSchema } from '../../models/validationSchema';
+import { nanoid } from 'nanoid';
+import { IMaterialEmbed } from 'types/interfaces/ServicesEmbed';
+import { IDefaultMaterials } from '../../models/DefaultMaterials';
 
 type Props = {
   isVisible: boolean;
@@ -39,8 +40,8 @@ const CreateMaterial = (props: Props) => {
     dispatch,
   } = useContext(Store);
 
-  const defaultMaterial: DefaultMaterials = {
-    id: uuidv4(),
+  const defaultMaterial: IDefaultMaterials = {
+    id: nanoid(),
     name: '',
     image: '',
     description: '',
@@ -54,7 +55,7 @@ const CreateMaterial = (props: Props) => {
     setValue,
     getValues,
     formState: {errors, isValid},
-  } = useForm<DefaultMaterials>({
+  } = useForm<IDefaultMaterials>({
     mode: 'onChange',
     defaultValues: defaultMaterial,
     resolver: yupResolver(materialSchema),
@@ -76,7 +77,9 @@ const CreateMaterial = (props: Props) => {
     isUploading,
     error: uploadError,
     uploadImage,
-  } = useUploadToFirebase(materialStoragePath);
+  } = useUploadToCloudflare(
+    code, 'materials'
+  );
 
   const url = `${BACK_END_SERVER_URL}/api/company/createMaterial`;
   const {isLoading, error, createToServer} = useCreateToServer(

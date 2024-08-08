@@ -16,7 +16,6 @@ import {
 } from 'react-native';
 
 import { Controller, FormProvider, useForm, useWatch } from 'react-hook-form';
-import {v4 as uuidv4} from 'uuid';
 
 import {
   faImages,
@@ -25,7 +24,6 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { DiscountType, MaterialEmbed, ServicesEmbed, StandardEmbed } from '@prisma/client';
 import Decimal from 'decimal.js-light';
 import CurrencyInput from 'react-native-currency-input';
 import {
@@ -35,15 +33,20 @@ import {
   TextInput,
   Text as TextPaper
 } from 'react-native-paper';
-import { serviceValidationSchema } from '../../models/validationSchema';
 import GalleryScreen from '../gallery/existing';
 import ExistingMaterials from '../materials/existing';
 import SelectStandard from '../standard/selectStandard';
 import SmallDivider from '../styles/SmallDivider';
 
+import firebase from '../../firebase';
+import { nanoid } from 'nanoid';
+import { IMaterialEmbed, IServiceEmbed, IStandardEmbed } from 'types/interfaces/ServicesEmbed';
+import { DiscountType } from 'types/enums';
+import { serviceValidationSchema } from 'validation/quotations/create';
+
 type Props = {
-  onUpdateService: (serviceIndex: number ,updatedService: ServicesEmbed) => void;
-  currentValue: ServicesEmbed | null;
+  onUpdateService: (serviceIndex: number ,updatedService: IServiceEmbed) => void;
+  currentValue: IServiceEmbed | null;
   onClose: () => void;
   visible: boolean;
   resetUpdateService: () => void;
@@ -74,10 +77,10 @@ const UpdateServiceModal = (props: Props) => {
     resetUpdateService();
 
   };
-  const defaultService: ServicesEmbed = {
-    id: currentValue ? currentValue.id : uuidv4(),
-    title: currentValue ? currentValue.title : 'KUY',
-    description: currentValue ? currentValue.description : 'KUY',
+  const defaultService: IServiceEmbed = {
+    id: currentValue ? currentValue.id : nanoid(),
+    title: currentValue ? currentValue.title : '',
+    description: currentValue ? currentValue.description : '',
     unitPrice: currentValue ? currentValue.unitPrice : 0,
     qty: currentValue ? currentValue.qty : 0,
     total: currentValue ? currentValue.total : 0,
@@ -87,11 +90,11 @@ const UpdateServiceModal = (props: Props) => {
     discountValue: currentValue ? currentValue.discountValue : 0,
     standards: currentValue ? currentValue.standards : [],
     materials:  currentValue ? currentValue.materials : [],
-    created : currentValue ? currentValue.created : new Date(),
+    // created : currentValue ? currentValue.created : firebase.firestore.Timestamp.now(),
     
   };
 
-  const methods = useForm<ServicesEmbed>({
+  const methods = useForm<IServiceEmbed>({
     mode: 'onChange',
     defaultValues:  defaultService,
     resolver: yupResolver(serviceValidationSchema),
@@ -214,7 +217,7 @@ const UpdateServiceModal = (props: Props) => {
                     }}
                     keyExtractor={(item, index) => index.toString()}
                     ListFooterComponent={
-                      serviceImages.length > 0 ? (
+                      serviceImages && serviceImages.length > 0 ? (
                         <TouchableOpacity
                           style={styles.addButtonContainer}
                           onPress={() => {
@@ -440,7 +443,7 @@ const UpdateServiceModal = (props: Props) => {
                     gap: 20,
                   }}>
                   <Divider />
-                  {methods.watch('standards')?.length > 0 ? (
+                  {methods.watch('standards')?.length ?? 0 > 0 ? (
                     <View style={styles.cardContainer}>
                       <Text
                         style={{
@@ -458,7 +461,7 @@ const UpdateServiceModal = (props: Props) => {
                           style={styles.cardContainer}>
                           {methods
                             .watch('standards')
-                            ?.map((item: StandardEmbed) => (
+                            ?.map((item: IStandardEmbed) => (
                               <Text key={item.id}>
                                 {item.standardShowTitle}
                               </Text>
@@ -498,7 +501,7 @@ const UpdateServiceModal = (props: Props) => {
                
                
                 <View>
-                  {methods.watch('materials')?.length > 0 ? (
+                  {methods.watch('materials')!.length > 0 ? (
                     <>
                       <Text
                         style={{
@@ -516,7 +519,7 @@ const UpdateServiceModal = (props: Props) => {
                           style={styles.cardContainer}>
                           {methods
                             .watch('materials')
-                            ?.map((item: MaterialEmbed, index: number) => (
+                            ?.map((item: IMaterialEmbed, index: number) => (
                               <Text key={index}>{item.name}</Text>
                             ))}
                         </TouchableOpacity>
@@ -558,11 +561,14 @@ const UpdateServiceModal = (props: Props) => {
                 isVisible={isModalMaterialsVisible}
                 onClose={() => setIsModalMaterialsVisible(false)}
               />
-              <GalleryScreen
+              {serviceImages && serviceImages.length > 0 && (
+                <GalleryScreen
                 isVisible={isModalImagesVisible}
                 onClose={() => setModalImagesVisible(false)}
                 serviceImages={serviceImages}
               />
+              )}
+              
             </ScrollView>
           </View>
         </KeyboardAwareScrollView>

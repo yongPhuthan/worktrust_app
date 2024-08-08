@@ -1,51 +1,37 @@
-import {
-  DiscountType,
-  QuotationStatus,
-  SellerEmbed,
-  ServicesEmbed,
-  TaxType,
-  WarrantyStatus,
-  SubmissionImagesPairEmbed,
-  SubmissionBeforeImagesEmbed,
-  SubmissionAfterImagesEmbed,
-  type CustomerEmbed,
-  type Quotations,
-  type WarrantyEmbed,
-} from '@prisma/client';
-import {v4 as uuidv4} from 'uuid';
+import { IWarrantyEmbed } from '../types/interfaces/WarrantyEmbed';
+import { CustomerEmbedType } from '../validation/quotations/create';
 
-export const defalutCustomer: CustomerEmbed = {
-  id: uuidv4(),
+
+export const defalutCustomer: CustomerEmbedType = {
   name: '',
   address: '',
   customerTax: '',
   phone: '',
 };
 
-export const initialWarranty: WarrantyEmbed = {
+export const initialWarranty: IWarrantyEmbed = {
   productWarrantyMonth: 0,
   skillWarrantyMonth: 0,
   sellerSignature: null,
   fixDays: 0,
   condition:
     'รับประกันคุณภาพตัวสินค้า ตามมาตรฐานในการใช้งานตามปกติเท่านั้น ขอสงวนสิทธ์การรับประกันที่เกิดจากการใช้งานสินค้าที่ไม่ถูกต้องหรือความเสียหายที่เกิดจากภัยธรรมชาติ หรือ การใช้งานผิดประเภทหรือปัญหาจากการกระทําของบคุคลอื่น เช่นความเสียหายที่เกิดจากการทำงานของผู้รับเหมาทีมอื่นหรือบุคคลที่สามโดยตั้งใจหรือไม่ได้ตั้งใจ',
-  dateWaranty: null,
   endProductWarranty: null,
   endSkillWarranty: null,
   pdfUrl: null,
 };
 
-export const initialBeforeImage: SubmissionBeforeImagesEmbed = {
+export const initialBeforeImage = {
   thumbnailUrl: '',
   originalUrl: '',
 };
 
-export const initialAfterImage: SubmissionAfterImagesEmbed = {
+export const initialAfterImage = {
   thumbnailUrl: '',
   originalUrl: '',
 };
 
-export const initialImagePair: SubmissionImagesPairEmbed  = {
+export const initialImagePair  = {
   beforeImages: [],
   afterImages: [],
 };

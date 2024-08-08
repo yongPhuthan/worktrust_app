@@ -1,11 +1,13 @@
+import { faCloudUpload } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { nanoid } from 'nanoid';
+import React, { useEffect, useState } from 'react';
 import {BACK_END_SERVER_URL} from '@env';
-import {faCloudUpload} from '@fortawesome/free-solid-svg-icons';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {Account, Company, Provider, SellerEmbed, User, UserRole} from '@prisma/client';
-import {StackNavigationProp} from '@react-navigation/stack';
 import {useMutation} from '@tanstack/react-query';
-import React, {useEffect, useState} from 'react';
-import {Controller, useForm, useWatch} from 'react-hook-form';
+
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import {
   Alert,
   Dimensions,
@@ -17,8 +19,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {Asset, ImagePickerResponse} from 'react-native-image-picker';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import {
   ActivityIndicator,
   Appbar,
@@ -27,23 +28,21 @@ import {
   ProgressBar,
   TextInput,
 } from 'react-native-paper';
-import {useCreateToServer} from '../../hooks/useUploadToserver';
-import {useUploadToFirebase} from '../../hooks/useUploadtoFirebase';
-import {usePickImage} from '../../hooks/utils/image/usePickImage';
-import {useUser} from '../../providers/UserContext';
-import {ParamListBase} from '../../types/navigationType';
+import { ValidationError } from 'yup';
+import { useCreateCompany } from '../../hooks/firestore/register/useCreateCompanySeller';
+import { useUploadToCloudflare } from '../../hooks/useUploadtoCloudflare';
+import { usePickImage } from '../../hooks/utils/image/usePickImage';
+
+import { useUser } from '../../providers/UserContext';
+import { ParamListBase } from '../../types/navigationType';
+import { CompanyCreateSchema, CompanyCreateSchemaType, CreateCompanyValidationSchema, CreateCompanyValidationSchemaType, PostCreateCompanyValidationSchema, UserCreateCompanySchema, UserCreateCompanySchemaType } from '../../models/validationSchema/register/createCompanyScreen';
+import { useCreateToServer } from '../../hooks/useUploadToserver';
+import { IUser } from '../../models/User';
+import { ICompany } from '../../models/Company';
+
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'RegisterScreen'>;
 }
-interface ImageResponse extends ImagePickerResponse {
-  assets?: Asset[];
-}
-
-interface Category {
-  key: string;
-  value: string;
-}
-
 const screenWidth = Dimensions.get('window').width;
 const checkboxStyle = {
   borderRadius: 5, // Rounded corners
@@ -54,13 +53,28 @@ const checkboxStyle = {
 
 const CreateCompanyScreen = ({navigation}: Props) => {
   const [page, setPage] = useState<number>(1);
-  const [isImageUpload, setIsImageUpload] = useState(false);
-
-  const [categories, setCategories] = useState([]);
   const [userLoading, setUserLoading] = useState(false);
   const API_URL = `${BACK_END_SERVER_URL}/api/company/createCompanySeller`;
 
   const user = useUser();
+  if (!user) {
+    return;
+  }
+  const initialSeller: UserCreateCompanySchemaType = {
+    name: '',
+    jobPosition: '',
+  };
+  const initialCompany: CompanyCreateSchemaType = {
+    code: nanoid(6),
+    bizName: '',
+    address: '',
+    officeTel: '',
+    mobileTel: '',
+    companyTax: '',
+    userUids: [user.uid],
+    bizType: '',
+    logo: '',
+  };
 
   const {
     handleSubmit,
@@ -68,120 +82,89 @@ const CreateCompanyScreen = ({navigation}: Props) => {
     control,
     getValues,
     formState: {isValid, isDirty, errors},
-  } = useForm<User | Company | Account>({
+  } = useForm<CreateCompanyValidationSchemaType>({
     mode: 'onChange',
     defaultValues: {
-      bizName: '',
-      name: '',
-      jobPosition: '',
-      address: '',
-      officeTel: '',
-      mobileTel: '',
-      bizType: '',
-      logo: '',
-      companyTax: '',
-      code: '',
+      seller: initialSeller,
+      company: initialCompany,
     },
-    // resolver: yupResolver(companyValidationSchema),
+    resolver: yupResolver(CreateCompanyValidationSchema),
   });
-
   const logo = useWatch({
     control,
-    name: 'logo',
+    name: 'company.logo',
+  });
+  const seller = useWatch({
+    control,
+    name: 'seller',
+  });
+  const company = useWatch({
+    control,
+    name: 'company',
   });
   const code = useWatch({
     control,
-    name: 'code',
+    name: 'company.code',
   });
   const bizName = useWatch({
     control,
-    name: 'bizName',
+    name: 'company.bizName',
   });
   const name = useWatch({
     control,
 
-    name: 'name',
+    name: 'seller.name',
   });
 
   const bizType = useWatch({
     control,
 
-    name: 'bizType',
+    name: 'company.bizType',
   });
   const companyTax = useWatch({
     control,
 
-    name: 'companyTax',
+    name: 'company.companyTax',
   });
 
   const jobPosition = useWatch({
     control,
 
-    name: 'jobPosition',
+    name: 'seller.jobPosition',
   });
   const address = useWatch({
     control,
 
-    name: 'address',
+    name: 'company.address',
   });
   const mobileTel = useWatch({
     control,
 
-    name: 'mobileTel',
+    name: 'company.mobileTel',
   });
   const officeTel = useWatch({
     control,
-
-    name: 'officeTel',
+    name: 'company.officeTel',
   });
 
   const {isImagePicking: isImagePicking, pickImage} = usePickImage(
     (uri: string) => {
-      setValue('logo', uri);
+      setValue('company.logo', uri, {shouldDirty: true, shouldValidate: true});
     },
   );
-  const logoStoragePath = `${code}/logo/${bizName}`;
   const {
     isUploading,
     error: isLogoError,
     uploadImage,
-  } = useUploadToFirebase(logoStoragePath);
-  const {
-    isLoading: isLodingServer,
-    error: errorServer,
-    createToServer,
-  } = useCreateToServer(API_URL, 'dashboardQuotation');
-  const createCompanySeller = async ({ seller, company, token }: any) => {
-    if (!token) {
-      throw new Error('User or user UID is not available');
-    }
-    if (company.logo) {
-      const downloadUrl = await uploadImage(company.logo as string);
-  
-      if (!downloadUrl || !downloadUrl.originalUrl) {
-        throw new Error('ไม่สามาถอัพโหลดรูปภาพได้');
-      }
-      company.logo = downloadUrl.originalUrl;
-    }
-  
-    try {
-      const formData = {
-        seller,
-        company,
-        token,
-      };
-      await createToServer(formData);
-    } catch (error) {
-      console.error('Error:', error);
-      throw new Error('There was an error processing the request');
-    }
-  };
+  } = useUploadToCloudflare(code, 'logo');
 
   const isNextDisabledPage1 = !bizName || !name || !jobPosition || !bizType;
 
-  const isNextDisabledPage2 = !address || !mobileTel;
   useEffect(() => {
-    setValue('code', Math.floor(100000 + Math.random() * 900000).toString());
+    setValue(
+      'company.code',
+      Math.floor(100000 + Math.random() * 900000).toString(),
+    );
   }, []);
 
   const handleNextPage = () => {
@@ -192,72 +175,104 @@ const CreateCompanyScreen = ({navigation}: Props) => {
       setPage(page - 1);
     }
   };
-
-  const {mutate, isPending, isError} = useMutation({
+  const {isLoading, error, createCompany} = useCreateCompany();
+  const {
+    isLoading: isLodingServer,
+    error: errorServer,
+    createToServer,
+  } = useCreateToServer(API_URL, 'dashboardQuotation');
+  const createCompanySeller = async ({ seller, company, token }: { seller: UserCreateCompanySchemaType, company: CompanyCreateSchemaType, token: string }) => {
+    if (!token) {
+      throw new Error('Token is not available');
+    }
+  
+    if (company.logo) {
+      try {
+        const downloadUrl = await uploadImage(company.logo as string);
+        if (!downloadUrl || !downloadUrl.originalUrl) {
+          throw new Error('ไม่สามารถอัพโหลดรูปภาพได้');
+        }
+        company.logo = downloadUrl.originalUrl;
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        throw new Error('Error uploading image');
+      }
+    }
+  
+    try {
+      const formData = { seller, company, token };
+      const success = await createToServer(formData);
+      if (!success) {
+        throw new Error('Error creating company and user');
+      }
+    } catch (error) {
+      console.error('Error creating company and user:', error);
+      throw new Error('Error creating company and user');
+    }
+  };
+  const { mutate, isPending, isError } = useMutation({
     mutationFn: createCompanySeller,
     onSuccess: () => {
+      console.log('success');
       //clear navigation stack
       navigation.reset({
         index: 0,
-        routes: [{name: 'DashboardQuotation'}],
+        routes: [{ name: 'DashboardQuotation' }],
       });
-      // navigation.navigate('DashboardQuotation');
     },
     onError: (error: any) => {
-      console.log(error.response);
-      Alert.alert('Error', 'There was an error processing the request');
+      console.error('Error response:', error);
+      Alert.alert('Error', error.message || 'There was an error processing the request');
     },
   });
 
   const handleSave = async () => {
-    const seller: User = {
-      name,
-      email: user?.email || '',
-      jobPosition,
-      signature: null,
-      id: '',
-      provider: user?.email ? Provider.EMAIL : Provider.PHONE,
-      phoneNumber: null,
-      role: UserRole.OWNER,
-      password: null,
-      isActive: false,
-      currentCompanyId: null,
-      currentSubscriptionId: null,
-      firebaseUid: null,
-      image: null,
-      companyIds: []
-    };
+    try {
+      const sellerValidated = await UserCreateCompanySchema.validate(seller) as UserCreateCompanySchemaType
+      const companyValidated = await CompanyCreateSchema.validate(company) as CompanyCreateSchemaType
+      const postValidated = await PostCreateCompanyValidationSchema.validate({
+        seller: sellerValidated,
+        company: companyValidated,
+        token: user?.uid,
+      });
 
-    const company : Company = {
-      id: '',
-      code,
-      bizName,
-      address,
-      officeTel,
-      mobileTel,
-      companyTax,
-      bizType,
-      logo,
-      isActive: false,
-      signature: null,
-      defaultContracts: null,
-      defaultWarranty: null,
-      userIds: [],
-      bankAccounts: [],
-    };
-    mutate({seller, company, token: user?.uid});
+      if (logo) {
+        const uploadedLogo = await uploadImage(logo);
+        if (!uploadedLogo) {
+          throw new Error('Failed to upload image');
+        }
+        console.log('uploadedLogo', uploadedLogo);
+        mutate({seller:sellerValidated, company:companyValidated, token: user.uid});
+
+  
+      } else {
+        const success = await createCompany({
+          seller: postValidated.seller,
+          company: company,
+        });
+  
+        if (success) {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'DashboardQuotation' }],
+          });
+        }
+      }
+
+
+    } catch (error) {
+      console.error('Error:', error);
+
+      if (error instanceof ValidationError) {
+        Alert.alert('ข้อผิดพลาด', error.message);
+      } else {
+        Alert.alert('Error', 'There was an error processing the request');
+      }
+
+      throw new Error('There was an error processing the request');
+    }
   };
-
-  if (isLodingServer) {
-    return (
-      <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-        <ActivityIndicator size="large" />
-      </View>
-    );
-  }
-
   const width = Dimensions.get('window').width;
-
   const renderPage = () => {
     switch (page) {
       case 1:
@@ -285,7 +300,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
             <ScrollView style={{marginTop: 10, paddingHorizontal: 20}}>
               <Controller
                 control={control}
-                name="logo"
+                name="company.logo"
                 render={({field: {onChange, value}}) => (
                   <TouchableOpacity
                     style={{
@@ -303,7 +318,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
                       <ActivityIndicator size="small" color="gray" />
                     ) : value ? (
                       <Image
-                        source={{uri: value}}
+                        source={{uri: (value as string) || ''}}
                         style={{
                           width: 100,
                           aspectRatio: 1,
@@ -335,7 +350,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
 
               <Controller
                 control={control}
-                name="bizName"
+                name="company.bizName"
                 render={({
                   field: {onChange, value, onBlur},
                   fieldState: {error},
@@ -359,7 +374,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
               <View>
                 <Controller
                   control={control}
-                  name="name"
+                  name="seller.name"
                   render={({
                     field: {onChange, value, onBlur},
                     fieldState: {error},
@@ -382,7 +397,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
               </View>
               <Controller
                 control={control}
-                name="jobPosition"
+                name="seller.jobPosition"
                 render={({
                   field: {onChange, value, onBlur},
                   fieldState: {error},
@@ -415,7 +430,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
                 }}>
                 <Controller
                   control={control}
-                  name="bizType"
+                  name="company.bizType"
                   render={({field: {value}}) => (
                     <View style={{flexDirection: 'row', alignItems: 'center'}}>
                       <Checkbox.Android
@@ -424,7 +439,11 @@ const CreateCompanyScreen = ({navigation}: Props) => {
                         status={
                           value === 'individual' ? 'checked' : 'unchecked'
                         }
-                        onPress={() => setValue('bizType', 'individual')}
+                        onPress={() =>
+                          setValue('company.bizType', 'individual', {
+                            shouldValidate: true,
+                          })
+                        }
                       />
                       <Text>บุคคลธรรมดา</Text>
                     </View>
@@ -432,7 +451,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
                 />
                 <Controller
                   control={control}
-                  name="bizType"
+                  name="company.bizType"
                   render={({field: {value}}) => (
                     <View style={{flexDirection: 'row', alignItems: 'center'}}>
                       <Checkbox.Android
@@ -440,7 +459,11 @@ const CreateCompanyScreen = ({navigation}: Props) => {
                         style={{...checkboxStyle, flexDirection: 'row-reverse'}}
                         uncheckedColor="grey"
                         status={value === 'business' ? 'checked' : 'unchecked'}
-                        onPress={() => setValue('bizType', 'business')}
+                        onPress={() =>
+                          setValue('company.bizType', 'business', {
+                            shouldDirty: true,
+                          })
+                        }
                       />
                       <Text>บริษัท-หจก</Text>
                     </View>
@@ -466,9 +489,9 @@ const CreateCompanyScreen = ({navigation}: Props) => {
               />
               <Button
                 onPress={handleSave}
-                disabled={isUploading || isPending}
+                disabled={isUploading}
                 mode="contained"
-                loading={isPending || userLoading || isUploading}>
+                loading={userLoading || isUploading || isLoading}>
                 บันทึก
               </Button>
             </Appbar.Header>
@@ -476,7 +499,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
             <View style={{marginTop: 30, paddingHorizontal: 10}}>
               <Controller
                 control={control}
-                name="address"
+                name="company.address"
                 render={({
                   field: {onChange, value, onBlur},
                   fieldState: {error},
@@ -512,7 +535,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
                 <View style={{flex: 0.45}}>
                   <Controller
                     control={control}
-                    name="officeTel"
+                    name="company.officeTel"
                     render={({
                       field: {onChange, value, onBlur},
                       fieldState: {error},
@@ -524,6 +547,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
                           error={!!error}
                           label="เบอร์โทรบริษัท"
                           keyboardType="number-pad"
+                          maxLength={10}
                           value={String(value)}
                           onChangeText={onChange}
                         />
@@ -537,7 +561,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
                 <View style={{flex: 0.45}}>
                   <Controller
                     control={control}
-                    name="mobileTel"
+                    name="company.mobileTel"
                     render={({
                       field: {onChange, value, onBlur},
                       fieldState: {error},
@@ -548,6 +572,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
                           onBlur={onBlur}
                           error={!!error}
                           label="เบอร์มือถือ"
+                          maxLength={10}
                           keyboardType="number-pad"
                           value={value ? value.toString() : ''}
                           onChangeText={onChange}
@@ -562,7 +587,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
               </View>
               <Controller
                 control={control}
-                name="companyTax"
+                name="company.companyTax"
                 render={({
                   field: {onChange, value, onBlur},
                   fieldState: {error},
@@ -572,6 +597,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
                       mode="outlined"
                       onBlur={onBlur}
                       error={!!error}
+                      maxLength={10}
                       keyboardType="number-pad"
                       label="เลขภาษี(ถ้ามี)"
                       value={value ? value.toString() : ''}

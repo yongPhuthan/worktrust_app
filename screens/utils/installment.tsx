@@ -6,7 +6,6 @@ import {useMutation, useQueryClient} from '@tanstack/react-query';
 import Decimal from 'decimal.js-light';
 import React, { useCallback,useContext, useEffect, useMemo, useState } from 'react';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-import {installmentValidationSchema} from '../../models/validationSchema';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 
 import {Controller, useFieldArray, useForm} from 'react-hook-form';
@@ -116,7 +115,7 @@ const Installment = ({navigation, route}: Props) => {
         },
       ],
     },
-    resolver: yupResolver(installmentValidationSchema),
+    // resolver: yupResolver(installmentValidationSchema),
   });
 
   const {fields, append, remove} = useFieldArray({

@@ -1,6 +1,6 @@
 import {faClose} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-
+import { nanoid } from 'nanoid';
 import {RouteProp} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {useQueryClient} from '@tanstack/react-query';
@@ -46,7 +46,6 @@ import {
   WorkStatus,
 } from '@prisma/client';
 import Clipboard from '@react-native-clipboard/clipboard';
-import {v4 as uuidv4} from 'uuid';
 import DatePickerButton from '../../components/styles/DatePicker';
 import AddNewImage from '../../components/submission/after/addNew';
 import AddNewBeforeImage from '../../components/submission/before/addNew';
@@ -61,8 +60,9 @@ import {Store} from '../../redux/store';
 import {ParamListBase} from '../../types/navigationType';
 import SubmissionViewScreen from '../../components/webview/submission';
 import useUpdateSubmission from '../../hooks/submission/useUpdate';
-import {initialImagePair} from '../../models/InitialState';
 import { set } from 'lodash';
+import { initialImagePair } from '../../models/InitialState';
+import { ISubmissions } from 'models/Submissions';
 type Props = {
   navigation: StackNavigationProp<ParamListBase>;
   route: RouteProp<ParamListBase, 'SendWorks'>;
@@ -103,7 +103,6 @@ const SendWorks = (props: Props) => {
   const [label, setLabel] = useState<string | null>(null);
   const [title, setTitle] = useState<string | null>(null);
   const [imageType, setImageType] = useState<string | null>(null);
-  const imageRandomId = uuidv4();
   const [submissionId, setSubmissionId] = useState<string>('');
   const [submissionServerId, setSubmissionServerId] = useState<string | null>(
     null,
@@ -118,8 +117,8 @@ const SendWorks = (props: Props) => {
   const [opneSubmissionModal, setOpenSubmissionModal] =
     useState<boolean>(false);
 
-  const initialSubmission: Submissions = {
-    id: uuidv4(),
+  const initialSubmission: ISubmissions = {
+    id: nanoid(),
     address: editQuotation ? editQuotation.customer.address : '',
     description: '',
     dateOffer: initialDateOffer,
@@ -142,7 +141,7 @@ const SendWorks = (props: Props) => {
     workers: editQuotation ? editQuotation.workers : [],
     updatedAt: new Date(),
   };
-  const methods = useForm<Submissions>({
+  const methods = useForm<ISubmissions>({
     mode: 'all',
     defaultValues: editSubmission ? editSubmission : initialSubmission,
   });

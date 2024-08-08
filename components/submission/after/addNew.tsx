@@ -31,12 +31,12 @@ import {
 } from 'react-native-paper';
 import {imageTogallery} from '../../../models/validationSchema';
 
-import {v4 as uuidv4} from 'uuid';
 import firebase from '../../../firebase';
-import {useUploadToFirebase} from '../../../hooks/useUploadtoFirebase';
+import {useUploadToCloudflare} from '../../../hooks/useUploadtoCloudflare';
 import {usePickImage} from '../../../hooks/utils/image/usePickImage';
 import {useUser} from '../../../providers/UserContext';
 import {Store} from '../../../redux/store';
+import { nanoid } from 'nanoid';
 
 interface ExistingModalProps {
   isVisible: boolean;
@@ -89,7 +89,7 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
   const [addWatermark, setAddWatermark] = useState(false);
   const [originalImage, setOriginalImage] = useState<string | null>(null);
 
-  const imageId = uuidv4();
+  const imageId = nanoid();
   const [inputValue, setInputValue] = useState<string>('');
   const [inputNewTag, setInputNewTag] = useState<string>('');
   const [tags, setTags] = useState<string[]>([]);
@@ -190,7 +190,9 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
     isUploading,
     error: uploadError,
     uploadImage,
-  } = useUploadToFirebase(storagePath);
+  } = useUploadToCloudflare(
+    code,'gallery/after',
+  );
 
   const handleAddTag = async () => {
     setIsLoading(true);

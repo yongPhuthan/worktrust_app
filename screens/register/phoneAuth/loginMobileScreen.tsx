@@ -1,14 +1,14 @@
-import {yupResolver} from '@hookform/resolvers/yup';
+import { yupResolver } from '@hookform/resolvers/yup';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, {useRef, useState} from 'react';
-import {Dimensions, SafeAreaView, StyleSheet, View, Alert} from 'react-native';
-import {Appbar, Button, Text, TextInput} from 'react-native-paper';
+import { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import { StackNavigationProp } from '@react-navigation/stack';
+import React, { useRef, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { Alert, Dimensions, SafeAreaView, StyleSheet, View } from 'react-native';
+import { Appbar, Button, Text, TextInput } from 'react-native-paper';
 import firebase from '../../../firebase';
-import {FirebaseAuthTypes} from '@react-native-firebase/auth';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {Controller, set, useForm} from 'react-hook-form';
-import {ParamListBase} from '../../../types/navigationType';
-import {signupMobilevalidationSchema} from '../../../models/validationSchema';
+import { ParamListBase } from '../../../types/navigationType';
+import { LoginMobileSchema, LoginMobileSchemaType } from '../../../models/validationSchema/register/phoneAuth/loginMobileScreen';
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'LoginMobileScreen'>;
 }
@@ -50,12 +50,9 @@ const LoginMobileScreen = ({navigation}: Props) => {
     setValue,
     getValues,
     formState: {isValid, isDirty, errors},
-  } = useForm({
+  } = useForm<LoginMobileSchemaType>({
     mode: 'onChange',
-    defaultValues: {
-      phoneNumber: '',
-    },
-    resolver: yupResolver(signupMobilevalidationSchema),
+    resolver: yupResolver(LoginMobileSchema),
   });
   const formatPhoneNumber = (phoneNumber: string) => {
     if (phoneNumber.startsWith('0')) {
@@ -216,6 +213,9 @@ const LoginMobileScreen = ({navigation}: Props) => {
                     mode="outlined"
                     // error={!!error}
                   />
+                  {error && (
+                    <Text style={styles.errorText}>{error.message}</Text> 
+                  )}
                 </View>
               )}
             />
@@ -288,7 +288,7 @@ const LoginMobileScreen = ({navigation}: Props) => {
             style={styles.otpInput}
             textAlign="center"
             textAlignVertical="center"
-            keyboardType="numeric"
+            keyboardType="number-pad"             
             pointerEvents="auto"
             inputMode="numeric"
             textContentType="oneTimeCode"

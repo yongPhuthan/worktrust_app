@@ -57,13 +57,12 @@ const useFetchDashboard = (): UseQueryResult<CompanyQuery, ErrorResponse> => {
     );
     dispatch(stateAction.code_company(data.company.code));
     dispatch(stateAction.get_logo(data.company.logo));
-    dispatch(stateAction.get_default_contract(data.company.defaultContract));
     dispatch(stateAction.get_default_warranty(data.company.defaultWarranty));
     dispatch(stateAction.get_notification(data.notifications));
     dispatch(stateAction.get_existing_workers(data.company.workers));
     dispatch(stateAction.get_existing_services(services));
     dispatch(stateAction.get_user_signature(data.user.signature));
-    dispatch(stateAction.get_seller_id(data.user.id));
+    dispatch(stateAction.get_seller_uid(data.user.id));
     dispatch(stateAction.get_subscription(data.subscription));
     dispatch(stateAction.get_user(data.user));
 

@@ -11,7 +11,7 @@ import {
 import {Appbar, Button, Text} from 'react-native-paper';
 import {Store} from '../../redux/store';
 import AddProductFormModal from './addNew';
-import {ServicesEmbed} from '@prisma/client';
+import { IServiceEmbed } from 'types/interfaces/ServicesEmbed';
 
 interface Props {
   visible: boolean;
@@ -29,13 +29,13 @@ const SelectProductModal: React.FC<Props> = ({
     dispatch,
   } = useContext(Store);
   const [showAddNewService, setShowAddNewService] = useState(false);
-  const [selectService, setSelectService] = useState<ServicesEmbed | null>(
+  const [selectService, setSelectService] = useState<IServiceEmbed | null>(
     null,
   );
   const [addNewService, setAddNewService] = useState(false);
-  const uniqueExistingServices: ServicesEmbed[] = existingServices.reduce(
-    (acc: ServicesEmbed[], current: ServicesEmbed) => {
-      const x = acc.find((item: ServicesEmbed) => item.id === current.id);
+  const uniqueExistingServices: IServiceEmbed[] = existingServices.reduce(
+    (acc: IServiceEmbed[], current: IServiceEmbed) => {
+      const x = acc.find((item: IServiceEmbed) => item.id === current.id);
       if (!x) {
         return acc.concat([current]);
       } else {
@@ -89,10 +89,14 @@ const SelectProductModal: React.FC<Props> = ({
                 }}
                 style={styles.subContainer}>
                 <View style={styles.row}>
-                  <Image
+                {item.serviceImages && item.serviceImages.length > 0 && (
+                    <Image
                     source={{uri: item.serviceImages[0].thumbnailUrl}}
                     style={{width: 50, height: 50}}
                   />
+                )}
+
+                
                   <View>
                     <Text style={styles.title}>{item.title}</Text>
                     <Text style={styles.description}>{item.description}</Text>

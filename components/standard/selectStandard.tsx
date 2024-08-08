@@ -9,12 +9,12 @@ import {
   View,
 } from 'react-native';
 import {Store} from '../../redux/store';
+import { IDefaultStandards } from '../../models/DefaultStandards';
 
 import {BACK_END_SERVER_URL} from '@env';
 import {useQuery} from '@tanstack/react-query';
 import {useFormContext} from 'react-hook-form';
 
-import {DefaultStandards} from '@prisma/client';
 import Modal from 'react-native-modal';
 import {
   Appbar,
@@ -48,7 +48,7 @@ const SelectStandard = ({
   const [isCreateStandard, setIsCreateStandard] = useState(false);
 
   const user = useUser();
-  const [standardDatas, setStandardDatas] = useState<DefaultStandards[] | null>(
+  const [standardDatas, setStandardDatas] = useState<IDefaultStandards[] | null>(
     null,
   );
   const context = useFormContext();
@@ -65,15 +65,14 @@ const SelectStandard = ({
     state: {companyId, code},
     dispatch,
   } = useContext(Store);
-  console.log('code', code);
-  console.log('companyId', companyId);
+
   const fetchStandards = async () => {
     if (!user) {
       throw new Error('User not authenticated');
     } else {
       const idToken = await user.getIdToken(true);
       let url = `${BACK_END_SERVER_URL}/api/services/queryStandards?id=${encodeURIComponent(
-        companyId,
+        companyId.toString(),
       )}`;
       const response = await fetch(url, {
         method: 'GET',
@@ -82,7 +81,7 @@ const SelectStandard = ({
           Authorization: `Bearer ${idToken}`,
         },
       });
-      const data: DefaultStandards[] = await response.json();
+      const data: IDefaultStandards[] = await response.json();
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
@@ -101,10 +100,10 @@ const SelectStandard = ({
     queryFn: fetchStandards,
   });
 
-  const handleSelectStandard = (standard: DefaultStandards) => {
+  const handleSelectStandard = (standard: IDefaultStandards) => {
     const currentStandards = getValues('standards') || [];
     const standardIndex = currentStandards.findIndex(
-      (standardData: DefaultStandards) => standardData.id === standard.id,
+      (standardData: IDefaultStandards) => standardData.id === standard.id,
     );
     if (standardIndex !== -1) {
       const updatedStandards = [...currentStandards];
@@ -191,7 +190,7 @@ const SelectStandard = ({
                   style={[
                     styles.card,
                     (watch('standards') || []).some(
-                      (standard: DefaultStandards) => standard.id === item.id,
+                      (standard: IDefaultStandards) => standard.id === item.id,
                     )
                       ? styles.cardChecked
                       : null,
@@ -218,7 +217,7 @@ const SelectStandard = ({
                         }}
                         status={
                           (watch('standards') || []).some(
-                            (standard: DefaultStandards) =>
+                            (standard: IDefaultStandards) =>
                               standard.id === item.id,
                           )
                             ? 'checked'

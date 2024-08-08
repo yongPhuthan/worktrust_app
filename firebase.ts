@@ -13,6 +13,7 @@ import {
   FIREBASE_MESSAGING_SENDER_ID,
   FIREBASE_PROJECT_ID,
   FIREBASE_STORAGE_BUCKET,
+  FIREBASE_STORAGE_PDF_BUCKET,
   DEBUG_TOKEN,
 } from '@env';
 
@@ -41,7 +42,9 @@ if (__DEV__) {
   firebase.storage().useEmulator(emulatorHost, 9199);
   firebase.firestore().useEmulator(emulatorHost, 8080);
 }
+const docStorage = firebase.app().storage(FIREBASE_STORAGE_PDF_BUCKET);
 
 console.log('Firebase App name: ', firebase.app().appCheck().app.name);
 
+export { docStorage };
 export default firebase;

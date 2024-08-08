@@ -36,7 +36,6 @@ export type ProductItem = {
 type OnAddService = (service: ServicesEmbed) => void;
 
 export type ParamListBase = {
-  Quotation: undefined;
   CreateWarranty : undefined;
   CreateNewInvoice: undefined;
   EditWorkers:undefined;
@@ -162,6 +161,11 @@ export interface NavigationScreen {
 export interface DashboardScreenProps {
   navigation: StackNavigationProp<ParamListBase, 'Dashboard'>;
 }
+
+export type RootStackParamList = {
+  FirstAppScreen: undefined;
+  CreateCompanyScreen: undefined;
+} & ParamListBase;
 
 export type ScreenName =
   | 'SignUpScreen'

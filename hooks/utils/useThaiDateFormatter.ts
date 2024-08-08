@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
 function useThaiDateFormatter() {
   const thaiDateFormatter = new Intl.DateTimeFormat('th-TH', {
@@ -8,7 +9,15 @@ function useThaiDateFormatter() {
   });
 
   const formatThaiDate = useCallback(
-    (date: Date | number | string) => thaiDateFormatter.format(new Date(date)),
+    (date: Date | number | string | FirebaseFirestoreTypes.Timestamp) => {
+      let parsedDate: Date;
+      if (date instanceof FirebaseFirestoreTypes.Timestamp) {
+        parsedDate = date.toDate();
+      } else {
+        parsedDate = new Date(date);
+      }
+      return thaiDateFormatter.format(parsedDate);
+    },
     [thaiDateFormatter]
   );
 

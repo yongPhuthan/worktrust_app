@@ -1,61 +1,54 @@
-import {BACK_END_SERVER_URL} from '@env';
+import { BACK_END_SERVER_URL } from '@env';
 import messaging from '@react-native-firebase/messaging';
-import {DrawerActions} from '@react-navigation/native';
-import {useQueryClient} from '@tanstack/react-query';
-import * as contrains from '../../redux/constrains';
-import React, {useContext, useEffect, useState, useCallback} from 'react';
+import { DrawerActions } from '@react-navigation/native';
+import { useQueryClient } from '@tanstack/react-query';
+import React, { useContext, useEffect, useState } from 'react';
 import {
   Alert,
+  DevSettings,
   Dimensions,
   FlatList,
+  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
-  Image,
-  RefreshControl,
-  DevSettings,
+  View
 } from 'react-native';
 import Modal from 'react-native-modal';
 import CardDashBoard from '../../components/CardDashBoard';
-import {QuotationsFilterButton} from '../../components/ui/Dashboard/FilterButton'; // Adjust the import path as necessary
+import { QuotationsFilterButton } from '../../components/ui/Dashboard/FilterButton'; // Adjust the import path as necessary
 import firebase from '../../firebase';
-import {useActiveFilter} from '../../hooks/dashboard/useActiveFilter';
-import {useFilteredData} from '../../hooks/dashboard/useFilteredData';
-import {useUser} from '../../providers/UserContext';
+import { useActiveFilter } from '../../hooks/dashboard/useActiveFilter';
+import { useFilteredData } from '../../hooks/dashboard/useFilteredData';
+import { useUser } from '../../providers/UserContext';
 import * as stateAction from '../../redux/actions';
-import {Store} from '../../redux/store';
+import { Store } from '../../redux/store';
 
-import {DashboardScreenProps} from '../../types/navigationType';
+import { DashboardScreenProps } from '../../types/navigationType';
 
 import {
+  ActivityIndicator,
   Appbar,
   Dialog,
   Divider,
-  FAB,
-  Icon,
   List,
   PaperProvider,
-  ActivityIndicator,
-  Portal,
-  Menu,
+  Portal
 } from 'react-native-paper';
-import {requestNotifications} from 'react-native-permissions';
-import useFetchDashboard from '../../hooks/quotation/dashboard/useFetchDashboard'; // adjust the path as needed
+import { requestNotifications } from 'react-native-permissions';
 
-import {
-  CustomerEmbed,
-  NotificationType,
-  QuotationStatus,
-  Quotations,
-  ServicesEmbed,
-} from '@prisma/client';
-import {CompanyOnly, CompanyState} from 'types';
-import {useModal} from '../../hooks/quotation/create/useModal';
-import useResetQuotation from '../../hooks/quotation/update/resetStatus';
-import FABButton from '../../components/ui/Button/FAB';
-import useCheckSubscription from '../../hooks/useCheckSubscription';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { CompanyState } from 'types';
 import SelectPackages from '../../components/payment/selectPackages';
+import FABButton from '../../components/ui/Button/FAB';
+import fetchQuotations from '../../hooks/firestore/quotations/query/queryDashboard';
+import { useModal } from '../../hooks/quotation/create/useModal';
+import useResetQuotation from '../../hooks/quotation/update/resetStatus';
+import useCheckSubscription from '../../hooks/useCheckSubscription';
+import { IQuotations } from '../../models/Quotations';
+import { NotificationType, QuotationStatus } from '../../types/enums';
+import { ICustomerEmbed } from '../../types/interfaces/CustomerEmbed';
 
 interface ErrorResponse {
   message: string;
@@ -63,6 +56,9 @@ interface ErrorResponse {
 }
 const Dashboard = ({navigation}: DashboardScreenProps) => {
   const [showModal, setShowModal] = useState(true);
+  const [quotations, setQuotations] = useState<IQuotations[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const {isVisible, setIsVisible, checkSubscription} = useCheckSubscription();
   const user = useUser();
   const {
@@ -77,9 +73,9 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   } = useModal();
   const {
     dispatch,
-    state: {quotations,sellerId},
+    state: {sellerUid: sellerId},
   } = useContext(Store);
-  const {data, isLoading, isError, error, refetch} = useFetchDashboard();
+  // const {data, isLoading, isError, error, refetch} = useFetchDashboard();
   const {activeFilter, updateActiveFilter} = useActiveFilter();
   const {width, height} = Dimensions.get('window');
   const [refreshing, setRefreshing] = useState(false);
@@ -87,10 +83,10 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   const [isLoadingAction, setIsLoadingAction] = useState(false);
   const queryClient = useQueryClient();
   const [isModalSignContract, setIsModalSignContract] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<Quotations | null>(null);
+  const [selectedItem, setSelectedItem] = useState<IQuotations | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const filteredData = useFilteredData(
-    quotations,
+    quotations as any,
     activeFilter as QuotationStatus,
   );
   const [companyData, setCompanyData] = useState<CompanyState | null>(null);
@@ -106,17 +102,21 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
       console.error('Failed to sign out: ', error);
     }
   };
-
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    refetch()
-      .then(() => {
-        setRefreshing(false);
-      })
-      .catch(() => {
-        setRefreshing(false);
-      });
-  }, [refetch]);
+  // if(user ){
+  //   console.log('user not found', user)
+  //   handleLogout()
+  // }
+  // console.log('user', user)
+  // const onRefresh = useCallback(() => {
+  //   setRefreshing(true);
+  //   refetch()
+  //     .then(() => {
+  //       setRefreshing(false);
+  //     })
+  //     .catch(() => {
+  //       setRefreshing(false);
+  //     });
+  // }, [refetch]);
   const handleErrorResponse = (error: ErrorResponse) => {
     switch (error.message) {
       case 'logout':
@@ -196,7 +196,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     }
   };
 
-  const confirmRemoveQuotation = (id: string, customer: CustomerEmbed) => {
+  const confirmRemoveQuotation = (id: string, customer: ICustomerEmbed) => {
     setShowModal(false);
     if (!checkSubscription()) {
       return;
@@ -237,35 +237,35 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     );
   };
 
-  useEffect(() => {
-    if (data) {
-      // If data[0] exists and has a non-null `code`, proceed with your logic
-      const companyOnly: CompanyState = {
-        ...data.company,
-        quotations: [],
-        workers: [],
-        invoices: [],
-        receipts: [],
-        defaultWarranty: null,
-        submissions: [],
-        defaultContracts: null,
-        defaultStandards: [],
-        defaultMaterials: [],
-        users: [],
-      };
-      setCompanyData(companyOnly);
-      dispatch(stateAction.get_company_state(companyOnly));
+  // useEffect(() => {
+  //   if (data) {
+  //     // If data[0] exists and has a non-null `code`, proceed with your logic
+  //     const companyOnly: CompanyState = {
+  //       ...data.company,
+  //       quotations: [],
+  //       workers: [],
+  //       invoices: [],
+  //       receipts: [],
+  //       defaultWarranty: null,
+  //       submissions: [],
+  //       defaultContracts: null,
+  //       defaultStandards: [],
+  //       defaultMaterials: [],
+  //       users: [],
+  //     };
+  //     setCompanyData(companyOnly);
+  //     dispatch(stateAction.get_company_state(companyOnly));
 
-      dispatch(stateAction.get_companyID(companyOnly.id));
-      // Sort the quotations by the most recently updated date
-      const sortedQuotations = data.company?.quotations.sort((a, b) => {
-        const dateA = new Date(a.updated);
-        const dateB = new Date(b.updated);
-        return dateB.getTime() - dateA.getTime();
-      });
-      dispatch(stateAction.get_quotations(sortedQuotations));
-    }
-  }, [data]);
+  //     dispatch(stateAction.get_companyID(companyOnly.id));
+  //     // Sort the quotations by the most recently updated date
+  //     const sortedQuotations = data.company?.quotations.sort((a, b) => {
+  //       const dateA = new Date(a.updated);
+  //       const dateB = new Date(b.updated);
+  //       return dateB.getTime() - dateA.getTime();
+  //     });
+  //     dispatch(stateAction.get_quotations(sortedQuotations));
+  //   }
+  // }, [data]);
 
   useEffect(() => {
     const initializeListeners = () => {
@@ -320,7 +320,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
           navigation.navigate('DashboardSubmit');
           break;
         case NotificationType.QuotationEvent:
-          const quotation: Quotations | undefined = quotations?.find(
+          const quotation: IQuotations | undefined = quotations?.find(
             q => q.id === docId,
           );
           if (quotation) {
@@ -360,6 +360,18 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     if (showProjectModal || showPDFModal) {
       setShowModal(false);
     }
+    const fetchStoredUrl = async () => {
+      try {
+        const url = await AsyncStorage.getItem('logo');
+        if (url !== null) {
+       console.log('LOGO AsyncStorage', url)
+        }
+      } catch (error) {
+        console.error('Failed to fetch the URL from AsyncStorage:', error);
+      }
+    };
+
+    fetchStoredUrl();
   }, [showProjectModal, showPDFModal]);
 
   const filtersToShow = [
@@ -387,7 +399,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     }
     setIsModalSignContract(false);
   };
-  const handleModalOpen = (item: Quotations, index: number) => {
+  const handleModalOpen = (item: IQuotations, index: number) => {
     setSelectedItem(item);
     setSelectedIndex(index);
     // handleModal(item, index);
@@ -399,7 +411,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     setSelectedIndex(null);
     setShowModal(false);
   };
-  const editQuotation = async (quotation: Quotations) => {
+  const editQuotation = async (quotation: IQuotations) => {
     if (!checkSubscription()) {
       return;
     }
@@ -410,10 +422,23 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     navigation.navigate('CreateQuotation');
   };
 
-  if (isError && error) {
-    handleErrorResponse(error);
-  }
-  console.log('sellerId',sellerId)
+
+  useEffect(() => {
+    if (user && user.uid) {
+      fetchQuotations(user.uid, navigation, dispatch, stateAction)
+        .then((quotations) => {
+          console.log('quotations', quotations);
+          setQuotations(quotations);
+
+          setLoading(false);
+        })
+        .catch((err) => {
+          setError(err.message);
+          setLoading(false);
+        });
+    }
+  }, [user, navigation]);
+
 
   const renderItem = ({item, index}: any) => (
     <>
@@ -630,12 +655,12 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   );
 
   const createNewQuotation = () => {
-    if (!checkSubscription()) {
-      return;
-    }
-    if (!companyData) {
-      navigation.navigate('CreateCompanyScreen');
-    }
+    // if (!checkSubscription()) {
+    //   return;
+    // }
+    // if (!companyData) {
+    //   navigation.navigate('CreateCompanyScreen');
+    // }
     dispatch(stateAction.reset_edit_quotation());
     navigation.navigate('CreateQuotation');
   };
@@ -693,7 +718,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                   keyExtractor={item => item}
                 />
               </View>
-              {isLoading || isLoadingAction || (isReseting && !refreshing) ? (
+              {loading || isLoadingAction || (isReseting && !refreshing) ? (
                 <View
                   style={{
                     flex: 1,
@@ -724,13 +749,13 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                       )}
                     <FlatList
                       data={filteredData}
-                      refreshControl={
-                        <RefreshControl
-                          refreshing={refreshing}
-                          onRefresh={onRefresh}
-                        />
-                      }
-                      onRefresh={onRefresh}
+                      // refreshControl={
+                      //   <RefreshControl
+                      //     refreshing={refreshing}
+                      //     onRefresh={onRefresh}
+                      //   />
+                      // }
+                      // onRefresh={onRefresh}
                       renderItem={renderItem}
                       refreshing={refreshing}
                       keyExtractor={item => item.id}

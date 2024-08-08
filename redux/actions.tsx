@@ -1,21 +1,20 @@
-import {
-  Company,
-  ContractUpdateLogEmbed,
-  ContractsEmbed,
-  Invoices,
-  Notifications,
-  Quotations,
-  Receipts,
-  ServicesEmbed,
-  Submissions,
-  Subscription,
-  User,
-  WarrantyEmbed,
-  Workers,
-} from '@prisma/client';
-import {FirebaseAuthTypes} from '@react-native-firebase/auth';
+
+import { FirebaseAuthTypes } from '@react-native-firebase/auth';
 
 import * as contrains from './constrains';
+import { IServiceEmbed } from 'types/interfaces/ServicesEmbed';
+import { ICompany } from 'models/Company';
+import { IWarrantyEmbed } from 'types/interfaces/WarrantyEmbed';
+import { CreateQuotationSchemaType } from 'validation/quotations/create';
+import { IInvoices } from 'models/Invoices';
+import { IReceipts } from '../models/Receipts';
+import { ISubmissions } from 'models/Submissions';
+import { ISubscription } from 'models/Subscription';
+import { IUser } from 'models/User';
+import { NotificationType } from 'types/enums';
+import { IQuotations } from 'models/Quotations';
+import { Schema, model, Document, Types } from 'mongoose';
+import { IWorkerEmbed } from 'types/interfaces/WorkerEmbed';
 
 // ACTION => REDUCER
 
@@ -24,42 +23,38 @@ export const code_company = (payload: string) => ({
   payload,
 });
 
-export const get_companyID = (payload: string) => ({
+export const get_companyID = (payload: Types.ObjectId) => ({
   type: contrains.GET_COMPANYID,
   payload,
 });
 
-export const add_product = (payload: ServicesEmbed) => ({
+export const add_product = (payload: IServiceEmbed) => ({
   type: contrains.ADD_PRODUCT,
   payload,
 });
 
-export const get_company_state = (payload: Company) => ({
+export const get_company_state = (payload: ICompany) => ({
   type: contrains.GET_COMPANY_STATE,
   payload,
 });
 
-export const get_existing_services = (payload: ServicesEmbed[]) => ({
+export const get_existing_services = (payload: IServiceEmbed[]) => ({
   type: contrains.GET_EXISTING_SERVICES,
   payload,
 });
 
-export const get_default_contract = (payload: ContractsEmbed) => ({
-  type: contrains.GET_DEFAULT_CONTRACT,
-  payload,
-});
 
 export const get_logo = (payload: string) => ({
   type: contrains.GET_LOGO,
   payload,
 });
 
-export const get_default_warranty = (payload: WarrantyEmbed) => ({
+export const get_default_warranty = (payload: IWarrantyEmbed) => ({
   type: contrains.GET_DEFAULT_WARRANTY,
   payload,
 });
 
-export const get_existing_workers = (payload: Workers[]) => ({
+export const get_existing_workers = (payload: IWorkerEmbed[]) => ({
   type: contrains.GET_EXISTING_WORKERS,
   payload,
 });
@@ -69,27 +64,27 @@ export const get_user_signature = (payload: string) => ({
   payload,
 });
 
-export const get_edit_quotation = (payload: Quotations) => ({
+export const get_edit_quotation = (payload: CreateQuotationSchemaType) => ({
   type: contrains.GET_EDIT_QUOTATION,
   payload,
 });
 
-export const get_edit_invoice = (payload: Invoices) => ({
+export const get_edit_invoice = (payload: IInvoices) => ({
   type: contrains.GET_EDIT_INVOICE,
   payload,
 });
 
-export const get_edit_receipt = (payload: Receipts) => ({
+export const get_edit_receipt = (payload: IReceipts) => ({
   type: contrains.GET_EDIT_RECEIPT,
   payload,
 });
 
-export const get_edit_submission = (payload: Submissions) => ({
+export const get_edit_submission = (payload: ISubmissions) => ({
   type: contrains.GET_EDIT_SUBMISSION,
   payload,
 });
 
-export const view_submission = (payload: Submissions) => ({
+export const view_submission = (payload: ISubmissions) => ({
   type: contrains.VIEW_SUBMISSION,
   payload,
 });
@@ -110,8 +105,8 @@ export const reset_edit_submission = () => ({
   type: contrains.RESET_EDIT_SUBMISSION,
 });
 
-export const get_seller_id = (payload: string) => ({
-  type: contrains.GET_SELLER_ID,
+export const get_seller_uid = (payload: string) => ({
+  type: contrains.GET_SELLER_UID,
   payload,
 });
 
@@ -130,12 +125,12 @@ export const get_quotation_id = (payload: string) => ({
   payload,
 });
 
-export const get_subscription = (payload: Subscription) => ({
+export const get_subscription = (payload: ISubscription) => ({
   type: contrains.GET_SUBSCRIPTION,
   payload,
 });
 
-export const get_user = (payload: User) => ({
+export const get_user = (payload: IUser) => ({
   type: contrains.GET_USER,
   payload,
 });
@@ -149,12 +144,12 @@ export const reset_firebase_user = () => ({
   type: contrains.RESET_FIREBASE_USER,
 });
 
-export const get_notification = (payload: Notifications[]) => ({
+export const get_notification = (payload: NotificationType[]) => ({
   type: contrains.GET_NOTIFICATION,
   payload,
 });
 
-export const get_quotations = (payload: Quotations[]) => ({
+export const get_quotations = (payload: IQuotations[]) => ({
   type: contrains.GET_QUOTATIONS,
   payload,
 });
@@ -165,43 +160,34 @@ export const codeCompany = (payload: string) => {
     dispatch(code_company(payload));
   };
 };
-export const getCompanyID = (payload: string) => {
-  return (dispatch: (arg0: {type: string; payload: string}) => void) => {
+export const getCompanyID = (payload: Types.ObjectId) => {
+  return (dispatch: (arg0: {type: string; payload: Types.ObjectId}) => void) => {
     dispatch(get_companyID(payload));
   };
 };
-export const addProduct = (payload: ServicesEmbed) => {
-  return (dispatch: (arg0: {type: string; payload: ServicesEmbed}) => void) => {
+export const addProduct = (payload: IServiceEmbed) => {
+  return (dispatch: (arg0: {type: string; payload: IServiceEmbed}) => void) => {
     dispatch(add_product(payload));
   };
 };
 
-export const getCompanyState = (payload: Company) => {
+export const getCompanyState = (payload: ICompany) => {
   return (
-    dispatch: (arg0: {type: string; payload: Company | null}) => void,
+    dispatch: (arg0: {type: string; payload: ICompany | null}) => void,
   ) => {
     dispatch(get_company_state(payload));
   };
 };
 
-export const getExistingServices = (payload: ServicesEmbed[]) => {
+export const getExistingServices = (payload: IServiceEmbed[]) => {
   return (
-    dispatch: (arg0: {type: string; payload: ServicesEmbed[]}) => void,
+    dispatch: (arg0: {type: string; payload: IServiceEmbed[]}) => void,
   ) => {
     dispatch(get_existing_services(payload));
   };
 };
 
-export const getDefaultContract = (payload: ContractsEmbed) => {
-  return (
-    dispatch: (arg0: {
-      type: string;
-      payload: ContractsEmbed & {contractUpdateLogs: ContractUpdateLogEmbed[]};
-    }) => void,
-  ) => {
-    dispatch(get_default_contract(payload));
-  };
-};
+
 
 export const getLogo = (payload: string) => {
   return (dispatch: (arg0: {type: string; payload: string}) => void) => {
@@ -209,14 +195,14 @@ export const getLogo = (payload: string) => {
   };
 };
 
-export const getDefaultWarranty = (payload: WarrantyEmbed) => {
-  return (dispatch: (arg0: {type: string; payload: WarrantyEmbed}) => void) => {
+export const getDefaultWarranty = (payload: IWarrantyEmbed) => {
+  return (dispatch: (arg0: {type: string; payload: IWarrantyEmbed}) => void) => {
     dispatch(get_default_warranty(payload));
   };
 };
 
-export const getExistingWorkers = (payload: Workers[]) => {
-  return (dispatch: (arg0: {type: string; payload: Workers[]}) => void) => {
+export const getExistingWorkers = (payload: IWorkerEmbed[]) => {
+  return (dispatch: (arg0: {type: string; payload: IWorkerEmbed[]}) => void) => {
     dispatch(get_existing_workers(payload));
   };
 };
@@ -227,8 +213,8 @@ export const getUserSignature = (payload: string) => {
   };
 };
 
-export const getEditQuotation = (payload: Quotations) => {
-  return (dispatch: (arg0: {type: string; payload: Quotations}) => void) => {
+export const getEditQuotation = (payload: CreateQuotationSchemaType) => {
+  return (dispatch: (arg0: {type: string; payload: CreateQuotationSchemaType}) => void) => {
     dispatch(get_edit_quotation(payload));
   };
 };
@@ -239,8 +225,8 @@ export const resetEditQuotation = () => {
   };
 };
 
-export const getEditInvoice = (payload: Invoices) => {
-  return (dispatch: (arg0: {type: string; payload: Invoices}) => void) => {
+export const getEditInvoice = (payload: IInvoices) => {
+  return (dispatch: (arg0: {type: string; payload: IInvoices}) => void) => {
     dispatch(get_edit_invoice(payload));
   };
 };
@@ -251,8 +237,8 @@ export const resetEditInvoice = () => {
   };
 };
 
-export const getEditReceipt = (payload: Receipts) => {
-  return (dispatch: (arg0: {type: string; payload: Receipts}) => void) => {
+export const getEditReceipt = (payload: IReceipts) => {
+  return (dispatch: (arg0: {type: string; payload: IReceipts}) => void) => {
     dispatch(get_edit_receipt(payload));
   };
 };
@@ -263,9 +249,9 @@ export const resetEditReceipt = () => {
   };
 };
 
-export const getSellerId = (payload: string) => {
+export const getSellerUid = (payload: string) => {
   return (dispatch: (arg0: {type: string; payload: string}) => void) => {
-    dispatch(get_seller_id(payload));
+    dispatch(get_seller_uid(payload));
   };
 };
 
@@ -287,14 +273,14 @@ export const getQuotationId = (payload: string) => {
   };
 };
 
-export const getEditSubmission = (payload: Submissions) => {
-  return (dispatch: (arg0: {type: string; payload: Submissions}) => void) => {
+export const getEditSubmission = (payload: ISubmissions) => {
+  return (dispatch: (arg0: {type: string; payload: ISubmissions}) => void) => {
     dispatch(get_edit_submission(payload));
   };
 };
 
-export const viewSubmission = (payload: Submissions) => {
-  return (dispatch: (arg0: {type: string; payload: Submissions}) => void) => {
+export const viewSubmission = (payload: ISubmissions) => {
+  return (dispatch: (arg0: {type: string; payload: ISubmissions}) => void) => {
     dispatch(view_submission(payload));
   };
 };
@@ -305,14 +291,14 @@ export const resetEditSubmission = () => {
   };
 };
 
-export const getSubscription = (payload: Subscription) => {
-  return (dispatch: (arg0: {type: string; payload: Subscription}) => void) => {
+export const getSubscription = (payload: ISubscription) => {
+  return (dispatch: (arg0: {type: string; payload: ISubscription}) => void) => {
     dispatch(get_subscription(payload));
   };
 };
 
-export const getUser = (payload: User) => {
-  return (dispatch: (arg0: {type: string; payload: User}) => void) => {
+export const getUser = (payload: IUser) => {
+  return (dispatch: (arg0: {type: string; payload: IUser}) => void) => {
     dispatch(get_user(payload));
   };
 };
@@ -331,17 +317,17 @@ export const resetFirebaseUser = () => {
   };
 };
 
-export const getNotification = (payload: Notifications[]) => {
+export const getNotification = (payload: NotificationType[]) => {
   return (
-    dispatch: (arg0: {type: string; payload: Notifications[]}) => void,
+    dispatch: (arg0: {type: string; payload: NotificationType[]}) => void,
   ) => {
     dispatch(get_notification(payload));
   };
 };
 
-export const getQuotations = (payload: Quotations[]) => {
+export const getQuotations = (payload: IQuotations[]) => {
   return (
-    dispatch: (arg0: {type: string; payload: Quotations[]}) => void,
+    dispatch: (arg0: {type: string; payload: IQuotations[]}) => void,
   ) => {
     dispatch(get_quotations(payload));
   };

@@ -1,6 +1,6 @@
 import React from 'react';
-import {Controller, useFormContext} from 'react-hook-form';
-import {Dimensions, StyleSheet, View, Platform} from 'react-native';
+import {Controller, useFormContext, useWatch} from 'react-hook-form';
+import {Dimensions, StyleSheet,  Modal, View, Platform} from 'react-native';
 import {v4 as uuidv4} from 'uuid';
 
 import {Appbar, Button, TextInput} from 'react-native-paper';
@@ -19,24 +19,35 @@ const AddCustomer = ({onClose}: Props) => {
     setValue,
     watch,
     formState: {errors},
-  } = context 
-const customer = watch('customer');
+  } = context;
   const onSubmit = () => {
     // setValue('customer.id', uuidv4());
     onClose();
   };
+  const customreAddress = useWatch({
+    control,
+    name: 'customer.address',
+  });
+  const customerName = useWatch({
+    control,
+    name: 'customer.name',
+  });
   return (
     <>
+
       <Appbar.Header
         mode="center-aligned"
+        elevated
         style={{
           backgroundColor: 'white',
           width: Dimensions.get('window').width,
         }}>
         <Appbar.Action icon={'close'} onPress={() => onClose()} />
-        <Appbar.Content
-          title="เพิ่มลูกค้า"
-          titleStyle={{fontSize: 18}}
+        <Appbar.Content title="เพิ่มลูกค้า" titleStyle={{fontSize: 18}} />
+        <Appbar.Action
+          icon={'check'}
+          onPress={onSubmit}
+          disabled={!customerName || !customreAddress}
         />
       </Appbar.Header>
       <View style={styles.subContainer}>
@@ -158,7 +169,7 @@ const customer = watch('customer');
           ]}>
           <Text style={styles.buttonText}>{`บันทึก`}</Text>
         </TouchableOpacity> */}
-          <Button
+          {/* <Button
             testID="submit-button"
             // loading={postLoading}
             disabled={!watch('customer.name') || !watch('customer.address')}
@@ -166,10 +177,9 @@ const customer = watch('customer');
             style={{
               marginTop: 40,
             }}
-     
             onPress={onSubmit}>
             {'บันทึก'}
-          </Button>
+          </Button> */}
         </View>
       </View>
     </>

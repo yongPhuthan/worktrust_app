@@ -1,21 +1,14 @@
-import {DefaultTheme, NavigationContainer} from '@react-navigation/native';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import { DefaultTheme, NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
-import {ActivityIndicator, StyleSheet, View} from 'react-native';
-import {useUser} from '../providers/UserContext';
-import DefaultContract from '../screens/contract/defaultContract';
-import AddCustomer from '../screens/customer/addCustomer';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import Quotation from '../screens/quotation/create';
 import DocViewScreen from '../screens/quotation/webview';
 import CreateCompanyScreen from '../screens/register/createcompanyScreen';
-import {ParamListBase, ScreenItem} from '../types/navigationType';
+import { ParamListBase, ScreenItem } from '../types/navigationType';
 
-import ContractOption from '../screens/contract/contractOptions';
-import EditQuotation from '../screens/quotation/edit';
 import EditSetting from '../screens/setting/editSetting';
 
-import EditDefaultContract from '../screens/contract/edit/editDefaultContract';
-import ExistingContract from '../screens/contract/existingContract';
 import FirstAppScreen from '../screens/register/firstAppScreen';
 import LoginScreen from '../screens/register/loginScreen';
 import RegisterScreen from '../screens/register/registerScreen';
@@ -25,25 +18,19 @@ import SendWorks from '../screens/submit/sendWorks';
 import Installment from '../screens/utils/installment';
 import DashboardDrawer from './dashboardDrawer';
 // import BootSplash from "react-native-bootsplash";
-import ContractViewScreen from '../screens/contract/webview';
-import SelectDoc from '../screens/invoice/selectDoc';
-import CreateNewInvoice from '../screens/invoice/create/createNew';
 
-import SignupMobileScreen from '../screens/register/phoneAuth/signupMobile';
-import LoginMobileScreen from '../screens/register/phoneAuth/loginMobileScreen';
-import ProjectViewScreen from '../screens/preview/project';
 import PDFViewScreen from '../screens/preview/pdf';
-import CreateNewReceipt from '../screens/receipt/create/createNew';
-import InvoiceDepositScreen from '../screens/deposit/invoiceDeposit';
-import ReceiptDepositScreen from '../screens/deposit/receiptDeposit';
-import CreateWarranty from '../screens/warranty/create';
-import EditWorkers from '../screens/setting/workers/edit';
-import ViewSubmission from '../screens/submit/view';
-import EditMaterials from '../screens/setting/materials/edit';
+import ProjectViewScreen from '../screens/preview/project';
+import LoginMobileScreen from '../screens/register/phoneAuth/loginMobileScreen';
+import SignupMobileScreen from '../screens/register/phoneAuth/signupMobile';
 import EditGallery from '../screens/setting/gallery/edit';
+import EditMaterials from '../screens/setting/materials/edit';
 import EditStandard from '../screens/setting/standards/edit';
+import EditWorkers from '../screens/setting/workers/edit';
 import DashboardSubmit from '../screens/submit/dashboard';
+import ViewSubmission from '../screens/submit/view';
 import NotificationScreen from '../screens/utils/notifications';
+import CreateQuotation from '../screens/quotation/create';
 
 const Theme = {
   ...DefaultTheme,
@@ -97,7 +84,7 @@ const Navigation = ({initialRouteName}: {initialRouteName: keyof ParamListBase |
         ))}
         <Stack.Screen
           name="CreateQuotation"
-          component={Quotation}
+          component={CreateQuotation}
           options={{
             ...commonScreenOptions,
             headerShown: false,
@@ -110,36 +97,7 @@ const Navigation = ({initialRouteName}: {initialRouteName: keyof ParamListBase |
             headerTintColor: 'black',
           }}
         />
-        <Stack.Screen
-          name="CreateNewInvoice"
-          component={CreateNewInvoice}
-          options={{
-            ...commonScreenOptions,
-            headerShown: false,
-            title: 'สร้างใบวางบิล',
-            headerBackTitle: '',
 
-            headerStyle: {
-              backgroundColor: '#ffffff',
-            },
-            headerTintColor: 'black',
-          }}
-        />
-        <Stack.Screen
-          name="CreateNewReceipt"
-          component={CreateNewReceipt}
-          options={{
-            ...commonScreenOptions,
-            headerShown: false,
-            title: 'สร้างใบเสร็จรับเงิน',
-            headerBackTitle: '',
-
-            headerStyle: {
-              backgroundColor: '#ffffff',
-            },
-            headerTintColor: 'black',
-          }}
-        />
 
         <Stack.Screen name="PDFViewScreen" component={PDFViewScreen} />
         <Stack.Screen name="ProjectViewScreen" component={ProjectViewScreen} />
@@ -160,20 +118,7 @@ const Navigation = ({initialRouteName}: {initialRouteName: keyof ParamListBase |
             headerTintColor: 'black',
           }}
         />
-             <Stack.Screen
-          name="CreateWarranty"
-          component={CreateWarranty}
-          options={{
-            ...commonScreenOptions,
-            headerShown: false,
-            title: 'แจ้งส่งงานลูกค้า',
-            headerBackTitleVisible: false,
-            headerStyle: {
-              backgroundColor: '#ffffff',
-            },
-            headerTintColor: 'black',
-          }}
-        />
+
        
     
         <Stack.Screen
@@ -232,20 +177,6 @@ const Navigation = ({initialRouteName}: {initialRouteName: keyof ParamListBase |
             headerTintColor: 'black',
           }}
         />
-        <Stack.Screen
-          name="SelectDoc"
-          component={SelectDoc}
-          options={{
-            ...commonScreenOptions,
-            headerShown: false,
-            title: 'เลือกเอกสาร',
-            headerBackTitleVisible: false,
-            headerStyle: {
-              backgroundColor: '#ffffff',
-            },
-            headerTintColor: 'black',
-          }}
-        />
 
         <Stack.Screen
           name="EditSetting"
@@ -289,35 +220,7 @@ const Navigation = ({initialRouteName}: {initialRouteName: keyof ParamListBase |
             headerTintColor: 'black',
           }}
         />
-        {/* InvoiceDepositScreen */}
-        <Stack.Screen
-          name="InvoiceDepositScreen"
-          component={InvoiceDepositScreen}
-          options={{
-            ...commonScreenOptions,
-            headerShown: false,
-            title: 'มัดจำใบวางบิล',
-            headerBackTitleVisible: false,
-            headerStyle: {
-              backgroundColor: '#ffffff',
-            },
-            headerTintColor: 'black',
-          }}
-        />
-        <Stack.Screen
-          name="ReceiptDepositScreen"
-          component={ReceiptDepositScreen}
-          options={{
-            ...commonScreenOptions,
-            headerShown: false,
-            title: 'มัดจำใบเสร็จรับเงิน',
-            headerBackTitleVisible: false,
-            headerStyle: {
-              backgroundColor: '#ffffff',
-            },
-            headerTintColor: 'black',
-          }}
-        />
+
 
         <Stack.Screen
           name="SettingsScreen"
@@ -334,51 +237,7 @@ const Navigation = ({initialRouteName}: {initialRouteName: keyof ParamListBase |
           }}
         />
 
-        <Stack.Screen
-          name="ExistingContract"
-          component={ExistingContract}
-          options={{
-            ...commonScreenOptions,
-            headerShown: true,
-            title: 'ตั้งค่าสัญญา',
-            headerBackTitleVisible: false,
-            headerStyle: {
-              backgroundColor: '#ffffff',
-            },
-            headerTintColor: 'black',
-          }}
-        />
-
-        <Stack.Screen
-          name="AddCustomer"
-          component={AddCustomer}
-          options={{
-            ...commonScreenOptions,
-            headerShown: true,
-            title: 'เพิ่มลูกค้า',
-            headerBackTitleVisible: false,
-            headerStyle: {
-              backgroundColor: '#ffffff',
-            },
-            headerTintColor: 'black',
-          }}
-        />
-
-        <Stack.Screen
-          name="EditQuotation"
-          component={EditQuotation}
-          options={{
-            ...commonScreenOptions,
-            headerShown: false,
-            title: 'แก้ไขเอกสาร',
-            headerBackTitleVisible: false,
-
-            headerStyle: {
-              backgroundColor: '#ffffff',
-            },
-            headerTintColor: 'black',
-          }}
-        />
+      
          <Stack.Screen
           name="EditStandard"
           component={EditStandard}
@@ -426,50 +285,8 @@ const Navigation = ({initialRouteName}: {initialRouteName: keyof ParamListBase |
           }}
           />
 
-        <Stack.Screen
-          name="DefaultContract"
-          component={DefaultContract}
-          options={{
-            ...commonScreenOptions,
-            headerShown: false,
-            title: 'รายละเอียดสัญญา',
-            headerBackTitleVisible: false,
-
-            headerStyle: {
-              backgroundColor: '#ffffff',
-            },
-            headerTintColor: 'black',
-          }}
-        />
-        <Stack.Screen
-          name="EditDefaultContract"
-          component={EditDefaultContract}
-          options={{
-            ...commonScreenOptions,
-            headerShown: false,
-            title: 'แก้ไขรายละเอียดสัญญา',
-            headerBackTitleVisible: false,
-            headerStyle: {
-              backgroundColor: '#ffffff',
-            },
-            headerTintColor: 'black',
-          }}
-        />
-        <Stack.Screen
-          name="ContractOptions"
-          component={ContractOption}
-          options={{
-            ...commonScreenOptions,
-            headerShown: false,
-            title: 'รายละเอียดสัญญา',
-            headerBackTitleVisible: false,
-
-            headerStyle: {
-              backgroundColor: '#ffffff',
-            },
-            headerTintColor: 'black',
-          }}
-        />
+       
+      
       </Stack.Navigator>
     </NavigationContainer>
   );

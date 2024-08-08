@@ -21,10 +21,10 @@ import * as yup from 'yup';
 import {BACK_END_SERVER_URL} from '@env';
 
 import {Controller, set, useForm, useWatch} from 'react-hook-form';
-import {signupMobilevalidationSchema} from '../../../models/validationSchema';
 import {FirebaseAuthTypes} from '@react-native-firebase/auth';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {ParamListBase} from '../../../types/navigationType';
+import { LoginMobileSchema } from '../../../models/validationSchema/register/phoneAuth/loginMobileScreen';
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'RegisterScreen'>;
 }
@@ -58,7 +58,7 @@ const SignupMobileScreen = ({navigation}: Props) => {
     defaultValues: {
       phoneNumber: '',
     },
-    resolver: yupResolver(signupMobilevalidationSchema),
+    resolver: yupResolver(LoginMobileSchema),
   });
   const formatPhoneNumber = (phoneNumber: string) => {
     if (phoneNumber.startsWith('0')) {
@@ -126,50 +126,15 @@ const SignupMobileScreen = ({navigation}: Props) => {
       // Combine all OTP digits into a single string
 
       if (confirm) {
-        await confirm.confirm(code); // Use the confirm method with the code
-
-        // After confirmation, add the user to Firestore
-        const formattedPhoneNumber = formatPhoneNumber(phoneNumber); // Format as needed
+        const confirmed = await confirm.confirm(code); // Use the confirm method with the code
 
         // Add the user to the 'users' collection with phoneNumber
-        await firebase.firestore().collection('users').add({
-          phoneNumber: formattedPhoneNumber,
-          // Add other user details as needed
-        });
-        const user = firebase.auth().currentUser;
-        if (!user || !user.uid) {
-          throw new Error(
-            'User creation was successful, but no user data was returned.',
-          );
+        if (confirmed) {
+          navigation.reset({
+            index: 0,
+            routes: [{name: 'CreateCompanyScreen'}],
+          });
         }
-        const token = await user.getIdToken(true);
-        const response = await fetch(
-          `${BACK_END_SERVER_URL}/api/company/createUserPhoneNumber`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              phoneNumber: user.phoneNumber,
-              uid: user.uid,
-            }),
-          },
-        );
-        console.log('Server response for createUser', response);
-
-        if (!response.ok) {
-          throw new Error('Failed to create user on the server');
-        }
-
-        const responseData = await response.json();
-        console.log('Server response data', responseData);
-        // If successful, navigate to the next screen
-        navigation.reset({
-          index: 0,
-          routes: [{name: 'CreateCompanyScreen'}],
-        });
       }
     } catch (error) {
       console.error(
@@ -182,8 +147,7 @@ const SignupMobileScreen = ({navigation}: Props) => {
     }
   };
 
-
-const isCodeValid = code.length === 6;
+  const isCodeValid = code.length === 6;
 
   const phoneNumber = getValues('phoneNumber'); // Get the phone number from the form
   React.useEffect(() => {
@@ -278,7 +242,6 @@ const isCodeValid = code.length === 6;
               {' '}
               <Text
                 children="หรือ ลงทะเบียนด้วยอีเมล"
-                
                 style={{
                   fontFamily: 'Sukhumvit Set Bold',
                 }}></Text>
@@ -330,19 +293,18 @@ const isCodeValid = code.length === 6;
         <Text style={styles.timerText2}> {phoneNumber}</Text>
 
         <View style={styles.otpContainer}>
-        <TextInput
-              mode="outlined"
-              style={styles.otpInput}
-              textAlign="center"
-              textAlignVertical="center"
-              keyboardType="numeric"
-              
-              inputMode="numeric"
-              textContentType="oneTimeCode"
-              maxLength={6}
-              onChangeText={value => setCode(value)}
-              value={code}
-            />
+          <TextInput
+            mode="outlined"
+            style={styles.otpInput}
+            textAlign="center"
+            textAlignVertical="center"
+            keyboardType="numeric"
+            inputMode="numeric"
+            textContentType="oneTimeCode"
+            maxLength={6}
+            onChangeText={value => setCode(value)}
+            value={code}
+          />
         </View>
         <Button
           loading={isLoading}
