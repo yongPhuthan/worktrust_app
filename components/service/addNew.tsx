@@ -40,8 +40,8 @@ import {
   IMaterialEmbed,
   IServiceEmbed,
   IStandardEmbed,
-} from 'types/interfaces/ServicesEmbed';
-import {serviceValidationSchema} from 'validation/quotations/create';
+} from '../../types/interfaces/ServicesEmbed';
+import {serviceValidationSchema} from '../../models/validationSchema';
 
 type Props = {
   onAddService: (data: IServiceEmbed) => void;

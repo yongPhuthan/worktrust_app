@@ -1,15 +1,14 @@
 
   import * as yup from 'yup';
 import { IQuotations } from './Quotations';
-import { ICustomerEmbed } from 'types/interfaces/CustomerEmbed';
-import { IInspectorEmbed } from 'types/interfaces/InspectorEmbed';
-import { IQuotationEventsEmbed } from 'types/interfaces/QuotationEventsEmbed';
-import { IRejectEmbed } from 'types/interfaces/RejectEmbed';
-import { DiscountType, QuotationStatus, SocialProvider, SubmissionStatus, TaxType, WarrantyStatus, WorkerStatus, WorkStatus } from 'types/enums';
-import { IMaterialEmbed, IServiceEmbed, IServiceImage, IStandardEmbed } from 'types/interfaces/ServicesEmbed';
-import { IWarrantyEmbed } from 'types/interfaces/WarrantyEmbed';
-import { IWorkerEmbed } from 'types/interfaces/WorkerEmbed';
-import { InspectorEmbed } from '@prisma/client';
+import { ICustomerEmbed } from '../types/interfaces/CustomerEmbed';
+import { IInspectorEmbed } from '../types/interfaces/InspectorEmbed';
+import { IQuotationEventsEmbed } from '../types/interfaces/QuotationEventsEmbed';
+import { IRejectEmbed } from '../types/interfaces/RejectEmbed';
+import { DiscountType, QuotationStatus, SocialProvider, SubmissionStatus, TaxType, WarrantyStatus, WorkerStatus, WorkStatus } from '../types/enums';
+import { IMaterialEmbed, IServiceEmbed, IServiceImage, IStandardEmbed } from '../types/interfaces/ServicesEmbed';
+import { IWarrantyEmbed } from '../types/interfaces/WarrantyEmbed';
+import { IWorkerEmbed } from '../types/interfaces/WorkerEmbed';
 
   
   export const customerSchemas: yup.ObjectSchema<ICustomerEmbed> = yup.object({
@@ -21,7 +20,7 @@ import { InspectorEmbed } from '@prisma/client';
   });
   
   
-  export const inspectorValidationSchema: yup.ObjectSchema<InspectorEmbed> = yup.object().shape({
+  export const inspectorValidationSchema: yup.ObjectSchema<IInspectorEmbed> = yup.object().shape({
     name: yup.string().required('ระบุชื่อผู้ตรวจสอบ'),
     image: yup.string().required('ระบุรูปภาพของผู้ตรวจสอบ'),
     provider: yup.string().required('ระบุผู้ให้บริการ'),

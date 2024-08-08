@@ -1,8 +1,11 @@
 // useFilteredQuotationData.ts
 import { useMemo } from 'react';
-import { InvoiceStatus, Invoices, QuotationStatus, Quotations, ReceiptStatus, Receipts, SubmissionStatus, Submissions, WarrantyEmbed, WarrantyStatus } from '@prisma/client';
-
-export const useFilteredData = (originalData: Quotations[] | Invoices[] | null, activeFilter: QuotationStatus | InvoiceStatus) => {
+import { QuotationStatus, InvoiceStatus,ReceiptStatus, SubmissionStatus, WarrantyStatus  } from '../../types/enums';
+import { IQuotations } from '../../models/Quotations';
+import { IInvoices } from '../../models/Invoices';
+import { IReceipts } from '../../models/Receipts';
+import { ISubmissions } from '../../models/Submissions';
+export const useFilteredData = (originalData: IQuotations[] | IInvoices[] | null, activeFilter: QuotationStatus | InvoiceStatus) => {
   const filteredData = useMemo(() => {
     if (!originalData) return null;
 
@@ -13,7 +16,7 @@ export const useFilteredData = (originalData: Quotations[] | Invoices[] | null, 
 
   return filteredData;
 };
-export const useFilteredInvoicesData = (originalData:  Invoices[]| null, activeFilter: InvoiceStatus) => {
+export const useFilteredInvoicesData = (originalData:  IInvoices[]| null, activeFilter: InvoiceStatus) => {
   const filteredData = useMemo(() => {
     if (!originalData) return null;
 
@@ -25,7 +28,7 @@ export const useFilteredInvoicesData = (originalData:  Invoices[]| null, activeF
   return filteredData;
 };
 
-export const useFilteredReceiptsData = (originalData:  Receipts[]| null, activeFilter: ReceiptStatus) => {
+export const useFilteredReceiptsData = (originalData:  IReceipts[]| null, activeFilter: ReceiptStatus) => {
   const filteredData = useMemo(() => {
     if (!originalData) return null;
 
@@ -37,7 +40,7 @@ export const useFilteredReceiptsData = (originalData:  Receipts[]| null, activeF
   return filteredData;
 };
 
-export const useFilteredSubmissionsData = (originalData:  Submissions[]| null, activeFilter: SubmissionStatus) => {
+export const useFilteredSubmissionsData = (originalData:  ISubmissions[]| null, activeFilter: SubmissionStatus) => {
   const filteredData = useMemo(() => {
     if (!originalData) return null;
 
@@ -50,7 +53,7 @@ export const useFilteredSubmissionsData = (originalData:  Submissions[]| null, a
 };
 
 
-export const useFilteredWarrantyData = (originalData:  Quotations[]| null, activeFilter: WarrantyStatus) => {
+export const useFilteredWarrantyData = (originalData:  IQuotations[]| null, activeFilter: WarrantyStatus) => {
   const filteredData = useMemo(() => {
     if (!originalData) return null;
 

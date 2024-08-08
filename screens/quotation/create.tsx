@@ -44,7 +44,7 @@ import DatePickerButton from '../../components/styles/DatePicker';
 // import Divider from '../../components/styles/Divider';
 import {yupResolver} from '@hookform/resolvers/yup';
 
-import {CompanyState} from 'types';
+import {CompanyState} from '../../types';
 import {ValidationError} from 'yup';
 import UpdateServiceModal from '../../components/service/update';
 import SmallDivider from '../../components/styles/SmallDivider';
@@ -54,7 +54,6 @@ import WarrantyModal from '../../components/warranty/create';
 import PDFModalScreen from '../../components/webview/pdf';
 import ProjectModalScreen from '../../components/webview/project';
 import ExistingWorkers from '../../components/workers/existing';
-import useCreateQuotation from '../../hooks/firestore/quotations/useSaveQuotation';
 import {useModal} from '../../hooks/quotation/create/useModal';
 import useSelectedDates from '../../hooks/quotation/create/useSelectDates';
 import useUpdateQuotation from '../../hooks/quotation/update/useUpdateQuotations';
@@ -69,12 +68,13 @@ import {
 import {Store} from '../../redux/store';
 import {ParamListBase} from '../../types/navigationType';
 import {nanoid} from 'nanoid';
-import { IServiceEmbed } from 'types/interfaces/ServicesEmbed';
+import { IServiceEmbed } from '../../types/interfaces/ServicesEmbed';
 import { IQuotations } from '../../models/Quotations';
-import { IQuotationEventsEmbed } from 'types/interfaces/QuotationEventsEmbed';
-import { ISellerEmbed } from 'types/interfaces/SellerEmbed';
+import { IQuotationEventsEmbed } from '../../types/interfaces/QuotationEventsEmbed';
+import { ISellerEmbed } from '../../types/interfaces/SellerEmbed';
 import { CreateQuotationSchema, CreateQuotationSchemaType } from '../../validation/quotations/create';
 import { defalutCustomer, initialWarranty } from '../../models/InitialState';
+import useCreateQuotation from '../../hooks/quotation/create/useSaveQuotation';
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'CreateQuotation'>;
 }
@@ -339,22 +339,21 @@ const CreateQuotation = ({navigation}: Props) => {
 
   const {mutate: updateQuotation, isPending: isUpdatePending} =
     useUpdateQuotation(actions);
-  const {createQuotationHandler} = useCreateQuotation(actions);
+    const {mutate, isPending} = useCreateQuotation(actions);
 
-  const handleButtonPress = async () => {
-    try {
+  
+    const handleButtonPress = async () => {
+      const data = {
+        quotation: methods.getValues() as IQuotations,
+        company: G_company as CompanyState,
+      };
       if (isNewQuotation) {
-        // const varidatedQuotation = await QuotationValidationSchema.validate(
-        //   methods.getValues(),
-        // );
-        const success = await createQuotationHandler(
-          methods.getValues(),
-        );
-        if (!success) {
-          Alert.alert('ข้อผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้');
-        }
-        console.log('GOOD QUERY')
-        // await fetchQuotations(G_user.uid, navigation, dispatch, stateAction);
+        mutate(data, {
+          onSuccess:() => {
+            dispatch(stateAction.get_edit_quotation(data.quotation))
+            methods.reset(data.quotation)
+          },
+        });
       } else {
         const existingData = {
           ...methods.getValues(),
@@ -364,19 +363,10 @@ const CreateQuotation = ({navigation}: Props) => {
           quotation: existingData as IQuotations,
           company: G_company as CompanyState,
         };
-        // updateQuotation(data);
+        updateQuotation(data);
       }
-    } catch (error: any) {
-      if (error instanceof ValidationError) {
-        // Handle validation errors
-        Alert.alert('Validation Error', error.errors.join('\n'));
-      } else {
-        // Handle other types of errors
-        console.log('error', error);
-        Alert.alert('ข้อผิดพลาด', error.message);
-      }
-    }
-  };
+    };
+
   const handleInvoiceNumberChange = (text: string) => {
     methods.setValue('docNumber', text);
   };

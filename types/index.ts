@@ -1,18 +1,17 @@
-import {
-  ContractsEmbed,
-  DefaultMaterials,
-  DefaultStandards,
-  Invoices,
-  Quotations,
-  Receipts,
-  Submissions,
-  User,
-  WarrantyEmbed,
-  Workers,
-} from '@prisma/client';
+
+import { IDefaultMaterials } from 'models/DefaultMaterials';
+import { IDefaultStandards } from 'models/DefaultStandards';
+import { IInvoices } from 'models/Invoices';
+import { IQuotations } from 'models/Quotations';
+import { IReceipts } from 'models/Receipts';
+import { ISubmissions } from 'models/Submissions';
+import { IUser } from 'models/User';
+import { Types } from 'mongoose';
+import { IWarrantyEmbed } from './interfaces/WarrantyEmbed';
+import { IWorkerEmbed } from './interfaces/WorkerEmbed';
 
 export type CompanyState = {
-  id: string;
+  id: Types.ObjectId;
   code: string;
   bizName: string;
   address: string;
@@ -24,21 +23,20 @@ export type CompanyState = {
   isActive: boolean;
   signature: string | null;
   userIds: string[];
-  users: User[];
-  workers: Workers[];
-  defaultMaterials: DefaultMaterials[];
-  defaultStandards: DefaultStandards[];
-  quotations: Quotations[];
-  invoices: Invoices[];
+  users: IUser[];
+  workers: IWorkerEmbed[];
+  defaultMaterials: IDefaultMaterials[];
+  defaultStandards: IDefaultStandards[];
+  quotations: IQuotations[];
+  invoices: IInvoices[];
   bankAccounts: any[];
-  receipts: Receipts[];
-  defaultContracts: ContractsEmbed | null;
-  defaultWarranty: WarrantyEmbed | null;
-  submissions: Submissions[];
+  receipts: IReceipts[];
+  defaultWarranty: IWarrantyEmbed | null;
+  submissions: ISubmissions[];
 };
 
 export type CompanyOnly = {
-  id: string;
+  id: Types.ObjectId;
   code: string;
   bizName: string;
   address: string;
@@ -54,11 +52,11 @@ export type CompanyOnly = {
 export type CompanyQuery = {
   company: CompanyState;
   userSignature: string;
-  sellerId: string;
+  sellerUid: string;
 };
 export type ReceiptsQuery = {
   company :{
-    receipts: Receipts[];
+    receipts: IReceipts[];
 
   }
 
@@ -66,13 +64,13 @@ export type ReceiptsQuery = {
 
 export type InvoiceQuery = {
   company: {
-    invoices: Invoices[];
+    invoices: IInvoices[];
   };
 };
 
 export type SubmissionQuery = {
   company: {
-    submissions : Submissions[];
+    submissions : ISubmissions[];
   };
 };
 

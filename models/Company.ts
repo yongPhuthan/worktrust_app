@@ -11,7 +11,7 @@ export interface ICompany extends Document {
   bizType: string;
   logo?: string | null;
   isActive: boolean;
-  userIds: Types.ObjectId[]
+  userUids: string[]
   workers: Types.ObjectId[] | null;
   defaultMaterials: Types.ObjectId[] | null;
   defaultStandards: Types.ObjectId[] | null;
@@ -34,7 +34,7 @@ export const companySchema = new Schema<ICompany>({
   bizType: { type: String, required: true },
   logo: { type: String },
   isActive: { type: Boolean, default: true },
-  userIds: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+  userUids: [{ type: String }],
   workers: [{ type: Schema.Types.ObjectId, ref: 'Worker' }],
   defaultMaterials: [{ type: Schema.Types.ObjectId, ref: 'DefaultMaterials' }],
   defaultStandards: [{ type: Schema.Types.ObjectId, ref: 'DefaultStandards' }],

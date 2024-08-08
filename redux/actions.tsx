@@ -1,20 +1,19 @@
 
 import { FirebaseAuthTypes } from '@react-native-firebase/auth';
-
-import * as contrains from './constrains';
-import { IServiceEmbed } from 'types/interfaces/ServicesEmbed';
-import { ICompany } from 'models/Company';
-import { IWarrantyEmbed } from 'types/interfaces/WarrantyEmbed';
-import { CreateQuotationSchemaType } from 'validation/quotations/create';
-import { IInvoices } from 'models/Invoices';
+import { IInvoices } from '../models/Invoices';
+import { IQuotations } from '../models/Quotations';
+import { ISubmissions } from '../models/Submissions';
+import { ISubscription } from '../models/Subscription';
+import { IUser } from '../models/User';
+import { Types } from 'mongoose';
+import { CompanyState } from '../types';
+import { NotificationType } from '../types/enums';
+import { IServiceEmbed } from '../types/interfaces/ServicesEmbed';
+import { IWarrantyEmbed } from '../types/interfaces/WarrantyEmbed';
+import { IWorkerEmbed } from '../types/interfaces/WorkerEmbed';
+import { CreateQuotationSchemaType } from '../validation/quotations/create';
 import { IReceipts } from '../models/Receipts';
-import { ISubmissions } from 'models/Submissions';
-import { ISubscription } from 'models/Subscription';
-import { IUser } from 'models/User';
-import { NotificationType } from 'types/enums';
-import { IQuotations } from 'models/Quotations';
-import { Schema, model, Document, Types } from 'mongoose';
-import { IWorkerEmbed } from 'types/interfaces/WorkerEmbed';
+import * as contrains from './constrains';
 
 // ACTION => REDUCER
 
@@ -33,7 +32,7 @@ export const add_product = (payload: IServiceEmbed) => ({
   payload,
 });
 
-export const get_company_state = (payload: ICompany) => ({
+export const get_company_state = (payload: CompanyState) => ({
   type: contrains.GET_COMPANY_STATE,
   payload,
 });
@@ -171,9 +170,9 @@ export const addProduct = (payload: IServiceEmbed) => {
   };
 };
 
-export const getCompanyState = (payload: ICompany) => {
+export const getCompanyState = (payload: CompanyState) => {
   return (
-    dispatch: (arg0: {type: string; payload: ICompany | null}) => void,
+    dispatch: (arg0: {type: string; payload: CompanyState | null}) => void,
   ) => {
     dispatch(get_company_state(payload));
   };

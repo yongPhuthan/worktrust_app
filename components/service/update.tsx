@@ -41,8 +41,8 @@ import SmallDivider from '../styles/SmallDivider';
 import firebase from '../../firebase';
 import { nanoid } from 'nanoid';
 import { IMaterialEmbed, IServiceEmbed, IStandardEmbed } from 'types/interfaces/ServicesEmbed';
-import { DiscountType } from 'types/enums';
-import { serviceValidationSchema } from 'validation/quotations/create';
+import { DiscountType } from '../../types/enums';
+import { serviceValidationSchema } from '../../models/validationSchema';
 
 type Props = {
   onUpdateService: (serviceIndex: number ,updatedService: IServiceEmbed) => void;

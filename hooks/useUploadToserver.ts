@@ -24,7 +24,6 @@ export function useCreateToServer(url: string, queryKey: string): Response {
   } = useContext(Store);
 
   const createToServer = async (data: any): Promise<boolean> => {
-    console.log('data', data);
     if (!user || !user.uid) {
       console.error('User or user uid is not available');
       setError(new Error('User or user uid is not available'));
@@ -32,7 +31,7 @@ export function useCreateToServer(url: string, queryKey: string): Response {
     }
     setIsLoading(true);
     setError(null);
-
+console.log('data', data);
     try {
       const token = await user.getIdToken();
       const response = await fetch(`${url}`, {

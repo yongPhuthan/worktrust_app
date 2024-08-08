@@ -1,11 +1,11 @@
+import { BACK_END_SERVER_URL } from '@env';
 import { faCloudUpload } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { useMutation } from '@tanstack/react-query';
 import { nanoid } from 'nanoid';
 import React, { useEffect, useState } from 'react';
-import {BACK_END_SERVER_URL} from '@env';
-import {useMutation} from '@tanstack/react-query';
 
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import {
@@ -28,17 +28,13 @@ import {
   ProgressBar,
   TextInput,
 } from 'react-native-paper';
-import { ValidationError } from 'yup';
-import { useCreateCompany } from '../../hooks/firestore/register/useCreateCompanySeller';
 import { useUploadToCloudflare } from '../../hooks/useUploadtoCloudflare';
 import { usePickImage } from '../../hooks/utils/image/usePickImage';
 
+import { useCreateToServer } from '../../hooks/useUploadToserver';
+import { CompanyCreateSchemaType, CreateCompanyValidationSchema, CreateCompanyValidationSchemaType, UserCreateCompanySchemaType } from '../../models/validationSchema/register/createCompanyScreen';
 import { useUser } from '../../providers/UserContext';
 import { ParamListBase } from '../../types/navigationType';
-import { CompanyCreateSchema, CompanyCreateSchemaType, CreateCompanyValidationSchema, CreateCompanyValidationSchemaType, PostCreateCompanyValidationSchema, UserCreateCompanySchema, UserCreateCompanySchemaType } from '../../models/validationSchema/register/createCompanyScreen';
-import { useCreateToServer } from '../../hooks/useUploadToserver';
-import { IUser } from '../../models/User';
-import { ICompany } from '../../models/Company';
 
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'RegisterScreen'>;
@@ -54,7 +50,7 @@ const checkboxStyle = {
 const CreateCompanyScreen = ({navigation}: Props) => {
   const [page, setPage] = useState<number>(1);
   const [userLoading, setUserLoading] = useState(false);
-  const API_URL = `${BACK_END_SERVER_URL}/api/company/createCompanySeller`;
+  const API_URL = `${BACK_END_SERVER_URL}/api/register/company`;
 
   const user = useUser();
   if (!user) {
@@ -175,12 +171,6 @@ const CreateCompanyScreen = ({navigation}: Props) => {
       setPage(page - 1);
     }
   };
-  const {isLoading, error, createCompany} = useCreateCompany();
-  const {
-    isLoading: isLodingServer,
-    error: errorServer,
-    createToServer,
-  } = useCreateToServer(API_URL, 'dashboardQuotation');
   const createCompanySeller = async ({ seller, company, token }: { seller: UserCreateCompanySchemaType, company: CompanyCreateSchemaType, token: string }) => {
     if (!token) {
       throw new Error('Token is not available');
@@ -224,54 +214,23 @@ const CreateCompanyScreen = ({navigation}: Props) => {
       console.error('Error response:', error);
       Alert.alert('Error', error.message || 'There was an error processing the request');
     },
-  });
+  });  const {
+    isLoading: isLodingServer,
+    error: errorServer,
+    createToServer,
+  } = useCreateToServer(API_URL, 'dashboardQuotation');
 
   const handleSave = async () => {
-    try {
-      const sellerValidated = await UserCreateCompanySchema.validate(seller) as UserCreateCompanySchemaType
-      const companyValidated = await CompanyCreateSchema.validate(company) as CompanyCreateSchemaType
-      const postValidated = await PostCreateCompanyValidationSchema.validate({
-        seller: sellerValidated,
-        company: companyValidated,
-        token: user?.uid,
-      });
-
-      if (logo) {
-        const uploadedLogo = await uploadImage(logo);
-        if (!uploadedLogo) {
-          throw new Error('Failed to upload image');
-        }
-        console.log('uploadedLogo', uploadedLogo);
-        mutate({seller:sellerValidated, company:companyValidated, token: user.uid});
-
-  
-      } else {
-        const success = await createCompany({
-          seller: postValidated.seller,
-          company: company,
-        });
-  
-        if (success) {
-          navigation.reset({
-            index: 0,
-            routes: [{ name: 'DashboardQuotation' }],
-          });
-        }
-      }
-
-
-    } catch (error) {
-      console.error('Error:', error);
-
-      if (error instanceof ValidationError) {
-        Alert.alert('ข้อผิดพลาด', error.message);
-      } else {
-        Alert.alert('Error', 'There was an error processing the request');
-      }
-
-      throw new Error('There was an error processing the request');
+    if(!user){
+      Alert.alert('Error', 'User is not available');
+      
+      return;
     }
+     mutate({seller, company, token: user.uid});
+
+
   };
+
   const width = Dimensions.get('window').width;
   const renderPage = () => {
     switch (page) {
@@ -491,7 +450,7 @@ const CreateCompanyScreen = ({navigation}: Props) => {
                 onPress={handleSave}
                 disabled={isUploading}
                 mode="contained"
-                loading={userLoading || isUploading || isLoading}>
+                loading={userLoading || isUploading }>
                 บันทึก
               </Button>
             </Appbar.Header>

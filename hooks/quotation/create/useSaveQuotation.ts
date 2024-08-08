@@ -1,15 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useUser } from '../../../providers/UserContext';
 import { BACK_END_SERVER_URL } from '@env';
-import { CompanyState } from '../../../types';
-import { IQuotations } from '../../../models/Quotations';
+import { CompanyState } from 'types';
+import { IQuotations } from 'models/Quotations';
 export interface QuotationActions {
   setQuotationServerId: (id: string) => void;
   setPdfUrl: (url: string) => void;
   openProjectModal: () => void;
 }
 // Pass actions via props
-const useUpdateQuotation = (actions: QuotationActions) => {
+const useCreateQuotation = (actions: QuotationActions) => {
   const { setQuotationServerId, setPdfUrl, openProjectModal } = actions;
   const queryClient = useQueryClient();
   const user = useUser();
@@ -19,14 +19,14 @@ const useUpdateQuotation = (actions: QuotationActions) => {
     throw new Error('User is not authenticated');
   }
 
-  const updateQuotation = async (quotation: IQuotations, company:CompanyState) => {
+  const createQuotation = async (quotation: IQuotations, company:CompanyState) => {
     if (!user || !user.uid) {
       throw new Error('User is not available');
     }
 
     const token = await user.getIdToken(true);
-    const response = await fetch(`${BACK_END_SERVER_URL}/api/docs/updateQuotation`, {
-      method: 'PUT',
+    const response = await fetch(`${BACK_END_SERVER_URL}/api/docs/createQuotation`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
@@ -47,7 +47,7 @@ const useUpdateQuotation = (actions: QuotationActions) => {
   const { mutate, data, error, isError, isPending, isSuccess, reset } = useMutation( {
     mutationFn: async (data: { quotation: IQuotations, company: CompanyState }) => {
       const { quotation, company } = data;
-      return updateQuotation(quotation, company);
+      return createQuotation(quotation, company);
     },
     onSuccess: (responseData:any) => {
       setQuotationServerId(responseData.quotationId);
@@ -64,4 +64,4 @@ const useUpdateQuotation = (actions: QuotationActions) => {
   return { mutate, data, error, isError, isPending, isSuccess, reset };
 };
 
-export default useUpdateQuotation;
+export default useCreateQuotation;

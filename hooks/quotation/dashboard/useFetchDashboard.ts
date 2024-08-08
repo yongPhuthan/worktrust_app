@@ -10,8 +10,8 @@ import {useContext} from 'react';
 import {useUser} from '../../../providers/UserContext';
 import * as stateAction from '../../../redux/actions';
 import {Store} from '../../../redux/store';
-import {Company, Quotations, Subscription} from '@prisma/client';
-import {CompanyQuery} from 'types';
+import {CompanyQuery} from '../../../types';
+import { IQuotations } from 'models/Quotations';
 
 interface ErrorResponse {
   message: string;
@@ -52,7 +52,7 @@ const useFetchDashboard = (): UseQueryResult<CompanyQuery, ErrorResponse> => {
 
     const data = await response.json();
     const quotations = data.company.quotations;
-    const services = quotations.flatMap((quotation: Quotations) =>
+    const services = quotations.flatMap((quotation: IQuotations) =>
       quotation.services.slice(0, 10),
     );
     dispatch(stateAction.code_company(data.company.code));

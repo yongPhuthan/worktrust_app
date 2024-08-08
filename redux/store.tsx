@@ -1,21 +1,21 @@
-import React, {createContext, useReducer} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import auth, {FirebaseAuthTypes} from '@react-native-firebase/auth';
-
-import * as contrains from './constrains';
+import { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import React, { createContext, useReducer } from 'react';
 import { Company } from '@prisma/client';
-import { CreateQuotationSchemaType } from 'validation/quotations/create';
-import { IServiceEmbed } from 'types/interfaces/ServicesEmbed';
-import { IWarrantyEmbed } from 'types/interfaces/WarrantyEmbed';
-import { IQuotations } from 'models/Quotations';
+import { Types } from 'mongoose';
 import { IInvoices } from '../models/Invoices';
+import { IQuotations } from '../models/Quotations';
 import { IReceipts } from '../models/Receipts';
 import { ISubmissions } from '../models/Submissions';
 import { ISubscription } from '../models/Subscription';
-import { IUser } from 'models/User';
-import { NotificationType } from 'types/enums';
-import { Schema, model, Document, Types } from 'mongoose';
-import { IWorkerEmbed } from 'types/interfaces/WorkerEmbed';
+import { IUser } from '../models/User';
+import { CompanyState } from '../types';
+import { NotificationType } from '../types/enums';
+import { IServiceEmbed } from '../types/interfaces/ServicesEmbed';
+import { IWarrantyEmbed } from '../types/interfaces/WarrantyEmbed';
+import { IWorkerEmbed } from '../types/interfaces/WorkerEmbed';
+import { CreateQuotationSchemaType } from '../validation/quotations/create';
+import * as contrains from './constrains';
 
 export type StateType = {
   companyId: Types.ObjectId | string;
@@ -38,7 +38,7 @@ export type StateType = {
   G_subscription: ISubscription | null;
   G_user: IUser | null;
   G_logo: string | null;
-  G_company: Company | null;
+  G_company: CompanyState | null;
   firebase_User : FirebaseAuthTypes.User | null;
   notifications : NotificationType[] | null;
 };
@@ -130,7 +130,7 @@ function reducer(state: StateType, action: ActionType): StateType {
     case contrains.GET_COMPANYID:
       return {...state, companyId: action.payload as string};
     case contrains.GET_COMPANY_STATE:
-      return {...state, G_company: action.payload as Company};
+      return {...state, G_company: action.payload as CompanyState};
     case contrains.ADD_PRODUCT:
       return {
         ...state,

@@ -1,24 +1,30 @@
-import React, { useState } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
+  ActivityIndicator,
+  Alert,
   Dimensions,
   SafeAreaView,
   StyleSheet,
-  View
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { Appbar, Button, Snackbar, Text, TextInput } from 'react-native-paper';
+import {TextInput, Button, Text, Appbar, Snackbar} from 'react-native-paper';
 
-import { Controller, useForm, useWatch } from 'react-hook-form';
+import {Controller, useForm, useWatch} from 'react-hook-form';
 
-import { FirebaseAuthTypes } from '@react-native-firebase/auth';
-import { StackNavigationProp } from '@react-navigation/stack';
+import {faArrowLeft} from '@fortawesome/free-solid-svg-icons';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {FirebaseAuthTypes} from '@react-native-firebase/auth';
+import {StackNavigationProp} from '@react-navigation/stack';
 import firebase from '../../firebase';
-import { ParamListBase } from '../../types/navigationType';
+import {ParamListBase} from '../../types/navigationType';
 
-import { BACK_END_SERVER_URL } from '@env';
-import { yupResolver } from '@hookform/resolvers/yup';
+import {BACK_END_SERVER_URL} from '@env';
+import {yupResolver} from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 
-import { useUser } from '../../providers/UserContext';
+import {useUser} from '../../providers/UserContext';
 const screenWidth = Dimensions.get('window').width;
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'RegisterScreen'>;
@@ -88,6 +94,8 @@ const RegisterScreen = ({navigation}: Props) => {
     console.log('Starting signUpEmail function');
     setUserLoading(true);
     try {
+      await AsyncStorage.setItem('userEmail', email);
+      await AsyncStorage.setItem('userPassword', password);
       console.log('Stored email and password in AsyncStorage');
 
       if (password !== confirmPassword) {
@@ -120,14 +128,14 @@ const RegisterScreen = ({navigation}: Props) => {
       const token = await user.getIdToken(true);
 
       const response = await fetch(
-        `${BACK_END_SERVER_URL}/api/company/createUserEmail`,
+        `${BACK_END_SERVER_URL}/api/register/email`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({email: user.email, firebaseUid: user.uid}),
+          body: JSON.stringify({email: user.email, uid: user.uid}),
         },
       );
 
