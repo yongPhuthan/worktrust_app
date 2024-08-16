@@ -1,6 +1,6 @@
 import { IQuotations } from '../../models/Quotations';
 import * as yup from 'yup';
-import {FirebaseFirestoreTypes} from '@react-native-firebase/firestore';
+import {doc, FirebaseFirestoreTypes} from '@react-native-firebase/firestore';
 import  {IWorkerEmbed, workerEmbedSchema}  from '../../types/interfaces/WorkerEmbed';
 import {IQuotationEventsEmbed,} from '../../types/interfaces/QuotationEventsEmbed';
 import {ICustomerSignEmbed} from '../../types/interfaces/CustomerSignEmbed';
@@ -81,6 +81,8 @@ export const serviceImagesSchema: yup.ObjectSchema<IServiceImage> = yup
   .object({
     thumbnailUrl: yup.string().required(),
     originalUrl: yup.string().required(),
+    localPathUrl: yup.string().nullable().default(null),
+    created : yup.date().required(" not found created date"),
   })
   .defined();
 
@@ -145,17 +147,20 @@ export const SellerEmbedSchema: yup.ObjectSchema<ISellerEmbed> = yup
 export const CreateQuotationSchema: yup.ObjectSchema<any> = yup
   .object()
   .shape({
+
     customer: customerSchemas.required("ไม่พบข้อมูลลูกค้า"),
     vat7: yup.number().default(0),
     sellerEmbed: SellerEmbedSchema.required(),
+    isArchived: yup.boolean().default(false),
     
-    // events: quotationEventsEmbed.nullable().default(null),
+    events: quotationEventsEmbed.nullable().default(null),
     // isArchived: yup.boolean().default(false),
     services: yup
       .array()
       .of(serviceValidationSchema)
       .required('เพิ่มบริการอย่างน้อย 1 รายการ')
       .min(1, 'ต้องเลือกบริการอย่างน้อย 1 รายการ'),
+    
     taxType: yup
       .mixed<TaxType>()
       .oneOf(Object.values(TaxType))

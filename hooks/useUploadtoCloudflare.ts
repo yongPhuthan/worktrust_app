@@ -97,7 +97,7 @@ export function useUploadToCloudflare(
 }
 
 async function uploadToCloudflare(
-  companyId: string,
+  code: string,
   category: string,
   uri: string,
   imageSize: string,
@@ -116,10 +116,10 @@ async function uploadToCloudflare(
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          companyId: companyId,
+           code,
           [category]: 'true',
         },
-        body: JSON.stringify({companyId}), // Adjust this as needed
+        body: JSON.stringify({code}), // Adjust this as needed
       },
     );
 
@@ -150,7 +150,7 @@ async function uploadToCloudflare(
     }
     await AsyncStorage.setItem(`${category}`, imageUri);
 
-    return `${CLOUDFLARE_R2_PUBLIC_URL}/${companyId}/${category}/${imageSize}/${fileName}`;
+    return `${CLOUDFLARE_R2_PUBLIC_URL}/${code}/${category}/${imageSize}/${fileName}`;
   } catch (error) {
     if (error instanceof Error) {
       console.error('Cloudflare upload error:', error);

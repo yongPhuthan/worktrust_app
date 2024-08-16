@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 import {Store} from '../../redux/store';
-import { IDefaultStandards } from '../../models/DefaultStandards';
+import {IDefaultStandards} from '../../models/DefaultStandards';
 
 import {BACK_END_SERVER_URL} from '@env';
 import {useQuery} from '@tanstack/react-query';
@@ -27,6 +27,8 @@ import {
 } from 'react-native-paper';
 import {useUser} from '../../providers/UserContext';
 import CreateStandard from './createStandard';
+import useFetchStandard from '../../hooks/standard/read';
+import { Types } from 'mongoose';
 
 interface AuditModalProps {
   isVisible: boolean;
@@ -48,9 +50,9 @@ const SelectStandard = ({
   const [isCreateStandard, setIsCreateStandard] = useState(false);
 
   const user = useUser();
-  const [standardDatas, setStandardDatas] = useState<IDefaultStandards[] | null>(
-    null,
-  );
+  const [standardDatas, setStandardDatas] = useState<
+    IDefaultStandards[] | null
+  >(null);
   const context = useFormContext();
   const {
     register,
@@ -59,51 +61,24 @@ const SelectStandard = ({
     setValue,
     watch,
     formState: {errors},
-  } = context as any;
+  } = context;
 
   const {
-    state: {companyId, code},
+    state: {G_standards},
     dispatch,
   } = useContext(Store);
+  const { isLoading, isError, error, refetch} = useFetchStandard();
 
-  const fetchStandards = async () => {
-    if (!user) {
-      throw new Error('User not authenticated');
-    } else {
-      const idToken = await user.getIdToken(true);
-      let url = `${BACK_END_SERVER_URL}/api/services/queryStandards?id=${encodeURIComponent(
-        companyId.toString(),
-      )}`;
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${idToken}`,
-        },
-      });
-      const data: IDefaultStandards[] = await response.json();
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      const sortedData = data.sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      );
 
-      setStandardDatas(sortedData);
-      return sortedData;
+  useEffect(() => {
+    if (G_standards) {
+      setStandardDatas(G_standards);
     }
-  };
-
-  const {data, isLoading, isError} = useQuery({
-    queryKey: ['standards'],
-    queryFn: fetchStandards,
-  });
-
+  }, [G_standards]);
   const handleSelectStandard = (standard: IDefaultStandards) => {
     const currentStandards = getValues('standards') || [];
     const standardIndex = currentStandards.findIndex(
-      (standardData: IDefaultStandards) => standardData.id === standard.id,
+      (standardData: IDefaultStandards) => standardData._id === standard._id,
     );
     if (standardIndex !== -1) {
       const updatedStandards = [...currentStandards];
@@ -113,7 +88,7 @@ const SelectStandard = ({
       const updatedStandards = [
         ...currentStandards,
         {
-          id: standard.id,
+          _id: standard._id,
           standardShowTitle: standard.standardShowTitle,
           image: standard.image,
           content: standard.content,
@@ -190,7 +165,7 @@ const SelectStandard = ({
                   style={[
                     styles.card,
                     (watch('standards') || []).some(
-                      (standard: IDefaultStandards) => standard.id === item.id,
+                      (standard: IDefaultStandards) => standard._id === item._id,
                     )
                       ? styles.cardChecked
                       : null,
@@ -218,7 +193,7 @@ const SelectStandard = ({
                         status={
                           (watch('standards') || []).some(
                             (standard: IDefaultStandards) =>
-                              standard.id === item.id,
+                              standard._id === item._id,
                           )
                             ? 'checked'
                             : 'unchecked'
@@ -233,55 +208,55 @@ const SelectStandard = ({
                         {item.standardShowTitle}
                       </Text>
                     </View>
-                  
+
                     <View
                       style={{flexDirection: 'column', paddingHorizontal: 10}}>
                       <List.Section>
-                      <List.Accordion
-                        title="รูปภาพ"
-                        titleStyle={{fontSize: 16}}
-                        style={{width: '100%'}}>
-                        <List.Item
-                          title={
-                            <View
-                              style={{
-                                flexDirection: 'row',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                width: '100%',
-                                paddingHorizontal: 10,
-                                gap: 10,
-                              }}>
+                        <List.Accordion
+                          title="รูปภาพ"
+                          titleStyle={{fontSize: 16}}
+                          style={{width: '100%'}}>
+                          <List.Item
+                            title={
                               <View
                                 style={{
-                                  flexDirection: 'column',
-                                  marginHorizontal: 5,
+                                  flexDirection: 'row',
+                                  justifyContent: 'center',
+                                  alignItems: 'center',
+                                  width: '100%',
+                                  paddingHorizontal: 10,
+                                  gap: 10,
                                 }}>
-                                {item.image && (
-                                  <Image
-                                    source={{uri: item.image}}
-                                    style={styles.productImage}
-                                  />
-                                )}
-                              </View>
+                                <View
+                                  style={{
+                                    flexDirection: 'column',
+                                    marginHorizontal: 5,
+                                  }}>
+                                  {item.image && (
+                                    <Image
+                                      source={{uri: item.image.thumbnailUrl}}
+                                      style={styles.productImage}
+                                    />
+                                  )}
+                                </View>
 
-                              <View
-                                style={{
-                                  flexDirection: 'column',
-                                  marginHorizontal: 5, // เพิ่ม margin รอบข้างเล็กน้อยเพื่อแยกรูปภาพ
-                                }}>
-                                {item.badStandardImage && (
-                                  <Image
-                                    source={{uri: item.badStandardImage}}
-                                    style={styles.productImage}
-                                  />
-                                )}
+                                <View
+                                  style={{
+                                    flexDirection: 'column',
+                                    marginHorizontal: 5, // เพิ่ม margin รอบข้างเล็กน้อยเพื่อแยกรูปภาพ
+                                  }}>
+                                  {item.badStandardImage && (
+                                    <Image
+                                      source={{uri: item.badStandardImage.thumbnailUrl}}
+                                      style={styles.productImage}
+                                    />
+                                  )}
+                                </View>
                               </View>
-                            </View>
-                          }
-                          titleNumberOfLines={8}
-                        />
-                      </List.Accordion>
+                            }
+                            titleNumberOfLines={8}
+                          />
+                        </List.Accordion>
                         <List.Accordion
                           title="มาตรฐานของคุณ"
                           titleStyle={{fontSize: 16}}
@@ -314,7 +289,6 @@ const SelectStandard = ({
                           />
                         </List.Accordion>
                       </List.Section>
-                     
                     </View>
                   </View>
                 </View>
@@ -336,15 +310,13 @@ const SelectStandard = ({
                   onPress={() => setIsCreateStandard(true)}
                   mode="contained"
                   icon={'plus'}>
-                  <Text
-                    variant="titleMedium"
-                    style={{color: 'white',}}>
+                  <Text variant="titleMedium" style={{color: 'white'}}>
                     เพิ่มมาตรฐานการทำงาน
                   </Text>
                 </Button>
               </View>
             }
-            keyExtractor={item => item.id}
+            keyExtractor={(item: IDefaultStandards) => new Types.ObjectId(item._id as string).toHexString()}
           />
 
           {watch('standards')?.length > 0 && (

@@ -1,17 +1,17 @@
-
-import { IDefaultMaterials } from 'models/DefaultMaterials';
-import { IDefaultStandards } from 'models/DefaultStandards';
-import { IInvoices } from 'models/Invoices';
-import { IQuotations } from 'models/Quotations';
-import { IReceipts } from 'models/Receipts';
-import { ISubmissions } from 'models/Submissions';
-import { IUser } from 'models/User';
-import { Types } from 'mongoose';
-import { IWarrantyEmbed } from './interfaces/WarrantyEmbed';
-import { IWorkerEmbed } from './interfaces/WorkerEmbed';
+import {IDefaultMaterials} from '../models/DefaultMaterials';
+import {IDefaultStandards} from '../models/DefaultStandards';
+import {IInvoices} from '../models/Invoices';
+import {IQuotations} from '../models/Quotations';
+import {IReceipts} from '../models/Receipts';
+import {ISubmissions} from '../models/Submissions';
+import {IUser} from '../models/User';
+import {Types} from 'mongoose';
+import {IWarrantyEmbed} from './interfaces/WarrantyEmbed';
+import {IWorkerEmbed} from './interfaces/WorkerEmbed';
+import {ISubscription} from '../models/Subscription';
 
 export type CompanyState = {
-  id: Types.ObjectId;
+  _id: Types.ObjectId;
   code: string;
   bizName: string;
   address: string;
@@ -48,18 +48,18 @@ export type CompanyOnly = {
   isActive: boolean;
   signature: string | null;
   userIds: string[];
-}
-export type CompanyQuery = {
+};
+
+export type DashboardResponse = {
   company: CompanyState;
-  userSignature: string;
-  sellerUid: string;
+  subscription: ISubscription;
+  user: IUser;
+  quotations: IQuotations[];
 };
 export type ReceiptsQuery = {
-  company :{
+  company: {
     receipts: IReceipts[];
-
-  }
-
+  };
 };
 
 export type InvoiceQuery = {
@@ -70,7 +70,7 @@ export type InvoiceQuery = {
 
 export type SubmissionQuery = {
   company: {
-    submissions : ISubmissions[];
+    submissions: ISubmissions[];
   };
 };
 

@@ -7,6 +7,7 @@ import { IWorkerEmbed, workerEmbedSchema } from 'types/interfaces/WorkerEmbed';
 import { IWarrantyEmbed, warrantyEmbedSchema } from 'types/interfaces/WarrantyEmbed';
 
 export interface IQuotations extends Document {
+  _id : Types.ObjectId;
   services: IServiceEmbed[];
   customer: ICustomerEmbed;
   isArchived : boolean;

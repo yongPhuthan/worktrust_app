@@ -31,7 +31,6 @@ export function useCreateToServer(url: string, queryKey: string): Response {
     }
     setIsLoading(true);
     setError(null);
-console.log('data', data);
     try {
       const token = await user.getIdToken();
       const response = await fetch(`${url}`, {

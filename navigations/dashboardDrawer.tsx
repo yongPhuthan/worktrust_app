@@ -55,7 +55,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
           }}
         /> */}
         <Text style={{fontSize: 16, fontWeight: 'bold', color: '#012b20'}}>
-          {BRAND_NAME}
+         WorkStandard
         </Text>
       </View>
       <Divider style={{marginBottom: 20}} />

@@ -14,11 +14,20 @@ import { IWorkerEmbed } from '../types/interfaces/WorkerEmbed';
 import { CreateQuotationSchemaType } from '../validation/quotations/create';
 import { IReceipts } from '../models/Receipts';
 import * as contrains from './constrains';
+import { ImageGallery } from '../components/gallery/existing';
+import { ICategory } from '../models/Category';
+import { IDefaultStandards } from 'models/DefaultStandards';
+import { IDefaultMaterials } from 'models/DefaultMaterials';
 
 // ACTION => REDUCER
 
 export const code_company = (payload: string) => ({
   type: contrains.CODE,
+  payload,
+});
+
+export const get_gallery = (payload: ImageGallery[]) => ({
+  type: contrains.GET_GALLERY,
   payload,
 });
 
@@ -153,6 +162,25 @@ export const get_quotations = (payload: IQuotations[]) => ({
   payload,
 });
 
+export const get_categories = (payload: ICategory[]) => ({
+  type: contrains.GET_CATEGORIES,
+  payload,
+});
+
+export const get_initial_gallery = (payload: ImageGallery[]) => ({
+  type: contrains.GET_INITIAL_GALLERY,
+  payload,
+});
+
+export const get_standard = (payload: IDefaultStandards[]) => ({
+  type: contrains.GET_STANDARD,
+  payload,
+});
+export const get_material = (payload: IDefaultMaterials[]) => ({
+  type: contrains.GET_MATERIAL,
+  payload,
+});
+
 // COMPONENTS  => ACTION
 export const codeCompany = (payload: string) => {
   return (dispatch: (arg0: {type: string; payload: string}) => void) => {
@@ -284,6 +312,12 @@ export const viewSubmission = (payload: ISubmissions) => {
   };
 };
 
+export const getGallery = (payload: ImageGallery[]) => {
+  return (dispatch: (arg0: {type: string; payload: ImageGallery[]}) => void) => {
+    dispatch(get_gallery(payload));
+  };
+}
+
 export const resetEditSubmission = () => {
   return (dispatch: (arg0: {type: string}) => void) => {
     dispatch(reset_edit_submission());
@@ -331,3 +365,35 @@ export const getQuotations = (payload: IQuotations[]) => {
     dispatch(get_quotations(payload));
   };
 };
+
+export const getCategories = (payload: ICategory[]) => {
+  return (
+    dispatch: (arg0: {type: string; payload: ICategory[]}) => void,
+  ) => {
+    dispatch(get_categories(payload));
+  };
+}
+
+export const getInitialGallery = (payload: ImageGallery[]) => {
+  return (
+    dispatch: (arg0: {type: string; payload: ImageGallery[]}) => void,
+  ) => {
+    dispatch(get_initial_gallery(payload));
+  };
+}
+
+export const getStandard = (payload: IDefaultStandards[]) => {
+  return (
+    dispatch: (arg0: {type: string; payload: IDefaultStandards[]}) => void,
+  ) => {
+    dispatch(get_standard(payload));
+  };
+}
+
+export const getMaterial = (payload: IDefaultMaterials[]) => {
+  return (
+    dispatch: (arg0: {type: string; payload: IDefaultMaterials[]}) => void,
+  ) => {
+    dispatch(get_material(payload));
+  };
+}

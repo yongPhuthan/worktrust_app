@@ -109,7 +109,6 @@ const CreateQuotation = ({navigation}: Props) => {
   const [quotationServerId, setQuotationServerId] = useState<string | null>(
     editQuotation ? editQuotation.id : null,
   );
-  const {firestore} = firebase;
 
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
@@ -207,8 +206,10 @@ const CreateQuotation = ({navigation}: Props) => {
     customer: defalutCustomer,
     // customerSign: null,
     companyId : G_user.currentCompanyId,
+    docUrl : nanoid(10),
     vat7: 0,
     taxType: TaxType.NOTAX,
+    
     taxValue: 0,
     summary: 0,
     warrantyStatus: WarrantyStatus.PENDING,
@@ -224,7 +225,7 @@ const CreateQuotation = ({navigation}: Props) => {
     sellerEmbed,
     dateEnd: initialDateEnd,
     docNumber: `QT${initialDocnumber}`,
-    workers: [],
+    workers: null,
     FCMToken: fcmToken,
     sellerSignature: '',
     warranty: defaultWarranty ? defaultWarranty : initialWarranty,
@@ -278,7 +279,6 @@ const CreateQuotation = ({navigation}: Props) => {
     control: methods.control,
     name: 'noteToTeam',
   });
-
   const noteToCustomer = useWatch({
     control: methods.control,
     name: 'noteToCustomer',
@@ -335,7 +335,6 @@ const CreateQuotation = ({navigation}: Props) => {
     setPdfUrl,
     openProjectModal,
   };
-  console.log('COMPANY ID', G_company);
 
   const {mutate: updateQuotation, isPending: isUpdatePending} =
     useUpdateQuotation(actions);
@@ -346,12 +345,14 @@ const CreateQuotation = ({navigation}: Props) => {
       const data = {
         quotation: methods.getValues() as IQuotations,
         company: G_company as CompanyState,
+        user : G_user
       };
       if (isNewQuotation) {
         mutate(data, {
-          onSuccess:() => {
+          onSuccess:(res) => {
             dispatch(stateAction.get_edit_quotation(data.quotation))
             methods.reset(data.quotation)
+            setPdfUrl(res.quotation.pdfUrl)
           },
         });
       } else {
@@ -451,19 +452,19 @@ const CreateQuotation = ({navigation}: Props) => {
             onPress={openProjectModal}
           />
 
-          {/* <IconButton
+          <IconButton
             disabled={!pdfUrl && !editQuotation?.pdfUrl}
             icon="file-document"
             mode="outlined"
             iconColor="#047e6e"
             onPress={openPDFModal}
-          /> */}
+          />
           <Appbar.Content title="" />
 
           <Button
-            loading={isUpdatePending}
+            loading={isUpdatePending || isPending}
             disabled={
-              isDisabled || isUpdatePending || !methods.formState.isDirty
+              isPending || isDisabled || isUpdatePending || !methods.formState.isDirty
             }
             testID="submited-button"
             mode="contained"
@@ -601,9 +602,11 @@ const CreateQuotation = ({navigation}: Props) => {
               <View style={styles.signatureRow}>
                 <Text style={styles.signHeader}>เพิ่มทีมงานติดตั้ง</Text>
                 <Switch
+                                color='#007e5e'
+
                   ios_backgroundColor="#3e3e3e"
                   onValueChange={useWorkers}
-                  value={workers.length > 0 ? true : false}
+                  value={ workers && workers.length > 0 ? true : false}
                   style={Platform.select({
                     ios: {
                       transform: [{scaleX: 0.7}, {scaleY: 0.7}],
@@ -614,7 +617,7 @@ const CreateQuotation = ({navigation}: Props) => {
                 />
               </View>
               {/* workers */}
-              {workers.length > 0 && (
+              { workers && workers.length > 0 && (
                 <FlatList
                   data={workers}
                   horizontal={true}
@@ -660,6 +663,8 @@ const CreateQuotation = ({navigation}: Props) => {
               <View style={styles.signatureRow}>
                 <Text style={styles.signHeader}>หมายเหตุ</Text>
                 <Switch
+                                color='#007e5e'
+
                   ios_backgroundColor="#3e3e3e"
                   onValueChange={() =>
                     setOpenNoteToCustomer(!openNoteToCustomer)
@@ -712,6 +717,7 @@ const CreateQuotation = ({navigation}: Props) => {
               <View style={styles.signatureRow}>
                 <Text style={styles.signHeader}>โน๊ตภายในบริษัท</Text>
                 <Switch
+                color='#007e5e'
                   ios_backgroundColor="#3e3e3e"
                   onValueChange={() => setOpenNoteToTeam(!openNoteToTeam)}
                   value={openNoteToTeam ? true : false}
@@ -721,6 +727,7 @@ const CreateQuotation = ({navigation}: Props) => {
                       marginTop: 5,
                     },
                     android: {},
+                    
                   })}
                 />
               </View>

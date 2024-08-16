@@ -42,6 +42,7 @@ import {
   IStandardEmbed,
 } from '../../types/interfaces/ServicesEmbed';
 import {serviceValidationSchema} from '../../models/validationSchema';
+import { IDefaultStandards } from 'models/DefaultStandards';
 
 type Props = {
   onAddService: (data: IServiceEmbed) => void;
@@ -474,8 +475,8 @@ const AddProductFormModal = (props: Props) => {
                           style={styles.cardContainer}>
                           {methods
                             .watch('standards')
-                            ?.map((item: IStandardEmbed) => (
-                              <Text key={item.id}>
+                            ?.map((item: IStandardEmbed, index) => (
+                              <Text key={index}>
                                 {item.standardShowTitle}
                               </Text>
                             ))}
@@ -562,7 +563,7 @@ const AddProductFormModal = (props: Props) => {
                 isVisible={isModalMaterialsVisible}
                 onClose={() => setIsModalMaterialsVisible(false)}
               />
-              {serviceImages && serviceImages.length > 0 && (
+              {serviceImages  && (
                 <GalleryScreen
                   isVisible={isModalImagesVisible}
                   onClose={() => setModalImagesVisible(false)}

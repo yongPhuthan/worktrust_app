@@ -3,6 +3,8 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import React, { useContext } from 'react';
 import { Store } from '../../redux/store';
 
+import { Types } from 'mongoose';
+import { nanoid } from 'nanoid';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import {
   Alert,
@@ -11,22 +13,19 @@ import {
   SafeAreaView,
   ScrollView,
   StyleSheet,
-  View
+  TouchableOpacity,
+  Image,
+  View,
 } from 'react-native';
-import {
-  Appbar,
-  Button,
-  Text,
-  TextInput
-} from 'react-native-paper';
+import { ActivityIndicator, Appbar, Button, IconButton, Text, TextInput } from 'react-native-paper';
 import UploadImage from '../../components/ui/UploadImage';
-import { useCreateToServer } from '../../hooks/useUploadToserver';
+import useCreateMaterial from '../../hooks/materials/create';
 import { useUploadToCloudflare } from '../../hooks/useUploadtoCloudflare';
 import { usePickImage } from '../../hooks/utils/image/usePickImage';
-import { materialSchema } from '../../models/validationSchema';
-import { nanoid } from 'nanoid';
-import { IMaterialEmbed } from 'types/interfaces/ServicesEmbed';
-import { IDefaultMaterials } from '../../models/DefaultMaterials';
+import {
+  MaterialSchemaType,
+  materialSchema,
+} from '../../models/validationSchema/material';
 
 type Props = {
   isVisible: boolean;
@@ -40,24 +39,15 @@ const CreateMaterial = (props: Props) => {
     dispatch,
   } = useContext(Store);
 
-  const defaultMaterial: IDefaultMaterials = {
-    id: nanoid(),
-    name: '',
-    image: '',
-    description: '',
-    companyId,
-    created: new Date(),
-    updated: new Date(),
-  };
+
   const {
     register,
     control,
     setValue,
     getValues,
     formState: {errors, isValid},
-  } = useForm<IDefaultMaterials>({
+  } = useForm<MaterialSchemaType>({
     mode: 'onChange',
-    defaultValues: defaultMaterial,
     resolver: yupResolver(materialSchema),
   });
 
@@ -66,32 +56,31 @@ const CreateMaterial = (props: Props) => {
     name: 'image',
   });
   const {
-    isImagePicking: isStandardImageUploading,
-    pickImage: pickStandardImage,
-  } = usePickImage((uri: string) => {
-    setValue('image', uri);
+    isImagePicking: isImageUploading,
+    pickImage,
+  } = usePickImage((uri) => {
+    setValue('image.localPathUrl', uri);
   });
 
-  const materialStoragePath = `${code}/materials/${getValues('name')}`;
   const {
     isUploading,
     error: uploadError,
     uploadImage,
-  } = useUploadToCloudflare(
-    code, 'materials'
-  );
+  } = useUploadToCloudflare(code, 'logo');
 
   const url = `${BACK_END_SERVER_URL}/api/company/createMaterial`;
-  const {isLoading, error, createToServer} = useCreateToServer(
-    url,
-    'defaultMaterials',
-  );
+  const {mutate, isPending} = useCreateMaterial();
+
   const handleSubmit = async () => {
     if (!isValid) {
       Alert.alert('Error', 'กรุณากรอกข้อมูลให้ครบถ้วน');
       return;
     }
-    const uploadPromises = [(await uploadImage(image)).originalUrl];
+    if(!image.localPathUrl){
+      Alert.alert('Error', 'กรุณาเลือกรูปภาพ');
+      return
+    }
+    const uploadPromises = [(await uploadImage(image.localPathUrl))];
     const downloadUrl = await Promise.all(uploadPromises);
 
     if (uploadError) {
@@ -100,33 +89,32 @@ const CreateMaterial = (props: Props) => {
     if (!downloadUrl) {
       throw new Error('ไม่สามาถอัพโหลดรูปภาพได้');
     }
-
+    
     try {
-      if (downloadUrl && downloadUrl[0]) {
-        setValue('image', downloadUrl[0]);
+      if (downloadUrl && downloadUrl[0].originalUrl && downloadUrl[0].thumbnailUrl) {
+        setValue('image', { thumbnailUrl: downloadUrl[0].thumbnailUrl , originalUrl: downloadUrl[0].originalUrl  });
       } else {
         Alert.alert('Error', 'ไม่สามารถอัพโหลดรูปภาพได้');
       }
+      setValue('companyId', new Types.ObjectId(companyId).toHexString(), {shouldValidate: true});
+      setValue('created', new Date(), {shouldValidate: true});
+      setValue('updated', new Date(), {shouldValidate: true});
+      setValue('id', nanoid(), {shouldValidate: true});
 
-      const formData = {
-        ...getValues(),
-      };
-      await createToServer(formData);
+      const formData = getValues();
+
+      mutate(formData);
     } catch (err) {
       // Handle errors from uploading images or creating the standard
       console.error('An error occurred:', err);
     } finally {
-      if (error || uploadError) {
-        Alert.alert('Error', error?.message);
-      } else {
-        onClose();
-      }
+      onClose();
     }
   };
 
   return (
     <>
-          <Appbar.Header
+      <Appbar.Header
         mode="center-aligned"
         elevated
         style={{
@@ -143,157 +131,172 @@ const CreateMaterial = (props: Props) => {
         />
       </Appbar.Header>
       <SafeAreaView style={styles.container}>
-
-<ScrollView>
-  <View
-    style={{
-      marginBottom: 30,
-      paddingHorizontal: 20,
-      paddingVertical: 20,
-      flexDirection: 'column',
-      justifyContent: 'space-between',
-      alignContent: 'center',
-      gap: 20,
-    }}>
-      <UploadImage 
-        control={control}
-        name="image"
-        label="อัพโหลดรูปวัสดุ-อุปกรณ์"
-        isUploading={isStandardImageUploading}
-        pickImage={pickStandardImage}
-        width={200}
-        height={200}
-      />
-    {/* <Controller
+        <ScrollView>
+          <View
+            style={{
+              marginBottom: 30,
+              paddingHorizontal: 20,
+              paddingVertical: 20,
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              alignContent: 'center',
+              gap: 20,
+            }}>
+            <Controller
       control={control}
-      name="image"
-      render={({field: {onChange, value}}) => (
-        <TouchableOpacity
-          style={{
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-          onPress={() => pickStandardImage()}>
-          {value ? (
-            <Image
-              source={{uri: value}}
-              style={{
-                width: 200,
-                aspectRatio: 1,
-                resizeMode: 'contain',
-              }}
-              onError={e =>
-                console.log('Failed to load image:', e.nativeEvent.error)
-              }
-            />
-          ) : (
-            <View>
-              <TouchableOpacity
+      name={'image'}
+      render={({ field: { onChange, value } }) => {
+        const [imageUri, setImageUri] = React.useState<string | undefined>(
+          value?.localPathUrl || value?.thumbnailUrl
+        );
+
+        const handleError = () => {
+          if (imageUri !== value?.thumbnailUrl) {
+            setImageUri(value?.thumbnailUrl);
+          }
+        };
+
+        return (
+          <TouchableOpacity
+            style={{
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            onPress={() => pickImage()}
+          >
+            {isImageUploading ? (
+              <View
                 style={{
                   justifyContent: 'center',
                   alignItems: 'center',
-                  marginBottom: 5,
-                  borderColor: '#0073BA',
+                  borderColor: '#047e6e',
                   borderWidth: 1,
+                  backgroundColor: '#f5f5f5',
                   borderRadius: 5,
                   borderStyle: 'dashed',
-                  marginVertical: 20,
                   padding: 10,
-                  height: 150,
-                  width: 200,
+                  height,
+                  width,
                 }}
-                onPress={() => {
-                  pickStandardImage();
-                }}>
-                {isStandardImageUploading ? (
-                  <ActivityIndicator size="small" color="gray" />
-                ) : (
+              >
+                <ActivityIndicator size="small" />
+              </View>
+            ) : imageUri ? (
+              <Image
+                source={{ uri: imageUri }}
+                style={{
+                  width,
+                  height,
+                  aspectRatio: 1,
+                }}
+                onError={handleError}
+              />
+            ) : (
+              <View>
+                <TouchableOpacity
+                  style={{
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    borderColor: '#047e6e',
+                    borderWidth: 1,
+                    backgroundColor: '#f5f5f5',
+                    borderRadius: 5,
+                    borderStyle: 'dashed',
+                    padding: 10,
+                    height,
+                    width,
+                  }}
+                  onPress={() => pickImage()}
+                >
                   <IconButton
                     icon="image-plus"
-                    iconColor={'#0073BA'}
+                    iconColor={'#047e6e'}
                     size={40}
-                    onPress={() => pickStandardImage()}
+                    onPress={() => pickImage()}
                   />
-                )}
-              </TouchableOpacity>
-              <Text
-                style={{
-                  textAlign: 'center',
-                  color: '#0073BA',
-                  fontFamily: 'Sukhumvit set',
-                }}>
-                อัพโหลดรูปภาพวัสดุ-อุปกรณ์
-              </Text>
-            </View>
-          )}
-        </TouchableOpacity>
-      )}
-    /> */}
-    <Controller
-      control={control}
-      name="name"
-      render={({
-        field: {onChange, value, onBlur},
-        fieldState: {error},
-      }) => (
-        <View>
-          <TextInput
-            mode="outlined"
-            label={'ชื่อ'}
-            onBlur={onBlur}
-            error={!!error}
-            placeholder="เช่น บานพับปีกผีเสื้อ..."
-            value={value}
-            onChangeText={onChange}
-          />
-          {error && <Text style={styles.errorText}>{error.message}</Text>}
-        </View>
-      )}
+                  <Text
+                    style={{
+                      textAlign: 'center',
+                      color: '#047e6e',
+                    }}
+                  >
+                    อัพโหลดรูปวัสดุ-อุปกรณ์
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </TouchableOpacity>
+        );
+      }}
     />
+            <Controller
+              control={control}
+              name="name"
+              render={({
+                field: {onChange, value, onBlur},
+                fieldState: {error},
+              }) => (
+                <View>
+                  <TextInput
+                    mode="outlined"
+                    label={'ชื่อ'}
+                    onBlur={onBlur}
+                    error={!!error}
+                    placeholder="เช่น บานพับปีกผีเสื้อ..."
+                    value={value}
+                    onChangeText={onChange}
+                  />
+                  {error && (
+                    <Text style={styles.errorText}>{error.message}</Text>
+                  )}
+                </View>
+              )}
+            />
 
-    <Controller
-      control={control}
-      name="description"
-      render={({
-        field: {onChange, value, onBlur},
-        fieldState: {error},
-      }) => (
-        <View>
-          <TextInput
-            mode="outlined"
-            numberOfLines={4}
-            label={'รายละเอียด'}
-            multiline={true}
-            onBlur={onBlur}
-            error={!!error}
-            style={
-              Platform.OS === 'ios'
-                ? {height: 100, textAlignVertical: 'top'}
-                : {}
-            }
-            placeholder="จุดเด่นหรือรายละเอียดของวัสดุ-อุปกรณ์..."
-            value={value}
-            onChangeText={onChange}
-          />
-          {error && <Text style={styles.errorText}>{error.message}</Text>}
-        </View>
-      )}
-    />
-  </View>
-  <Button
-    loading={isLoading || isUploading}
-    disabled={!isValid}
-    style={{width: '90%', alignSelf: 'center', marginBottom: 20}}
-    mode="contained"
-    onPress={() => {
-      handleSubmit();
-    }}>
-    {'บันทึก'}
-  </Button>
-</ScrollView>
-</SafeAreaView>
+            <Controller
+              control={control}
+              name="description"
+              render={({
+                field: {onChange, value, onBlur},
+                fieldState: {error},
+              }) => (
+                <View>
+                  <TextInput
+                    mode="outlined"
+                    numberOfLines={4}
+                    label={'รายละเอียด'}
+                    multiline={true}
+                    onBlur={onBlur}
+                    error={!!error}
+                    style={
+                      Platform.OS === 'ios'
+                        ? {height: 100, textAlignVertical: 'top'}
+                        : {}
+                    }
+                    placeholder="จุดเด่นหรือรายละเอียดของวัสดุ-อุปกรณ์..."
+                    value={value}
+                    onChangeText={onChange}
+                  />
+                  {error && (
+                    <Text style={styles.errorText}>{error.message}</Text>
+                  )}
+                </View>
+              )}
+            />
+          </View>
+          <Button
+            loading={isUploading}
+            disabled={!isValid}
+            style={{width: '90%', alignSelf: 'center', marginBottom: 20}}
+            mode="contained"
+            onPress={() => {
+              handleSubmit();
+            }}>
+            {'บันทึก'}
+          </Button>
+        </ScrollView>
+      </SafeAreaView>
     </>
-
   );
 };
 
@@ -305,7 +308,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   container: {
-
     backgroundColor: '#ffffff',
     width: width,
     height: height,

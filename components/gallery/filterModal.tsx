@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useContext, useState} from 'react';
 import {
   FlatList,
   StyleSheet,
@@ -8,25 +8,27 @@ import {
 } from 'react-native';
 import Modal from 'react-native-modal';
 import {Chip, Appbar, Button} from 'react-native-paper';
+import {Store} from '../../redux/store';
+import { ICategory } from '../../models/Category';
 
 type Props = {
   isVisible: boolean;
   onClose: () => void;
-  tags: Tag[];
+
   selectedTags: string[];
   handleSelectTag : (tag: string) => void;
 };
-interface Tag {
-    id: string;
-    name: string;
-  }
-  
+
 const FilterModal = (props: Props) => {
-  const {isVisible, onClose, tags, selectedTags, handleSelectTag} = props;
+  const {
+    state: {code, companyId, G_gallery, G_categories},
+    dispatch,
+  } = useContext(Store);
+  const {isVisible, onClose, selectedTags, handleSelectTag} = props;
 
 
-
-  const renderItem = ({item}: {item: Tag}) => (
+console.log('G_categories', G_categories);
+  const renderItem = ({item}: {item: ICategory}) => (
     <Chip
       style={styles.chip}
       mode="outlined"
@@ -45,7 +47,7 @@ const FilterModal = (props: Props) => {
       </Appbar.Header>
       <SafeAreaView style={styles.container}>
         <FlatList
-          data={tags}
+          data={G_categories}
           numColumns={4}
           renderItem={renderItem}
           keyExtractor={(item, index) => index.toString()}

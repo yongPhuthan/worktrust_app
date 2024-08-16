@@ -7,7 +7,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { useContext } from 'react';
-import { CompanyQuery, SubmissionQuery } from 'types';
+import { DashboardResponse, SubmissionQuery } from 'types';
 import { useUser } from '../../providers/UserContext';
 import { Store } from '../../redux/store';
 

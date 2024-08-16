@@ -16,6 +16,10 @@ import { IWarrantyEmbed } from '../types/interfaces/WarrantyEmbed';
 import { IWorkerEmbed } from '../types/interfaces/WorkerEmbed';
 import { CreateQuotationSchemaType } from '../validation/quotations/create';
 import * as contrains from './constrains';
+import { ImageGallery } from '../components/gallery/existing';
+import { ICategory } from '../models/Category';
+import { IDefaultStandards } from '../models/DefaultStandards';
+import { IDefaultMaterials } from '../models/DefaultMaterials';
 
 export type StateType = {
   companyId: Types.ObjectId | string;
@@ -41,6 +45,11 @@ export type StateType = {
   G_company: CompanyState | null;
   firebase_User : FirebaseAuthTypes.User | null;
   notifications : NotificationType[] | null;
+  G_gallery : ImageGallery[];
+  G_categories : ICategory[];
+  G_standards : IDefaultStandards[];
+  G_materials : IDefaultMaterials[];
+  initial_gallery : ImageGallery[];
 };
 
 type ActionType = {
@@ -60,6 +69,15 @@ type ActionType = {
     | undefined
     | boolean
     | ISubmissions
+    | ISubscription
+    | IUser
+    | FirebaseAuthTypes.User
+    | IServiceEmbed
+    | ImageGallery[]
+    | ICategory[]
+    | IDefaultStandards[]
+    | IDefaultMaterials[]
+    
     |CreateQuotationSchemaType
 };
 
@@ -93,6 +111,11 @@ export const Store = createContext<ContextType>({
     firebase_User: null,
     notifications: null,
     quotations: null,
+    G_gallery: [],
+    G_categories: [],
+    initial_gallery: [],
+    G_standards: [],
+    G_materials: [],
   },
   dispatch: () => {},
 });
@@ -121,6 +144,11 @@ const initialState: StateType = {
   firebase_User: null,
   notifications: null,
   quotations: null,
+  G_gallery: [],
+  G_categories: [],
+  initial_gallery: [],
+  G_standards: [],
+  G_materials: [],
 };
 
 function reducer(state: StateType, action: ActionType): StateType {
@@ -128,7 +156,7 @@ function reducer(state: StateType, action: ActionType): StateType {
     case contrains.CODE:
       return {...state, code: action.payload as string};
     case contrains.GET_COMPANYID:
-      return {...state, companyId: action.payload as string};
+      return {...state, companyId: action.payload as Types.ObjectId};
     case contrains.GET_COMPANY_STATE:
       return {...state, G_company: action.payload as CompanyState};
     case contrains.ADD_PRODUCT:
@@ -182,8 +210,18 @@ function reducer(state: StateType, action: ActionType): StateType {
       return {...state, firebase_User: null};
     case contrains.GET_NOTIFICATION:
       return {...state, notifications: action.payload };
+    case contrains.GET_GALLERY:
+      return {...state, G_gallery: action.payload };
     case contrains.GET_QUOTATIONS:
       return {...state, quotations: action.payload };
+    case contrains.GET_CATEGORIES:
+      return {...state, G_categories: action.payload };
+    case contrains.GET_INITIAL_GALLERY:
+      return {...state, initial_gallery: action.payload };
+    case contrains.GET_STANDARD:
+      return {...state, G_standards: action.payload };
+    case contrains.GET_MATERIAL:
+      return {...state, G_materials: action.payload };
 
     default:
       return state;

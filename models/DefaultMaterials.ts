@@ -1,9 +1,10 @@
 import { Schema, model, Document, Types } from 'mongoose';
+import { IServiceImage, serviceImageSchema } from '../types/interfaces/ServicesEmbed';
 
 export interface IDefaultMaterials extends Document {
   name: string;
   description: string;
-  image: string;
+  image: IServiceImage;
   created: Date;
   updated: Date;
   companyId: Types.ObjectId;
@@ -12,7 +13,7 @@ export interface IDefaultMaterials extends Document {
 export const defaultMaterialsSchema = new Schema<IDefaultMaterials>({
   name: { type: String, required: true },
   description: { type: String, required: true },
-  image: { type: String, required: true },
+  image: { type: serviceImageSchema, required: true },
   created: { type: Date, default: Date.now },
   updated: { type: Date, default: Date.now },
   companyId: { type: Schema.Types.ObjectId, ref: 'Company', required: true },

@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import {
   Dimensions,
   FlatList,
@@ -8,15 +8,15 @@ import {
   View,
 } from 'react-native';
 
-import { BACK_END_SERVER_URL } from '@env';
-import { DefaultMaterials, MaterialEmbed } from '@prisma/client';
-import { useQuery } from '@tanstack/react-query';
 import { useFormContext } from 'react-hook-form';
 import Modal from 'react-native-modal';
-import { Appbar, Button, Checkbox, Text,ActivityIndicator } from 'react-native-paper';
+import { ActivityIndicator, Appbar, Button, Checkbox, Text } from 'react-native-paper';
+import useFetchMaterial from '../../hooks/materials/read';
+import { IDefaultMaterials } from '../../models/DefaultMaterials';
 import { useUser } from '../../providers/UserContext';
 import { Store } from '../../redux/store';
 import CreateMaterial from './createMaterial';
+import { Types } from 'mongoose';
 
 interface ExistingModalProps {
   isVisible: boolean;
@@ -24,7 +24,6 @@ interface ExistingModalProps {
   serviceId: string;
 }
 
-const numColumns = 2;
 const {width, height} = Dimensions.get('window');
 const imageContainerWidth = width / 3 - 10;
 const ExistingMaterials = ({
@@ -32,7 +31,7 @@ const ExistingMaterials = ({
   onClose,
   serviceId,
 }: ExistingModalProps) => {
-  const [materials, setMaterials] = useState<MaterialEmbed[]>([]);
+  const [materials, setMaterials] = useState<IDefaultMaterials[]>([]);
   const [isOpenModal, setIsOpenModal] = useState(false);
   const context = useFormContext();
   const [isCreateMaterial, setIsCreateMaterial] = useState(false);
@@ -48,54 +47,16 @@ const ExistingMaterials = ({
   const user = useUser();
 
   const {
-    state: {companyId},
+    state: {companyId, G_materials},
     dispatch,
   } = useContext(Store);
 
-  const fetchExistingMaterials = async () => {
-    if (!user) {
-      throw new Error('User not authenticated');
-    } else {
-      const idToken = await user.getIdToken(true);
+  const { isLoading, isError, error, refetch} = useFetchMaterial();
 
-      let url = `${BACK_END_SERVER_URL}/api/services/queryMaterials?id=${encodeURIComponent(
-        companyId,
-      )}`;
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${idToken}`,
-        },
-      });
-      const data :DefaultMaterials[] = await response.json();
-
-      if (!response.ok) {
-        // console.log('error', data)
-        throw new Error('Network response was not ok');
-      }
-      const sortedData = data.sort(
-        (a, b) =>
-          new Date(b.created).getTime() - new Date(a.created).getTime(),
-      );
-      setMaterials(sortedData);
-
-      return data;
-    }
-  };
-
-  const {data, isLoading, isError} = useQuery(
-    // ['existingMaterials'],
-    // () => fetchExistingMaterials().then(res => res),
-    {
-      queryKey: ['defaultMaterials'],
-      queryFn: fetchExistingMaterials,
-    },
-  );
-  const handleSelectMaterial = (material: MaterialEmbed) => {
+  const handleSelectMaterial = (material: IDefaultMaterials) => {
     const currentMaterials = getValues('materials') || [];
     const materialIndex = currentMaterials.findIndex(
-      (materialData: MaterialEmbed) => materialData.id === material.id,
+      (materialData: IDefaultMaterials) => materialData._id === material._id,
     );
     if (materialIndex !== -1) {
       const updatedMaterials = [...currentMaterials];
@@ -105,7 +66,7 @@ const ExistingMaterials = ({
       const updatedMaterials = [
         ...currentMaterials,
         {
-          id: material.id,
+          _id: material._id,
           name: material.name,
           description : material.description,
           image : material.image,
@@ -116,18 +77,17 @@ const ExistingMaterials = ({
   };
 
 
-  // if (isError) {
-  //   return (
-  //     <View style={styles.loadingContainer}>
-  //       <Text>เกิดข้อผิดพลาด Material</Text>
-  //     </View>
-  //   );
-  // }
+
   const handleDonePress = () => {
     if (watch('materials')?.length > 0) {
       onClose();
     }
   };
+  useEffect(() => {
+    if (G_materials) {
+      setMaterials(G_materials);
+    }
+  }, [G_materials]);
 
   return (
     <Modal isVisible={isVisible} style={styles.modal} onBackdropPress={onClose}>
@@ -163,7 +123,7 @@ const ExistingMaterials = ({
                       style={[
                         styles.card,
                         (watch('materials') || []).some(
-                          (material: MaterialEmbed) => material.id === item.id,
+                          (material: IDefaultMaterials) => material._id === item._id,
                         )
                           ? styles.cardChecked
                           : null,
@@ -172,7 +132,7 @@ const ExistingMaterials = ({
                       <Checkbox.Android
                         status={
                           (watch('materials') || []).some(
-                            (material: MaterialEmbed) => material.id === item.id,
+                            (material: IDefaultMaterials) => material._id === item._id,
                           )
                             ? 'checked'
                             : 'unchecked'
@@ -184,7 +144,7 @@ const ExistingMaterials = ({
                         <Text style={styles.productTitle}>{item.name}</Text>
                         <Text style={styles.description}>{item.description}</Text>
                       </View>
-                      <Image source={{uri: item.image}} style={styles.productImage} />
+                      <Image source={{uri: item.image.thumbnailUrl}} style={styles.productImage} />
                     </TouchableOpacity>
                   </>
                 )}
@@ -209,7 +169,7 @@ const ExistingMaterials = ({
                     </Button>
                   </View>
                 }
-                keyExtractor={item => item.id}
+                keyExtractor={item => new Types.ObjectId(item._id as string).toHexString()}
               />
       
               {watch('materials')?.length > 0 && (

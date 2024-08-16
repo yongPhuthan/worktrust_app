@@ -1,10 +1,11 @@
-import { BACK_END_SERVER_URL } from '@env';
+import {BACK_END_SERVER_URL} from '@env';
 import messaging from '@react-native-firebase/messaging';
-import { DrawerActions } from '@react-navigation/native';
-import { useQueryClient } from '@tanstack/react-query';
-import { Types } from 'mongoose';
+import {DrawerActions} from '@react-navigation/native';
+import {useQueryClient} from '@tanstack/react-query';
+import {Types} from 'mongoose';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, {useCallback, useContext, useEffect, useState} from 'react';
 import {
   Alert,
   DevSettings,
@@ -19,17 +20,17 @@ import {
 } from 'react-native';
 import Modal from 'react-native-modal';
 import CardDashBoard from '../../components/CardDashBoard';
-import { QuotationsFilterButton } from '../../components/ui/Dashboard/FilterButton'; // Adjust the import path as necessary
+import {QuotationsFilterButton} from '../../components/ui/Dashboard/FilterButton'; // Adjust the import path as necessary
 import firebase from '../../firebase';
-import { useActiveFilter } from '../../hooks/dashboard/useActiveFilter';
-import { useFilteredData } from '../../hooks/dashboard/useFilteredData';
-import { useUser } from '../../providers/UserContext';
+import {useActiveFilter} from '../../hooks/dashboard/useActiveFilter';
+import {useFilteredData} from '../../hooks/dashboard/useFilteredData';
+import {useUser} from '../../providers/UserContext';
 import * as stateAction from '../../redux/actions';
-import { Store } from '../../redux/store';
+import {Store} from '../../redux/store';
 
-import { DashboardScreenProps } from '../../types/navigationType';
+import {DashboardScreenProps} from '../../types/navigationType';
 
-import { IQuotations } from '../../models/Quotations';
+import {IQuotations} from '../../models/Quotations';
 import {
   ActivityIndicator,
   Appbar,
@@ -37,15 +38,19 @@ import {
   Divider,
   List,
   PaperProvider,
-  Portal
+  Portal,
 } from 'react-native-paper';
-import { requestNotifications } from 'react-native-permissions';
-import { CompanyState } from 'types';
-import { NotificationType, QuotationStatus } from '../../types/enums';
-import { ICustomerEmbed } from 'types/interfaces/CustomerEmbed';
+import {requestNotifications} from 'react-native-permissions';
+import {CompanyState} from 'types';
+import {
+  NotificationType,
+  QueryKeyType,
+  QuotationStatus,
+} from '../../types/enums';
+import {ICustomerEmbed} from 'types/interfaces/CustomerEmbed';
 import SelectPackages from '../../components/payment/selectPackages';
 import FABButton from '../../components/ui/Button/FAB';
-import { useModal } from '../../hooks/quotation/create/useModal';
+import {useModal} from '../../hooks/quotation/create/useModal';
 import useFetchDashboard from '../../hooks/quotation/dashboard/useFetchDashboard'; // adjust the path as needed
 import useResetQuotation from '../../hooks/quotation/update/resetStatus';
 import useCheckSubscription from '../../hooks/useCheckSubscription';
@@ -72,7 +77,8 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     dispatch,
     state: {quotations},
   } = useContext(Store);
-  const {data, isLoading, isError, error, refetch} = useFetchDashboard();
+  const {dashboard, isLoading, isError, error, refetch, quotationsData} =
+    useFetchDashboard();
   const {activeFilter, updateActiveFilter} = useActiveFilter();
   const {width, height} = Dimensions.get('window');
   const [refreshing, setRefreshing] = useState(false);
@@ -99,9 +105,9 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
       console.error('Failed to sign out: ', error);
     }
   };
-  if(user){
-    handleLogout();
-  }
+  // if (user) {
+  //   handleLogout();
+  // }
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -147,7 +153,8 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     }
   };
 
-  const removeQuotation = async (id: string) => {
+
+  const removeQuotation = async (_id: Types.ObjectId) => {
     handleModalClose();
     if (!checkSubscription()) {
       return;
@@ -160,8 +167,8 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     try {
       const token = await user.getIdToken(true);
       const response = await fetch(
-        `${BACK_END_SERVER_URL}/api/docs/deleteQuotation?id=${encodeURIComponent(
-          id,
+        `${BACK_END_SERVER_URL}/api/docs/deleteQuotation?_id=${encodeURIComponent(
+          _id.toString(),
         )}`,
         {
           method: 'DELETE',
@@ -173,9 +180,21 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
       );
 
       if (response.ok) {
-        queryClient.invalidateQueries({
-          queryKey: ['dashboardData'],
-        });
+        //remove quotation from AsyncStorage
+        const quotations = await AsyncStorage.getItem(QueryKeyType.QUOTATIONS);
+        if (quotations) {
+          const parsedQuotations = JSON.parse(quotations);
+          const updatedQuotations = parsedQuotations.filter(
+            (quotation: IQuotations) => quotation._id !== _id,
+          );
+          await AsyncStorage.setItem(
+            QueryKeyType.QUOTATIONS,
+            JSON.stringify(updatedQuotations),
+          );
+          dispatch(stateAction.get_quotations(updatedQuotations));
+
+        }
+
         setIsLoadingAction(false);
       } else {
         // It's good practice to handle HTTP error statuses
@@ -192,7 +211,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     }
   };
 
-  const confirmRemoveQuotation = (id: string, customer: ICustomerEmbed) => {
+  const confirmRemoveQuotation = (_id: Types.ObjectId, customer: ICustomerEmbed) => {
     setShowModal(false);
     if (!checkSubscription()) {
       return;
@@ -206,7 +225,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
           onPress: () => console.log('Cancel Pressed'),
           style: 'cancel',
         },
-        {text: 'ลบเอกสาร', onPress: () => removeQuotation(id)},
+        {text: 'ลบเอกสาร', onPress: () => removeQuotation(_id)},
       ],
       {cancelable: false},
     );
@@ -234,11 +253,27 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   };
 
   useEffect(() => {
-    if (data) {
-      // If data[0] exists and has a non-null `code`, proceed with your logic
+    if (quotationsData) {
+      // Sort the quotations by the most recently updated date
+      const sortedQuotations = quotationsData.sort((a, b) => {
+        const dateA = new Date(a.updated || new Date());
+        const dateB = new Date(b.updated || new Date());
+        return dateB.getTime() - dateA.getTime();
+      });
+      dispatch(stateAction.get_quotations(sortedQuotations));
+
+      const services = quotationsData.flatMap((quotation: IQuotations) =>
+        quotation.services.slice(0, 10),
+      );
+      if (services) {
+        dispatch(stateAction.get_existing_services(services));
+      }
+    }
+    if (dashboard) {
+      console.log('DATA FROMEE ASYNC STORAGE');
       const companyOnly: CompanyState = {
-        ...data.company,
-        quotations: [],        
+        ...dashboard.company,
+        quotations: [],
         workers: [],
         invoices: [],
         receipts: [],
@@ -249,17 +284,36 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
       };
       setCompanyData(companyOnly);
       dispatch(stateAction.get_company_state(companyOnly));
+      dispatch(stateAction.code_company(dashboard.company.code));
+      if (dashboard.company.logo) {
+        dispatch(stateAction.get_logo(dashboard.company.logo));
+      }
+      if (dashboard.company.defaultWarranty) {
+        dispatch(
+          stateAction.get_default_warranty(dashboard.company.defaultWarranty),
+        );
+      }
+      if (dashboard.company.workers) {
+        dispatch(stateAction.get_existing_workers(dashboard.company.workers));
+      }
 
-      dispatch(stateAction.get_companyID(companyOnly.id as Types.ObjectId ));
-      // Sort the quotations by the most recently updated date
-      const sortedQuotations = data.company?.quotations.sort((a, b) => {
-        const dateA = new Date(a.updated || new Date());
-        const dateB = new Date(b.updated || new Date());
-        return dateB.getTime() - dateA.getTime();
-      });
-      dispatch(stateAction.get_quotations(sortedQuotations));
+      if (dashboard.user.signature) {
+        dispatch(stateAction.get_user_signature(dashboard.user.signature));
+      }
+      if (dashboard.user.uid) {
+        dispatch(stateAction.get_seller_uid(dashboard.user.uid));
+      }
+      if (dashboard.subscription) {
+        dispatch(stateAction.get_subscription(dashboard.subscription));
+      }
+      if (dashboard.user) {
+        dispatch(stateAction.get_user(dashboard.user));
+      }
+      if (companyOnly._id) {
+        dispatch(stateAction.get_companyID(companyOnly._id as Types.ObjectId));
+      }
     }
-  }, [data]);
+  }, [dashboard, quotationsData]);
 
   useEffect(() => {
     const initializeListeners = () => {
@@ -407,6 +461,16 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   if (isError && error) {
     handleErrorResponse(error);
   }
+
+  // const removeasyncStorage = async () => {
+  //   try {
+  //     await AsyncStorage.removeItem(QueryKeyType.DASHBOARD);
+  //     await AsyncStorage.removeItem(QueryKeyType.QUOTATIONS);
+  //   } catch (error) {
+  //     console.error('Failed to remove data from async storage:', error);
+  //   }
+  // }
+  // removeasyncStorage();
 
   const renderItem = ({item, index}: any) => (
     <>
@@ -608,7 +672,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                   <Divider />
                   <List.Item
                     onPress={() =>
-                      confirmRemoveQuotation(item.id, item?.customer?.name)
+                      confirmRemoveQuotation(item._id, item?.customer?.name)
                     }
                     title="ลบ"
                     titleStyle={{textAlign: 'center', color: 'red'}}
@@ -726,7 +790,9 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                       onRefresh={onRefresh}
                       renderItem={renderItem}
                       refreshing={refreshing}
-                      keyExtractor={item => item.id}
+                      keyExtractor={(item: IQuotations, index) =>
+                        item._id.toString()
+                      }
                       ListEmptyComponent={
                         <View
                           style={{
@@ -749,7 +815,6 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                           <Text style={{marginTop: 10, color: 'gray'}}>
                             ยังไม่มีเอกสาร
                           </Text>
-             
                         </View>
                       }
                       contentContainerStyle={

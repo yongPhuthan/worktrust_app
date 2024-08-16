@@ -28,7 +28,7 @@ import { useUploadToCloudflare } from '../../hooks/useUploadtoCloudflare';
 import { usePickImage } from '../../hooks/utils/image/usePickImage';
 
 import { useUser } from '../../providers/UserContext';
-import { defaulatStandardSchema } from '../../models/validationSchema';
+import { defaulatStandardSchema, standardEmbedSchema } from '../../models/validationSchema';
 
 type Props = {
     onClose: () => void;

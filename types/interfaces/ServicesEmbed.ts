@@ -2,8 +2,11 @@ import { Schema, Types } from 'mongoose';
 import { DiscountType } from 'types/enums';
 
 interface IServiceImage {
+  id :string
   thumbnailUrl: string;
   originalUrl: string;
+  localPathUrl: string;
+  created: Date | null;
 }
 
 interface IStandardEmbed {
@@ -38,9 +41,13 @@ interface IServiceEmbed {
   created?: Date | null;
 }
 
-const serviceImageSchema = new Schema<IServiceImage>({
+export const serviceImageSchema = new Schema<IServiceImage>({
+  id: { type: String, required: true },
   thumbnailUrl: { type: String, required: true },
   originalUrl: { type: String, required: true },
+  localPathUrl: { type: String },
+  created: { type: Date, default: Date.now },
+
 });
 
 const standardEmbedSchema = new Schema<IStandardEmbed>({

@@ -1,238 +1,68 @@
-{
-  "updated": {"seconds": 1722514187, "nanoseconds": 829000000},
-  "quotations": [
-    {
-      "id": "7APLbohoEYEJDMTXtpjJ",
-      "isArchived": false,
-      "created": {"_type": "timestamp"},
-      "updated": {"_type": "timestamp"},
-      "services": [
-        {
-          "id": "dOGT2YWTmPMT_-dNxQuXV",
-          "title": "PRODUCT1",
-          "description": "ADDRES",
-          "unitPrice": 555,
-          "qty": 1,
-          "total": 555,
-          "unit": "ชุด",
-          "serviceImages": [],
-          "discountType": "NONE",
-          "discountValue": 0,
-          "standards": [],
-          "materials": [],
-          "created": {"_type": "timestamp"}
-        }
-      ],
-      "events": {
-        "pageView": 0,
-        "download": 0,
-        "print": 0,
-        "share": 0,
-        "created": {"seconds": 1722880085, "nanoseconds": 232000000},
-        "lastOccurred": {"seconds": 1722880085, "nanoseconds": 232000000}
-      },
-      "customer": {
-        "name": "CUSTOMER",
-        "address": "ADDRESS",
-        "customerTax": "",
-        "phone": ""
-      },
-      "customerSign": null,
-      "companyId": "RUGI5MWGogQydngk2JhY",
-      "vat7": 0,
-      "taxType": "NOTAX",
-      "taxValue": 0,
-      "summary": 555,
-      "warrantyStatus": "PENDING",
-      "summaryAfterDiscount": 538.35,
-      "sellerUid": "u3mdyVOyAr9Nqg9AQZ405DCwticF",
-      "discountType": "PERCENT",
-      "discountPercentage": 3,
-      "discountValue": 16.65,
-      "allTotal": 538.35,
-      "dateOffer": "2024-08-05T17:48:05.231Z",
-      "noteToCustomer": null,
-      "noteToTeam": null,
-      "sellerEmbed": {
-        "bizName": "AWS LOGPOST",
-        "jobPosition": "Manager",
-        "sellerName": "Phuthan Kantabusabong",
-        "logo": "https://pub-1b49f44c19f34277b1bc3bfb7016aa29.r2.dev/logo/original/pGqPOTIdmZ5j9vpJJDB69.png",
-        "address": "Address",
-        "mobileTel": "",
-        "officeTel": "",
-        "companyTax": "",
-        "email": ""
-      },
-      "dateEnd": "2024-08-12T17:48:05.231Z",
-      "docNumber": "QT20240806470",
-      "workers": [],
-      "FCMToken": "dFlKguH0rEeYpFCb2IgzwC:APA91bHSp75mOfRIvvDge3Vl-6yniMAHRqrXII2mkKbEVpI7I2xln2uQk3dQQxjigEwSHTxVGkbFWl5GFXnuXgcxtAbcWgXASvbfWhl9RZVZM0PGplHnvS1a5bpZMsNo-LHsln7MNvi6",
-      "sellerSignature": "",
-      "warranty": {
-        "productWarrantyMonth": 21,
-        "skillWarrantyMonth": 11,
-        "sellerSignature": null,
-        "fixDays": 22,
-        "condition": "รับประกันคุณภาพตัวสินค้า ตามมาตรฐานในการใช้งานตามปกติเท่านั้น ขอสงวนสิทธ์การรับประกันที่เกิดจากการใช้งานสินค้าที่ไม่ถูกต้องหรือความเสียหายที่เกิดจากภัยธรรมชาติ หรือ การใช้งานผิดประเภทหรือปัญหาจากการกระทําของบคุคลอื่น เช่นความเสียหายที่เกิดจากการทำงานของผู้รับเหมาทีมอื่นหรือบุคคลที่สามโดยตั้งใจหรือไม่ได้ตั้งใจ",
-        "dateWaranty": null,
-        "endProductWarranty": null,
-        "endSkillWarranty": null,
-        "pdfUrl": null
-      },
-      "status": "PENDING",
-      "pdfUrl": null
-    },
-    {
-      "id": "hhC91MITzdxgT4v9WcA2",
-      "isArchived": false,
-      "created": "2024-08-05T18:11:45.859Z",
-      "updated": "2024-08-05T18:11:45.859Z",
-      "services": [
-        {
-          "id": "y0nMF8O4wtyVSupj1ZZIJ",
-          "title": "PRODUCT1",
-          "description": "ADDERS",
-          "unitPrice": 4000,
-          "qty": 1,
-          "total": 4000,
-          "unit": "ชุด",
-          "serviceImages": [],
-          "discountType": "NONE",
-          "discountValue": 0,
-          "standards": [],
-          "materials": []
-        }
-      ],
-      "events": null,
-      "customer": {
-        "name": "AWS",
-        "address": "SDSDSD",
-        "customerTax": "",
-        "phone": ""
-      },
-      "customerSign": null,
-      "companyId": "RUGI5MWGogQydngk2JhY",
-      "vat7": 0,
-      "taxType": "NOTAX",
-      "taxValue": 0,
-      "summary": 4000,
-      "warrantyStatus": "PENDING",
-      "summaryAfterDiscount": 3880,
-      "sellerUid": "u3mdyVOyAr9Nqg9AQZ405DCwticF",
-      "discountType": "PERCENT",
-      "discountPercentage": 3,
-      "discountValue": 120,
-      "allTotal": 3880,
-      "dateOffer": "2024-08-05T18:11:21.364Z",
-      "noteToCustomer": null,
-      "noteToTeam": null,
-      "sellerEmbed": {
-        "bizName": "AWS LOGPOST",
-        "jobPosition": "Manager",
-        "sellerName": "Phuthan Kantabusabong",
-        "logo": "https://pub-1b49f44c19f34277b1bc3bfb7016aa29.r2.dev/logo/original/pGqPOTIdmZ5j9vpJJDB69.png",
-        "address": "Address",
-        "mobileTel": "",
-        "officeTel": "",
-        "companyTax": "",
-        "email": ""
-      },
-      "dateEnd": "2024-08-12T18:11:21.364Z",
-      "docNumber": "QT20240806958",
-      "workers": [],
-      "FCMToken": "dFlKguH0rEeYpFCb2IgzwC:APA91bHSp75mOfRIvvDge3Vl-6yniMAHRqrXII2mkKbEVpI7I2xln2uQk3dQQxjigEwSHTxVGkbFWl5GFXnuXgcxtAbcWgXASvbfWhl9RZVZM0PGplHnvS1a5bpZMsNo-LHsln7MNvi6",
-      "sellerSignature": "",
-      "warranty": {
-        "productWarrantyMonth": 21,
-        "skillWarrantyMonth": 112,
-        "sellerSignature": null,
-        "fixDays": 2,
-        "condition": "รับประกันคุณภาพตัวสินค้า ตามมาตรฐานในการใช้งานตามปกติเท่านั้น ขอสงวนสิทธ์การรับประกันที่เกิดจากการใช้งานสินค้าที่ไม่ถูกต้องหรือความเสียหายที่เกิดจากภัยธรรมชาติ หรือ การใช้งานผิดประเภทหรือปัญหาจากการกระทําของบคุคลอื่น เช่นความเสียหายที่เกิดจากการทำงานของผู้รับเหมาทีมอื่นหรือบุคคลที่สามโดยตั้งใจหรือไม่ได้ตั้งใจ",
-        "dateWaranty": null,
-        "endProductWarranty": null,
-        "endSkillWarranty": null,
-        "pdfUrl": null
-      },
-      "status": "PENDING",
-      "pdfUrl": null
-    },
-    {
-      "id": "G1Nu5yVfAjvcg5Nsz75w",
-      "isArchived": false,
-      "created": "2024-08-06T07:11:12.730Z",
-      "updated": "2024-08-06T07:11:12.730Z",
-      "services": [
-        {
-          "id": "pKg-6izPdNeT0QQ2Zpwcn",
-          "title": "Product1",
-          "description": "American",
-          "unitPrice": 4999,
-          "qty": 1,
-          "total": 4999,
-          "unit": "ชุด",
-          "serviceImages": [],
-          "discountType": "NONE",
-          "discountValue": 0,
-          "standards": [],
-          "materials": [],
-          "created": "2024-08-06T07:10:46.621Z"
-        }
-      ],
-      "events": null,
-      "customer": {
-        "name": "Customer1",
-        "address": "Address",
-        "customerTax": "",
-        "phone": "05306426"
-      },
-      "customerSign": null,
-      "companyId": "RUGI5MWGogQydngk2JhY",
-      "vat7": 0,
-      "taxType": "NOTAX",
-      "taxValue": 0,
-      "summary": 4999,
-      "warrantyStatus": "PENDING",
-      "summaryAfterDiscount": 4849.03,
-      "sellerUid": "u3mdyVOyAr9Nqg9AQZ405DCwticF",
-      "discountType": "PERCENT",
-      "discountPercentage": 3,
-      "discountValue": 149.97,
-      "allTotal": 4849.03,
-      "dateOffer": "2024-08-06T07:10:32.540Z",
-      "noteToCustomer": null,
-      "noteToTeam": null,
-      "sellerEmbed": {
-        "bizName": "AWS LOGPOST",
-        "jobPosition": "Manager",
-        "sellerName": "Phuthan Kantabusabong",
-        "logo": "https://pub-1b49f44c19f34277b1bc3bfb7016aa29.r2.dev/logo/original/pGqPOTIdmZ5j9vpJJDB69.png",
-        "address": "Address",
-        "mobileTel": "",
-        "officeTel": "",
-        "companyTax": "",
-        "email": ""
-      },
-      "dateEnd": "2024-08-13T07:10:32.540Z",
-      "docNumber": "QT20240806691",
-      "workers": [],
-      "FCMToken": "dFlKguH0rEeYpFCb2IgzwC:APA91bHSp75mOfRIvvDge3Vl-6yniMAHRqrXII2mkKbEVpI7I2xln2uQk3dQQxjigEwSHTxVGkbFWl5GFXnuXgcxtAbcWgXASvbfWhl9RZVZM0PGplHnvS1a5bpZMsNo-LHsln7MNvi6",
-      "sellerSignature": "",
-      "warranty": {
-        "productWarrantyMonth": 12,
-        "skillWarrantyMonth": 21,
-        "sellerSignature": null,
-        "fixDays": 11,
-        "condition": "รับประกันคุณภาพตัวสินค้า ตามมาตรฐานในการใช้งานตามปกติเท่านั้น ขอสงวนสิทธ์การรับประกันที่เกิดจากการใช้งานสินค้าที่ไม่ถูกต้องหรือความเสียหายที่เกิดจากภัยธรรมชาติ หรือ การใช้งานผิดประเภทหรือปัญหาจากการกระทําของบคุคลอื่น เช่นความเสียหายที่เกิดจากการทำงานของผู้รับเหมาทีมอื่นหรือบุคคลที่สามโดยตั้งใจหรือไม่ได้ตั้งใจ",
-        "dateWaranty": null,
-        "endProductWarranty": null,
-        "endSkillWarranty": null,
-        "pdfUrl": null
-      },
-      "status": "PENDING",
-      "pdfUrl": null
+[
+  {
+    "categories": ["สีขาว"],
+    "created": "2024-08-13T05:18:20.390Z",
+    "defaultChecked": true,
+    "id": "66bb04aef6bc8e0cf4b16d6f",
+    "url": {
+      "_id": "66bb04aef6bc8e0cf4b16d6f",
+      "originalUrl": "https://pub-1b49f44c19f34277b1bc3bfb7016aa29.r2.dev/503405/gallery/original/ow0DPirbH-6Hgdo304FY7.png",
+      "thumbnailUrl": "https://pub-1b49f44c19f34277b1bc3bfb7016aa29.r2.dev/503405/gallery/thumbnail/vbehT_pSUa2nlRrbq30FE.png"
     }
-  ],
-  "companyId": "lG8I5lascBnPn04qKqQc",
-  "created": {"seconds": 1722514187, "nanoseconds": 829000000}
-}
+  },
+  {
+    "categories": ["สีขาว"],
+    "created": "2024-08-13T05:18:20.390Z",
+    "defaultChecked": true,
+    "id": "66bb0582ddf87a9dc71adc13",
+    "url": {
+      "_id": "66bb0582ddf87a9dc71adc13",
+      "originalUrl": "https://pub-1b49f44c19f34277b1bc3bfb7016aa29.r2.dev/503405/gallery/original/XAE4f9MUCjEpTeqO6QNGe.png",
+      "thumbnailUrl": "https://pub-1b49f44c19f34277b1bc3bfb7016aa29.r2.dev/503405/gallery/thumbnail/zN4E6B_lHqFSo-1IHxRaz.png"
+    }
+  },
+  {
+    "categories": ["สีดำด้าน"],
+    "created": "2024-08-13T05:18:07.522Z",
+    "defaultChecked": true,
+    "id": "66bb04aef6bc8e0cf4b16d71",
+    "url": {
+      "_id": "66bb04aef6bc8e0cf4b16d71",
+      "originalUrl": "https://pub-1b49f44c19f34277b1bc3bfb7016aa29.r2.dev/503405/gallery/original/ow0DPirbH-6Hgdo304FY7.png",
+      "thumbnailUrl": "https://pub-1b49f44c19f34277b1bc3bfb7016aa29.r2.dev/503405/gallery/thumbnail/vbehT_pSUa2nlRrbq30FE.png"
+    }
+  },
+  {
+    "categories": ["สีดำด้าน"],
+    "created": "2024-08-13T05:18:07.522Z",
+    "defaultChecked": true,
+    "id": "66bb0582ddf87a9dc71adc10",
+    "url": {
+      "_id": "66bb0582ddf87a9dc71adc10",
+      "originalUrl": "https://pub-1b49f44c19f34277b1bc3bfb7016aa29.r2.dev/503405/gallery/original/XAE4f9MUCjEpTeqO6QNGe.png",
+      "thumbnailUrl": "https://pub-1b49f44c19f34277b1bc3bfb7016aa29.r2.dev/503405/gallery/thumbnail/zN4E6B_lHqFSo-1IHxRaz.png"
+    }
+  },
+  {
+    "categories": ["สีดำด้าน"],
+    "created": "2024-08-13T05:18:07.522Z",
+    "defaultChecked": true,
+    "id": "66bb20e380f0adda2135a330",
+    "url": {
+      "_id": "66bb20e380f0adda2135a330",
+      "originalUrl": "https://pub-1b49f44c19f34277b1bc3bfb7016aa29.r2.dev/503405/gallery/original/obrl2XvsCcrOlyn1HRYKk.png",
+      "thumbnailUrl": "https://pub-1b49f44c19f34277b1bc3bfb7016aa29.r2.dev/503405/gallery/thumbnail/O3e2whBNGMWVmn-yh1ArF.png"
+    }
+  },
+  {
+    "categories": ["สีดำด้าน"],
+    "created": "2024-08-13T05:18:07.522Z",
+    "defaultChecked": true,
+    "id": "66bf067bc90e0a52e35e4084",
+    "url": {
+      "_id": "66bf067bc90e0a52e35e4084",
+      "originalUrl": "",
+      "thumbnailUrl": ""
+    }
+  }
+]

@@ -1,11 +1,13 @@
-import {yupResolver} from '@hookform/resolvers/yup';
 import Slider from '@react-native-community/slider';
 import {useQuery, useQueryClient} from '@tanstack/react-query';
-import {create, debounce, set} from 'lodash';
+import {debounce} from 'lodash';
 import React, {useContext, useEffect, useState} from 'react';
 import {Controller, useForm, useWatch} from 'react-hook-form';
-import Marker, {Position, ImageMarkOptions} from 'react-native-image-marker';
+import Marker, {ImageMarkOptions, Position} from 'react-native-image-marker';
 import Modal from 'react-native-modal';
+import {BACK_END_SERVER_URL} from '@env';
+import {yupResolver} from '@hookform/resolvers/yup';
+import * as stateAction from '../../redux/actions';
 
 import {
   ActivityIndicator,
@@ -13,13 +15,10 @@ import {
   Dimensions,
   FlatList,
   Image,
-  Linking,
   Platform,
   StyleSheet,
   Text,
-  PermissionsAndroid,
   TouchableOpacity,
-  ScrollView,
   View,
 } from 'react-native';
 import {
@@ -32,27 +31,27 @@ import {
   Switch,
   TextInput,
 } from 'react-native-paper';
-
+import {nanoid} from 'nanoid';
 import firebase from '../../firebase';
 import {useUploadToCloudflare} from '../../hooks/useUploadtoCloudflare';
 import {usePickImage} from '../../hooks/utils/image/usePickImage';
-import {useUser} from '../../providers/UserContext';
-import {Store} from '../../redux/store';
 import useStoragePermission from '../../hooks/utils/useStoragePermission';
-import { nanoid } from 'nanoid';
+import {Store} from '../../redux/store';
+import { useUser } from '../../providers/UserContext';
+
+import { ServiceImagesEmbedType } from '../../validation/quotations/create';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { QueryKeyType } from '../../types/enums';
+import { ImageGallery } from './existing';
 
 interface ExistingModalProps {
   isVisible: boolean;
   onClose: () => void;
 }
-interface FormData {
-  selectedTags: string[];
-  image: string;
-}
-interface Tag {
-  id: string;
-  name: string; // ระบุว่าแต่ละ tag ต้องมีฟิลด์ name
-}
+// interface FormData {
+//   selectedCategories: string[];
+//   image: ServiceImagesEmbedType;
+// }
 interface ImageSize {
   width: number;
   height: number;
@@ -91,11 +90,14 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
   const [addNewTag, setAddNewTag] = useState(false);
   const [addWatermark, setAddWatermark] = useState(false);
   const [originalImage, setOriginalImage] = useState<string | null>(null);
-
+  const firebaseUser = useUser();
+  if (!firebaseUser || !firebaseUser.uid) {
+    throw new Error('User is not available');
+  }
   const imageId = nanoid();
   const [inputValue, setInputValue] = useState<string>('');
   const [inputNewTag, setInputNewTag] = useState<string>('');
-  const [tags, setTags] = useState<string[]>([]);
+  const [initialCategories, setInitialCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [applyTrigger, setApplyTrigger] = useState(false);
   const [brightness, setBrightness] = useState(1);
@@ -104,45 +106,26 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
   const onPermissionDenied = () => {
     setAddWatermark(false);
   };
-  const { hasPermission, requestStoragePermission } = useStoragePermission(onPermissionDenied);
+  const {hasPermission, requestStoragePermission} =
+    useStoragePermission(onPermissionDenied);
   const [watermarkPosition, setWatermarkPosition] =
     useState<string>('Bottom Right');
-    const checkImageExists = (imageUri: string): Promise<boolean> => {
-      return new Promise((resolve) => {
-        Image.getSize(
-          imageUri,
-          () => resolve(true),
-          () => resolve(false)
-        );
-      });
-    };
-
-    useEffect(() => {
-      // Call applyWatermark whenever the watermarkPosition changes
-      if (originalImage) {
-        applyWatermark();
-      }
-    }, [watermarkPosition]);
-
-  const getLogoScale = async (
-    backgroundImageUri: string,
-    logoUri: string,
-  ): Promise<number> => {
-    try {
-      const [bgImageSize, logoSize] = await Promise.all([
-        getImageSize(backgroundImageUri),
-        getImageSize(logoUri),
-      ]);
-
-      const targetLogoWidth = bgImageSize.width * 0.3; // e.g., logo is 10% of the background image width
-      const logoScale = targetLogoWidth / logoSize.width; // Calculate scale factor
-
-      return logoScale;
-    } catch (error) {
-      console.error('Error getting image sizes:', error);
-      return 0.1; // Default scale if there's an error
-    }
+  const checkImageExists = (imageUri: string): Promise<boolean> => {
+    return new Promise(resolve => {
+      Image.getSize(
+        imageUri,
+        () => resolve(true),
+        () => resolve(false),
+      );
+    });
   };
+
+  useEffect(() => {
+    // Call applyWatermark whenever the watermarkPosition changes
+    if (originalImage) {
+      applyWatermark();
+    }
+  }, [watermarkPosition]);
 
   const [logoScale, setLogoScale] = useState(1);
 
@@ -156,7 +139,7 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
     });
   };
   const {
-    state: {code, G_logo, G_company},
+    state: {code, G_logo, G_company, companyId},
     dispatch,
   } = useContext(Store);
   if (!G_company) {
@@ -172,187 +155,259 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
     watch,
     setValue,
     formState: {errors, isValid, isDirty},
-  } = useForm<FormData>({
+  } = useForm<ImageGallery>({
     mode: 'onChange',
     defaultValues: {
-      selectedTags: [],
-      image: '',
+      id: nanoid(),
+      defaultChecked : false,
+      categories: [],
+      images: {
+        originalUrl: '',
+        thumbnailUrl: '',
+        localPathUrl: '',  
+      },
+      created: new Date(),
     },
-    // resolver: yupResolver(imageTogallery),
   });
-  const image = useWatch({
+  const images = useWatch({
     control,
-    name: 'image',
+    name: 'images',
   });
-  const selectedTags = useWatch({
+  const categories = useWatch({
     control,
-    name: 'selectedTags',
+    name: 'categories',
   });
-  const fetchTags = async () => {
-    const tagsCollectionPath = `${code}/gallery/tags`;
-    const tagsRef = firebase.firestore().collection(tagsCollectionPath);
+  const fetchCategories = async () => {
+
+    const token = await firebaseUser.getIdToken(true);
     try {
-      const snapshot = await tagsRef.get();
-      const tagsFirestore = snapshot.docs.map(doc => doc.data().name); // Assuming 'name' is a field in the tag documents
+      const response = await fetch(`${BACK_END_SERVER_URL}/api/gallery/getCategories?companyId=${encodeURIComponent(
+          companyId.toString(),
+        )}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
 
-      // Successfully fetched tags, now reset the form
-      setTags(tagsFirestore);
-
-      return tags; // You might return the tags if needed for further processing
+        },
+      });
+      console.log('response', response);
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch categories');
+      }
+  
+      const categoriesData = await response.json();
+      const categories = categoriesData.map((category: { name: string }) => category.name);
+  
+      // Successfully fetched categories, now reset the form
+      setInitialCategories(categories);
+  
+      return categories;
     } catch (error) {
-      console.error('Failed to fetch tags:', error);
+      console.error('Failed to fetch categories:', error);
       // Handle the error appropriately, perhaps setting an error state or showing a message
       throw error; // Re-throwing the error if you need further error handling upstream
     }
   };
+
   const {
     data,
     isLoading: isFetching,
     isError,
   } = useQuery({
-    queryKey: ['tags'],
-    queryFn: fetchTags,
+    queryKey: ['categories'],
+    queryFn: fetchCategories,
   });
   const {isImagePicking, pickImage} = usePickImage((uri: string) => {
-    setValue('image', uri, {shouldDirty: true});
+    setValue('images.localPathUrl', uri, {shouldValidate: true});
     setOriginalImage(uri);
   });
-  const [isWatermarkMenuVisible, setWatermarkMenuVisible] =
-    useState<boolean>(true);
-
-  const storagePath = `${code}/gallery`;
 
   const {
     isUploading,
     error: uploadError,
     uploadImage,
-  } = useUploadToCloudflare(
-    code, 'gallery/after'
-  );
+  } = useUploadToCloudflare(code, 'gallery');
 
-  const handleAddTag = async () => {
+  // const handleAddTag = async () => {
+  //   setIsLoading(true);
+  //   const tagsCollectionPath = `${code}/gallery/tags`;
+  //   const tagRef = firebase
+  //     .firestore()
+  //     .collection(tagsCollectionPath)
+  //     .doc(inputNewTag);
+
+  //   try {
+  //     // Create a new tag with the current date and an empty image array
+  //     await tagRef.set({
+  //       name: inputNewTag,
+  //       date: new Date(), // Store the current date and time of tag creation
+  //       images: [], // Empty array for future image URLs
+  //     });
+
+  //     setInputNewTag(''); // Clear the input field
+  //     setAddNewTag(false); // Optionally close the input field or provide feedback
+
+  //     // Invalidate queries related to the gallery or tags to refresh the data
+  //     queryClient.invalidateQueries({
+  //       queryKey: ['tags'],
+  //     });
+  //     setIsLoading(false);
+  //   } catch (error) {
+  //     // Handle errors, such as displaying a user-friendly error message
+  //     console.error('Failed to add tag:', error);
+  //     alert('Failed to add tag, please try again!');
+  //     setIsLoading(false);
+  //   }
+  // };
+  const handleAddCategory = async () => {
     setIsLoading(true);
-    const tagsCollectionPath = `${code}/gallery/tags`;
-    const tagRef = firebase
-      .firestore()
-      .collection(tagsCollectionPath)
-      .doc(inputNewTag);
+    const token = await firebaseUser.getIdToken(true);
 
     try {
-      // Create a new tag with the current date and an empty image array
-      await tagRef.set({
-        name: inputNewTag,
-        date: new Date(), // Store the current date and time of tag creation
-        images: [], // Empty array for future image URLs
-      });
+      const response = await fetch(
+        `${BACK_END_SERVER_URL}/api/gallery/createCategory`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({name: inputNewTag, companyId}),
+        },
+      );
+
+      if (!response.ok) {
+        const errorResponse = await response.json();
+        throw new Error(errorResponse.error || 'Failed to create category');
+      }
+
+      const savedCategory = await response.json();
 
       setInputNewTag(''); // Clear the input field
       setAddNewTag(false); // Optionally close the input field or provide feedback
 
       // Invalidate queries related to the gallery or tags to refresh the data
       queryClient.invalidateQueries({
-        queryKey: ['tags'],
+        queryKey: ['categories'], // Adjust query key as needed
       });
+
       setIsLoading(false);
+      return savedCategory;
     } catch (error) {
-      // Handle errors, such as displaying a user-friendly error message
-      console.error('Failed to add tag:', error);
-      alert('Failed to add tag, please try again!');
+      console.error('Failed to add category:', error);
+      alert('Failed to add category, please try again!');
       setIsLoading(false);
     }
   };
 
-  const uploadImageWithTags = async (): Promise<void> => {
-    if (!image || selectedTags.length === 0) {
-      alert('Please ensure an image is selected and at least one tag is chosen.');
+
+  const uploadImageWithCategories = async (): Promise<void> => {
+    if (!images || categories.length === 0) {
+      alert(
+        'Please ensure an image is selected and at least one category is chosen.',
+      );
       return;
     }
     setIsLoading(true);
-  
-    const db = firebase.firestore();
-    const imageCollectionRef = db.collection(`${code}/gallery/images`);
-    const tagsCollectionRef = db.collection(`${code}/gallery/tags`);
-    console.log('image', image);
+    const token = await firebaseUser.getIdToken(true);
+
     try {
-      // Create a new document in the Images collection
-      const uploadedImageUrl = await uploadImage(image);
-      if (!uploadedImageUrl) {
+      if(!images.localPathUrl) {
+        console.error('Image local path URL is missing.');
+        alert('Image upload failed. Please try again.');
+        return;
+      }
+      const uploadedImageUrl = await uploadImage(images.localPathUrl);
+      if (!uploadedImageUrl || !uploadedImageUrl.originalUrl || !uploadedImageUrl.thumbnailUrl) {
         console.error('Image upload returned null or undefined.');
         alert('Image upload failed. Please try again.');
         return;
       }
-  
-      const imageDocRef = await imageCollectionRef.add({
-        url: uploadedImageUrl,
-        tags: selectedTags, // Assuming selectedTags are IDs or names of tags
-        created: new Date(), // Add the created field here
-      });
-  
-      // For each tag, update or create a tag document to include the image URL
-      selectedTags.forEach(async (tag) => {
-        const tagRef = tagsCollectionRef.doc(tag);
-        const doc = await tagRef.get();
-  
-        if (doc.exists) {
-          // Update existing tag document to include this image
-          await tagRef.update({
-            images: firebase.firestore.FieldValue.arrayUnion(imageDocRef.id),
-          });
-        } else {
-          // Optionally handle the case where the tag does not exist
-          await tagRef.set({
-            name: tag,
-            images: [imageDocRef.id],
-            created: new Date(),
-          });
+      setValue('images.originalUrl', uploadedImageUrl.originalUrl, {shouldValidate: true});
+      setValue('images.thumbnailUrl', uploadedImageUrl.thumbnailUrl, {shouldValidate: true});
+
+      console.log("Image UPDATE successfully:", images);
+
+      // Save the image with categories to the server via API call
+      const response = await fetch(
+        `${BACK_END_SERVER_URL}/api/gallery/addImagesToCategory`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+
+          },
+          body: JSON.stringify({
+             url: images,
+            categories, // ส่งรายการ category ที่เลือกไปยังเซิร์ฟเวอร์
+          }),
+        },
+      );
+      // console.log('response', response);
+
+      if (!response.ok) {
+        const errorResponse = await response.json();
+        throw new Error(
+          errorResponse.error || 'Failed to save image with categories',
+        );
+      }
+     const galleryStorage = await AsyncStorage.getItem(QueryKeyType.GALLERY);
+      let galleryData: ServiceImagesEmbedType[] = [];
+      if(galleryStorage) {
+        try {
+          galleryData = JSON.parse(galleryStorage);
+        } catch (parseError) {
+          console.error('Error parsing gallery data:', parseError);
+          await AsyncStorage.removeItem(QueryKeyType.GALLERY);
+          galleryData = [];
         }
+      }
+      const existingGallery = galleryData.find(
+        q => q.thumbnailUrl === images.thumbnailUrl,
+      );
+      if (!existingGallery) {
+        galleryData.push(images);
+      } else {
+        console.log('Image already exists in gallery.', existingGallery);
+
+      }
+      const sortedGalllery = galleryData.sort((a, b) => {
+        const dateA = new Date(a.created || new Date());
+        const dateB = new Date( b.created || new Date());
+        return dateB.getTime() - dateA.getTime();
       });
-  
+      await AsyncStorage.setItem(QueryKeyType.GALLERY, JSON.stringify(sortedGalllery));
+dispatch(stateAction.get_gallery(sortedGalllery));
+
       onClose();
       reset();
-  
-      setTimeout(() => {
-        queryClient.invalidateQueries({
-          queryKey: ['gallery', code],
-        });
-      }, 1500); // หน่วงเวลา 1.5 วินาที (1500 มิลลิวินาที)
     } catch (error) {
-      console.error('Error uploading image with tags:', error);
-      alert('Error uploading image with tags, please try again.');
+      console.error('Error uploading image with categories:', error);
+      alert('Error uploading image with categories, please try again.');
     } finally {
       setIsLoading(false);
     }
   };
-  
 
   const handleSelectTag = (tag: string) => {
-    if (selectedTags.includes(tag)) {
+    if (categories.includes(tag)) {
       setValue(
-        'selectedTags',
-        selectedTags.filter(t => t !== tag),
+        'categories',
+        categories.filter(t => t !== tag),
       ); // Unselect the tag
     } else {
-      setValue('selectedTags', [...selectedTags, tag]); // Select the tag
+      setValue('categories', [...categories, tag]); // Select the tag
     }
   };
-
-  if (isFetching) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}>
-        <ActivityIndicator />
-      </View>
-    );
-  }
   const clearWatermark = () => {
     setChecked(null);
-    setValue('image', originalImage ?? '', {shouldDirty: true}); // Reset to original image
+    setValue('images.localPathUrl', originalImage ?? '', {shouldDirty: true}); // Reset to original image
   };
-  
+
   const applyWatermarkImage = async (
     originalImage: string,
     watermarkPosition: string,
@@ -360,15 +415,15 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
     imageId: string,
   ): Promise<string | undefined> => {
     if (!originalImage || !G_logo) return;
-  
+
     console.log('Original image:', originalImage);
-  
+
     const originalFileExists = await checkImageExists(originalImage);
     if (!originalFileExists) {
       console.error('Original image does not exist:', originalImage);
       return;
     }
-  
+
     const options: ImageMarkOptions = {
       backgroundImage: {
         src: originalImage,
@@ -387,33 +442,38 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
       quality: 100,
       filename: imageId,
     };
-  
+
     try {
       const markedImage = await Marker.markImage(options);
       const markedImagePath = `file://${markedImage}`;
       console.log('Marked image path:', markedImagePath);
-  
+
       const markedFileExists = await checkImageExists(markedImagePath);
       if (!markedFileExists) {
         console.error('Marked image does not exist:', markedImagePath);
         return;
       }
-  
+
       return markedImagePath;
     } catch (error) {
       console.error('Error applying image watermark:', error);
       throw error;
     }
   };
-  
+
   const applyWatermark = async () => {
     if (!originalImage) return;
-  
+
     try {
       let markedImage: string | undefined;
-  
+
       if (G_logo) {
-        markedImage = await applyWatermarkImage(originalImage, watermarkPosition, brightness, imageId);
+        markedImage = await applyWatermarkImage(
+          originalImage,
+          watermarkPosition,
+          brightness,
+          imageId,
+        );
       } else if (G_company && G_company.bizName) {
         markedImage = await applyWatermarkText(
           originalImage,
@@ -424,13 +484,16 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
           imageId,
         );
       }
-  
+
       if (markedImage) {
         const markedFileExists = await checkImageExists(markedImage);
         if (markedFileExists) {
-          setValue('image', markedImage, { shouldDirty: true });
+          setValue('images.localPathUrl', markedImage, {shouldDirty: true});
         } else {
-          console.error('Marked image does not exist after watermark applied:', markedImage);
+          console.error(
+            'Marked image does not exist after watermark applied:',
+            markedImage,
+          );
           Alert.alert('Error', 'Failed to add watermark.');
         }
       }
@@ -438,7 +501,7 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
       Alert.alert('Error', 'Failed to add watermark.');
     }
   };
-  
+
   function getPositionBasedOn(watermarkPosition: string): Position {
     switch (watermarkPosition) {
       case 'กลาง':
@@ -461,7 +524,6 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
   }
   const handleSwitchChange = (value: boolean) => {
     if (value && !hasPermission) {
-
       requestStoragePermission();
     }
     setAddWatermark(value);
@@ -527,6 +589,7 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
       throw error;
     }
   };
+  console.log('selectedCategories', categories);
   return (
     <>
       <Appbar.Header
@@ -545,33 +608,43 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
         />
         <Button
           loading={isImageUpload || isUploading}
-          disabled={!image || !selectedTags || selectedTags.length === 0}
+          disabled={
+            !images || !categories || categories.length === 0
+          }
           mode="contained"
           onPress={() => {
-            uploadImageWithTags();
+            uploadImageWithCategories();
           }}>
           บันทึก
         </Button>
       </Appbar.Header>
+      {isFetching &&   <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}>
+        <ActivityIndicator />
+      </View>}
       <FlatList
         style={styles.container}
         ListHeaderComponent={
           <>
             <Controller
               control={control}
-              name="image"
+              name="images"
               rules={{required: 'Image is required'}}
               render={({field: {onChange, value}}) => (
                 <TouchableOpacity
                   onPress={() => pickImage()}
                   style={styles.imageView}>
-                  {value ? (
+                  {value ?.localPathUrl ? (
                     isImagePicking ? (
                       <View style={styles.imageUploader}>
                         <ActivityIndicator />
                       </View>
                     ) : (
-                      <Image source={{uri: value}} style={styles.image} />
+                      <Image source={{uri: value.localPathUrl ?? ''}} style={styles.image} />
                     )
                   ) : isImagePicking ? (
                     <View style={styles.imageUploader}>
@@ -616,17 +689,17 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
             </View>
           </>
         }
-        data={tags}
+        data={initialCategories}
         keyExtractor={(item, index) => index.toString()}
         renderItem={({item}) => (
           <>
             <View style={styles.chipContainer}>
               <Chip
-                mode={selectedTags.includes(item) ? 'outlined' : 'flat'}
-                selected={selectedTags.includes(item)}
+                mode={categories.includes(item) ? 'outlined' : 'flat'}
+                selected={categories.includes(item)}
                 onPress={() => handleSelectTag(item)}
                 textStyle={
-                  selectedTags.includes(item) && styles.selectedChipText
+                  categories.includes(item) && styles.selectedChipText
                 }>
                 {item}
               </Chip>
@@ -675,7 +748,7 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
                       mode="contained"
                       disabled={isLoading || !inputNewTag}
                       loading={isLoading}
-                      onPress={() => handleAddTag()}>
+                      onPress={() => handleAddCategory()}>
                       บันทึก
                     </Button>
                   </View>
@@ -743,7 +816,7 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
                     />
                   </View>
                   {G_logo && (
-                      <View
+                    <View
                       style={{
                         flexDirection: 'row',
                         justifyContent: 'space-between',
@@ -763,7 +836,6 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
                       />
                     </View>
                   )}
-                
                 </>
               )}
             </View>
@@ -808,7 +880,6 @@ const styles = StyleSheet.create({
     maxHeight: windowHeight * 0.7,
     resizeMode: 'contain',
     margin: 10,
-   
   },
   input: {
     height: 40,

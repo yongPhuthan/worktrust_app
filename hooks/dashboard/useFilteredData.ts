@@ -5,7 +5,7 @@ import { IQuotations } from '../../models/Quotations';
 import { IInvoices } from '../../models/Invoices';
 import { IReceipts } from '../../models/Receipts';
 import { ISubmissions } from '../../models/Submissions';
-export const useFilteredData = (originalData: IQuotations[] | IInvoices[] | null, activeFilter: QuotationStatus | InvoiceStatus) => {
+export const useFilteredData = (originalData: IQuotations[]  | null, activeFilter: QuotationStatus | InvoiceStatus) => {
   const filteredData = useMemo(() => {
     if (!originalData) return null;
 

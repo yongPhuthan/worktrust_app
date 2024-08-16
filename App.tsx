@@ -14,10 +14,12 @@ const theme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    primary: '#0c49c1',
+    // primary: '#0c49c1',
+    primary:'#3e3e3e' ,
     button: '#f78a20',
     textInput: '#0c49c1',
   },
+  
   // Customizing component styles using theming
   components: {
     Button: {

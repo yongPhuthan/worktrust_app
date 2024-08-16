@@ -134,3 +134,19 @@ export enum NotificationType {
   SubmissionEvent = "SubmissionEvent",
   QuotationEvent = "QuotationEvent",
 }
+
+export enum QueryKeyType {
+  DASHBOARD = "DASHBOARD",
+  RECEIPTS = "RECEIPTS",
+  INVOICES = "INVOICES",
+  SUBMISSIONS = "SUBMISSIONS",
+  QUOTATIONS = "QUOTATIONS",
+  WORKERS = "WORKERS",
+  COMPANY = "COMPANY",
+  SUBSCRIPTION = "SUBSCRIPTION",
+  USER = "USER",
+  GALLERY = "GALLERY",
+  CATEGORY = "CATEGORY",
+  MATERIAL = "MATERIAL",
+  STANDARD = "STANDARD",
+}

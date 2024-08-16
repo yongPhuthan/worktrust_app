@@ -1,5 +1,4 @@
-import {useQuery} from '@tanstack/react-query';
-import React, {useContext, useState} from 'react';
+import React, { useContext, useState } from 'react';
 import {
   Dimensions,
   FlatList,
@@ -10,17 +9,16 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {ActivityIndicator, Appbar, Button, Checkbox} from 'react-native-paper';
-import firebase from '../../firebase';
-import {useUser} from '../../providers/UserContext';
+import { ActivityIndicator, Appbar, Button } from 'react-native-paper';
 
-import {useFormContext} from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 import Modal from 'react-native-modal';
-import CustomCheckbox from '../../components/CustomCheckbox';
-import {Store} from '../../redux/store';
-import AddNewImage from './addNew';
-import FilterModal from './filterModal';
 import { IServiceImage } from 'types/interfaces/ServicesEmbed';
+import CustomCheckbox from '../../components/CustomCheckbox';
+import { useUser } from '../../providers/UserContext';
+import * as stateAction from '../../redux/actions';
+import { Store } from '../../redux/store';
+import AddNewImage from './addNew';
 
 interface ImageModalProps {
   isVisible: boolean;
@@ -33,13 +31,15 @@ interface Tag {
   name: string;
 }
 
-interface ImageData {
+export interface ImageGallery {
   id: string;
   url: {
     thumbnailUrl: string;
     originalUrl: string;
+    localPathUrl: string;
   };
-  tags: string[];
+  created: Date | null;
+  categories: string[];
   defaultChecked: boolean;
 }
 
@@ -47,34 +47,79 @@ interface ModalProps {
   isVisible: boolean;
   onClose: () => void;
 }
+interface GalleryItemProps {
+  item: ImageGallery;
+  onPress: () => void;
+  serviceImages :any
+}
+
 
 const {width, height} = Dimensions.get('window');
 const imageContainerWidth = width / 3 - 10;
+const GalleryItem: React.FC<GalleryItemProps> = React.memo(({ item, onPress, serviceImages }) => {
+  const [imageUri, setImageUri] = React.useState<string | undefined>(
+    item.url.localPathUrl || item.url.thumbnailUrl
+  );
 
+  console.log('serviceImages', serviceImages);
+
+  // ตรวจสอบว่า item.id ตรงกับ _id ของรายการใน serviceImages หรือไม่
+  const isChecked = React.useMemo(() => {
+    return serviceImages.some(image => image._id === item.id);
+  }, [item.id, serviceImages]);
+
+  const handleError = React.useCallback(() => {
+    // เมื่อเกิดข้อผิดพลาดในการโหลดรูปภาพ เราจะไม่แสดงกรอบเปล่าๆ
+    setImageUri(undefined);
+  }, []);
+
+  // ถ้าไม่มี imageUri เราจะไม่แสดงคอมโพเนนต์นี้เลย
+  if (!imageUri) {
+    return null;
+  }
+
+  return (
+    <View
+      style={[
+        styles.imageContainer,
+        isChecked && styles.selected,
+      ]}
+    >
+      <Image
+        source={{ uri: imageUri }}
+        style={styles.image}
+        onError={handleError}
+      />
+      <View style={styles.checkboxContainer}>
+        <CustomCheckbox
+          checked={isChecked}
+          onPress={onPress}
+        />
+      </View>
+    </View>
+  );
+});
 const GalleryScreen = ({
   isVisible,
   onClose,
   serviceImages,
 }: ImageModalProps) => {
   const [isImageUpload, setIsImageUpload] = useState(false);
-  const [imageUrls, setImageUrls] = useState<string[]>([]);
-  const user = useUser();
-  const [loading, setLoading] = useState(true);
-  const [tags, setTags] = useState<Tag[]>([]);
+  const firebaseUser = useUser();
+  if (!firebaseUser || !firebaseUser.uid) {
+    throw new Error('User is not available');
+  }
   const [isOpenModal, setIsOpenModal] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  // const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  // const [galleryImages, setGalleryImages] = useState<ImageData[]>([]);
-  // const [initialGalleryImages, setInitialGalleryImages] = useState<ImageData[]>([]);
   const [selectedImage, setSelectedImage] = useState<string>('');
-  const [responseLog, setResponseLog] = useState<string | null>(null);
-  const [initialGalleryImages, setInitialGalleryImages] = useState<ImageData[]>(
-    [],
-  );
+  const [initialGalleryImages, setInitialGalleryImages] = useState<
+    ImageGallery[]
+  >([]);
+  const [categories, setCategories] = useState<string[]>([]);
   const [isLoadingWebP, setIsLoadingWebP] = useState<boolean>(false);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [openFilter, setOpenFilter] = useState<boolean>(false);
-  const [galleryImages, setGalleryImages] = useState<ImageData[]>([]);
+  // const [galleryImages, setGalleryImages] = useState<ImageGallery[]>([]);
   const context = useFormContext();
   const {
     register,
@@ -85,118 +130,57 @@ const GalleryScreen = ({
     formState: {errors},
   } = context;
   const {
-    state: {code},
+    state: {code, companyId, G_gallery, G_categories, initial_gallery},
     dispatch,
   } = useContext(Store);
-
   const handleCheckbox = (id: string) => {
-    const updatedData = galleryImages.map(img => {
-      if (img.id === id) {
-        return {...img, defaultChecked: !img.defaultChecked};
+    // ค้นหา serviceImages ที่มีการเลือก (selected)
+    const isSelected = G_gallery.some(img => img.id === id && serviceImages.some(serviceImg => serviceImg._id === id));
+  
+    let updatedServiceImages;
+    if (isSelected) {
+      // ถ้า id ถูกเลือกอยู่แล้ว ให้ยกเลิกการเลือก (unselect) โดยการกรองออกจาก serviceImages
+      updatedServiceImages = serviceImages.filter(serviceImg => serviceImg._id !== id);
+    } else {
+      // ถ้า id ยังไม่ได้ถูกเลือก ให้เพิ่มเข้าไปใน serviceImages
+      const selectedImage = G_gallery.find(img => img.id === id);
+      if (selectedImage) {
+        updatedServiceImages = [...serviceImages, selectedImage.url];
+      } else {
+        updatedServiceImages = [...serviceImages];
       }
-      return img;
-    });
-    setGalleryImages(updatedData);
-
-    const urls = updatedData
-      .filter(img => img.defaultChecked)
-      .map(img => img.url);
-    setValue('serviceImages', urls, {shouldDirty: true});
+    }
+  
+    // อัปเดตสถานะของ gallery เพื่อแสดงผลการเลือกหรือยกเลิกการเลือก
+    const updatedData = G_gallery.map(img => ({
+      ...img,
+      defaultChecked: updatedServiceImages.some(serviceImg => serviceImg._id === img.id)
+    }));
+  
+    // ส่งข้อมูลที่อัปเดตไปยัง store หรือ local state
+    dispatch(stateAction.get_gallery(updatedData));
+  
+    // อัปเดตค่าของ serviceImages ในฟอร์ม
+    setValue('serviceImages', updatedServiceImages, { shouldDirty: true });
   };
   const toggleTag = (tag: string) => {
-    setSelectedTags(prev =>
+    setSelectedCategories(prev =>
       prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag],
     );
   };
-  const getGallery = async () => {
-    const imagesCollectionPath = `${code}/gallery/images`;
-    const imagesRef = firebase.firestore().collection(imagesCollectionPath);
 
-    try {
-      const imageSnapshot = await imagesRef.get();
-      const serviceImageUrls = new Set(
-        serviceImages.map(img => img.thumbnailUrl),
-      );
-
-      const images = imageSnapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          url: data.url,
-          tags: data.tags || [],
-          defaultChecked: serviceImageUrls.has(data.url.thumbnailUrl),
-          created: data.created ? data.created.toDate() : null,
-        };
-      });
-
-      const tagsCollectionPath = `${code}/gallery/tags`;
-      const tagsRef = firebase.firestore().collection(tagsCollectionPath);
-      const tagSnapshot = await tagsRef.get();
-      const fetchedTags = tagSnapshot.docs.map(doc => ({
-        id: doc.id,
-        name: doc.data().name,
-        created: doc.data().created ? doc.data().created.toDate() : null,
-      }));
-
-      images.sort((a, b) => {
-        if (a.created && b.created) {
-          return b.created.getTime() - a.created.getTime();
-        }
-        if (a.created && !b.created) {
-          return -1;
-        }
-        if (!a.created && b.created) {
-          return 1;
-        }
-        return 0;
-      });
-
-      setGalleryImages(images);
-      setInitialGalleryImages(images);
-      setTags(fetchedTags); // Assuming setTags updates the state containing all tags
-
-      return images; // Return images array, even if it's empty
-    } catch (error) {
-      console.error('Error fetching gallery images:', error);
-      return [];
-    }
-  };
-
-  const {data, isLoading, error} = useQuery({
-    queryKey: ['gallery', code],
-    queryFn: getGallery,
-  });
-
-  const handleFilterGalleryImages = (id: string): void => {
-    const newSelectedTags = selectedTags.includes(id)
-      ? selectedTags.filter(tagId => tagId !== id) // Toggle off if already selected
-      : [...selectedTags, id]; // Add to selection if not currently selected
-    setSelectedTags(newSelectedTags);
-
-    // Filter gallery images based on AND logic for multiple tags
-    if (newSelectedTags.length > 0) {
-      const filteredImages = initialGalleryImages.filter(image =>
-        newSelectedTags.every(tag => image.tags.includes(tag)),
-      );
-      setGalleryImages(filteredImages);
-      setValue('serviceImages', [], {shouldDirty: true});
-    } else {
-      // No tags are selected, show all images
-      setGalleryImages(initialGalleryImages);
-      setValue('serviceImages', [], {shouldDirty: true});
-    }
-  };
 
   const sortedGalleryImages = React.useMemo(() => {
-    if (!galleryImages) return [];
-    const validImages = galleryImages.filter(
-      item => item.url && item.url.thumbnailUrl,
+    if (!G_gallery) return [];
+    const validImages = G_gallery.filter(
+      item => item.url && item.url.localPathUrl && item.url.thumbnailUrl,
     );
-    const invalidImages = galleryImages.filter(
-      item => !item.url || !item.url.thumbnailUrl,
+    const invalidImages = G_gallery.filter(
+      item => !item.url || !item.url.localPathUrl,
     );
     return [...validImages, ...invalidImages];
-  }, [galleryImages]);
+  }, [G_gallery]);
+
 
   return (
     <>
@@ -227,7 +211,7 @@ const GalleryScreen = ({
                 onPress={() => setIsOpenModal(true)}
               />
             </Appbar.Header>
-            {isLoading || isLoadingWebP ? (
+            { isLoadingWebP ? (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator color="#047e6e" size={'large'} />
               </View>
@@ -239,23 +223,23 @@ const GalleryScreen = ({
                     gap: 10,
                     paddingBottom: '35%',
                   }}>
-                  {sortedGalleryImages.length > 0 && (
-                     <Button
-                     onPress={() => setOpenFilter(true)}
-                     mode="outlined"
-                     icon={'tune-variant'}
-                     style={{
-                       width: '50%',
-                       marginVertical: 5,
-                     }}
-                     contentStyle={{
-                       flexDirection: 'row-reverse',
-                       justifyContent: 'space-between',
-                     }}
-                     children={'กรองหมวดหมู่'}
-                   />
-                  )}
-                 
+                  {/* {sortedGalleryImages.length > 0 && (
+                    <Button
+                      onPress={() => setOpenFilter(true)}
+                      mode="outlined"
+                      icon={'tune-variant'}
+                      style={{
+                        width: '50%',
+                        margin: 10,
+                        marginTop: 20,
+                      }}
+                      contentStyle={{
+                        flexDirection: 'row-reverse',
+                        justifyContent: 'space-between',
+                      }}
+                      children={'กรองหมวดหมู่'}
+                    />
+                  )} */}
 
                   <FlatList
                     data={sortedGalleryImages}
@@ -282,37 +266,18 @@ const GalleryScreen = ({
                         <Text style={{marginTop: 10, color: 'gray'}}>
                           ยังไม่ได้เพิ่มรูปภาพผลงาน
                         </Text>
-           
                       </View>
                     }
-                    renderItem={({item}) => {
-                      if (!item.url || !item.url.thumbnailUrl) {
-                        return null; // ไม่แสดงผลถ้า url หรือ thumbnailUrl เป็น null
-                      }
-                      return (
-                        <View
-                          style={[
-                            styles.imageContainer,
-                            item.defaultChecked && styles.selected,
-                          ]}>
-                          <Image
-                            source={{uri: item.url.thumbnailUrl}}
-                            style={styles.image}
-                          />
-                          <View style={styles.checkboxContainer}>
-                            <CustomCheckbox
-                              checked={item.defaultChecked}
-                              onPress={() => {
-                                handleCheckbox(item.id);
-                              }}
-                            />
-                          </View>
-                        </View>
-                      );
-                    }}
+                    renderItem={({ item }) => (
+                      <GalleryItem
+                      serviceImages={watch('serviceImages')}
+                        item={item}
+                        onPress={() => handleCheckbox(item.id)}
+                      />
+                    )}
                     keyExtractor={item => item.id.toString()}
                   />
-                  {galleryImages.length > 0 && (
+                  {G_gallery.length > 0 && (
                     <View
                       style={{
                         flexDirection: 'column',
@@ -367,13 +332,12 @@ const GalleryScreen = ({
             }}
           />
         </Modal>
-        <FilterModal
-          selectedTags={selectedTags}
+        {/* <FilterModal
+          selectedTags={selectedCategories}
           handleSelectTag={handleFilterGalleryImages}
           isVisible={openFilter}
           onClose={() => setOpenFilter(false)}
-          tags={tags}
-        />
+        /> */}
       </Modal>
     </>
   );
@@ -531,6 +495,7 @@ const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
     alignItems: 'center',
+    backgroundColor: 'white',
     justifyContent: 'center',
   },
   modal: {
