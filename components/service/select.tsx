@@ -19,6 +19,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { QueryKeyType } from '../../types/enums';
 import { useUser } from '../../providers/UserContext';
 import {BACK_END_SERVER_URL} from '@env';
+import { ICategory } from 'models/Category';
 
 interface Props {
   visible: boolean;
@@ -74,8 +75,6 @@ const SelectProductModal: React.FC<Props> = ({
           dispatch(stateAction.get_gallery(updatedGallery));
           dispatch(stateAction.get_categories(parsedCategories));
           dispatch(stateAction.get_initial_gallery(updatedGallery));
-          console.log("G_Gallery", G_gallery)
-
           return updatedGallery;
         }
       }
@@ -118,24 +117,19 @@ const SelectProductModal: React.FC<Props> = ({
         return acc;
       }, []);
 
-      const categories = data.categories.map((category: any) => ({
-        id: category._id,
-        name: category.name,
-        created: new Date(category.created),
-      }));
-
+      const categories = data.categories
       const sortedImages = images.sort((a:IServiceImage, b:IServiceImage) => {
         const dateA = new Date(a.created || new Date());
         const dateB = new Date(b.created || new Date());
         return dateB.getTime() - dateA.getTime();
       });
 
-      dispatch(stateAction.get_gallery(sortedImages));
+      dispatch(stateAction.get_gallery(images));
       dispatch(stateAction.get_categories(categories));
-      dispatch(stateAction.get_initial_gallery(sortedImages));
+      dispatch(stateAction.get_initial_gallery(images));
 
       // 3. Save the fetched data to AsyncStorage for future use
-      await AsyncStorage.setItem(QueryKeyType.GALLERY, JSON.stringify(sortedImages));
+      await AsyncStorage.setItem(QueryKeyType.GALLERY, JSON.stringify(images));
       await AsyncStorage.setItem(
         QueryKeyType.CATEGORY,
         JSON.stringify(categories),
@@ -172,7 +166,7 @@ const SelectProductModal: React.FC<Props> = ({
 
     if (service.serviceImages && service.serviceImages.length > 0) {
         // กรองรูปภาพที่อยู่ใน G_gallery และมี thumbnailUrl ตรงกับ serviceImages
-        const updatedGallery = G_gallery.map(image => {
+        const updatedGallery = G_gallery.map((image : any) => {
             const isServiceImageSelected = service.serviceImages?.some(
                 serviceImage => serviceImage.id === image.url.id
             );

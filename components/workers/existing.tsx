@@ -1,30 +1,23 @@
-import {BACK_END_SERVER_URL} from '@env';
-import {useRoute} from '@react-navigation/native';
-import {useQuery} from '@tanstack/react-query';
-import React, {useContext, useState} from 'react';
+import { BACK_END_SERVER_URL } from '@env';
+import { useRoute } from '@react-navigation/native';
+import { useQuery } from '@tanstack/react-query';
+import React, { useContext, useState } from 'react';
+import { useFormContext, useWatch } from 'react-hook-form';
 import {
-  Appbar,
-  Button,
-  ProgressBar,
-
-  Text,
-} from 'react-native-paper';
-import {useFormContext, useWatch} from 'react-hook-form';
-import {
+  ActivityIndicator,
   Dimensions,
   FlatList,
   Image,
   StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-  View,
+  View
 } from 'react-native';
 import Modal from 'react-native-modal';
-import {Checkbox} from 'react-native-paper';
-import {useUser} from '../../providers/UserContext';
-import {Store} from '../../redux/store';
+import { Appbar, Button, Text } from 'react-native-paper';
+import { IWorkerEmbed } from 'types/interfaces/WorkerEmbed';
+import { useUser } from '../../providers/UserContext';
+import { Store } from '../../redux/store';
 import AddNewWorker from './addNew';
-import {WorkerEmbed, Workers} from '@prisma/client';
+import WorkerItem from './workerItem';
 interface ExistingModalProps {
   isVisible: boolean;
   onClose: () => void;
@@ -37,7 +30,7 @@ const ExistingWorkers = ({isVisible, onClose}: ExistingModalProps) => {
     state: {existingWorkers, code},
     dispatch,
   } = useContext(Store);
-  const [workers, setWorkers] = useState<Workers[]>(existingWorkers);
+  const [workers, setWorkers] = useState<IWorkerEmbed[]>(existingWorkers);
   const [isOpenModal, setIsOpenModal] = useState(false);
   const [refetch, setRefetch] = useState(false);
   const context = useFormContext();
@@ -88,13 +81,13 @@ const ExistingWorkers = ({isVisible, onClose}: ExistingModalProps) => {
     name: 'workers',
   });
 
-  const handleSelectWorker = (worker: Workers) => {
+  const handleSelectWorker = (worker: IWorkerEmbed) => {
     // Ensure currentWorkers is an array; use an empty array if it's null or undefined
     const safeWorkers = currentWorkers || [];
 
     // Find the index of the worker in the array
     const workerIndex = safeWorkers.findIndex(
-      (existingWorker: Workers) => existingWorker.id === worker.id,
+      (existingWorker: IWorkerEmbed) => existingWorker.id === worker.id,
     );
 
     if (workerIndex !== -1) {
@@ -145,69 +138,41 @@ const ExistingWorkers = ({isVisible, onClose}: ExistingModalProps) => {
             }}>
             <ActivityIndicator />
           </View>
-        ) :(
+        ) : (
           <FlatList
-          data={workers}
-          renderItem={({item, index}) => (
-            <>
-              <TouchableOpacity
-                style={[
-                  styles.card,
-                  currentWorkers?.some((m: Workers) => m.id === item.id)
-                    ? styles.cardChecked
-                    : null,
-                ]}
-                onPress={() => handleSelectWorker(item)}>
-                <Checkbox.Android
-                  status={
-                    currentWorkers?.some(
-                      (worker: Workers) => worker.id === item.id,
-                    )
-                      ? 'checked'
-                      : 'unchecked'
-                  }
-                  onPress={() => handleSelectWorker(item)}
-                  style={styles.checkboxContainer}
-                />
-                <View style={styles.textContainer}>
-                  <Text style={styles.productTitle}>{item.name}</Text>
-                  <Text style={styles.description}>{item.mainSkill}</Text>
-                </View>
-                <Image
-                  source={{uri: item.image || undefined}}
-                  style={styles.productImage}
-                />
-              </TouchableOpacity>
-            </>
-          )}
-          ListEmptyComponent={
-            <View
-              style={{
-                justifyContent: 'flex-start',
-                height: height,
-                width: width*0.9,
-                alignItems: 'center',
-              }}>
-              <Image
-                source={require('../../assets/images/ConstructionWorker-bro.png')}
-                width={width * 0.5}
-                height={height * 0.3}
-                style={{
-                  width: width * 0.5,
-                  height: height * 0.3,
-
-                }}
+            data={workers}
+            renderItem={({item}) => (
+              <WorkerItem
+                item={item}
+                onPress={() => handleSelectWorker(item)}
+                currentWorkers={currentWorkers}
               />
-              <Text style={{marginTop: 10, color: 'gray'}}>
-              ยังไม่ได้เพิ่มทีมช่าง
-              </Text>
- 
-            </View>
-          }
-          keyExtractor={item => item.id}
-        />
-        ) }
-   
+            )}
+            ListEmptyComponent={
+              <View
+                style={{
+                  justifyContent: 'flex-start',
+                  height: height,
+                  width: width * 0.9,
+                  alignItems: 'center',
+                }}>
+                <Image
+                  source={require('../../assets/images/ConstructionWorker-bro.png')}
+                  width={width * 0.5}
+                  height={height * 0.3}
+                  style={{
+                    width: width * 0.5,
+                    height: height * 0.3,
+                  }}
+                />
+                <Text style={{marginTop: 10, color: 'gray'}}>
+                  ยังไม่ได้เพิ่มทีมช่าง
+                </Text>
+              </View>
+            }
+            keyExtractor={item => item.id}
+          />
+        )}
 
         {currentWorkers?.length > 0 && (
           <Button

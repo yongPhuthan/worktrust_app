@@ -1,7 +1,8 @@
 import { Schema, model, Document, Types } from 'mongoose';
 import { IServiceImage, serviceImageSchema } from '../types/interfaces/ServicesEmbed';
 
-export interface IDefaultMaterials extends Document {
+export interface IMaterials extends Document {
+  _id? : Types.ObjectId | null
   name: string;
   description: string;
   image: IServiceImage;
@@ -10,7 +11,8 @@ export interface IDefaultMaterials extends Document {
   companyId: Types.ObjectId;
 }
 
-export const defaultMaterialsSchema = new Schema<IDefaultMaterials>({
+export const materialsSchema = new Schema<IMaterials>({
+  _id : {type: Types.ObjectId},
   name: { type: String, required: true },
   description: { type: String, required: true },
   image: { type: serviceImageSchema, required: true },
@@ -19,6 +21,6 @@ export const defaultMaterialsSchema = new Schema<IDefaultMaterials>({
   companyId: { type: Schema.Types.ObjectId, ref: 'Company', required: true },
 });
 
-const DefaultMaterials = model<IDefaultMaterials>('DefaultMaterials', defaultMaterialsSchema);
+const Materials = model<IMaterials>('Materials', materialsSchema);
 
-export default DefaultMaterials;
+export default Materials;

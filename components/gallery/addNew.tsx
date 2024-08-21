@@ -43,6 +43,7 @@ import { ServiceImagesEmbedType } from '../../validation/quotations/create';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { QueryKeyType } from '../../types/enums';
 import { ImageGallery } from './existing';
+import { IServiceImage } from 'types/interfaces/ServicesEmbed';
 
 interface ExistingModalProps {
   isVisible: boolean;
@@ -162,9 +163,11 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
       defaultChecked : false,
       categories: [],
       images: {
+        
         originalUrl: '',
         thumbnailUrl: '',
-        localPathUrl: '',  
+        localPathUrl: '', 
+         
       },
       created: new Date(),
     },
@@ -356,7 +359,7 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
         );
       }
      const galleryStorage = await AsyncStorage.getItem(QueryKeyType.GALLERY);
-      let galleryData: ServiceImagesEmbedType[] = [];
+      let galleryData = [];
       if(galleryStorage) {
         try {
           galleryData = JSON.parse(galleryStorage);
@@ -367,7 +370,7 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
         }
       }
       const existingGallery = galleryData.find(
-        q => q.thumbnailUrl === images.thumbnailUrl,
+        (q:IServiceImage) => q.thumbnailUrl === images.url?.thumbnailUrl,
       );
       if (!existingGallery) {
         galleryData.push(images);
@@ -375,7 +378,7 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
         console.log('Image already exists in gallery.', existingGallery);
 
       }
-      const sortedGalllery = galleryData.sort((a, b) => {
+      const sortedGalllery = galleryData.sort((a : IServiceImage, b:IServiceImage) => {
         const dateA = new Date(a.created || new Date());
         const dateB = new Date( b.created || new Date());
         return dateB.getTime() - dateA.getTime();

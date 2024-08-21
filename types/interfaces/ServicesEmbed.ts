@@ -2,7 +2,7 @@ import { Schema, Types } from 'mongoose';
 import { DiscountType } from 'types/enums';
 
 interface IServiceImage {
-  id :string
+
   thumbnailUrl: string;
   originalUrl: string;
   localPathUrl: string;

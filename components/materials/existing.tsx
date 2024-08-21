@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {
   Dimensions,
   FlatList,
@@ -8,15 +8,23 @@ import {
   View,
 } from 'react-native';
 
-import { useFormContext } from 'react-hook-form';
+import {useFormContext} from 'react-hook-form';
 import Modal from 'react-native-modal';
-import { ActivityIndicator, Appbar, Button, Checkbox, Text } from 'react-native-paper';
+import {
+  ActivityIndicator,
+  Appbar,
+  Button,
+  Checkbox,
+  Text,
+} from 'react-native-paper';
 import useFetchMaterial from '../../hooks/materials/read';
-import { IDefaultMaterials } from '../../models/DefaultMaterials';
-import { useUser } from '../../providers/UserContext';
-import { Store } from '../../redux/store';
+import {IMaterials} from '../../models/Materials';
+import {useUser} from '../../providers/UserContext';
+import {Store} from '../../redux/store';
 import CreateMaterial from './createMaterial';
-import { Types } from 'mongoose';
+import {Types} from 'mongoose';
+import useImageUri from 'hooks/materials/imageUri';
+import MaterialItem from './materialItem';
 
 interface ExistingModalProps {
   isVisible: boolean;
@@ -26,12 +34,13 @@ interface ExistingModalProps {
 
 const {width, height} = Dimensions.get('window');
 const imageContainerWidth = width / 3 - 10;
+
 const ExistingMaterials = ({
   isVisible,
   onClose,
   serviceId,
 }: ExistingModalProps) => {
-  const [materials, setMaterials] = useState<IDefaultMaterials[]>([]);
+  const [materials, setMaterials] = useState<IMaterials[]>([]);
   const [isOpenModal, setIsOpenModal] = useState(false);
   const context = useFormContext();
   const [isCreateMaterial, setIsCreateMaterial] = useState(false);
@@ -43,7 +52,7 @@ const ExistingMaterials = ({
     setValue,
     watch,
     formState: {errors},
-  } = context
+  } = context;
   const user = useUser();
 
   const {
@@ -51,12 +60,12 @@ const ExistingMaterials = ({
     dispatch,
   } = useContext(Store);
 
-  const { isLoading, isError, error, refetch} = useFetchMaterial();
+  const {isLoading, isError, error, refetch} = useFetchMaterial();
 
-  const handleSelectMaterial = (material: IDefaultMaterials) => {
+  const handleSelectMaterial = (material: IMaterials) => {
     const currentMaterials = getValues('materials') || [];
     const materialIndex = currentMaterials.findIndex(
-      (materialData: IDefaultMaterials) => materialData._id === material._id,
+      (materialData: IMaterials) => materialData._id === material._id,
     );
     if (materialIndex !== -1) {
       const updatedMaterials = [...currentMaterials];
@@ -68,15 +77,13 @@ const ExistingMaterials = ({
         {
           _id: material._id,
           name: material.name,
-          description : material.description,
-          image : material.image,
+          description: material.description,
+          image: material.image,
         },
       ];
       setValue('materials', updatedMaterials, {shouldDirty: true});
     }
   };
-
-
 
   const handleDonePress = () => {
     if (watch('materials')?.length > 0) {
@@ -88,7 +95,7 @@ const ExistingMaterials = ({
       setMaterials(G_materials);
     }
   }, [G_materials]);
-
+console.log('G_Material', G_materials)
   return (
     <Modal isVisible={isVisible} style={styles.modal} onBackdropPress={onClose}>
       <Appbar.Header
@@ -100,7 +107,7 @@ const ExistingMaterials = ({
         <Appbar.Action icon={'close'} onPress={onClose} />
         <Appbar.Content
           title="วัสดุอุปกรณ์ที่ต้องการนำเสนอ"
-          titleStyle={{fontSize: 16, }}
+          titleStyle={{fontSize: 16}}
         />
         {materials && materials?.length > 0 && (
           <Appbar.Action
@@ -111,91 +118,65 @@ const ExistingMaterials = ({
       </Appbar.Header>
       {isLoading ? (
         <View style={styles.loadingContainer}>
-              <ActivityIndicator  color='#047e6e' size={'large'} />
+          <ActivityIndicator color="#047e6e" size={'large'} />
         </View>
-      ):(
-              <View style={styles.container}>
-              <FlatList
-                data={materials}
-                renderItem={({item, index}) => (
-                  <>
-                    <TouchableOpacity
-                      style={[
-                        styles.card,
-                        (watch('materials') || []).some(
-                          (material: IDefaultMaterials) => material._id === item._id,
-                        )
-                          ? styles.cardChecked
-                          : null,
-                      ]}
-                      onPress={() => handleSelectMaterial(item)}>
-                      <Checkbox.Android
-                        status={
-                          (watch('materials') || []).some(
-                            (material: IDefaultMaterials) => material._id === item._id,
-                          )
-                            ? 'checked'
-                            : 'unchecked'
-                        }
-                        onPress={() => handleSelectMaterial(item)}
-                        color="#012b20"
-                      />
-                      <View style={styles.textContainer}>
-                        <Text style={styles.productTitle}>{item.name}</Text>
-                        <Text style={styles.description}>{item.description}</Text>
-                      </View>
-                      <Image source={{uri: item.image.thumbnailUrl}} style={styles.productImage} />
-                    </TouchableOpacity>
-                  </>
-                )}
-                ListEmptyComponent={
-                  <View
-                    style={{
-                      flex: 1,
-                      justifyContent: 'center',
-                      height: height * 0.5,
-      
-                      alignItems: 'center',
-                    }}>
-                    <Button
-                      onPress={() => setIsCreateMaterial(true)}
-                      mode="contained"
-                      icon={'plus'}>
-                      <Text
-                        
-                        style={{color: 'white', fontSize:16}}>
-                        เพิ่มวัสดุอุปกรณ์
-                      </Text>
-                    </Button>
-                  </View>
-                }
-                keyExtractor={item => new Types.ObjectId(item._id as string).toHexString()}
+      ) : (
+        <View style={styles.container}>
+          <FlatList
+            data={materials}
+            renderItem={({ item }) => (
+              <MaterialItem
+                item={item}
+                onPress={() => handleSelectMaterial(item)}
+                selectedMaterials={watch('materials') || []}
               />
-      
-              {watch('materials')?.length > 0 && (
+            )}
+            ListEmptyComponent={
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: 'center',
+                  height: height * 0.5,
+                  alignItems: 'center',
+                }}>
                 <Button
-                  style={{
-                    width: '80%',
-                    alignSelf: 'center',
-                  }}
-                  // buttonColor="#1b52a7"
+                  onPress={() => setIsCreateMaterial(true)}
                   mode="contained"
-                  onPress={handleDonePress}>
-                  {`บันทึก ${watch('materials')?.length} รายการ`}{' '}
+                  icon={'plus'}>
+                  <Text style={{color: 'white', fontSize: 16}}>
+                    เพิ่มวัสดุอุปกรณ์
+                  </Text>
                 </Button>
-              )}
-               <Modal
-                isVisible={isCreateMaterial}
-                style={styles.modal}
-                onBackdropPress={() => setIsCreateMaterial(false)}>
-                <CreateMaterial
-                  isVisible={isCreateMaterial}
-                  onClose={() => setIsCreateMaterial(false)}
-                />
-              </Modal>
-            </View>
-      )}
+              </View>
+            }
+            keyExtractor={(item: IMaterials) =>
+              item._id ? new Types.ObjectId(item._id).toHexString() : ''
+            }
+          />
 
+          {watch('materials')?.length > 0 && (
+            <Button
+              style={{
+                width: '80%',
+                alignSelf: 'center',
+              }}
+              // buttonColor="#1b52a7"
+              mode="contained"
+              onPress={handleDonePress}>
+              {`บันทึก ${watch('materials')?.length} รายการ`}{' '}
+            </Button>
+          )}
+          <Modal
+            isVisible={isCreateMaterial}
+            style={styles.modal}
+            onBackdropPress={() => setIsCreateMaterial(false)}>
+            <CreateMaterial
+              isVisible={isCreateMaterial}
+              onClose={() => setIsCreateMaterial(false)}
+            />
+          </Modal>
+        </View>
+      )}
     </Modal>
   );
 };
@@ -263,7 +244,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'white',
-    width
+    width,
   },
 
   buttonText: {

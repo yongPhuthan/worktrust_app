@@ -1,4 +1,4 @@
-import React, {useContext, useEffect, useState} from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -8,13 +8,12 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import {Store} from '../../redux/store';
-import {IDefaultStandards} from '../../models/DefaultStandards';
+import { IDefaultStandards } from '../../models/DefaultStandards';
+import { Store } from '../../redux/store';
 
-import {BACK_END_SERVER_URL} from '@env';
-import {useQuery} from '@tanstack/react-query';
-import {useFormContext} from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 
+import { Types } from 'mongoose';
 import Modal from 'react-native-modal';
 import {
   Appbar,
@@ -25,10 +24,9 @@ import {
   Snackbar,
   Text,
 } from 'react-native-paper';
-import {useUser} from '../../providers/UserContext';
-import CreateStandard from './createStandard';
 import useFetchStandard from '../../hooks/standard/read';
-import { Types } from 'mongoose';
+import { useUser } from '../../providers/UserContext';
+import CreateStandard from './createStandard';
 
 interface AuditModalProps {
   isVisible: boolean;

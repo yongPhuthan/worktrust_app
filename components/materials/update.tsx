@@ -3,7 +3,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import React, { useCallback, useContext } from 'react';
 import { Store } from '../../redux/store';
-import { IDefaultMaterials } from '../../models/DefaultMaterials';
+import { IMaterials } from '../../models/Materials';
 import { usePutServer } from '../../hooks/materials/useUpdate';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import {
@@ -53,7 +53,7 @@ const UpdateMaterial = (props: Props) => {
     setValue,
     getValues,
     formState: {errors, isValid,isDirty},
-  } = useForm<IDefaultMaterials>({
+  } = useForm<IMaterials>({
     mode: 'onChange',
     defaultValues: material,
     resolver: yupResolver(materialSchema),

@@ -17,7 +17,7 @@ import * as contrains from './constrains';
 import { ImageGallery } from '../components/gallery/existing';
 import { ICategory } from '../models/Category';
 import { IDefaultStandards } from 'models/DefaultStandards';
-import { IDefaultMaterials } from 'models/DefaultMaterials';
+import { IMaterials } from 'models/DefaultMaterials';
 
 // ACTION => REDUCER
 
@@ -176,7 +176,7 @@ export const get_standard = (payload: IDefaultStandards[]) => ({
   type: contrains.GET_STANDARD,
   payload,
 });
-export const get_material = (payload: IDefaultMaterials[]) => ({
+export const get_material = (payload: IMaterials[]) => ({
   type: contrains.GET_MATERIAL,
   payload,
 });
@@ -390,9 +390,9 @@ export const getStandard = (payload: IDefaultStandards[]) => {
   };
 }
 
-export const getMaterial = (payload: IDefaultMaterials[]) => {
+export const getMaterial = (payload: IMaterials[]) => {
   return (
-    dispatch: (arg0: {type: string; payload: IDefaultMaterials[]}) => void,
+    dispatch: (arg0: {type: string; payload: IMaterials[]}) => void,
   ) => {
     dispatch(get_material(payload));
   };

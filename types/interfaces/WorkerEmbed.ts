@@ -1,12 +1,13 @@
 import { Schema } from 'mongoose';
 import { WorkerStatus } from 'types/enums';
+import { IServiceImage, serviceImageSchema } from './ServicesEmbed';
 
 interface IWorkerEmbed {
   id: string;
   name: string;
   mainSkill: string;
   workerStatus: WorkerStatus;
-  image: string;
+  image: IServiceImage;
 }
 
 const workerEmbedSchema = new Schema<IWorkerEmbed>({
@@ -14,7 +15,7 @@ const workerEmbedSchema = new Schema<IWorkerEmbed>({
   name: { type: String, required: true },
   mainSkill: { type: String, required: true },
   workerStatus: { type: String, enum: WorkerStatus, required: true },
-  image: { type: String, required: true },
+  image: { type: serviceImageSchema, required: true },
 });
 
 export { IWorkerEmbed,workerEmbedSchema  };

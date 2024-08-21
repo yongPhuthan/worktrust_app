@@ -5,7 +5,7 @@ import {DashboardResponse} from '../../types';
 import {QueryKeyType} from '../../types/enums';
 import {useUser} from '../../providers/UserContext';
 import {Store} from '../../redux/store';
-import { IDefaultMaterials } from 'models/DefaultMaterials';
+import { IMaterials } from 'models/DefaultMaterials';
 import * as stateAction from '../../redux/actions';
 
 const useFetchMaterial = () => {
@@ -84,7 +84,7 @@ const useFetchMaterial = () => {
 
       if (storedMaterials) {
         console.log('LOAD FROM ASYNC STORAGE');
-        const parsedMaterials: IDefaultMaterials[] = JSON.parse(storedMaterials);
+        const parsedMaterials: IMaterials[] = JSON.parse(storedMaterials);
         dispatch(stateAction.get_material(parsedMaterials));
 
       } else {

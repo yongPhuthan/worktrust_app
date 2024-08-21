@@ -19,6 +19,7 @@ import { useUser } from '../../providers/UserContext';
 import * as stateAction from '../../redux/actions';
 import { Store } from '../../redux/store';
 import AddNewImage from './addNew';
+import { Types } from 'mongoose';
 
 interface ImageModalProps {
   isVisible: boolean;
@@ -50,7 +51,7 @@ interface ModalProps {
 interface GalleryItemProps {
   item: ImageGallery;
   onPress: () => void;
-  serviceImages :any
+  serviceImages :IServiceImage[]
 }
 
 
@@ -65,7 +66,7 @@ const GalleryItem: React.FC<GalleryItemProps> = React.memo(({ item, onPress, ser
 
   // ตรวจสอบว่า item.id ตรงกับ _id ของรายการใน serviceImages หรือไม่
   const isChecked = React.useMemo(() => {
-    return serviceImages.some(image => image._id === item.id);
+    return serviceImages.some((image :IServiceImage ) =>  image._id && new Types.ObjectId(image._id).toHexString() === item.id);
   }, [item.id, serviceImages]);
 
   const handleError = React.useCallback(() => {

@@ -9,7 +9,7 @@ import { Store } from '../../redux/store';
 import { QueryKeyType } from '../../types/enums';
 import { StandardSchemaType } from '../../models/validationSchema/standard';
 import { MaterialSchemaType } from 'models/validationSchema/material';
-import { IDefaultMaterials } from 'models/DefaultMaterials';
+import { IMaterials } from 'models/DefaultMaterials';
 
 
 // Pass actions via props
@@ -54,12 +54,12 @@ const useCreateMaterial = () => {
   
     const mutation = useMutation({
       mutationFn: createMaterial, // ensure this function expects StandardSchemaType as argument
-      onSuccess: async (materialResponse: IDefaultMaterials) => {
+      onSuccess: async (materialResponse: IMaterials) => {
         console.log('Standard created successfully:', materialResponse);
   
         try {
           const materialStorage = await AsyncStorage.getItem(QueryKeyType.MATERIAL);
-          let MaterialData: IDefaultMaterials[] = [];
+          let MaterialData: IMaterials[] = [];
   
           if (materialStorage) {
             try {

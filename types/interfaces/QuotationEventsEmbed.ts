@@ -1,6 +1,7 @@
 import { Schema } from 'mongoose';
 
 interface IQuotationEventsEmbed {
+  id : string
   pageView: number;
   download: number;
   print: number;

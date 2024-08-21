@@ -1,8 +1,10 @@
 import * as yup from 'yup';
 export const imagesSetSchema = yup.object().shape({
+  id: yup.string().nullable(),
   thumbnailUrl: yup.string().required('Thumbnail URL is required'),
   originalUrl: yup.string().required('Original URL is required'),
   localPathUrl : yup.string().nullable(),
+  created: yup.date().nullable(),
 });
 export const materialSchema = yup
   .object()

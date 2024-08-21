@@ -2109,6 +2109,8 @@ PODS:
     - React-Core
   - react-native-get-random-values (1.11.0):
     - React-Core
+  - react-native-html-to-pdf (0.12.0):
+    - React-Core
   - react-native-image-marker (1.2.6):
     - React-Core
   - react-native-image-picker (7.1.1):
@@ -2417,6 +2419,7 @@ DEPENDENCIES:
   - react-native-blob-util (from `../node_modules/react-native-blob-util`)
   - "react-native-cameraroll (from `../node_modules/@react-native-camera-roll/camera-roll`)"
   - react-native-get-random-values (from `../node_modules/react-native-get-random-values`)
+  - react-native-html-to-pdf (from `../node_modules/react-native-html-to-pdf`)
   - react-native-image-marker (from `../node_modules/react-native-image-marker`)
   - react-native-image-picker (from `../node_modules/react-native-image-picker`)
   - "react-native-image-resizer (from `../node_modules/@bam.tech/react-native-image-resizer`)"
@@ -2574,6 +2577,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-camera-roll/camera-roll"
   react-native-get-random-values:
     :path: "../node_modules/react-native-get-random-values"
+  react-native-html-to-pdf:
+    :path: "../node_modules/react-native-html-to-pdf"
   react-native-image-marker:
     :path: "../node_modules/react-native-image-marker"
   react-native-image-picker:
@@ -2744,6 +2749,7 @@ SPEC CHECKSUMS:
   react-native-blob-util: 18b510205c080a453574a7d2344d64673d0ad9af
   react-native-cameraroll: ecc2a7301b75d1793fb364fd9771c7ed207bfa59
   react-native-get-random-values: 21325b2244dfa6b58878f51f9aa42821e7ba3d06
+  react-native-html-to-pdf: 4c5c6e26819fe202971061594058877aa9b25265
   react-native-image-marker: 01caff7bfa50f44277922cf84e7c29a732994ea8
   react-native-image-picker: 69557f178c1026142e202b8c3b8a3c130f75348d
   react-native-image-resizer: 669454edae94399b11e49c840e4da14482302293

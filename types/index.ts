@@ -1,4 +1,4 @@
-import {IDefaultMaterials} from '../models/DefaultMaterials';
+import {IMaterials} from '../models/Materials';
 import {IDefaultStandards} from '../models/DefaultStandards';
 import {IInvoices} from '../models/Invoices';
 import {IQuotations} from '../models/Quotations';
@@ -25,7 +25,7 @@ export type CompanyState = {
   userIds: string[];
   users: IUser[];
   workers: IWorkerEmbed[];
-  defaultMaterials: IDefaultMaterials[];
+  defaultMaterials: IMaterials[];
   defaultStandards: IDefaultStandards[];
   quotations: IQuotations[];
   invoices: IInvoices[];

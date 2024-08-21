@@ -19,7 +19,7 @@ import * as contrains from './constrains';
 import { ImageGallery } from '../components/gallery/existing';
 import { ICategory } from '../models/Category';
 import { IDefaultStandards } from '../models/DefaultStandards';
-import { IDefaultMaterials } from '../models/DefaultMaterials';
+import { IMaterials } from '../models/Materials';
 
 export type StateType = {
   companyId: Types.ObjectId | string;
@@ -48,7 +48,7 @@ export type StateType = {
   G_gallery : ImageGallery[];
   G_categories : ICategory[];
   G_standards : IDefaultStandards[];
-  G_materials : IDefaultMaterials[];
+  G_materials : IMaterials[];
   initial_gallery : ImageGallery[];
 };
 
@@ -76,7 +76,7 @@ type ActionType = {
     | ImageGallery[]
     | ICategory[]
     | IDefaultStandards[]
-    | IDefaultMaterials[]
+    | IMaterials[]
     
     |CreateQuotationSchemaType
 };
