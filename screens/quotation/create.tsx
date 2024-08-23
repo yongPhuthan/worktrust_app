@@ -1,10 +1,7 @@
-import {faBriefcase, faUser} from '@fortawesome/free-solid-svg-icons';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {StackNavigationProp} from '@react-navigation/stack';
-import React, {useContext, useEffect, useMemo, useState} from 'react';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-import firebase from '../../firebase';
-import * as stateAction from '../../redux/actions';
+import { faBriefcase, faUser } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { StackNavigationProp } from '@react-navigation/stack';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import {
   Controller,
   FormProvider,
@@ -23,6 +20,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import {
   Appbar,
   Avatar,
@@ -41,11 +39,9 @@ import Summary from '../../components/Summary';
 import AddCustomer from '../../components/add/AddCustomer';
 import SelectProductModal from '../../components/service/select';
 import DatePickerButton from '../../components/styles/DatePicker';
+import * as stateAction from '../../redux/actions';
 // import Divider from '../../components/styles/Divider';
-import {yupResolver} from '@hookform/resolvers/yup';
-
-import {CompanyState} from '../../types';
-import {ValidationError} from 'yup';
+import { yupResolver } from '@hookform/resolvers/yup';
 import UpdateServiceModal from '../../components/service/update';
 import SmallDivider from '../../components/styles/SmallDivider';
 import AddCard from '../../components/ui/Button/AddCard';
@@ -54,7 +50,8 @@ import WarrantyModal from '../../components/warranty/create';
 import PDFModalScreen from '../../components/webview/pdf';
 import ProjectModalScreen from '../../components/webview/project';
 import ExistingWorkers from '../../components/workers/existing';
-import {useModal} from '../../hooks/quotation/create/useModal';
+import firebase from '../../firebase';
+import { useModal } from '../../hooks/quotation/create/useModal';
 import useSelectedDates from '../../hooks/quotation/create/useSelectDates';
 import useUpdateQuotation from '../../hooks/quotation/update/useUpdateQuotations';
 import useThaiDateFormatter from '../../hooks/utils/useThaiDateFormatter';
@@ -65,15 +62,18 @@ import {
   WarrantyStatus,
 } from '../../types/enums';
 
-import {Store} from '../../redux/store';
-import {ParamListBase} from '../../types/navigationType';
-import {nanoid} from 'nanoid';
-import { IServiceEmbed } from '../../types/interfaces/ServicesEmbed';
-import { IQuotations } from '../../models/Quotations';
-import { IQuotationEventsEmbed } from '../../types/interfaces/QuotationEventsEmbed';
-import { ISellerEmbed } from '../../types/interfaces/SellerEmbed';
-import { CreateQuotationSchema, CreateQuotationSchemaType } from '../../validation/quotations/create';
-import { defalutCustomer, initialWarranty } from '../../models/InitialState';
+import { nanoid } from 'nanoid';
+import { Store } from '../../redux/store';
+import { ParamListBase } from '../../types/navigationType';
+
+import {
+  quotationSchema,
+  QuotationSchemaType,
+} from '../../validation/collection/subcollection/quotations';
+import { WarrantySchemaType } from '../../validation/collection/subcollection/warranty';
+import { CustomerEmbedSchemaType } from '../../validation/field/embed/customerEmbed';
+import { SellerEmbedSchemaType } from '../../validation/field/embed/sellerEmbed';
+import { ServiceSchemaType } from '../../validation/field/services';
 import useCreateQuotation from '../../hooks/quotation/create/useSaveQuotation';
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'CreateQuotation'>;
@@ -109,11 +109,11 @@ const CreateQuotation = ({navigation}: Props) => {
   const [quotationServerId, setQuotationServerId] = useState<string | null>(
     editQuotation ? editQuotation.id : null,
   );
-
+  const firestore = firebase.firestore;
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-
+const [isLoding, setIsLoading] = useState(false);
   const [isLoadingWebP, setIsLoadingWebP] = useState(false);
-  const [currentValue, setCurrentValue] = useState<IServiceEmbed | null>(null);
+  const [currentValue, setCurrentValue] = useState<ServiceSchemaType | null>(null);
 
   const [dateOfferFormatted, setDateOfferFormatted] = useState<string>(
     initialDateOfferFormatted,
@@ -175,48 +175,58 @@ const CreateQuotation = ({navigation}: Props) => {
   const [visibleModalIndex, setVisibleModalIndex] = useState<number | null>(
     null,
   );
-  const sellerEmbed: ISellerEmbed = {
+  const sellerEmbed: SellerEmbedSchemaType = {
     bizName: G_company.bizName,
     jobPosition: G_user.jobPosition ? G_user.jobPosition : '',
     sellerName: G_user.name ? G_user.name : '',
-    logo: G_company.logo ? G_company.logo : '',
+    logo: G_company.logo ? G_company.logo : null,
     address: G_company.address,
     mobileTel: G_company.mobileTel ? G_company.mobileTel : '',
     officeTel: G_company.officeTel ? G_company.officeTel : '',
     companyTax: G_company.companyTax ? G_company.companyTax : '',
     email: G_user.email ? G_user.email : '',
   };
-  const eventEmbed: IQuotationEventsEmbed = {
-    pageView: 0,
-    download: 0,
-    print: 0,
-    share: 0,
-    createdAt: new Date(),
-    lastOccurredAt: new Date(),
 
+  const defalutCustomer: CustomerEmbedSchemaType = {
+    name: '',
+    address: '',
+    customerTax: '',
+    phone: '',
   };
 
-  const quotationDefaultValues: CreateQuotationSchemaType = {
+  const initialWarranty: WarrantySchemaType = {
+    productWarrantyMonth: 0,
+    skillWarrantyMonth: 0,
+    sellerSignature: null,
+    fixDays: 0,
+    condition:
+      'รับประกันคุณภาพตัวสินค้า ตามมาตรฐานในการใช้งานตามปกติเท่านั้น ขอสงวนสิทธ์การรับประกันที่เกิดจากการใช้งานสินค้าที่ไม่ถูกต้องหรือความเสียหายที่เกิดจากภัยธรรมชาติ หรือ การใช้งานผิดประเภทหรือปัญหาจากการกระทําของบคุคลอื่น เช่นความเสียหายที่เกิดจากการทำงานของผู้รับเหมาทีมอื่นหรือบุคคลที่สามโดยตั้งใจหรือไม่ได้ตั้งใจ',
+    endProductWarranty: null,
+    endSkillWarranty: null,
+    pdfUrl: null,
+  };
+
+  const quotationDefaultValues: QuotationSchemaType = {
     id: nanoid(),
     isArchived: false,
-    created: null,
-    updated: null,
+    createAt: new Date(),
+    updateAt: new Date(),
     services: [],
     // events: null,
     customer: defalutCustomer,
     // customerSign: null,
-    companyId : G_user.currentCompanyId,
-    docUrl : nanoid(10),
+    companyId: G_user.currentCompanyId,
+    docUrl: nanoid(10),
     vat7: 0,
     taxType: TaxType.NOTAX,
-    
+
     taxValue: 0,
     summary: 0,
     warrantyStatus: WarrantyStatus.PENDING,
     summaryAfterDiscount: 0,
-    sellerUid : sellerUid? sellerUid: G_user.uid,
+    sellerUid: sellerUid ? sellerUid : G_user.uid,
     discountType: DiscountType.PERCENT,
-    discountPercentage: 3,
+    discountPercentage: 0,
     discountValue: 0,
     allTotal: 0,
     dateOffer: initialDateOffer,
@@ -224,6 +234,7 @@ const CreateQuotation = ({navigation}: Props) => {
     noteToTeam: '',
     sellerEmbed,
     dateEnd: initialDateEnd,
+    dateEndUTC: initialDateEnd,
     docNumber: `QT${initialDocnumber}`,
     workers: null,
     FCMToken: fcmToken,
@@ -233,10 +244,10 @@ const CreateQuotation = ({navigation}: Props) => {
     pdfUrl: null,
   };
 
-  const methods = useForm<CreateQuotationSchemaType>({
+  const methods = useForm<QuotationSchemaType>({
     mode: 'onChange',
     defaultValues: editQuotation ? editQuotation : quotationDefaultValues,
-    resolver: yupResolver(CreateQuotationSchema),
+    resolver: yupResolver(quotationSchema),
   });
   const {fields, append, remove, update} = useFieldArray({
     control: methods.control,
@@ -313,7 +324,7 @@ const CreateQuotation = ({navigation}: Props) => {
   );
 
   const useWorkers = () => {
-    if (workers.length > 0) {
+    if (workers && workers.length > 0) {
       methods.setValue('workers', [], {shouldDirty: true});
       closeWorkerModal();
     } else {
@@ -324,7 +335,7 @@ const CreateQuotation = ({navigation}: Props) => {
   const handleModalClose = () => {
     setVisibleModalIndex(null);
   };
-  const handleEditService = (index: number, currentValue: IServiceEmbed) => {
+  const handleEditService = (index: number, currentValue: ServiceSchemaType) => {
     handleModalClose();
     setCurrentValue(currentValue);
     setServiceIndex(index);
@@ -338,35 +349,64 @@ const CreateQuotation = ({navigation}: Props) => {
 
   const {mutate: updateQuotation, isPending: isUpdatePending} =
     useUpdateQuotation(actions);
-    const {mutate, isPending} = useCreateQuotation(actions);
+  const {mutate, isPending} = useCreateQuotation(actions);
 
-  
-    const handleButtonPress = async () => {
-      const data = {
-        quotation: methods.getValues() as IQuotations,
-        company: G_company as CompanyState,
-        user : G_user
-      };
+  const handleButtonPress = async () => {
+    const data = {
+      quotation: methods.getValues() as QuotationSchemaType,
+      company: G_company,
+      user: G_user,
+    };
+setIsLoading(true);
+    try {
       if (isNewQuotation) {
-        mutate(data, {
-          onSuccess:(res) => {
-            dispatch(stateAction.get_edit_quotation(data.quotation))
-            methods.reset(data.quotation)
-            setPdfUrl(res.quotation.pdfUrl)
-          },
-        });
+        // สร้างเอกสารใหม่ใน Firestore
+        const quotationRef = firestore()
+          .collection('companies')
+          .doc(companyId)
+          .collection('quotations')
+          .doc(); // สร้าง doc ใหม่โดยอัตโนมัติด้วย ID ใหม่
+
+        await quotationRef.set(data.quotation);
+
+        // ดึง PDF URL ถ้ามี
+        const quotationDoc = await quotationRef.get();
+        const pdfUrl = quotationDoc.data()?.pdfUrl || null;
+
+        // ดำเนินการหลังจากบันทึกสำเร็จ
+        dispatch(stateAction.get_edit_quotation(data.quotation));
+        methods.reset(data.quotation);
+        setQuotationServerId(quotationRef.id);
+        setPdfUrl(pdfUrl);
       } else {
         const existingData = {
           ...methods.getValues(),
           id: quotationServerId,
         };
-        const data = {
-          quotation: existingData as IQuotations,
-          company: G_company as CompanyState,
-        };
-        updateQuotation(data);
+
+        // อัปเดตเอกสารที่มีอยู่ใน Firestore
+        const quotationRef = firestore()
+          .collection('companies')
+          .doc(companyId)
+          .collection('quotations')
+          .doc(existingData.id || '');
+
+        await quotationRef.update(existingData);
+
+        // ดำเนินการหลังจากอัปเดตสำเร็จ
+        dispatch(
+          stateAction.get_edit_quotation(existingData as QuotationSchemaType),
+        );
+        setQuotationServerId(existingData.id);
+        methods.reset(existingData as QuotationSchemaType);
       }
-    };
+    } catch (error) {
+      console.error('Error saving quotation:', error);
+      // คุณสามารถเพิ่มการจัดการข้อผิดพลาดเพิ่มเติมที่นี่ เช่น แสดง Alert ให้กับผู้ใช้
+    } finally{
+      setIsLoading(false);
+    }
+  };
 
   const handleInvoiceNumberChange = (text: string) => {
     methods.setValue('docNumber', text);
@@ -462,9 +502,12 @@ const CreateQuotation = ({navigation}: Props) => {
           <Appbar.Content title="" />
 
           <Button
-            loading={isUpdatePending || isPending}
+            loading={isUpdatePending || isPending || isLoding}
             disabled={
-              isPending || isDisabled || isUpdatePending || !methods.formState.isDirty
+              isPending ||
+              isDisabled ||
+              isUpdatePending ||
+              !methods.formState.isDirty || isLoding
             }
             testID="submited-button"
             mode="contained"
@@ -524,7 +567,7 @@ const CreateQuotation = ({navigation}: Props) => {
                 <Text style={styles.label}>บริการ-สินค้า</Text>
               </View>
               {fields.length > 0 &&
-                fields.map((field :any , index: number) => (
+                fields.map((field: any, index: number) => (
                   <CardProject
                     handleModalClose={handleModalClose}
                     visibleModalIndex={visibleModalIndex === index}
@@ -602,11 +645,10 @@ const CreateQuotation = ({navigation}: Props) => {
               <View style={styles.signatureRow}>
                 <Text style={styles.signHeader}>เพิ่มทีมงานติดตั้ง</Text>
                 <Switch
-                                color='#007e5e'
-
+                  color="#007e5e"
                   ios_backgroundColor="#3e3e3e"
                   onValueChange={useWorkers}
-                  value={ workers && workers.length > 0 ? true : false}
+                  value={workers && workers.length > 0 ? true : false}
                   style={Platform.select({
                     ios: {
                       transform: [{scaleX: 0.7}, {scaleY: 0.7}],
@@ -617,19 +659,38 @@ const CreateQuotation = ({navigation}: Props) => {
                 />
               </View>
               {/* workers */}
-              { workers && workers.length > 0 && (
+              {workers && workers.length > 0 && (
                 <FlatList
                   data={workers}
                   horizontal={true}
                   contentContainerStyle={styles.contentContainer}
                   renderItem={({item, index}) => {
+                    // ตรวจสอบเงื่อนไขเพื่อเลือกใช้ localPathUrl หรือ thumbnailUrl โดยตรง
+                    const initialImageUrl =
+                      item.image?.localPathUrl ||
+                      item.image?.thumbnailUrl ||
+                      '';
+
                     return (
                       <View style={styles.workers}>
                         <Avatar.Image
                           size={100}
-                          source={{uri: item.image ? item.image : ''}}
+                          source={{uri: initialImageUrl}}
+                          onError={({nativeEvent}) => {
+                            if (nativeEvent.error) {
+                              console.error(
+                                'Image load failed, using fallback:',
+                                nativeEvent.error,
+                              );
+                            }
+                            // ใช้ fallback เป็น thumbnailUrl
+                            return {
+                              uri: item.image.thumbnailUrl
+                                ? item.image.thumbnailUrl
+                                : item.image.originalUrl,
+                            };
+                          }}
                         />
-
                         <Text>{item.name}</Text>
                       </View>
                     );
@@ -641,7 +702,6 @@ const CreateQuotation = ({navigation}: Props) => {
                         style={styles.addButtonContainer}
                         onPress={() => {
                           openWorkerModal();
-                          // navigation.navigate('GalleryScreen', {code});
                         }}>
                         <IconButton
                           icon="plus"
@@ -663,8 +723,7 @@ const CreateQuotation = ({navigation}: Props) => {
               <View style={styles.signatureRow}>
                 <Text style={styles.signHeader}>หมายเหตุ</Text>
                 <Switch
-                                color='#007e5e'
-
+                  color="#007e5e"
                   ios_backgroundColor="#3e3e3e"
                   onValueChange={() =>
                     setOpenNoteToCustomer(!openNoteToCustomer)
@@ -717,7 +776,7 @@ const CreateQuotation = ({navigation}: Props) => {
               <View style={styles.signatureRow}>
                 <Text style={styles.signHeader}>โน๊ตภายในบริษัท</Text>
                 <Switch
-                color='#007e5e'
+                  color="#007e5e"
                   ios_backgroundColor="#3e3e3e"
                   onValueChange={() => setOpenNoteToTeam(!openNoteToTeam)}
                   value={openNoteToTeam ? true : false}
@@ -727,7 +786,6 @@ const CreateQuotation = ({navigation}: Props) => {
                       marginTop: 5,
                     },
                     android: {},
-                    
                   })}
                 />
               </View>
@@ -831,7 +889,7 @@ const CreateQuotation = ({navigation}: Props) => {
             serviceIndex={serviceIndex}
             onUpdateService={(
               serviceIndex: number,
-              updatedService: IServiceEmbed,
+              updatedService: ServiceSchemaType,
             ) => update(serviceIndex, updatedService)}
           />
         )}

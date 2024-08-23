@@ -16,11 +16,20 @@ import {
 import { Appbar, Button, TextInput } from 'react-native-paper';
 import { ValidationError } from 'yup';
 import { ParamListBase } from '../../types/navigationType';
-import { LoginEmailSchema, LoginEmailSchemaType } from '../../models/validationSchema/register/loginScreen';
+import * as yup from 'yup';
 
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'LoginScreen'>;
 }
+
+// create Yup schema for Login Email validation
+
+const LoginEmailSchema = yup.object().shape({
+  email: yup.string().email('รูปแบบอีเมลล์ไม่ถูกต้อง').required('กรุณากรอกอีเมลล์'),
+  password: yup.string().required('กรุณากรอกรหัสผ่าน'),
+});
+
+type LoginEmailSchemaType = yup.InferType<typeof LoginEmailSchema>;
 
 const LoginScreen = ({navigation}: Props) => {
   const [isLoading, setIsLoading] = useState(false);

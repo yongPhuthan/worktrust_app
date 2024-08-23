@@ -1,5 +1,5 @@
-import React, {useEffect, useMemo, useState} from 'react';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import React, { useEffect, useMemo, useState } from 'react';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 import {
   Alert,
@@ -15,13 +15,13 @@ import {
   View,
 } from 'react-native';
 
-import {Controller, FormProvider, useForm, useWatch} from 'react-hook-form';
+import { Controller, FormProvider, useForm, useWatch } from 'react-hook-form';
 
-import {faPlus} from '@fortawesome/free-solid-svg-icons';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {yupResolver} from '@hookform/resolvers/yup';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { yupResolver } from '@hookform/resolvers/yup';
 import Decimal from 'decimal.js-light';
-import {DiscountType} from '../../types/enums';
+import { nanoid } from 'nanoid';
 import CurrencyInput from 'react-native-currency-input';
 import {
   Appbar,
@@ -31,24 +31,21 @@ import {
   TextInput,
   Text as TextPaper,
 } from 'react-native-paper';
+import { DiscountType } from '../../types/enums';
 import GalleryScreen from '../gallery/existing';
 import ExistingMaterials from '../materials/existing';
 import SelectStandard from '../standard/selectStandard';
-import firebase from '../../firebase';
-import {nanoid} from 'nanoid';
-import {
-  IMaterialEmbed,
-  IServiceEmbed,
-  IStandardEmbed,
-} from '../../types/interfaces/ServicesEmbed';
-import {serviceValidationSchema} from '../../models/validationSchema';
-import { IDefaultStandards } from 'models/DefaultStandards';
+
+import { MaterialSchemaType } from '../../validation/collection/subcollection/materials';
+import { StandardSchemaType } from '../../validation/collection/subcollection/standard';
+import { serviceSchema, ServiceSchemaType } from '../../validation/field/services';
+
 
 type Props = {
-  onAddService: (data: IServiceEmbed) => void;
+  onAddService: (data: ServiceSchemaType) => void;
   onClose: () => void;
   visible: boolean;
-  selectService: IServiceEmbed | null;
+  selectService: ServiceSchemaType | null;
   resetSelectService: () => void;
   resetAddNewService: () => void;
 };
@@ -79,7 +76,7 @@ const AddProductFormModal = (props: Props) => {
     resetAddNewService();
   };
 
-  const defaultService: IServiceEmbed = {
+  const defaultService: ServiceSchemaType = {
     id: nanoid(),
     title: '',
     description: '',
@@ -87,17 +84,17 @@ const AddProductFormModal = (props: Props) => {
     qty: 1,
     total: 0,
     unit: 'ชุด',
-    serviceImages: [],
+    images: [],
     discountType: DiscountType.NONE,
     discountValue: 0,
     standards: [],
     materials: [],
     created: new Date(),
   };
-  const methods = useForm<IServiceEmbed>({
+  const methods = useForm<ServiceSchemaType>({
     mode: 'onChange',
     defaultValues: selectService ? selectService : defaultService,
-    resolver: yupResolver(serviceValidationSchema),
+    resolver: yupResolver(serviceSchema),
   });
   const standards = useWatch({
     control: methods.control,
@@ -127,9 +124,9 @@ const AddProductFormModal = (props: Props) => {
     name: ['unitPrice', 'qty'],
   });
 
-  const serviceImages = useWatch({
+  const images = useWatch({
     control: methods.control,
-    name: 'serviceImages',
+    name: 'images',
   });
 
   useEffect(() => {
@@ -218,7 +215,7 @@ const AddProductFormModal = (props: Props) => {
                     alignItems: 'center',
                   }}>
                   <FlatList
-                    data={methods.watch('serviceImages')}
+                    data={methods.watch('images')}
                     horizontal={true}
                     renderItem={({item, index}) => {
                       return (
@@ -226,7 +223,7 @@ const AddProductFormModal = (props: Props) => {
                           <TouchableOpacity
                             onPress={() => setModalImagesVisible(true)}>
                             <Image
-                              source={{uri: item.originalUrl}}
+                              source={{uri: item.localPathUrl ?? ''}}
                               style={styles.image}
                             />
                           </TouchableOpacity>
@@ -235,7 +232,7 @@ const AddProductFormModal = (props: Props) => {
                     }}
                     keyExtractor={(item, index) => index.toString()}
                     ListFooterComponent={
-                      serviceImages && serviceImages.length > 0 ? (
+                      images && images.length > 0 ? (
                         <TouchableOpacity
                           style={styles.addButtonContainer}
                           onPress={() => {
@@ -475,7 +472,7 @@ const AddProductFormModal = (props: Props) => {
                           style={styles.cardContainer}>
                           {methods
                             .watch('standards')
-                            ?.map((item: IStandardEmbed, index) => (
+                            ?.map((item: StandardSchemaType, index) => (
                               <Text key={index}>
                                 {item.standardShowTitle}
                               </Text>
@@ -523,7 +520,7 @@ const AddProductFormModal = (props: Props) => {
                           style={styles.cardContainer}>
                           {methods
                             .watch('materials')
-                            ?.map((item: IMaterialEmbed, index: number) => (
+                            ?.map((item: MaterialSchemaType, index: number) => (
                               <Text key={index}>{item.name}</Text>
                             ))}
                         </TouchableOpacity>
@@ -563,11 +560,13 @@ const AddProductFormModal = (props: Props) => {
                 isVisible={isModalMaterialsVisible}
                 onClose={() => setIsModalMaterialsVisible(false)}
               />
-              {serviceImages  && (
+              {images && (
                 <GalleryScreen
                   isVisible={isModalImagesVisible}
                   onClose={() => setModalImagesVisible(false)}
-                  serviceImages={serviceImages}
+                  selectedImages={
+                    images
+                  }
                 />
               )}
             </ScrollView>

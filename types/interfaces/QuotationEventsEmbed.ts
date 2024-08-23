@@ -1,22 +1,15 @@
-import { Schema } from 'mongoose';
+import * as Yup from 'yup';
 
-interface IQuotationEventsEmbed {
-  id : string
-  pageView: number;
-  download: number;
-  print: number;
-  share: number;
-  createdAt: Date;
-  lastOccurredAt: Date;
-}
-
-const quotationEventsEmbedSchema = new Schema<IQuotationEventsEmbed>({
-  pageView: { type: Number, default: 0 },
-  download: { type: Number, default: 0 },
-  print: { type: Number, default: 0 },
-  share: { type: Number, default: 0 },
-  createdAt: { type: Date, default: Date.now },
-  lastOccurredAt: { type: Date, default: Date.now },
+const quotationEventsEmbedSchema = Yup.object().shape({
+  pageView: Yup.number().default(0),
+  download: Yup.number().default(0),
+  print: Yup.number().default(0),
+  share: Yup.number().default(0),
+  quotationId : Yup.string().required("กรุณากรอก quotationId"),
+  createdAt: Yup.date().default( new Date()),
+  lastOccurredAt: Yup.date().default( new Date()),
 });
+
+type IQuotationEventsEmbed = Yup.InferType<typeof quotationEventsEmbedSchema>;
 
 export { IQuotationEventsEmbed, quotationEventsEmbedSchema };

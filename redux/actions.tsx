@@ -1,23 +1,21 @@
 
 import { FirebaseAuthTypes } from '@react-native-firebase/auth';
-import { IInvoices } from '../models/Invoices';
-import { IQuotations } from '../models/Quotations';
-import { ISubmissions } from '../models/Submissions';
-import { ISubscription } from '../models/Subscription';
-import { IUser } from '../models/User';
-import { Types } from 'mongoose';
-import { CompanyState } from '../types';
+
 import { NotificationType } from '../types/enums';
-import { IServiceEmbed } from '../types/interfaces/ServicesEmbed';
-import { IWarrantyEmbed } from '../types/interfaces/WarrantyEmbed';
-import { IWorkerEmbed } from '../types/interfaces/WorkerEmbed';
-import { CreateQuotationSchemaType } from '../validation/quotations/create';
-import { IReceipts } from '../models/Receipts';
+
 import * as contrains from './constrains';
-import { ImageGallery } from '../components/gallery/existing';
-import { ICategory } from '../models/Category';
-import { IDefaultStandards } from 'models/DefaultStandards';
-import { IMaterials } from 'models/DefaultMaterials';
+
+import { UserType } from '../validation/collection/users';
+import { QuotationSchemaType } from '../validation/collection/subcollection/quotations';
+import { CompanyType } from '../validation/collection/companies';
+import { StandardSchemaType } from '../validation/collection/subcollection/standard';
+import { MaterialSchemaType } from '../validation/collection/subcollection/materials';
+import {WarrantySchemaType} from '../validation/collection/subcollection/warranty';
+import { ServiceSchemaType } from '../validation/field/services';
+import { WorkerSchemaType } from '../validation/collection/subcollection/workers';
+import { ProjectImagesSchemaType } from '../validation/collection/subcollection/projectImages';
+import { CategorySchemaType } from '../validation/collection/subcollection/categories';
+
 
 // ACTION => REDUCER
 
@@ -26,27 +24,27 @@ export const code_company = (payload: string) => ({
   payload,
 });
 
-export const get_gallery = (payload: ImageGallery[]) => ({
+export const get_gallery = (payload: ProjectImagesSchemaType[]) => ({
   type: contrains.GET_GALLERY,
   payload,
 });
 
-export const get_companyID = (payload: Types.ObjectId) => ({
+export const get_companyID = (payload: string) => ({
   type: contrains.GET_COMPANYID,
   payload,
 });
 
-export const add_product = (payload: IServiceEmbed) => ({
+export const add_product = (payload: ServiceSchemaType) => ({
   type: contrains.ADD_PRODUCT,
   payload,
 });
 
-export const get_company_state = (payload: CompanyState) => ({
+export const get_company_state = (payload: CompanyType) => ({
   type: contrains.GET_COMPANY_STATE,
   payload,
 });
 
-export const get_existing_services = (payload: IServiceEmbed[]) => ({
+export const get_existing_services = (payload: ServiceSchemaType[]) => ({
   type: contrains.GET_EXISTING_SERVICES,
   payload,
 });
@@ -57,12 +55,12 @@ export const get_logo = (payload: string) => ({
   payload,
 });
 
-export const get_default_warranty = (payload: IWarrantyEmbed) => ({
+export const get_default_warranty = (payload: WarrantySchemaType) => ({
   type: contrains.GET_DEFAULT_WARRANTY,
   payload,
 });
 
-export const get_existing_workers = (payload: IWorkerEmbed[]) => ({
+export const get_existing_workers = (payload: WorkerSchemaType[]) => ({
   type: contrains.GET_EXISTING_WORKERS,
   payload,
 });
@@ -72,27 +70,27 @@ export const get_user_signature = (payload: string) => ({
   payload,
 });
 
-export const get_edit_quotation = (payload: CreateQuotationSchemaType) => ({
+export const get_edit_quotation = (payload: QuotationSchemaType) => ({
   type: contrains.GET_EDIT_QUOTATION,
   payload,
 });
 
-export const get_edit_invoice = (payload: IInvoices) => ({
+export const get_edit_invoice = (payload: any) => ({
   type: contrains.GET_EDIT_INVOICE,
   payload,
 });
 
-export const get_edit_receipt = (payload: IReceipts) => ({
+export const get_edit_receipt = (payload: any) => ({
   type: contrains.GET_EDIT_RECEIPT,
   payload,
 });
 
-export const get_edit_submission = (payload: ISubmissions) => ({
+export const get_edit_submission = (payload: any) => ({
   type: contrains.GET_EDIT_SUBMISSION,
   payload,
 });
 
-export const view_submission = (payload: ISubmissions) => ({
+export const view_submission = (payload: any) => ({
   type: contrains.VIEW_SUBMISSION,
   payload,
 });
@@ -133,12 +131,12 @@ export const get_quotation_id = (payload: string) => ({
   payload,
 });
 
-export const get_subscription = (payload: ISubscription) => ({
+export const get_subscription = (payload: any) => ({
   type: contrains.GET_SUBSCRIPTION,
   payload,
 });
 
-export const get_user = (payload: IUser) => ({
+export const get_user = (payload: UserType) => ({
   type: contrains.GET_USER,
   payload,
 });
@@ -157,26 +155,26 @@ export const get_notification = (payload: NotificationType[]) => ({
   payload,
 });
 
-export const get_quotations = (payload: IQuotations[]) => ({
+export const get_quotations = (payload: QuotationSchemaType[]) => ({
   type: contrains.GET_QUOTATIONS,
   payload,
 });
 
-export const get_categories = (payload: ICategory[]) => ({
+export const get_categories = (payload: CategorySchemaType[]) => ({
   type: contrains.GET_CATEGORIES,
   payload,
 });
 
-export const get_initial_gallery = (payload: ImageGallery[]) => ({
+export const get_initial_gallery = (payload: ProjectImagesSchemaType[]) => ({
   type: contrains.GET_INITIAL_GALLERY,
   payload,
 });
 
-export const get_standard = (payload: IDefaultStandards[]) => ({
+export const get_standard = (payload: StandardSchemaType[]) => ({
   type: contrains.GET_STANDARD,
   payload,
 });
-export const get_material = (payload: IMaterials[]) => ({
+export const get_material = (payload: MaterialSchemaType[]) => ({
   type: contrains.GET_MATERIAL,
   payload,
 });
@@ -187,28 +185,28 @@ export const codeCompany = (payload: string) => {
     dispatch(code_company(payload));
   };
 };
-export const getCompanyID = (payload: Types.ObjectId) => {
-  return (dispatch: (arg0: {type: string; payload: Types.ObjectId}) => void) => {
+export const getCompanyID = (payload: string) => {
+  return (dispatch: (arg0: {type: string; payload: string}) => void) => {
     dispatch(get_companyID(payload));
   };
 };
-export const addProduct = (payload: IServiceEmbed) => {
-  return (dispatch: (arg0: {type: string; payload: IServiceEmbed}) => void) => {
+export const addProduct = (payload: ServiceSchemaType) => {
+  return (dispatch: (arg0: {type: string; payload: ServiceSchemaType}) => void) => {
     dispatch(add_product(payload));
   };
 };
 
-export const getCompanyState = (payload: CompanyState) => {
+export const getCompanyState = (payload: CompanyType) => {
   return (
-    dispatch: (arg0: {type: string; payload: CompanyState | null}) => void,
+    dispatch: (arg0: {type: string; payload: CompanyType | null}) => void,
   ) => {
     dispatch(get_company_state(payload));
   };
 };
 
-export const getExistingServices = (payload: IServiceEmbed[]) => {
+export const getExistingServices = (payload: ServiceSchemaType[]) => {
   return (
-    dispatch: (arg0: {type: string; payload: IServiceEmbed[]}) => void,
+    dispatch: (arg0: {type: string; payload: ServiceSchemaType[]}) => void,
   ) => {
     dispatch(get_existing_services(payload));
   };
@@ -222,14 +220,14 @@ export const getLogo = (payload: string) => {
   };
 };
 
-export const getDefaultWarranty = (payload: IWarrantyEmbed) => {
-  return (dispatch: (arg0: {type: string; payload: IWarrantyEmbed}) => void) => {
+export const getDefaultWarranty = (payload: WarrantySchemaType) => {
+  return (dispatch: (arg0: {type: string; payload: WarrantySchemaType}) => void) => {
     dispatch(get_default_warranty(payload));
   };
 };
 
-export const getExistingWorkers = (payload: IWorkerEmbed[]) => {
-  return (dispatch: (arg0: {type: string; payload: IWorkerEmbed[]}) => void) => {
+export const getExistingWorkers = (payload: WorkerSchemaType[]) => {
+  return (dispatch: (arg0: {type: string; payload: WorkerSchemaType[]}) => void) => {
     dispatch(get_existing_workers(payload));
   };
 };
@@ -240,8 +238,8 @@ export const getUserSignature = (payload: string) => {
   };
 };
 
-export const getEditQuotation = (payload: CreateQuotationSchemaType) => {
-  return (dispatch: (arg0: {type: string; payload: CreateQuotationSchemaType}) => void) => {
+export const getEditQuotation = (payload: QuotationSchemaType) => {
+  return (dispatch: (arg0: {type: string; payload: QuotationSchemaType}) => void) => {
     dispatch(get_edit_quotation(payload));
   };
 };
@@ -252,8 +250,8 @@ export const resetEditQuotation = () => {
   };
 };
 
-export const getEditInvoice = (payload: IInvoices) => {
-  return (dispatch: (arg0: {type: string; payload: IInvoices}) => void) => {
+export const getEditInvoice = (payload: any) => {
+  return (dispatch: (arg0: {type: string; payload: any}) => void) => {
     dispatch(get_edit_invoice(payload));
   };
 };
@@ -264,8 +262,8 @@ export const resetEditInvoice = () => {
   };
 };
 
-export const getEditReceipt = (payload: IReceipts) => {
-  return (dispatch: (arg0: {type: string; payload: IReceipts}) => void) => {
+export const getEditReceipt = (payload: any) => {
+  return (dispatch: (arg0: {type: string; payload: any}) => void) => {
     dispatch(get_edit_receipt(payload));
   };
 };
@@ -300,20 +298,20 @@ export const getQuotationId = (payload: string) => {
   };
 };
 
-export const getEditSubmission = (payload: ISubmissions) => {
-  return (dispatch: (arg0: {type: string; payload: ISubmissions}) => void) => {
+export const getEditSubmission = (payload: any) => {
+  return (dispatch: (arg0: {type: string; payload: any}) => void) => {
     dispatch(get_edit_submission(payload));
   };
 };
 
-export const viewSubmission = (payload: ISubmissions) => {
-  return (dispatch: (arg0: {type: string; payload: ISubmissions}) => void) => {
+export const viewSubmission = (payload: any) => {
+  return (dispatch: (arg0: {type: string; payload: any}) => void) => {
     dispatch(view_submission(payload));
   };
 };
 
-export const getGallery = (payload: ImageGallery[]) => {
-  return (dispatch: (arg0: {type: string; payload: ImageGallery[]}) => void) => {
+export const getGallery = (payload: ProjectImagesSchemaType[]) => {
+  return (dispatch: (arg0: {type: string; payload: ProjectImagesSchemaType[]}) => void) => {
     dispatch(get_gallery(payload));
   };
 }
@@ -324,14 +322,14 @@ export const resetEditSubmission = () => {
   };
 };
 
-export const getSubscription = (payload: ISubscription) => {
-  return (dispatch: (arg0: {type: string; payload: ISubscription}) => void) => {
+export const getSubscription = (payload: any) => {
+  return (dispatch: (arg0: {type: string; payload: any}) => void) => {
     dispatch(get_subscription(payload));
   };
 };
 
-export const getUser = (payload: IUser) => {
-  return (dispatch: (arg0: {type: string; payload: IUser}) => void) => {
+export const getUser = (payload: UserType) => {
+  return (dispatch: (arg0: {type: string; payload: UserType}) => void) => {
     dispatch(get_user(payload));
   };
 };
@@ -358,41 +356,41 @@ export const getNotification = (payload: NotificationType[]) => {
   };
 };
 
-export const getQuotations = (payload: IQuotations[]) => {
+export const getQuotations = (payload: QuotationSchemaType[]) => {
   return (
-    dispatch: (arg0: {type: string; payload: IQuotations[]}) => void,
+    dispatch: (arg0: {type: string; payload: QuotationSchemaType[]}) => void,
   ) => {
     dispatch(get_quotations(payload));
   };
 };
 
-export const getCategories = (payload: ICategory[]) => {
+export const getCategories = (payload: CategorySchemaType[]) => {
   return (
-    dispatch: (arg0: {type: string; payload: ICategory[]}) => void,
+    dispatch: (arg0: {type: string; payload: CategorySchemaType[]}) => void,
   ) => {
     dispatch(get_categories(payload));
   };
 }
 
-export const getInitialGallery = (payload: ImageGallery[]) => {
+export const getInitialGallery = (payload: ProjectImagesSchemaType[]) => {
   return (
-    dispatch: (arg0: {type: string; payload: ImageGallery[]}) => void,
+    dispatch: (arg0: {type: string; payload: ProjectImagesSchemaType[]}) => void,
   ) => {
     dispatch(get_initial_gallery(payload));
   };
 }
 
-export const getStandard = (payload: IDefaultStandards[]) => {
+export const getStandard = (payload: StandardSchemaType[]) => {
   return (
-    dispatch: (arg0: {type: string; payload: IDefaultStandards[]}) => void,
+    dispatch: (arg0: {type: string; payload: StandardSchemaType[]}) => void,
   ) => {
     dispatch(get_standard(payload));
   };
 }
 
-export const getMaterial = (payload: IMaterials[]) => {
+export const getMaterial = (payload: MaterialSchemaType[]) => {
   return (
-    dispatch: (arg0: {type: string; payload: IMaterials[]}) => void,
+    dispatch: (arg0: {type: string; payload: MaterialSchemaType[]}) => void,
   ) => {
     dispatch(get_material(payload));
   };

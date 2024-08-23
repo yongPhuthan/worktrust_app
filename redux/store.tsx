@@ -1,55 +1,53 @@
+import {Company} from '@prisma/client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { FirebaseAuthTypes } from '@react-native-firebase/auth';
-import React, { createContext, useReducer } from 'react';
-import { Company } from '@prisma/client';
-import { Types } from 'mongoose';
-import { IInvoices } from '../models/Invoices';
-import { IQuotations } from '../models/Quotations';
-import { IReceipts } from '../models/Receipts';
-import { ISubmissions } from '../models/Submissions';
-import { ISubscription } from '../models/Subscription';
-import { IUser } from '../models/User';
-import { CompanyState } from '../types';
-import { NotificationType } from '../types/enums';
-import { IServiceEmbed } from '../types/interfaces/ServicesEmbed';
-import { IWarrantyEmbed } from '../types/interfaces/WarrantyEmbed';
-import { IWorkerEmbed } from '../types/interfaces/WorkerEmbed';
-import { CreateQuotationSchemaType } from '../validation/quotations/create';
+import {FirebaseAuthTypes} from '@react-native-firebase/auth';
+import React, {createContext, useReducer} from 'react';
+
+import {NotificationType} from '../types/enums';
+
+import {QuotationSchemaType} from 'validation/collection/subcollection/quotations';
+import {WarrantySchemaType} from 'validation/collection/subcollection/warranty';
+import {WorkerSchemaType} from 'validation/collection/subcollection/workers';
+import {ImageGallery} from '../components/gallery/existing';
 import * as contrains from './constrains';
-import { ImageGallery } from '../components/gallery/existing';
-import { ICategory } from '../models/Category';
-import { IDefaultStandards } from '../models/DefaultStandards';
-import { IMaterials } from '../models/Materials';
+
+import {CompanyType} from 'validation/collection/companies';
+import {MaterialSchemaType} from 'validation/collection/subcollection/materials';
+import {StandardSchemaType} from 'validation/collection/subcollection/standard';
+import {UserType} from 'validation/collection/users';
+import {ServiceSchemaType} from 'validation/field/services';
+import { ProjectImagesSchemaType } from 'validation/collection/subcollection/projectImages';
+import { CategorySchemaType } from 'validation/collection/subcollection/categories';
 
 export type StateType = {
-  companyId: Types.ObjectId | string;
+  companyId: string;
   code: string;
-  services: IServiceEmbed[];
-  existingServices: IServiceEmbed[];
-  defaultWarranty: IWarrantyEmbed | null;
-  quotations : IQuotations[] | null;
-  editQuotation: CreateQuotationSchemaType | null;
-  editInvoice: IInvoices | null;
-  editReceipt: IReceipts | null;
-  editSubmission: ISubmissions | null;
-  viewSubmission: ISubmissions | null;
-  existingWorkers: IWorkerEmbed[];
+  services: ServiceSchemaType[];
+  existingServices: ServiceSchemaType[];
+  defaultWarranty: WarrantySchemaType | null;
+  quotations: QuotationSchemaType[] | null;
+  editQuotation: QuotationSchemaType | null;
+  editInvoice: any | null;
+  editReceipt: any | null;
+  editSubmission: any | null;
+  viewSubmission: any | null;
+  existingWorkers: WorkerSchemaType[];
   userSignature: string;
   sellerUid: string;
   fcmToken: string;
   quotationRefNumber: string;
   quotationId: string;
-  G_subscription: ISubscription | null;
-  G_user: IUser | null;
+  G_subscription: any | null;
+  G_user: UserType | null;
   G_logo: string | null;
-  G_company: CompanyState | null;
-  firebase_User : FirebaseAuthTypes.User | null;
-  notifications : NotificationType[] | null;
-  G_gallery : ImageGallery[];
-  G_categories : ICategory[];
-  G_standards : IDefaultStandards[];
-  G_materials : IMaterials[];
-  initial_gallery : ImageGallery[];
+  G_company: CompanyType | null;
+  firebase_User: FirebaseAuthTypes.User | null;
+  notifications: NotificationType[] | null;
+  G_gallery: ProjectImagesSchemaType[];
+  G_categories: CategorySchemaType[];
+  G_standards: StandardSchemaType[];
+  G_materials: MaterialSchemaType[];
+  initial_gallery: ProjectImagesSchemaType[];
 };
 
 type ActionType = {
@@ -58,27 +56,23 @@ type ActionType = {
     | string
     | number
     | object
-    | IServiceEmbed[]
     | Company
     | NotificationType
-    | IWarrantyEmbed
-    | IQuotations
-    | IInvoices
-    | IReceipts
     | null
     | undefined
     | boolean
-    | ISubmissions
-    | ISubscription
-    | IUser
+    | UserType
     | FirebaseAuthTypes.User
-    | IServiceEmbed
     | ImageGallery[]
-    | ICategory[]
-    | IDefaultStandards[]
-    | IMaterials[]
-    
-    |CreateQuotationSchemaType
+    | ServiceSchemaType[]
+    | QuotationSchemaType[]
+    | StandardSchemaType[]
+    | MaterialSchemaType[]
+    | WorkerSchemaType[]
+    | WarrantySchemaType
+    | CompanyType
+    | ProjectImagesSchemaType[]
+    | CategorySchemaType[]
 };
 
 type ContextType = {
@@ -156,38 +150,41 @@ function reducer(state: StateType, action: ActionType): StateType {
     case contrains.CODE:
       return {...state, code: action.payload as string};
     case contrains.GET_COMPANYID:
-      return {...state, companyId: action.payload as Types.ObjectId};
+      return {...state, companyId: action.payload as string};
     case contrains.GET_COMPANY_STATE:
-      return {...state, G_company: action.payload as CompanyState};
+      return {...state, G_company: action.payload as CompanyType};
     case contrains.ADD_PRODUCT:
       return {
         ...state,
-        services: [...state.services, action.payload ],
+        services: [...state.services, action.payload as ServiceSchemaType],
       };
     case contrains.GET_EXISTING_SERVICES:
-      return {...state, existingServices: action.payload };
+      return {
+        ...state,
+        existingServices: action.payload as ServiceSchemaType[],
+      };
     case contrains.GET_LOGO:
       return {...state, G_logo: action.payload as string};
     case contrains.GET_DEFAULT_WARRANTY:
-      return {...state, defaultWarranty: action.payload };
+      return {...state, defaultWarranty: action.payload as WarrantySchemaType};
     case contrains.GET_EXISTING_WORKERS:
-      return {...state, existingWorkers: action.payload};
+      return {...state, existingWorkers: action.payload as WorkerSchemaType[]};
     case contrains.GET_USER_SIGNATURE:
-      return {...state, userSignature: action.payload };
+      return {...state, userSignature: action.payload as string};
     case contrains.GET_EDIT_QUOTATION:
-      return {...state, editQuotation: action.payload};
+      return {...state, editQuotation: action.payload as QuotationSchemaType};
     case contrains.GET_EDIT_INVOICE:
-      return {...state, editInvoice: action.payload };
+      return {...state, editInvoice: action.payload};
     case contrains.GET_EDIT_RECEIPT:
-      return {...state, editReceipt: action.payload };
+      return {...state, editReceipt: action.payload};
     case contrains.GET_EDIT_SUBMISSION:
-      return {...state, editSubmission: action.payload };
+      return {...state, editSubmission: action.payload};
     case contrains.VIEW_SUBMISSION:
-      return {...state, viewSubmission: action.payload };
+      return {...state, viewSubmission: action.payload};
     case contrains.GET_SELLER_UID:
-      return {...state, sellerUid: action.payload };
+      return {...state, sellerUid: action.payload as string};
     case contrains.GET_FCM_TOKEN:
-      return {...state, fcmToken: action.payload };
+      return {...state, fcmToken: action.payload as string};
     case contrains.RESET_EDIT_QUOTATION:
       return {...state, editQuotation: null};
     case contrains.RESET_EDIT_INVOICE:
@@ -197,31 +194,34 @@ function reducer(state: StateType, action: ActionType): StateType {
     case contrains.RESET_EDIT_SUBMISSION:
       return {...state, editSubmission: null};
     case contrains.GET_QUOTATION_REF_NUMBER:
-      return {...state, quotationRefNumber: action.payload };
+      return {...state, quotationRefNumber: action.payload as string};
     case contrains.GET_QUOTATION_ID:
-      return {...state, quotationId: action.payload };
+      return {...state, quotationId: action.payload as string};
     case contrains.GET_SUBSCRIPTION:
-      return {...state, G_subscription: action.payload };
+      return {...state, G_subscription: action.payload};
     case contrains.GET_USER:
-      return {...state, G_user: action.payload };
+      return {...state, G_user: action.payload as UserType};
     case contrains.GET_FIREBASE_USER:
-      return {...state, firebase_User: action.payload};
+      return {
+        ...state,
+        firebase_User: action.payload as FirebaseAuthTypes.User,
+      };
     case contrains.RESET_FIREBASE_USER:
       return {...state, firebase_User: null};
     case contrains.GET_NOTIFICATION:
-      return {...state, notifications: action.payload };
+      return {...state, notifications: action.payload as NotificationType[]};
     case contrains.GET_GALLERY:
-      return {...state, G_gallery: action.payload };
+      return {...state, G_gallery: action.payload as ProjectImagesSchemaType[]};
     case contrains.GET_QUOTATIONS:
-      return {...state, quotations: action.payload };
+      return {...state, quotations: action.payload as QuotationSchemaType[]};
     case contrains.GET_CATEGORIES:
-      return {...state, G_categories: action.payload };
+      return {...state, G_categories: action.payload as CategorySchemaType[]};
     case contrains.GET_INITIAL_GALLERY:
-      return {...state, initial_gallery: action.payload };
+      return {...state, initial_gallery: action.payload as ProjectImagesSchemaType[]};
     case contrains.GET_STANDARD:
-      return {...state, G_standards: action.payload };
+      return {...state, G_standards: action.payload as StandardSchemaType[]};
     case contrains.GET_MATERIAL:
-      return {...state, G_materials: action.payload };
+      return {...state, G_materials: action.payload as MaterialSchemaType[]};
 
     default:
       return state;

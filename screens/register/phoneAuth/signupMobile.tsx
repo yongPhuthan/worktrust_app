@@ -24,10 +24,23 @@ import {Controller, set, useForm, useWatch} from 'react-hook-form';
 import {FirebaseAuthTypes} from '@react-native-firebase/auth';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {ParamListBase} from '../../../types/navigationType';
-import { LoginMobileSchema } from '../../../models/validationSchema/register/phoneAuth/loginMobileScreen';
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'RegisterScreen'>;
 }
+
+
+const LoginMobileSchema = yup.object().shape({
+  phoneNumber: yup
+    .string()
+    .required('กรุณากรอกหมายเลขโทรศัพท์')
+    .matches(
+      /^0[0-9]{9}$/,
+      'หมายเลขโทรศัพท์ต้องมี 10 หลักและเริ่มต้นด้วย 0',
+    ),
+});
+
+
+
 const SignupMobileScreen = ({navigation}: Props) => {
   // If null, no SMS has been sent
   const [confirm, setConfirm] =

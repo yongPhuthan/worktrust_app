@@ -8,7 +8,6 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { IDefaultStandards } from '../../models/DefaultStandards';
 import { Store } from '../../redux/store';
 
 import { useFormContext } from 'react-hook-form';
@@ -27,6 +26,7 @@ import {
 import useFetchStandard from '../../hooks/standard/read';
 import { useUser } from '../../providers/UserContext';
 import CreateStandard from './createStandard';
+import { StandardSchemaType } from '../../validation/collection/subcollection/standard';
 
 interface AuditModalProps {
   isVisible: boolean;
@@ -49,7 +49,7 @@ const SelectStandard = ({
 
   const user = useUser();
   const [standardDatas, setStandardDatas] = useState<
-    IDefaultStandards[] | null
+    StandardSchemaType[] | null
   >(null);
   const context = useFormContext();
   const {
@@ -73,10 +73,10 @@ const SelectStandard = ({
       setStandardDatas(G_standards);
     }
   }, [G_standards]);
-  const handleSelectStandard = (standard: IDefaultStandards) => {
+  const handleSelectStandard = (standard: StandardSchemaType) => {
     const currentStandards = getValues('standards') || [];
     const standardIndex = currentStandards.findIndex(
-      (standardData: IDefaultStandards) => standardData._id === standard._id,
+      (standardData: StandardSchemaType) => standardData.id === standard.id,
     );
     if (standardIndex !== -1) {
       const updatedStandards = [...currentStandards];
@@ -86,7 +86,7 @@ const SelectStandard = ({
       const updatedStandards = [
         ...currentStandards,
         {
-          _id: standard._id,
+          id: standard.id,
           standardShowTitle: standard.standardShowTitle,
           image: standard.image,
           content: standard.content,
@@ -163,7 +163,7 @@ const SelectStandard = ({
                   style={[
                     styles.card,
                     (watch('standards') || []).some(
-                      (standard: IDefaultStandards) => standard._id === item._id,
+                      (standard: StandardSchemaType) => standard.id === item.id,
                     )
                       ? styles.cardChecked
                       : null,
@@ -190,8 +190,8 @@ const SelectStandard = ({
                         }}
                         status={
                           (watch('standards') || []).some(
-                            (standard: IDefaultStandards) =>
-                              standard._id === item._id,
+                            (standard: StandardSchemaType) =>
+                              standard.id === item.id,
                           )
                             ? 'checked'
                             : 'unchecked'
@@ -230,9 +230,9 @@ const SelectStandard = ({
                                     flexDirection: 'column',
                                     marginHorizontal: 5,
                                   }}>
-                                  {item.image && (
+                                  {item.image  && item.image.localPathUrl && (
                                     <Image
-                                      source={{uri: item.image.thumbnailUrl}}
+                                      source={{uri: item.image.localPathUrl}}
                                       style={styles.productImage}
                                     />
                                   )}
@@ -243,10 +243,11 @@ const SelectStandard = ({
                                     flexDirection: 'column',
                                     marginHorizontal: 5, // เพิ่ม margin รอบข้างเล็กน้อยเพื่อแยกรูปภาพ
                                   }}>
-                                  {item.badStandardImage && (
+                                  {item.badStandardImage && item.badStandardImage.localPathUrl && (
                                     <Image
-                                      source={{uri: item.badStandardImage.thumbnailUrl}}
+                                      source={{uri: item.badStandardImage.localPathUrl}}
                                       style={styles.productImage}
+                            
                                     />
                                   )}
                                 </View>
@@ -314,7 +315,7 @@ const SelectStandard = ({
                 </Button>
               </View>
             }
-            keyExtractor={(item: IDefaultStandards) => new Types.ObjectId(item._id as string).toHexString()}
+            keyExtractor={(item: StandardSchemaType) => item.id}
           />
 
           {watch('standards')?.length > 0 && (

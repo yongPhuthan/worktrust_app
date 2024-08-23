@@ -31,7 +31,7 @@ import {
   Switch,
   TextInput,
 } from 'react-native-paper';
-import {imageTogallery} from '../../../models/validationSchema';
+// import {imageTogallery} from '../../../models/validationSchema';
 
 import firebase from '../../../firebase';
 import {useUploadToCloudflare} from '../../../hooks/useUploadtoCloudflare';
@@ -121,7 +121,7 @@ const AddNewBeforeImage = ({
       selectedTags: [],
       image: '',
     },
-    resolver: yupResolver(imageTogallery),
+    // resolver: yupResolver(imageTogallery),
   });
   const context = useFormContext();
   const image = useWatch({

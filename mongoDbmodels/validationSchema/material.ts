@@ -5,6 +5,7 @@ export const imagesSetSchema = yup.object().shape({
   originalUrl: yup.string().required('Original URL is required'),
   localPathUrl : yup.string().nullable(),
   created: yup.date().nullable(),
+  
 });
 export const materialSchema = yup
   .object()

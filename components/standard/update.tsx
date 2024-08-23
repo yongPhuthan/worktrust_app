@@ -4,7 +4,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import React, { useCallback, useContext } from 'react';
 import { Store } from '../../redux/store';
 
-import { IDefaultStandards } from '../../models/DefaultStandards';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import {
   Alert,
@@ -28,11 +27,11 @@ import { useUploadToCloudflare } from '../../hooks/useUploadtoCloudflare';
 import { usePickImage } from '../../hooks/utils/image/usePickImage';
 
 import { useUser } from '../../providers/UserContext';
-import { defaulatStandardSchema, standardEmbedSchema } from '../../models/validationSchema';
+import { StandardSchemaType,standardSchema } from '../../validation/collection/subcollection/standard';
 
 type Props = {
     onClose: () => void;
-  standard : IDefaultStandards;
+  standard : StandardSchemaType;
 };
 
 const UpdateStandard = (props: Props) => {
@@ -53,10 +52,10 @@ const UpdateStandard = (props: Props) => {
     setValue,
     getValues,
     formState: {errors, isValid,isDirty},
-  } = useForm<IDefaultStandards>({
+  } = useForm<StandardSchemaType>({
     mode: 'onChange',
     defaultValues: standard,
-    resolver: yupResolver(defaulatStandardSchema),
+    resolver: yupResolver(standardSchema),
   });
 
   const image = useWatch({
@@ -71,14 +70,14 @@ const UpdateStandard = (props: Props) => {
     isImagePicking: isStandardImageUploading,
     pickImage: pickStandardImage,
   } = usePickImage((uri: string) => {
-    setValue('image', uri, {shouldDirty: true});
+    setValue('image.localPathUrl', uri, {shouldDirty: true});
   });
 
   const {
     isImagePicking: isBadStandardImageUploading,
     pickImage: pickBadStandardImage,
   } = usePickImage((uri: string) => {
-    setValue('badStandardImage', uri, {shouldDirty: true});
+    setValue('badStandardImage.localPathUrl', uri, {shouldDirty: true});
   });
 
   const standardStoragePath = `${code}/standards/${getValues(
@@ -98,7 +97,7 @@ const UpdateStandard = (props: Props) => {
     isUploading: isBadStandardUploading,
     error: isBadStandardImageError,
     uploadImage: uploadBadStandardImage,
-  } = useUploadToCloudFlare(
+  } = useUploadToCloudflare(
     code, 'badStandard'
   );
 
@@ -115,21 +114,26 @@ const UpdateStandard = (props: Props) => {
 
     try {
       if (isDirty) {
-        if ( image && image !== standard.image) {
-          const downloadUrl = await uploadStandardImage(image);
-          if (!downloadUrl) {
+        if ( image && image !== standard.image  && image.localPathUrl) {
+          const downloadUrl = await uploadStandardImage(image.localPathUrl);
+          if (!downloadUrl || !downloadUrl.thumbnailUrl || !downloadUrl.originalUrl) {
             throw new Error('ไม่สามารถอัพโหลดรูปภาพได้');
           }
-          setValue('image', downloadUrl.originalUrl as string, {
+          setValue('image.originalUrl', downloadUrl.originalUrl , {
             shouldDirty: true,
           });
+          setValue('image.thumbnailUrl', downloadUrl.thumbnailUrl , {
+shouldDirty: true,});
         }
-        if (badStandardImage && badStandardImage !== standard.badStandardImage) {
-          const downloadUrl = await uploadBadStandardImage(badStandardImage);
-          if (!downloadUrl) {
+        if (badStandardImage && badStandardImage !== standard.badStandardImage && badStandardImage.localPathUrl) { {
+          const downloadUrl = await uploadBadStandardImage(badStandardImage.localPathUrl);
+          if (!downloadUrl || !downloadUrl.thumbnailUrl || !downloadUrl.originalUrl) {
             throw new Error('ไม่สามารถอัพโหลดรูปภาพได้');
           }
-          setValue('badStandardImage', downloadUrl.originalUrl as string, {
+          setValue('badStandardImage.originalUrl', downloadUrl.originalUrl , {
+            shouldDirty: true,
+          });
+          setValue('badStandardImage.thumbnailUrl', downloadUrl.thumbnailUrl , {
             shouldDirty: true,
           });
         }
@@ -139,6 +143,7 @@ const UpdateStandard = (props: Props) => {
       } else {
         console.log('No changes to save');
       }
+    }
     } catch (err) {
       console.error('An error occurred:', err);
       Alert.alert(

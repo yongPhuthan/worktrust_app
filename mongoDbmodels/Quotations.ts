@@ -2,9 +2,9 @@ import { Document, model, Schema, Types } from 'mongoose';
 import { QuotationStatus, TaxType, WarrantyStatus } from '../types/enums';
 import { customerEmbedSchema, ICustomerEmbed } from '../types/interfaces/CustomerEmbed';
 import { IServiceEmbed, serviceEmbedSchema } from '../types/interfaces/ServicesEmbed';
-import { ISellerEmbed, sellerEmbedSchema } from 'types/interfaces/SellerEmbed';
-import { IWorkerEmbed, workerEmbedSchema } from 'types/interfaces/WorkerEmbed';
-import { IWarrantyEmbed, warrantyEmbedSchema } from 'types/interfaces/WarrantyEmbed';
+import { ISellerEmbed, sellerEmbedSchema } from '../types/interfaces/SellerEmbed';
+import { IWorkerEmbed, workerEmbedSchema } from '../types/interfaces/WorkerEmbed';
+import { IWarrantyEmbed, warrantyEmbedSchema } from '../types/interfaces/WarrantyEmbed';
 
 export interface IQuotations extends Document {
   _id : Types.ObjectId;

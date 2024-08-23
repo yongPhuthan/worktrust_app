@@ -1,13 +1,13 @@
-import { BACK_END_SERVER_URL } from '@env';
-import { faCloudUpload } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { yupResolver } from '@hookform/resolvers/yup';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { useMutation } from '@tanstack/react-query';
-import { nanoid } from 'nanoid';
-import React, { useEffect, useState } from 'react';
-
-import { Controller, useForm, useWatch } from 'react-hook-form';
+import {BACK_END_SERVER_URL} from '@env';
+import {faCloudUpload} from '@fortawesome/free-solid-svg-icons';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {yupResolver} from '@hookform/resolvers/yup';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {useMutation} from '@tanstack/react-query';
+import {nanoid} from 'nanoid';
+import React, {useEffect, useState} from 'react';
+import {Controller, useForm, useWatch} from 'react-hook-form';
+import firebase from '../../firebase';
 import {
   Alert,
   Dimensions,
@@ -19,7 +19,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {
   ActivityIndicator,
   Appbar,
@@ -28,13 +28,20 @@ import {
   ProgressBar,
   TextInput,
 } from 'react-native-paper';
-import { useUploadToCloudflare } from '../../hooks/useUploadtoCloudflare';
-import { usePickImage } from '../../hooks/utils/image/usePickImage';
-
-import { useCreateToServer } from '../../hooks/useUploadToserver';
-import { CompanyCreateSchemaType, CreateCompanyValidationSchema, CreateCompanyValidationSchemaType, UserCreateCompanySchemaType } from '../../models/validationSchema/register/createCompanyScreen';
-import { useUser } from '../../providers/UserContext';
-import { ParamListBase } from '../../types/navigationType';
+import {useUploadToCloudflare} from '../../hooks/useUploadtoCloudflare';
+import {usePickImage} from '../../hooks/utils/image/usePickImage';
+import {ValidationError} from 'yup';
+import {useCreateToServer} from '../../hooks/useUploadToserver';
+import {useUser} from '../../providers/UserContext';
+import {ParamListBase} from '../../types/navigationType';
+import {
+  companySchema,
+  CompanyType,
+  createCompanyAndUpdateSellerSchema,
+  CreateCompanyAndUpdateSellerType,
+} from '../../validation/collection/companies';
+import {UserType} from '../../validation/collection/users';
+import { UserRole } from '../../types/enums';
 
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'RegisterScreen'>;
@@ -50,18 +57,25 @@ const checkboxStyle = {
 const CreateCompanyScreen = ({navigation}: Props) => {
   const [page, setPage] = useState<number>(1);
   const [userLoading, setUserLoading] = useState(false);
-  const API_URL = `${BACK_END_SERVER_URL}/api/register/company`;
-
+  const [isLoading, setIsLoading] = useState(false)
+  const companyId = Math.floor(100000 + Math.random() * 900000).toString()
+  const firestore = firebase.firestore();
   const user = useUser();
   if (!user) {
     return;
   }
-  const initialSeller: UserCreateCompanySchemaType = {
+  const initialSeller: UserType = {
     name: '',
     jobPosition: '',
+    provider: user.providerId,
+    currentCompanyId: `TH${companyId}`,
+    uid: user.uid,
+    companyIds: [`TH${companyId}`],
+    role: UserRole.OWNER,
   };
-  const initialCompany: CompanyCreateSchemaType = {
-    code: nanoid(6),
+  const initialCompany: CompanyType = {
+    id: `TH${companyId}`,
+    code: '',
     bizName: '',
     address: '',
     officeTel: '',
@@ -69,7 +83,9 @@ const CreateCompanyScreen = ({navigation}: Props) => {
     companyTax: '',
     userUids: [user.uid],
     bizType: '',
-    logo: '',
+    logo:null,
+    warranty: null,
+    isActive: true,
   };
 
   const {
@@ -78,18 +94,15 @@ const CreateCompanyScreen = ({navigation}: Props) => {
     control,
     getValues,
     formState: {isValid, isDirty, errors},
-  } = useForm<CreateCompanyValidationSchemaType>({
+  } = useForm<CreateCompanyAndUpdateSellerType>({
     mode: 'onChange',
     defaultValues: {
       seller: initialSeller,
       company: initialCompany,
     },
-    resolver: yupResolver(CreateCompanyValidationSchema),
+    resolver: yupResolver(createCompanyAndUpdateSellerSchema),
   });
-  const logo = useWatch({
-    control,
-    name: 'company.logo',
-  });
+
   const seller = useWatch({
     control,
     name: 'seller',
@@ -117,35 +130,18 @@ const CreateCompanyScreen = ({navigation}: Props) => {
 
     name: 'company.bizType',
   });
-  const companyTax = useWatch({
-    control,
-
-    name: 'company.companyTax',
-  });
 
   const jobPosition = useWatch({
     control,
 
     name: 'seller.jobPosition',
   });
-  const address = useWatch({
-    control,
-
-    name: 'company.address',
-  });
-  const mobileTel = useWatch({
-    control,
-
-    name: 'company.mobileTel',
-  });
-  const officeTel = useWatch({
-    control,
-    name: 'company.officeTel',
-  });
-
   const {isImagePicking: isImagePicking, pickImage} = usePickImage(
     (uri: string) => {
-      setValue('company.logo', uri, {shouldDirty: true, shouldValidate: true});
+      setValue('company.logo.localPathUrl', uri, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
     },
   );
   const {
@@ -171,64 +167,75 @@ const CreateCompanyScreen = ({navigation}: Props) => {
       setPage(page - 1);
     }
   };
-  const createCompanySeller = async ({ seller, company, token }: { seller: UserCreateCompanySchemaType, company: CompanyCreateSchemaType, token: string }) => {
-    if (!token) {
-      throw new Error('Token is not available');
-    }
-  
-    if (company.logo) {
-      try {
-        const downloadUrl = await uploadImage(company.logo as string);
-        if (!downloadUrl || !downloadUrl.originalUrl) {
-          throw new Error('ไม่สามารถอัพโหลดรูปภาพได้');
-        }
-        company.logo = downloadUrl.originalUrl;
-      } catch (error) {
-        console.error('Error uploading image:', error);
-        throw new Error('Error uploading image');
-      }
-    }
-  
-    try {
-      const formData = { seller, company, token };
-      const success = await createToServer(formData);
-      if (!success) {
-        throw new Error('Error creating company and user');
-      }
-    } catch (error) {
-      console.error('Error creating company and user:', error);
-      throw new Error('Error creating company and user');
-    }
-  };
-  const { mutate, isPending, isError } = useMutation({
-    mutationFn: createCompanySeller,
-    onSuccess: () => {
-      console.log('success');
-      //clear navigation stack
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'DashboardQuotation' }],
-      });
-    },
-    onError: (error: any) => {
-      console.error('Error response:', error);
-      Alert.alert('Error', error.message || 'There was an error processing the request');
-    },
-  });  const {
-    isLoading: isLodingServer,
-    error: errorServer,
-    createToServer,
-  } = useCreateToServer(API_URL, 'dashboardQuotation');
-
   const handleSave = async () => {
-    if(!user){
+    if (!user) {
       Alert.alert('Error', 'User is not available');
-      
       return;
     }
-     mutate({seller, company, token: user.uid});
+    setIsLoading(true);
+    try {
+      // ตรวจสอบข้อผิดพลาดจาก Yup
+      await createCompanyAndUpdateSellerSchema.validate(
+        {
+          seller: seller,
+          company: company,
+        },
+        {abortEarly: false},
+      );
 
+      // อัพโหลดรูปภาพก่อนถ้ามี
+      if (company.logo?.localPathUrl) {
+        try {
+          const downloadUrl = await uploadImage(company.logo.localPathUrl);
+          if (
+            !downloadUrl ||
+            !downloadUrl.originalUrl ||
+            !downloadUrl.thumbnailUrl
+          ) {
+            throw new Error('ไม่สามารถอัพโหลดรูปภาพได้');
+          }
+          setValue('company.logo.originalUrl', downloadUrl.originalUrl);
+          setValue('company.logo.thumbnailUrl', downloadUrl.thumbnailUrl);
+        } catch (error) {
+          console.error('Error uploading image:', error);
+          Alert.alert('Error', 'Error uploading image');
+          return;
+        }
+      }
 
+      // สร้างเอกสารสำหรับ company
+      const companyRef = firestore.collection('companies').doc(company.id);
+      const companyData = {
+        ...company,
+        logo: company.logo ? company.logo : null, // ยืนยันว่า logo ยอมรับค่า null
+      };
+      await companyRef.set(companyData);
+
+      // สร้างเอกสารสำหรับ seller
+      const sellerRef = firestore.collection('users').doc(user.uid);
+      const sellerData: UserType = {
+        ...seller,
+        currentCompanyId: company.id,
+        companyIds: [company.id],
+      };
+      await sellerRef.set(sellerData);
+
+      // ถ้าทุกอย่างสำเร็จ ให้ทำการนำทาง
+      navigation.reset({
+        index: 0,
+        routes: [{name: 'DashboardQuotation'}],
+      });
+    } catch (error) {
+      // ตรวจสอบว่าเป็น ValidationError หรือไม่
+      if (error instanceof ValidationError) {
+        Alert.alert('ข้อมูลไม่ถูกต้อง', error.errors.join('\n'));
+      } else {
+        console.error('Error creating company and seller:', error);
+        Alert.alert('Error', 'Error creating company and seller');
+      }
+    } finally {
+      setIsLoading(false); 
+    }
   };
 
   const width = Dimensions.get('window').width;
@@ -275,9 +282,9 @@ const CreateCompanyScreen = ({navigation}: Props) => {
                     onPress={pickImage}>
                     {isImagePicking ? (
                       <ActivityIndicator size="small" color="gray" />
-                    ) : value ? (
+                    ) : value?.localPathUrl? (
                       <Image
-                        source={{uri: (value as string) || ''}}
+                        source={{uri: (value.localPathUrl as string) || ''}}
                         style={{
                           width: 100,
                           aspectRatio: 1,
@@ -448,9 +455,9 @@ const CreateCompanyScreen = ({navigation}: Props) => {
               />
               <Button
                 onPress={handleSave}
-                disabled={isUploading}
+                disabled={isUploading || !isValid || isLoading}
                 mode="contained"
-                loading={userLoading || isUploading }>
+                loading={userLoading || isUploading || isLoading}>
                 บันทึก
               </Button>
             </Appbar.Header>

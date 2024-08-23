@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import {
   Dimensions,
   FlatList,
@@ -11,20 +11,20 @@ import {
 } from 'react-native';
 import { ActivityIndicator, Appbar, Button } from 'react-native-paper';
 
-import { useFormContext, useWatch } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 import Modal from 'react-native-modal';
 import { IServiceImage } from 'types/interfaces/ServicesEmbed';
 import CustomCheckbox from '../../components/CustomCheckbox';
 import { useUser } from '../../providers/UserContext';
 import * as stateAction from '../../redux/actions';
 import { Store } from '../../redux/store';
+import { ProjectImagesSchemaType } from '../../validation/collection/subcollection/projectImages';
 import AddNewImage from './addNew';
-import { Types } from 'mongoose';
 
 interface ImageModalProps {
   isVisible: boolean;
   onClose: () => void;
-  serviceImages: IServiceImage[];
+  selectedImages: IServiceImage[];
 }
 
 interface Tag {
@@ -49,61 +49,19 @@ interface ModalProps {
   onClose: () => void;
 }
 interface GalleryItemProps {
-  item: ImageGallery;
+  item: ProjectImagesSchemaType;
   onPress: () => void;
-  serviceImages :IServiceImage[]
+  images :ProjectImagesSchemaType[]
 }
 
 
 const {width, height} = Dimensions.get('window');
 const imageContainerWidth = width / 3 - 10;
-const GalleryItem: React.FC<GalleryItemProps> = React.memo(({ item, onPress, serviceImages }) => {
-  const [imageUri, setImageUri] = React.useState<string | undefined>(
-    item.url.localPathUrl || item.url.thumbnailUrl
-  );
 
-  console.log('serviceImages', serviceImages);
-
-  // ตรวจสอบว่า item.id ตรงกับ _id ของรายการใน serviceImages หรือไม่
-  const isChecked = React.useMemo(() => {
-    return serviceImages.some((image :IServiceImage ) =>  image._id && new Types.ObjectId(image._id).toHexString() === item.id);
-  }, [item.id, serviceImages]);
-
-  const handleError = React.useCallback(() => {
-    // เมื่อเกิดข้อผิดพลาดในการโหลดรูปภาพ เราจะไม่แสดงกรอบเปล่าๆ
-    setImageUri(undefined);
-  }, []);
-
-  // ถ้าไม่มี imageUri เราจะไม่แสดงคอมโพเนนต์นี้เลย
-  if (!imageUri) {
-    return null;
-  }
-
-  return (
-    <View
-      style={[
-        styles.imageContainer,
-        isChecked && styles.selected,
-      ]}
-    >
-      <Image
-        source={{ uri: imageUri }}
-        style={styles.image}
-        onError={handleError}
-      />
-      <View style={styles.checkboxContainer}>
-        <CustomCheckbox
-          checked={isChecked}
-          onPress={onPress}
-        />
-      </View>
-    </View>
-  );
-});
 const GalleryScreen = ({
   isVisible,
   onClose,
-  serviceImages,
+  selectedImages,
 }: ImageModalProps) => {
   const [isImageUpload, setIsImageUpload] = useState(false);
   const firebaseUser = useUser();
@@ -112,10 +70,8 @@ const GalleryScreen = ({
   }
   const [isOpenModal, setIsOpenModal] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<string>('');
-  const [initialGalleryImages, setInitialGalleryImages] = useState<
-    ImageGallery[]
-  >([]);
+  const [checkedImages, setCheckedImages] = useState<string []>([]);
+
   const [categories, setCategories] = useState<string[]>([]);
   const [isLoadingWebP, setIsLoadingWebP] = useState<boolean>(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -136,33 +92,33 @@ const GalleryScreen = ({
   } = useContext(Store);
   const handleCheckbox = (id: string) => {
     // ค้นหา serviceImages ที่มีการเลือก (selected)
-    const isSelected = G_gallery.some(img => img.id === id && serviceImages.some(serviceImg => serviceImg._id === id));
+    const isSelected = G_gallery.some(img => img.id === id && selectedImages.some(serviceImg => serviceImg.id === id));
   
-    let updatedServiceImages;
+    let updatedServiceImages 
     if (isSelected) {
       // ถ้า id ถูกเลือกอยู่แล้ว ให้ยกเลิกการเลือก (unselect) โดยการกรองออกจาก serviceImages
-      updatedServiceImages = serviceImages.filter(serviceImg => serviceImg._id !== id);
+      updatedServiceImages = selectedImages.filter(serviceImg => serviceImg.id !== id);
     } else {
       // ถ้า id ยังไม่ได้ถูกเลือก ให้เพิ่มเข้าไปใน serviceImages
       const selectedImage = G_gallery.find(img => img.id === id);
       if (selectedImage) {
-        updatedServiceImages = [...serviceImages, selectedImage.url];
+        updatedServiceImages = [...selectedImages, selectedImage.id];
       } else {
-        updatedServiceImages = [...serviceImages];
+        updatedServiceImages = [...selectedImages];
       }
     }
   
     // อัปเดตสถานะของ gallery เพื่อแสดงผลการเลือกหรือยกเลิกการเลือก
     const updatedData = G_gallery.map(img => ({
       ...img,
-      defaultChecked: updatedServiceImages.some(serviceImg => serviceImg._id === img.id)
+      // defaultChecked: updatedServiceImages.some((serviceImg:ProjectImagesSchemaType) => serviceImg.id === img.id)
     }));
   
     // ส่งข้อมูลที่อัปเดตไปยัง store หรือ local state
     dispatch(stateAction.get_gallery(updatedData));
   
     // อัปเดตค่าของ serviceImages ในฟอร์ม
-    setValue('serviceImages', updatedServiceImages, { shouldDirty: true });
+    setValue('images', updatedServiceImages, { shouldDirty: true });
   };
   const toggleTag = (tag: string) => {
     setSelectedCategories(prev =>
@@ -170,19 +126,42 @@ const GalleryScreen = ({
     );
   };
 
+  const toggleCheckbox = (imageId: string) => {
+    setCheckedImages((prevChecked) => {
+      const newCheckedImages = prevChecked.includes(imageId)
+        ? prevChecked.filter((id) => id !== imageId)
+        : [...prevChecked, imageId];
+  
+      // อัปเดตฟิลด์ images ในฟอร์มตามการเลือกของผู้ใช้
+      const selectedImages = G_gallery.filter((image) => newCheckedImages.includes(image.id));
+      console.log('selectedImages', selectedImages);
+      setValue('images', selectedImages, { shouldValidate: true });
+  
+      return newCheckedImages;
+    });
+  };
+
+  useEffect(() => {
+    // กำหนดค่าเริ่มต้นของ checked state โดยการตรวจสอบว่า id ของรูปภาพตรงกับ existingImages หรือไม่
+    const initialCheckedImages  = G_gallery
+      .filter((image) => selectedImages.some((selectedImage) => selectedImage.id === image.id))
+      .map((image) => image.id);
+    
+    setCheckedImages(initialCheckedImages);
+  }, [G_gallery, selectedImages]);
 
   const sortedGalleryImages = React.useMemo(() => {
     if (!G_gallery) return [];
     const validImages = G_gallery.filter(
-      item => item.url && item.url.localPathUrl && item.url.thumbnailUrl,
+      item => item && item.localPathUrl
     );
     const invalidImages = G_gallery.filter(
-      item => !item.url || !item.url.localPathUrl,
+      item => !item || !item.localPathUrl,
     );
     return [...validImages, ...invalidImages];
   }, [G_gallery]);
 
-
+console.log('G_gallery', G_gallery);
   return (
     <>
       <Modal
@@ -270,13 +249,30 @@ const GalleryScreen = ({
                       </View>
                     }
                     renderItem={({ item }) => (
-                      <GalleryItem
-                      serviceImages={watch('serviceImages')}
-                        item={item}
-                        onPress={() => handleCheckbox(item.id)}
+                      <View
+                      style={[
+                        styles.imageContainer,
+                        checkedImages.includes(item.id) && styles.selected,
+                      ]}
+                    >
+                      <Image
+                        source={{ uri: item.localPathUrl || '' }}
+                        style={styles.image}
                       />
+                      <View style={styles.checkboxContainer}>
+                        <CustomCheckbox
+                          checked={checkedImages.includes(item.id)}
+                          onPress={()=>toggleCheckbox(item.id)}
+                        />
+                      </View>
+                    </View>
+                      // <GalleryItem
+                      // images={watch('images')}
+                      //   item={item}
+                      //   onPress={() => toggleCheckbox(item.id)}
+                      // />
                     )}
-                    keyExtractor={item => item.id.toString()}
+                    keyExtractor={item => item.id}
                   />
                   {G_gallery.length > 0 && (
                     <View
@@ -291,24 +287,24 @@ const GalleryScreen = ({
                           width: '80%',
                         }}
                         onPress={() => {
-                          if (serviceImages) onClose();
+                          if (selectedImages) onClose();
                         }}
                         disabled={
-                          !watch('serviceImages') ||
-                          watch('serviceImages').length === 0
+                          !watch('images') ||
+                          watch('images').length === 0
                         }>
-                        บันทึก {watch('serviceImages').length} รูป
+                        บันทึก {watch('images').length} รูป
                       </Button>
                     </View>
                   )}
                 </View>
-
+{/* 
                 <Modal
                   isVisible={modalVisible}
                   onBackdropPress={() => setModalVisible(false)}>
                   <View style={styles.modalContainer}>
                     <Image
-                      source={{uri: selectedImage}}
+                      source={{uri: selectedImages[0].thumbnailUrl || ''}}
                       style={styles.modalImage}
                     />
                     <TouchableOpacity
@@ -317,7 +313,7 @@ const GalleryScreen = ({
                       <Text>Close</Text>
                     </TouchableOpacity>
                   </View>
-                </Modal>
+                </Modal> */}
               </SafeAreaView>
             )}
           </>

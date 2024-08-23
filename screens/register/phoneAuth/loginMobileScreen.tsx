@@ -8,10 +8,20 @@ import { Alert, Dimensions, SafeAreaView, StyleSheet, View } from 'react-native'
 import { Appbar, Button, Text, TextInput } from 'react-native-paper';
 import firebase from '../../../firebase';
 import { ParamListBase } from '../../../types/navigationType';
-import { LoginMobileSchema, LoginMobileSchemaType } from '../../../models/validationSchema/register/phoneAuth/loginMobileScreen';
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'LoginMobileScreen'>;
 }
+// create LoginMobileSchema
+import * as Yup from 'yup';
+
+const LoginMobileSchema = Yup.object().shape({
+  phoneNumber: Yup.string()
+    .matches(/^[0-9]{10}$/, 'กรุณากรอกหมายเลขโทรศัพท์ให้ถูกต้อง')
+    .required('กรุณากรอกหมายเลขโทรศัพท์'),
+});
+
+type LoginMobileSchemaType = Yup.InferType<typeof LoginMobileSchema>;
+
 const LoginMobileScreen = ({navigation}: Props) => {
   // If null, no SMS has been sent
   const [confirm, setConfirm] =
@@ -128,22 +138,6 @@ const LoginMobileScreen = ({navigation}: Props) => {
     }
   };
 
-  // Function to focus the next input
-  const focusNextInput = (index: number, value: string) => {
-    if (value.length === 1 && index < 5) {
-      inputRefs.current[index + 1]?.focus();
-    }
-    const newOtp = [...otp];
-    newOtp[index] = value;
-    setOtp(newOtp);
-  };
-  const isOtpComplete = otp.every(digit => digit.trim().length === 1);
-  // Function to focus the previous input
-  const focusPreviousInput = (key: string, index: number) => {
-    if (key === 'Backspace' && index > 0) {
-      inputRefs.current[index - 1]?.focus();
-    }
-  };
 
   const phoneNumber = getValues('phoneNumber'); // Get the phone number from the form
   React.useEffect(() => {

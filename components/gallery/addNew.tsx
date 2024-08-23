@@ -1,14 +1,13 @@
 import Slider from '@react-native-community/slider';
-import {useQuery, useQueryClient} from '@tanstack/react-query';
-import {debounce} from 'lodash';
-import React, {useContext, useEffect, useState} from 'react';
-import {Controller, useForm, useWatch} from 'react-hook-form';
-import Marker, {ImageMarkOptions, Position} from 'react-native-image-marker';
+import { useQueryClient } from '@tanstack/react-query';
+import { debounce } from 'lodash';
+import React, { useContext, useEffect, useState } from 'react';
+import { Controller, useForm, useWatch } from 'react-hook-form';
+import Marker, { ImageMarkOptions, Position } from 'react-native-image-marker';
 import Modal from 'react-native-modal';
-import {BACK_END_SERVER_URL} from '@env';
-import {yupResolver} from '@hookform/resolvers/yup';
 import * as stateAction from '../../redux/actions';
 
+import { nanoid } from 'nanoid';
 import {
   ActivityIndicator,
   Alert,
@@ -31,19 +30,19 @@ import {
   Switch,
   TextInput,
 } from 'react-native-paper';
-import {nanoid} from 'nanoid';
 import firebase from '../../firebase';
-import {useUploadToCloudflare} from '../../hooks/useUploadtoCloudflare';
-import {usePickImage} from '../../hooks/utils/image/usePickImage';
+import { useUploadToCloudflare } from '../../hooks/useUploadtoCloudflare';
+import { usePickImage } from '../../hooks/utils/image/usePickImage';
 import useStoragePermission from '../../hooks/utils/useStoragePermission';
-import {Store} from '../../redux/store';
 import { useUser } from '../../providers/UserContext';
+import { Store } from '../../redux/store';
+import { CategorySchemaType } from '../../validation/collection/subcollection/categories';
+import { ProjectImagesSchemaType } from '../../validation/collection/subcollection/projectImages';
 
-import { ServiceImagesEmbedType } from '../../validation/quotations/create';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { QueryKeyType } from '../../types/enums';
-import { ImageGallery } from './existing';
-import { IServiceImage } from 'types/interfaces/ServicesEmbed';
+interface ImageGallery {
+  categories: CategorySchemaType[];
+  image: ProjectImagesSchemaType;
+}
 
 interface ExistingModalProps {
   isVisible: boolean;
@@ -98,11 +97,10 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
   const imageId = nanoid();
   const [inputValue, setInputValue] = useState<string>('');
   const [inputNewTag, setInputNewTag] = useState<string>('');
-  const [initialCategories, setInitialCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [applyTrigger, setApplyTrigger] = useState(false);
   const [brightness, setBrightness] = useState(1);
-
+  const firestore = firebase.firestore();
   const [checked, setChecked] = React.useState<string | null>(null);
   const onPermissionDenied = () => {
     setAddWatermark(false);
@@ -140,7 +138,7 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
     });
   };
   const {
-    state: {code, G_logo, G_company, companyId},
+    state: {code, G_logo, G_company, companyId, G_categories, G_gallery},
     dispatch,
   } = useContext(Store);
   if (!G_company) {
@@ -159,233 +157,154 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
   } = useForm<ImageGallery>({
     mode: 'onChange',
     defaultValues: {
-      id: nanoid(),
-      defaultChecked : false,
       categories: [],
-      images: {
-        
+      image: {
+        id: nanoid(),
+        createAt: new Date(),
         originalUrl: '',
         thumbnailUrl: '',
-        localPathUrl: '', 
-         
+        localPathUrl: '',
       },
-      created: new Date(),
     },
   });
-  const images = useWatch({
+  const image = useWatch({
     control,
-    name: 'images',
+    name: 'image',
   });
   const categories = useWatch({
     control,
     name: 'categories',
   });
-  const fetchCategories = async () => {
 
-    const token = await firebaseUser.getIdToken(true);
-    try {
-      const response = await fetch(`${BACK_END_SERVER_URL}/api/gallery/getCategories?companyId=${encodeURIComponent(
-          companyId.toString(),
-        )}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-
-        },
-      });
-      console.log('response', response);
-  
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to fetch categories');
-      }
-  
-      const categoriesData = await response.json();
-      const categories = categoriesData.map((category: { name: string }) => category.name);
-  
-      // Successfully fetched categories, now reset the form
-      setInitialCategories(categories);
-  
-      return categories;
-    } catch (error) {
-      console.error('Failed to fetch categories:', error);
-      // Handle the error appropriately, perhaps setting an error state or showing a message
-      throw error; // Re-throwing the error if you need further error handling upstream
-    }
-  };
-
-  const {
-    data,
-    isLoading: isFetching,
-    isError,
-  } = useQuery({
-    queryKey: ['categories'],
-    queryFn: fetchCategories,
-  });
   const {isImagePicking, pickImage} = usePickImage((uri: string) => {
-    setValue('images.localPathUrl', uri, {shouldValidate: true});
+    setValue('image.localPathUrl', uri, {shouldValidate: true});
     setOriginalImage(uri);
   });
-
   const {
     isUploading,
     error: uploadError,
     uploadImage,
   } = useUploadToCloudflare(code, 'gallery');
 
-  // const handleAddTag = async () => {
-  //   setIsLoading(true);
-  //   const tagsCollectionPath = `${code}/gallery/tags`;
-  //   const tagRef = firebase
-  //     .firestore()
-  //     .collection(tagsCollectionPath)
-  //     .doc(inputNewTag);
-
-  //   try {
-  //     // Create a new tag with the current date and an empty image array
-  //     await tagRef.set({
-  //       name: inputNewTag,
-  //       date: new Date(), // Store the current date and time of tag creation
-  //       images: [], // Empty array for future image URLs
-  //     });
-
-  //     setInputNewTag(''); // Clear the input field
-  //     setAddNewTag(false); // Optionally close the input field or provide feedback
-
-  //     // Invalidate queries related to the gallery or tags to refresh the data
-  //     queryClient.invalidateQueries({
-  //       queryKey: ['tags'],
-  //     });
-  //     setIsLoading(false);
-  //   } catch (error) {
-  //     // Handle errors, such as displaying a user-friendly error message
-  //     console.error('Failed to add tag:', error);
-  //     alert('Failed to add tag, please try again!');
-  //     setIsLoading(false);
-  //   }
-  // };
-  const handleAddCategory = async () => {
+  const handleAddCategory = async (): Promise<
+    CategorySchemaType | undefined
+  > => {
     setIsLoading(true);
-    const token = await firebaseUser.getIdToken(true);
 
     try {
-      const response = await fetch(
-        `${BACK_END_SERVER_URL}/api/gallery/createCategory`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({name: inputNewTag, companyId}),
-        },
-      );
+      // สร้างเอกสารใหม่ใน subCollection "categories" ของบริษัท
+      const categoryRef = firestore
+        .collection('companies')
+        .doc(companyId)
+        .collection('categories')
+        .doc();
 
-      if (!response.ok) {
-        const errorResponse = await response.json();
-        throw new Error(errorResponse.error || 'Failed to create category');
-      }
+      const newCategory: CategorySchemaType = {
+        id: categoryRef.id, // ใช้ id ที่สร้างโดย Firestore
+        name: inputNewTag,
+        createAt: new Date(),
+        updateAt: new Date(),
+      };
 
-      const savedCategory = await response.json();
+      // บันทึกหมวดหมู่ใหม่ลงใน Firestore
+      await categoryRef.set(newCategory);
 
+      // ล้างค่า input และปิดฟิลด์การเพิ่มหมวดหมู่ใหม่
       setInputNewTag(''); // Clear the input field
       setAddNewTag(false); // Optionally close the input field or provide feedback
 
-      // Invalidate queries related to the gallery or tags to refresh the data
-      queryClient.invalidateQueries({
-        queryKey: ['categories'], // Adjust query key as needed
-      });
+      // ดึงข้อมูลหมวดหมู่ที่อัปเดตจาก subCollection "categories" ของบริษัท
+      const snapshot = await firestore
+        .collection('companies')
+        .doc(companyId)
+        .collection('categories')
+        .get();
+      const categories = snapshot.docs.map(
+        doc => doc.data() as CategorySchemaType,
+      );
+
+      // Dispatch categories to update the state
+      dispatch(stateAction.get_categories(categories));
 
       setIsLoading(false);
-      return savedCategory;
+      return newCategory;
     } catch (error) {
       console.error('Failed to add category:', error);
       alert('Failed to add category, please try again!');
       setIsLoading(false);
+      return undefined; // ส่งคืน undefined เมื่อเกิดข้อผิดพลาด
     }
   };
 
-
   const uploadImageWithCategories = async (): Promise<void> => {
-    if (!images || categories.length === 0) {
+    if (!image || categories.length === 0) {
       alert(
         'Please ensure an image is selected and at least one category is chosen.',
       );
       return;
     }
     setIsLoading(true);
-    const token = await firebaseUser.getIdToken(true);
 
     try {
-      if(!images.localPathUrl) {
+      if (!image.localPathUrl) {
         console.error('Image local path URL is missing.');
         alert('Image upload failed. Please try again.');
         return;
       }
-      const uploadedImageUrl = await uploadImage(images.localPathUrl);
-      if (!uploadedImageUrl || !uploadedImageUrl.originalUrl || !uploadedImageUrl.thumbnailUrl) {
+
+      // อัปโหลดภาพและดึง URL กลับมา
+      const uploadedImageUrl = await uploadImage(image.localPathUrl);
+      if (
+        !uploadedImageUrl ||
+        !uploadedImageUrl.originalUrl ||
+        !uploadedImageUrl.thumbnailUrl
+      ) {
         console.error('Image upload returned null or undefined.');
         alert('Image upload failed. Please try again.');
         return;
       }
-      setValue('images.originalUrl', uploadedImageUrl.originalUrl, {shouldValidate: true});
-      setValue('images.thumbnailUrl', uploadedImageUrl.thumbnailUrl, {shouldValidate: true});
 
-      console.log("Image UPDATE successfully:", images);
+      // อัปเดตค่า URL ใน form state
+      setValue('image.originalUrl', uploadedImageUrl.originalUrl, {
+        shouldValidate: true,
+      });
+      setValue('image.thumbnailUrl', uploadedImageUrl.thumbnailUrl, {
+        shouldValidate: true,
+      });
 
-      // Save the image with categories to the server via API call
-      const response = await fetch(
-        `${BACK_END_SERVER_URL}/api/gallery/addImagesToCategory`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
+      // สร้างข้อมูลของภาพที่ต้องการบันทึกลงใน Firestore
+      const imageId = nanoid(); // สร้าง ID สำหรับภาพ
+      const imageData: ProjectImagesSchemaType = {
+        id: imageId,
+        thumbnailUrl: uploadedImageUrl.thumbnailUrl,
+        originalUrl: uploadedImageUrl.originalUrl,
+        localPathUrl: image.localPathUrl,
+        createAt: new Date(),
+        categoryIds: categories.map(
+          (category: CategorySchemaType) => category.id,
+        ),
+      };
 
-          },
-          body: JSON.stringify({
-             url: images,
-            categories, // ส่งรายการ category ที่เลือกไปยังเซิร์ฟเวอร์
-          }),
-        },
-      );
-      // console.log('response', response);
+      // บันทึกข้อมูลภาพลงใน Firestore (สามารถปรับให้ตรงกับ collection ที่ใช้)
+      const imageRef = firestore
+        .collection('companies')
+        .doc(companyId)
+        .collection('images')
+        .doc(imageId);
+      await imageRef.set(imageData);
 
-      if (!response.ok) {
-        const errorResponse = await response.json();
-        throw new Error(
-          errorResponse.error || 'Failed to save image with categories',
-        );
-      }
-     const galleryStorage = await AsyncStorage.getItem(QueryKeyType.GALLERY);
-      let galleryData = [];
-      if(galleryStorage) {
-        try {
-          galleryData = JSON.parse(galleryStorage);
-        } catch (parseError) {
-          console.error('Error parsing gallery data:', parseError);
-          await AsyncStorage.removeItem(QueryKeyType.GALLERY);
-          galleryData = [];
-        }
-      }
-      const existingGallery = galleryData.find(
-        (q:IServiceImage) => q.thumbnailUrl === images.url?.thumbnailUrl,
-      );
-      if (!existingGallery) {
-        galleryData.push(images);
-      } else {
-        console.log('Image already exists in gallery.', existingGallery);
+      console.log('Image saved successfully with categories:', imageData);
 
-      }
-      const sortedGalllery = galleryData.sort((a : IServiceImage, b:IServiceImage) => {
-        const dateA = new Date(a.created || new Date());
-        const dateB = new Date( b.created || new Date());
+      // อัปเดต gallery ใน state ด้วยข้อมูลใหม่ที่บันทึก
+      const sortedGallery = [...G_gallery, imageData].sort((a, b) => {
+        const dateA = new Date(a.createAt || new Date());
+        const dateB = new Date(b.createAt || new Date());
         return dateB.getTime() - dateA.getTime();
       });
-      await AsyncStorage.setItem(QueryKeyType.GALLERY, JSON.stringify(sortedGalllery));
-dispatch(stateAction.get_gallery(sortedGalllery));
 
+      dispatch(stateAction.get_gallery(sortedGallery));
+
+      // ปิด modal และ reset form
       onClose();
       reset();
     } catch (error) {
@@ -396,19 +315,23 @@ dispatch(stateAction.get_gallery(sortedGalllery));
     }
   };
 
-  const handleSelectTag = (tag: string) => {
-    if (categories.includes(tag)) {
+  const handleSelectCategory = (category: CategorySchemaType) => {
+    const isSelected = categories.some((c) => c.id === category.id);
+  
+    if (isSelected) {
+      // Unselect the category
       setValue(
         'categories',
-        categories.filter(t => t !== tag),
-      ); // Unselect the tag
+        categories.filter((c) => c.id !== category.id)
+      );
     } else {
-      setValue('categories', [...categories, tag]); // Select the tag
+      // Select the category
+      setValue('categories', [...categories, category]);
     }
   };
   const clearWatermark = () => {
     setChecked(null);
-    setValue('images.localPathUrl', originalImage ?? '', {shouldDirty: true}); // Reset to original image
+    setValue('image.localPathUrl', originalImage ?? '', {shouldDirty: true}); // Reset to original image
   };
 
   const applyWatermarkImage = async (
@@ -449,7 +372,6 @@ dispatch(stateAction.get_gallery(sortedGalllery));
     try {
       const markedImage = await Marker.markImage(options);
       const markedImagePath = `file://${markedImage}`;
-      console.log('Marked image path:', markedImagePath);
 
       const markedFileExists = await checkImageExists(markedImagePath);
       if (!markedFileExists) {
@@ -491,7 +413,7 @@ dispatch(stateAction.get_gallery(sortedGalllery));
       if (markedImage) {
         const markedFileExists = await checkImageExists(markedImage);
         if (markedFileExists) {
-          setValue('images.localPathUrl', markedImage, {shouldDirty: true});
+          setValue('image.localPathUrl', markedImage, {shouldDirty: true});
         } else {
           console.error(
             'Marked image does not exist after watermark applied:',
@@ -610,10 +532,8 @@ dispatch(stateAction.get_gallery(sortedGalllery));
           }}
         />
         <Button
-          loading={isImageUpload || isUploading}
-          disabled={
-            !images || !categories || categories.length === 0
-          }
+          loading={isImageUpload || isUploading || isLoading}
+          disabled={!image || !categories || categories.length === 0}
           mode="contained"
           onPress={() => {
             uploadImageWithCategories();
@@ -621,33 +541,38 @@ dispatch(stateAction.get_gallery(sortedGalllery));
           บันทึก
         </Button>
       </Appbar.Header>
-      {isFetching &&   <View
-        style={{
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}>
-        <ActivityIndicator />
-      </View>}
+      {isLoading && (
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}>
+          <ActivityIndicator />
+        </View>
+      )}
       <FlatList
         style={styles.container}
         ListHeaderComponent={
           <>
             <Controller
               control={control}
-              name="images"
+              name="image"
               rules={{required: 'Image is required'}}
               render={({field: {onChange, value}}) => (
                 <TouchableOpacity
                   onPress={() => pickImage()}
                   style={styles.imageView}>
-                  {value ?.localPathUrl ? (
+                  {value?.localPathUrl ? (
                     isImagePicking ? (
                       <View style={styles.imageUploader}>
                         <ActivityIndicator />
                       </View>
                     ) : (
-                      <Image source={{uri: value.localPathUrl ?? ''}} style={styles.image} />
+                      <Image
+                        source={{uri: value.localPathUrl ?? ''}}
+                        style={styles.image}
+                      />
                     )
                   ) : isImagePicking ? (
                     <View style={styles.imageUploader}>
@@ -692,19 +617,19 @@ dispatch(stateAction.get_gallery(sortedGalllery));
             </View>
           </>
         }
-        data={initialCategories}
-        keyExtractor={(item, index) => index.toString()}
-        renderItem={({item}) => (
+        data={G_categories}
+        keyExtractor={item => item.id}
+        renderItem={({ item }) => (
           <>
             <View style={styles.chipContainer}>
               <Chip
-                mode={categories.includes(item) ? 'outlined' : 'flat'}
-                selected={categories.includes(item)}
-                onPress={() => handleSelectTag(item)}
+                mode={categories.some((c) => c.id === item.id) ? 'outlined' : 'flat'}
+                selected={categories.some((c) => c.id === item.id)}
+                onPress={() => handleSelectCategory(item)}
                 textStyle={
-                  categories.includes(item) && styles.selectedChipText
+                  categories.some((c) => c.id === item.id) && styles.selectedChipText
                 }>
-                {item}
+                {item.name}
               </Chip>
             </View>
           </>

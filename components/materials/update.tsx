@@ -3,8 +3,6 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import React, { useCallback, useContext } from 'react';
 import { Store } from '../../redux/store';
-import { IMaterials } from '../../models/Materials';
-import { usePutServer } from '../../hooks/materials/useUpdate';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import {
     Alert,
@@ -28,11 +26,11 @@ import {
 import { useUploadToCloudflare } from '../../hooks/useUploadtoCloudflare';
 import { usePickImage } from '../../hooks/utils/image/usePickImage';
 import { useUser } from '../../providers/UserContext';
-import { materialSchema } from '../../models/validationSchema';
+import { materialSchema, MaterialSchemaType } from '../../validation/collection/subcollection/materials';
 
 type Props = {
   onClose: () => void;
-  material: DefaultMaterials ;
+  material: MaterialSchemaType ;
   setRefetch: () => void;
 
 };
@@ -53,7 +51,7 @@ const UpdateMaterial = (props: Props) => {
     setValue,
     getValues,
     formState: {errors, isValid,isDirty},
-  } = useForm<IMaterials>({
+  } = useForm<MaterialSchemaType>({
     mode: 'onChange',
     defaultValues: material,
     resolver: yupResolver(materialSchema),
@@ -67,7 +65,7 @@ const UpdateMaterial = (props: Props) => {
     isImagePicking: isStandardImageUploading,
     pickImage: pickStandardImage,
   } = usePickImage((uri: string) => {
-    setValue('image', uri);
+    setValue('image.localPathUrl', uri);
   });
 
   const materialStoragePath = `${code}/materials/${getValues('name')}`;
@@ -82,70 +80,70 @@ const UpdateMaterial = (props: Props) => {
   const url = `${BACK_END_SERVER_URL}/api/company/updateMaterial`;
 
 
-  const {isLoading, error, putToServer} = usePutServer(
-    url,
-    'defaultMaterials',
-  );
-  const updateMaterial = useCallback(async () => {
-    if (!user || !user.uid ) {
-      console.error('User  error');
-      return;
-    }
+  // const {isLoading, error, putToServer} = usePutServer(
+  //   url,
+  //   'defaultMaterials',
+  // );
+  // const updateMaterial = useCallback(async () => {
+  //   if (!user || !user.uid ) {
+  //     console.error('User  error');
+  //     return;
+  //   }
 
-    try {
-      if (isDirty) {
-        if ( image && image !== material.image) {
-          const downloadUrl = await uploadImage(image);
-          if (!downloadUrl) {
-            throw new Error('ไม่สามารถอัพโหลดรูปภาพได้');
-          }
-          setValue('image', downloadUrl.originalUrl as string, {
-            shouldDirty: true,
-          });
-        }
-        const formData = getValues();
-        console.log('formData', formData);
-        await putToServer(formData);
-        setRefetch();
-        onClose();
-      } else {
-        console.log('No changes to save');
-      }
-    } catch (err) {
-      console.error('An error occurred:', err);
-      Alert.alert(
-        'เกิดข้อผิดพลาด',
-        'An error occurred while updating the worker. Please try again.',
-        [{text: 'OK'}],
-        {cancelable: false},
-      );
-    }
-  }, [
-    user,
-    isValid,
-    image,
-    material.image,
-    isDirty,
-    setValue,
-    getValues,
-    uploadImage,
-    putToServer,
-    setRefetch,
-    onClose,
-  ]);
-  const {mutate, isPending} = useMutation({
-    mutationFn: updateMaterial,
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['materials'],
-      });
-      setRefetch();
-      onClose();
-    },
-    onError: error => {
-      console.log('onError', error);
-    },
-  });
+  //   try {
+  //     if (isDirty) {
+  //       if ( image && image !== material.image) {
+  //         const downloadUrl = await uploadImage(image);
+  //         if (!downloadUrl) {
+  //           throw new Error('ไม่สามารถอัพโหลดรูปภาพได้');
+  //         }
+  //         setValue('image', downloadUrl.originalUrl as string, {
+  //           shouldDirty: true,
+  //         });
+  //       }
+  //       const formData = getValues();
+  //       console.log('formData', formData);
+  //       await putToServer(formData);
+  //       setRefetch();
+  //       onClose();
+  //     } else {
+  //       console.log('No changes to save');
+  //     }
+  //   } catch (err) {
+  //     console.error('An error occurred:', err);
+  //     Alert.alert(
+  //       'เกิดข้อผิดพลาด',
+  //       'An error occurred while updating the worker. Please try again.',
+  //       [{text: 'OK'}],
+  //       {cancelable: false},
+  //     );
+  //   }
+  // }, [
+  //   user,
+  //   isValid,
+  //   image,
+  //   material.image,
+  //   isDirty,
+  //   setValue,
+  //   getValues,
+  //   uploadImage,
+  //   putToServer,
+  //   setRefetch,
+  //   onClose,
+  // ]);
+  // const {mutate, isPending} = useMutation({
+  //   mutationFn: updateMaterial,
+  //   onSuccess: () => {
+  //     queryClient.invalidateQueries({
+  //       queryKey: ['materials'],
+  //     });
+  //     setRefetch();
+  //     onClose();
+  //   },
+  //   onError: error => {
+  //     console.log('onError', error);
+  //   },
+  // });
 
 
   return (
@@ -180,7 +178,7 @@ const UpdateMaterial = (props: Props) => {
           }}>
           <Controller
             control={control}
-            name="image"
+            name="image.localPathUrl"
             render={({field: {onChange, value}}) => (
               <TouchableOpacity
                 style={{
@@ -295,12 +293,12 @@ const UpdateMaterial = (props: Props) => {
           />
         </View>
         <Button
-          loading={isLoading || isUploading || isPending}
-          disabled={!isDirty || isPending}
+          loading={ isUploading }
+          disabled={!isDirty }
           style={{width: '90%', alignSelf: 'center', marginBottom: 20}}
           mode="contained"
           onPress={() => {
-            mutate();
+            // mutate();
           }}>
           {'บันทึก'}
         </Button>

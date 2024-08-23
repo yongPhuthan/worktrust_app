@@ -31,11 +31,9 @@ import {usePickImage} from '../../hooks/utils/image/usePickImage';
 import {Types} from 'mongoose';
 import {nanoid} from 'nanoid';
 import UploadImage from '../../components/ui/UploadImage';
-import {
-  StandardSchemaType,
-  standardSchema,
-} from '../../models/validationSchema/standard';
+
 import useCreateStandard from '../../hooks/standard/create';
+import { standardSchema, StandardSchemaType } from '../../validation/collection/subcollection/standard';
 
 type Props = {
   isVisible: boolean;
@@ -57,22 +55,24 @@ const CreateStandard = (props: Props) => {
     id: nanoid(),
     standardShowTitle: null,
     image: {
+      id: nanoid(),
       originalUrl: '',
       thumbnailUrl: '',
       localPathUrl: '',
+      createAt: new Date(),
     },
     content: '',
-    categories: null,
-    companyId : new Types.ObjectId(companyId).toHexString(),
     badStandardImage:  {
+      id: nanoid(),
       originalUrl: '',
       thumbnailUrl: '',
       localPathUrl: '',
+      createAt: new Date(),
     
     },
     badStandardEffect: null,
-    created: new Date(),
-    updated: new Date(),
+    createAt: new Date(),
+    updateAt: new Date(),
   };
   const {
     register,

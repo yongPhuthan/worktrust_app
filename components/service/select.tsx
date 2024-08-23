@@ -1,6 +1,8 @@
-import React, {useContext, useState} from 'react';
-import {useQuery} from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
+import React, { useContext, useState } from 'react';
 
+import { BACK_END_SERVER_URL } from '@env';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   Dimensions,
   FlatList,
@@ -10,17 +12,16 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {Appbar, Button, Text} from 'react-native-paper';
-import {Store} from '../../redux/store';
-import AddProductFormModal from './addNew';
-import { IServiceEmbed, IServiceImage } from 'types/interfaces/ServicesEmbed';
-import * as stateAction from '../../redux/actions';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { QueryKeyType } from '../../types/enums';
+import { Appbar, Button, Text } from 'react-native-paper';
 import { useUser } from '../../providers/UserContext';
-import {BACK_END_SERVER_URL} from '@env';
-import { ICategory } from 'models/Category';
-
+import * as stateAction from '../../redux/actions';
+import { Store } from '../../redux/store';
+import {  QueryKeyType } from '../../types/enums';
+import AddProductFormModal from './addNew';
+import { ServiceSchemaType } from '../../validation/field/services';
+import firebase from '../../firebase'
+import { ProjectImagesSchemaType } from 'validation/collection/subcollection/projectImages';
+import {CategorySchemaType} from '../../validation/collection/subcollection/categories'
 interface Props {
   visible: boolean;
   onClose: () => void;
@@ -41,116 +42,82 @@ const SelectProductModal: React.FC<Props> = ({
   if (!firebaseUser || !firebaseUser.uid) {
     throw new Error('User is not available');
   }
-  const [selectService, setSelectService] = useState<IServiceEmbed | null>(
+  const [selectService, setSelectService] = useState<ServiceSchemaType | null>(
     null,
   );
-
+const firestore = firebase.firestore
   const removeAsync = async()=>{
     await AsyncStorage.removeItem(QueryKeyType.GALLERY)
     await AsyncStorage.removeItem(QueryKeyType.CATEGORY)
   }
-  const getGallery = async () => {
+  const getGalleryAndCategories = async () => {
     try {
-      // 1. Try to load data from AsyncStorage
-      const storedGallery = await AsyncStorage.getItem(QueryKeyType.GALLERY);
-      const storedCategories = await AsyncStorage.getItem(
-        QueryKeyType.CATEGORY,
-      );
-
-      if (storedGallery && storedCategories) {
-        // Parse stored data
-        const parsedGallery = JSON.parse(storedGallery);
-        const parsedCategories = JSON.parse(storedCategories);
-
-        // Check if data is valid and not empty
-        if (parsedGallery.length > 0 && parsedCategories.length > 0) {
-          console.log('Loaded gallery from AsyncStorage');
-
-          // Set defaultChecked to false for each image if undefined
-          const updatedGallery = parsedGallery.map((image: any) => ({
-            ...image,
-            defaultChecked: false,
-          }));
-
-          dispatch(stateAction.get_gallery(updatedGallery));
-          dispatch(stateAction.get_categories(parsedCategories));
-          dispatch(stateAction.get_initial_gallery(updatedGallery));
-          return updatedGallery;
-        }
-      }
-
-      // 2. If AsyncStorage is empty or invalid, fetch from server
-      console.log('Fetching gallery from server...');
-      const token = await firebaseUser.getIdToken(true);
-
-      const response = await fetch(
-        `${BACK_END_SERVER_URL}/api/gallery/getAll?companyId=${encodeURIComponent(
-          companyId.toString(),
-        )}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch gallery');
-      }
-
-      const data = await response.json();
-      console.log('Fetched gallery data:', data);  
-
-      const images = data.categories.reduce((acc: any[], category: any) => {
-        if (category.images && category.images.length > 0) {
-          const imagesWithCategory = category.images.map((image: any) => ({
-            id: image._id,
-            url: image,
-            categories: [category.name],
-            defaultChecked: false, // Set defaultChecked to false
-            created: new Date(category.created),
-          }));
-          acc.push(...imagesWithCategory);
-        }
-        return acc;
-      }, []);
-
-      const categories = data.categories
-      const sortedImages = images.sort((a:IServiceImage, b:IServiceImage) => {
-        const dateA = new Date(a.created || new Date());
-        const dateB = new Date(b.created || new Date());
+  
+      // 1. Disable network to ensure offline mode
+      await firestore().disableNetwork();
+  
+      console.log('Fetching categories and gallery from Firestore in offline mode...');
+  
+      // 2. Fetch categories from Firestore's local cache
+      const categoriesSnapshot = await firestore()
+      .collection('companies')
+      .doc(companyId)
+        .collection('categories')
+        .get();
+  
+      const categories: CategorySchemaType[] = categoriesSnapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          name: data.name,
+          createAt: data.createAt.toDate(),
+          updateAt: data.updateAt.toDate(),
+        };
+      });
+  
+      // 3. Fetch gallery images from Firestore's local cache
+      const gallerySnapshot = await firestore()
+      .collection('companies')
+      .doc(companyId)
+        .collection('images')
+        .get();
+  
+      const images: ProjectImagesSchemaType[] = gallerySnapshot.docs.flatMap((doc) => {
+        const data = doc.data();
+        return {
+          ...data
+        };
+      });
+  
+      const sortedImages = images.sort((a, b) => {
+        const dateA = new Date(a.createAt || new Date());
+        const dateB = new Date(b.createAt || new Date());
         return dateB.getTime() - dateA.getTime();
       });
-
-      dispatch(stateAction.get_gallery(images));
+  
+      // 4. Dispatch data to the state
       dispatch(stateAction.get_categories(categories));
-      dispatch(stateAction.get_initial_gallery(images));
-
-      // 3. Save the fetched data to AsyncStorage for future use
-      await AsyncStorage.setItem(QueryKeyType.GALLERY, JSON.stringify(images));
-      await AsyncStorage.setItem(
-        QueryKeyType.CATEGORY,
-        JSON.stringify(categories),
-      );
-
-      console.log('Gallery data saved to AsyncStorage');
-      return images; // Return images array, even if it's empty
+      dispatch(stateAction.get_gallery(sortedImages));
+      dispatch(stateAction.get_initial_gallery(sortedImages));
+  
+      return { categories, images: sortedImages };
+  
     } catch (error) {
-      console.error('Error fetching gallery images:', error);
-      return [];
+      return { categories: [], images: [] };
+    } finally {
+      // 5. Re-enable network for subsequent operations
+      await firestore().enableNetwork();
     }
   };
   const {data, isLoading, error} = useQuery({
     queryKey: ['gallery'],
     // queryFn:fetchCategories
-    queryFn: getGallery,
+    queryFn: getGalleryAndCategories,
   });
   const [addNewService, setAddNewService] = useState(false);
-  const uniqueExistingServices: IServiceEmbed[] = existingServices.reduce(
-    (acc: IServiceEmbed[], current: IServiceEmbed) => {
-      const x = acc.find((item: IServiceEmbed) => item.id === current.id);
+  const uniqueExistingServices: ServiceSchemaType[] = existingServices.reduce(
+    (acc: ServiceSchemaType[], current: ServiceSchemaType) => {
+      const x = acc.find((item: ServiceSchemaType) => item.id === current.id);
       if (!x) {
         return acc.concat([current]);
       } else {
@@ -160,46 +127,45 @@ const SelectProductModal: React.FC<Props> = ({
     [],
   );
 
-  const handleSelectService = (service: IServiceEmbed) => {
-    console.log("service", service)
+  const handleSelectService = (service: ServiceSchemaType) => {
     setSelectService(service);
 
-    if (service.serviceImages && service.serviceImages.length > 0) {
-        // กรองรูปภาพที่อยู่ใน G_gallery และมี thumbnailUrl ตรงกับ serviceImages
-        const updatedGallery = G_gallery.map((image : any) => {
-            const isServiceImageSelected = service.serviceImages?.some(
-                serviceImage => serviceImage.id === image.url.id
-            );
+  //   if (service.images && service.images.length > 0) {
+  //       // กรองรูปภาพที่อยู่ใน G_gallery และมี thumbnailUrl หรือ id ตรงกับ serviceImages
+  //       const updatedGallery = G_gallery.map((image : ProjectImagesSchemaType) => {
+  //           const isServiceImageSelected = service.images?.some(
+  //               serviceImage => serviceImage.id === image.id
+  //           );
 
-            return {
-                ...image,
-                defaultChecked: isServiceImageSelected ? true : image.defaultChecked,
-            };
-        });
+  //           return {
+  //               ...image,
+  //               defaultChecked: isServiceImageSelected ? true : false,
+  //           };
+  //       });
 
-        // อัปเดต G_gallery ใน store
-        dispatch(stateAction.get_gallery(updatedGallery));
-    } else {
-      // หากไม่มี serviceImages หรือ serviceImages ว่างเปล่า ให้ตั้งค่า defaultChecked เป็น false สำหรับทุกภาพ
-      const updatedGallery = G_gallery.map(image => ({
-          ...image,
-          defaultChecked: false,
-      }));
+  //       // อัปเดต G_gallery ใน store
+  //       dispatch(stateAction.get_gallery(updatedGallery));
+  //   } else {
+  //     // หากไม่มี serviceImages หรือ serviceImages ว่างเปล่า ให้ตั้งค่า defaultChecked เป็น false สำหรับทุกภาพ
+  //     const updatedGallery = G_gallery.map(image => ({
+  //         ...image,
+  //         defaultChecked: false,
+  //     }));
 
-      // อัปเดต G_gallery ใน store
-      dispatch(stateAction.get_gallery(updatedGallery));
-  }
-    setSelectService(service);
+  //     // อัปเดต G_gallery ใน store
+  //     dispatch(stateAction.get_gallery(updatedGallery));
+  // }
+  //   setSelectService(service);
 
 };
 const handleAddService = () => {
-    const updatedGallery = G_gallery.map(image => ({
-      ...image,
-      defaultChecked: false,
-  }));
+  //   const updatedGallery = G_gallery.map(image => ({
+  //     ...image,
+  //     defaultChecked: false,
+  // }));
 
-  // อัปเดต G_gallery ใน store
-  dispatch(stateAction.get_gallery(updatedGallery));
+  // // อัปเดต G_gallery ใน store
+  // dispatch(stateAction.get_gallery(updatedGallery));
   setShowAddNewService(true);
   setAddNewService(true);
   onClose();
@@ -247,11 +213,11 @@ const handleAddService = () => {
                 }}
                 style={styles.subContainer}>
                 <View style={styles.row}>
-                {item.serviceImages && item.serviceImages.length > 0 && (
+                {item.images &&  item.images.length > 0 &&  (
                     <Image
-                    source={{uri: item.serviceImages[0].thumbnailUrl}}
-                    style={{width: 50, height: 50}}
-                  />
+                      source={{uri: item.images[0].localPathUrl ?? ''}}
+                      style={{width: 50, height: 50}}
+                    />
                 )}
 
                 

@@ -1,20 +1,20 @@
-import {BACK_END_SERVER_URL} from '@env';
-import {yupResolver} from '@hookform/resolvers/yup';
-import React, {useContext} from 'react';
-import {Store} from '../../redux/store';
-
-import {Types} from 'mongoose';
-import {nanoid} from 'nanoid';
-import {Controller, useForm, useWatch} from 'react-hook-form';
+import { BACK_END_SERVER_URL } from '@env';
+import { yupResolver } from '@hookform/resolvers/yup';
+import React, { useContext } from 'react';
+import { Store } from '../../redux/store';
+import firebase from '../../firebase'
+import { nanoid } from 'nanoid';
+import * as stateAction from '../../redux/actions';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import {
   Alert,
   Dimensions,
+  Image,
   Platform,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  Image,
   View,
 } from 'react-native';
 import {
@@ -25,18 +25,11 @@ import {
   Text,
   TextInput,
 } from 'react-native-paper';
-import UploadImage from '../../components/ui/UploadImage';
 import useCreateMaterial from '../../hooks/materials/create';
-import {useUploadToCloudflare} from '../../hooks/useUploadtoCloudflare';
-import {usePickImage} from '../../hooks/utils/image/usePickImage';
-import {
-  MaterialSchemaType,
-  materialSchema,
-} from '../../models/validationSchema/material';
-import {ValidationError} from 'yup';
+import { useUploadToCloudflare } from '../../hooks/useUploadtoCloudflare';
+import { usePickImage } from '../../hooks/utils/image/usePickImage';
+import { materialSchema, MaterialSchemaType } from '../../validation/collection/subcollection/materials';
 
-import {IMaterials} from 'models/DefaultMaterials';
-import {IMaterialEmbed} from 'types/interfaces/ServicesEmbed';
 
 type Props = {
   isVisible: boolean;
@@ -45,24 +38,28 @@ type Props = {
 
 const CreateMaterial = (props: Props) => {
   const {isVisible, onClose} = props;
+  const [isLoading, setIsLoading] = React.useState(false);
+  const firestore = firebase.firestore();
   const {
-    state: {code, companyId},
+    state: {code, companyId,G_materials},
     dispatch,
   } = useContext(Store);
 
   const defaultMaterial: MaterialSchemaType = {
+    id: nanoid(),
     name: '',
     image: {
       id:nanoid(),
       thumbnailUrl: 'INIT',
       localPathUrl: '',
       originalUrl: 'INIT',
-      created: new Date(),
+      createAt: new Date(),
     },
     description: '',
-    companyId: new Types.ObjectId(companyId).toHexString(),
-    created: new Date(),
-    updated: new Date(),
+    createAt: new Date(),
+    updateAt : new Date(),
+
+  
   };
   const {
     register,
@@ -73,9 +70,16 @@ const CreateMaterial = (props: Props) => {
   } = useForm<MaterialSchemaType>({
     mode: 'onChange',
     defaultValues: defaultMaterial,
-    resolver: yupResolver(materialSchema),
+    // resolver: yupResolver(materialSchema),
   });
-
+const name = useWatch({
+    control,
+    name: 'name',
+})
+const description = useWatch({
+    control,
+    name: 'description',
+  });
   const image = useWatch({
     control,
     name: 'image',
@@ -90,61 +94,75 @@ const CreateMaterial = (props: Props) => {
     uploadImage,
   } = useUploadToCloudflare(code, 'logo');
 
-  const url = `${BACK_END_SERVER_URL}/api/company/createMaterial`;
-  const {mutate, isPending} = useCreateMaterial();
 
   const handleSubmit = async () => {
     if (!isValid) {
-
-      Alert.alert('Error', 'กรุณากรอกข้อมูลให้ครบถ้วน' );
+      Alert.alert('Error', 'กรุณากรอกข้อมูลให้ครบถ้วน');
       return;
     }
+    
     if (!image.localPathUrl) {
       Alert.alert('Error', 'กรุณาเลือกรูปภาพ');
       return;
     }
-    const uploadPromises = [await uploadImage(image.localPathUrl)];
-    const downloadUrl = await Promise.all(uploadPromises);
-
-    if (uploadError) {
-      throw new Error('There was an error uploading the images');
-    }
-    if (!downloadUrl) {
-      throw new Error('ไม่สามาถอัพโหลดรูปภาพได้');
-    }
-
+  
+    setIsLoading(true); // ตั้งค่า loading status
+  
     try {
-      if (
-        downloadUrl &&
-        downloadUrl[0].originalUrl &&
-        downloadUrl[0].thumbnailUrl
-      ) {
-        setValue('image', {
-          thumbnailUrl: downloadUrl[0].thumbnailUrl,
-          originalUrl: downloadUrl[0].originalUrl,
-        }, {shouldValidate:true});
-      } else {
-        Alert.alert('Error', 'ไม่สามารถอัพโหลดรูปภาพได้');
+      // อัปโหลดภาพ
+      const uploadPromises = [await uploadImage(image.localPathUrl)];
+      const downloadUrl = await Promise.all(uploadPromises);
+  
+      if (!downloadUrl || !downloadUrl[0].originalUrl || !downloadUrl[0].thumbnailUrl) {
+        throw new Error('ไม่สามารถอัพโหลดรูปภาพได้');
       }
-      setValue('companyId', new Types.ObjectId(companyId).toHexString(), {
-        shouldValidate: true,
-      });
-      setValue('created', new Date(), {shouldValidate: true});
-      setValue('updated', new Date(), {shouldValidate: true});
-      setValue('id', nanoid(), {shouldValidate: true});
-
-      const formData = getValues();
-      console.log('FormData',formData)
-      mutate(formData);
+  
+      const existingId = getValues('id'); // ดึง id ที่มีอยู่จากฟอร์ม
+      const newId = existingId || nanoid(); // ใช้ id เดิมถ้ามีอยู่แล้ว, ถ้าไม่มีก็สร้างใหม่
+  
+      // ตั้งค่า value สำหรับรูปภาพในฟอร์ม
+      setValue('image', {
+        thumbnailUrl: downloadUrl[0].thumbnailUrl,
+        originalUrl: downloadUrl[0].originalUrl,
+        localPathUrl: image.localPathUrl,
+        createAt: existingId ? getValues('createAt') : new Date(), // ใช้วันที่สร้างเดิมถ้ามีอยู่แล้ว
+        id: newId, // ใช้ id ที่ถูกกำหนดไว้
+      }, { shouldValidate: true });
+  
+      const formData: MaterialSchemaType = getValues(); // ดึงข้อมูลจากฟอร์มทั้งหมดหลังจากที่ได้ตั้งค่ารูปภาพแล้ว
+  
+      const materialRef = firestore
+        .collection('companies')
+        .doc(companyId)
+        .collection('materials')
+        .doc(newId);
+  
+ await materialRef.set({
+          ...formData,
+        });
+  
+      // ดึง materials ปัจจุบันจาก Redux store
+      const currentMaterials = G_materials || [];
+  
+      // เพิ่ม material ใหม่เข้าไปในอาร์เรย์และเรียงลำดับตามวันที่สร้างหรืออัพเดตล่าสุด
+      const updatedMaterials = [formData, ...currentMaterials].sort(
+        (a, b) => new Date(b.updateAt).getTime() - new Date(a.updateAt).getTime()
+      );
+  
+      // เรียกใช้ dispatch เพื่ออัปเดต Redux store
+      dispatch(stateAction.get_material(updatedMaterials));
+  
+      Alert.alert('Success', 'ข้อมูลถูกอัพโหลดสำเร็จ');
     } catch (err) {
-      // Handle errors from uploading images or creating the standard
       console.error('An error occurred:', err);
+      Alert.alert('Error', 'เกิดข้อผิดพลาดระหว่างการอัพโหลดข้อมูล');
     } finally {
+      setIsLoading(false); // ปิด loading status
       onClose();
     }
   };
-console.log('Is feild valid ', validatingFields)
-console.log('isvalid', isValid)
+
+  const disbledButton = !image.localPathUrl || !name || !description || isUploading || isImageUploading;
   return (
     <>
       <Appbar.Header
@@ -162,6 +180,9 @@ console.log('isvalid', isValid)
             fontSize: 18,
           }}
         />
+        <Appbar.Action disabled={disbledButton} loading={
+          isUploading 
+        }   icon="check" onPress={() => handleSubmit()} />
       </Appbar.Header>
       <SafeAreaView style={styles.container}>
         <ScrollView>
@@ -185,7 +206,7 @@ console.log('isvalid', isValid)
                     justifyContent: 'center',
                   }}
                   onPress={() => pickImage()}>
-                  {isUploading ? (
+                  {isImageUploading ? (
                     <View
                       style={{
                         justifyContent: 'center',
@@ -263,7 +284,7 @@ console.log('isvalid', isValid)
                   <TextInput
                     mode="outlined"
                     label={'ชื่อ'}
-                    onBlur={onBlur}
+                    onBlur={onBlur} // แก้ไขตรงนี้
                     error={!!error}
                     placeholder="เช่น บานพับปีกผีเสื้อ..."
                     value={value}
@@ -307,7 +328,7 @@ console.log('isvalid', isValid)
               )}
             />
           </View>
-          <Button
+          {/* <Button
             loading={isUploading}
             disabled={!isValid}
             style={{width: '90%', alignSelf: 'center', marginBottom: 20}}
@@ -316,7 +337,7 @@ console.log('isvalid', isValid)
               handleSubmit();
             }}>
             {'บันทึก'}
-          </Button>
+          </Button> */}
         </ScrollView>
       </SafeAreaView>
     </>

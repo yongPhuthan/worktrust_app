@@ -1,13 +1,9 @@
-import {useState, useEffect,  useContext} from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import {BACK_END_SERVER_URL} from '@env';
-import {DashboardResponse} from '../../types';
-import {QueryKeyType} from '../../types/enums';
+import {useContext, useEffect, useState} from 'react';
+import {MaterialSchemaType} from 'validation/collection/subcollection/materials';
+import firebase from '../../firebase';
 import {useUser} from '../../providers/UserContext';
-import {Store} from '../../redux/store';
-import { IMaterials } from 'models/DefaultMaterials';
 import * as stateAction from '../../redux/actions';
-
+import {Store} from '../../redux/store';
 const useFetchMaterial = () => {
   const user = useUser();
   const {
@@ -17,9 +13,9 @@ const useFetchMaterial = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isError, setIsError] = useState<boolean>(false);
   const [error, setError] = useState<any | null>(null);
-
-  const fetchMaterialFromServer = async () => {
-    console.log('FETCHING MATERIAL FROM SERVER');
+  const firestore = firebase.firestore;
+  const fetchMaterialFromFirestore = async () => {
+    console.log('FETCHING MATERIAL FROM FIRESTORE');
     if (!user) {
       setIsError(true);
       setError({message: 'User not authenticated.', action: 'logout'});
@@ -28,86 +24,73 @@ const useFetchMaterial = () => {
     }
 
     try {
-      const token = await user.getIdToken();
+      // Disable network to force Firestore to use cache first
+      await firestore().disableNetwork();
 
-      const response = await fetch(
-        `${BACK_END_SERVER_URL}/api/company/getMaterials?companyId=${encodeURIComponent(
-          companyId.toString(),
-        )}`,
-        {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        },
-      );
+      // ดึงข้อมูลจากแคชใน Firestore ก่อน
+      const snapshot = await firestore()
+        .collection('companies')
+        .doc(companyId)
+        .collection('materials')
+        .get();
 
-      if (!response.ok) {
-        const errorData: any = await response.json();
-        console.log('Error fetching data:', errorData);
-        setIsError(true);
-        setError(errorData);
-        setIsLoading(false);
-        return;
-      }
-
-      const res: any = await response.json();
-
-      console.log('DATA SAVED TO ASYNC STORAGE');
-
-      if (res.materials) {
-        await AsyncStorage.setItem(
-          QueryKeyType.MATERIAL,
-          JSON.stringify(res.materials),
+      if (!snapshot.empty) {
+        console.log('Loaded materials from cache');
+        const materials: MaterialSchemaType[] = snapshot.docs.map(
+          doc => doc.data() as MaterialSchemaType,
         );
-        dispatch(stateAction.get_material(res.materials));
+        dispatch(stateAction.get_material(materials));
+        setIsError(false);
       } else {
-        await AsyncStorage.removeItem(QueryKeyType.MATERIAL);
-        dispatch(stateAction.get_material(res.materials));
+        console.log('No materials found in cache, fetching from server...');
 
-      }
+        // Re-enable network to fetch from the server
+        await firestore().enableNetwork();
 
-      setIsError(false);
-    } catch (err) {
-      console.error('An error occurred while fetching the material:', err);
-      setIsError(true);
-      setError({message: 'Failed to fetch data', action: 'retry'});
-    } finally {
-      setIsLoading(false);
-    }
-  };
+        // ดึงข้อมูลจากเซิร์ฟเวอร์ถ้าไม่มีในแคช
+        const serverSnapshot = await firestore()
+          .collection('companies')
+          .doc(companyId)
+          .collection('materials')
+          .get();
 
-  const loadFromAsyncStorage = async () => {
-    try {
-      const storedMaterials = await AsyncStorage.getItem(QueryKeyType.MATERIAL);
-
-      if (storedMaterials) {
-        console.log('LOAD FROM ASYNC STORAGE');
-        const parsedMaterials: IMaterials[] = JSON.parse(storedMaterials);
-        dispatch(stateAction.get_material(parsedMaterials));
-
-      } else {
-        fetchMaterialFromServer(); // Fetch from server if async storage is empty
+        if (!serverSnapshot.empty) {
+          const materials: MaterialSchemaType[] = serverSnapshot.docs.map(
+            doc => doc.data() as MaterialSchemaType,
+          );
+          dispatch(stateAction.get_material(materials));
+          setIsError(false);
+        } else {
+          console.log('No materials found in Firestore');
+          setIsError(true);
+          setError({message: 'No materials found', action: 'retry'});
+        }
       }
     } catch (err) {
-      console.error('Failed to load data from AsyncStorage:', err);
+      console.error(
+        'An error occurred while fetching the material from Firestore:',
+        err,
+      );
       setIsError(true);
-      setError({message: 'Failed to load data from storage', action: 'retry'});
+      setError({
+        message: 'Failed to fetch data from Firestore',
+        action: 'retry',
+      });
     } finally {
       setIsLoading(false);
+      await firestore().enableNetwork(); // Re-enable network after operation
     }
   };
 
   useEffect(() => {
-    loadFromAsyncStorage(); // Load data from AsyncStorage on component mount
+    fetchMaterialFromFirestore(); // Load data from Firestore on component mount
   }, []);
 
   return {
     isLoading,
     isError,
     error,
-    refetch: fetchMaterialFromServer,
+    refetch: fetchMaterialFromFirestore,
   };
 };
 

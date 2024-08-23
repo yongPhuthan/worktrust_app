@@ -1,20 +1,9 @@
-import React, {useState, useEffect} from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  Dimensions,
-  SafeAreaView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import {TextInput, Button, Text, Appbar, Snackbar} from 'react-native-paper';
+import React, {useState} from 'react';
+import {Dimensions, SafeAreaView, StyleSheet, View} from 'react-native';
+import {Appbar, Button, Snackbar, Text, TextInput} from 'react-native-paper';
 
 import {Controller, useForm, useWatch} from 'react-hook-form';
 
-import {faArrowLeft} from '@fortawesome/free-solid-svg-icons';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {FirebaseAuthTypes} from '@react-native-firebase/auth';
 import {StackNavigationProp} from '@react-navigation/stack';
 import firebase from '../../firebase';
@@ -56,7 +45,6 @@ const schema = yup.object().shape({
 });
 const RegisterScreen = ({navigation}: Props) => {
   const [userLoading, setUserLoading] = useState(false);
-  const user = useUser();
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
@@ -94,8 +82,6 @@ const RegisterScreen = ({navigation}: Props) => {
     console.log('Starting signUpEmail function');
     setUserLoading(true);
     try {
-      await AsyncStorage.setItem('userEmail', email);
-      await AsyncStorage.setItem('userPassword', password);
       console.log('Stored email and password in AsyncStorage');
 
       if (password !== confirmPassword) {
@@ -113,48 +99,20 @@ const RegisterScreen = ({navigation}: Props) => {
         return;
       }
 
-      const userCredential = await firebase
+      await firebase
         .auth()
-        .createUserWithEmailAndPassword(email, password);
-      const user = userCredential.user;
-      console.log('Created new user with email and password', user);
+        .createUserWithEmailAndPassword(email, password)
+        .then(userCredential => {
+          navigation.navigate('CreateCompanyScreen');
+        });
 
-      if (!user || !user.uid || !user.email) {
-        throw new Error(
-          'User creation was successful, but no user data was returned.',
-        );
-      }
-
-      const token = await user.getIdToken(true);
-
-      const response = await fetch(
-        `${BACK_END_SERVER_URL}/api/register/email`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({email: user.email, uid: user.uid}),
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to create user on the server');
-      }
-
-      const responseData = await response.json();
-      console.log('Server response data', responseData);
-
-      navigation.navigate('CreateCompanyScreen');
-      setUserLoading(false);
-      console.log('Finished signUpEmail function successfully');
     } catch (error) {
       console.error('Error during signUpEmail function', error);
       if ((error as SignUpError).code === 'auth/email-already-in-use') {
         setSnackbarMessage('อีเมลนี้ถูกใช้งานแล้ว');
         setSnackbarVisible(true);
       }
+    } finally {
       setUserLoading(false);
     }
   };
@@ -162,7 +120,6 @@ const RegisterScreen = ({navigation}: Props) => {
   const togglePasswordVisibility = () => {
     setPasswordVisible(!passwordVisible);
   };
-
 
   return (
     <>

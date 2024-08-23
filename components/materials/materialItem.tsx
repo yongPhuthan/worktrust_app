@@ -1,12 +1,12 @@
-import { IMaterials } from 'models/DefaultMaterials';
 import React from 'react';
-import { View, Text, Image, TouchableOpacity, Dimensions, StyleSheet } from 'react-native';
+import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Checkbox } from 'react-native-paper';
+import { MaterialSchemaType } from '../../validation/collection/subcollection/materials';
 
 interface MaterialItemProps {
-  item: IMaterials;
+  item: MaterialSchemaType;
   onPress: () => void;
-  selectedMaterials: IMaterials[];
+  selectedMaterials: MaterialSchemaType[];
 }
 const {width, height} = Dimensions.get('window');
 
@@ -16,8 +16,8 @@ const MaterialItem: React.FC<MaterialItemProps> = React.memo(({ item, onPress, s
     );
   console.log('ITEM', item)
     const isChecked = React.useMemo(() => {
-      return selectedMaterials.some(material => material._id === item._id);
-    }, [item._id, selectedMaterials]);
+      return selectedMaterials.some(material => material.id === item.id);
+    }, [item.id, selectedMaterials]);
   
     const handleError = React.useCallback(() => {
       // เมื่อเกิดข้อผิดพลาดในการโหลดรูปภาพ ให้ซ่อนคอมโพเนนต์นี้

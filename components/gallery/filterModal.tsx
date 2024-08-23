@@ -9,7 +9,7 @@ import {
 import Modal from 'react-native-modal';
 import {Chip, Appbar, Button} from 'react-native-paper';
 import {Store} from '../../redux/store';
-import { ICategory } from '../../models/Category';
+import { CategorySchemaType } from '../../validation/collection/subcollection/categories';
 
 type Props = {
   isVisible: boolean;
@@ -27,8 +27,7 @@ const FilterModal = (props: Props) => {
   const {isVisible, onClose, selectedTags, handleSelectTag} = props;
 
 
-console.log('G_categories', G_categories);
-  const renderItem = ({item}: {item: ICategory}) => (
+  const renderItem = ({item}: {item: CategorySchemaType}) => (
     <Chip
       style={styles.chip}
       mode="outlined"
@@ -50,7 +49,7 @@ console.log('G_categories', G_categories);
           data={G_categories}
           numColumns={4}
           renderItem={renderItem}
-          keyExtractor={(item, index) => index.toString()}
+          keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContainer}
         />
         <View

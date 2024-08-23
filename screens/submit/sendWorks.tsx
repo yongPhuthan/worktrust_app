@@ -61,8 +61,8 @@ import {ParamListBase} from '../../types/navigationType';
 import SubmissionViewScreen from '../../components/webview/submission';
 import useUpdateSubmission from '../../hooks/submission/useUpdate';
 import { set } from 'lodash';
-import { initialImagePair } from '../../models/InitialState';
-import { ISubmissions } from 'models/Submissions';
+// import { initialImagePair } from '../../models/InitialState';
+// import { ISubmissions } from 'models/Submissions';
 type Props = {
   navigation: StackNavigationProp<ParamListBase>;
   route: RouteProp<ParamListBase, 'SendWorks'>;
@@ -117,7 +117,7 @@ const SendWorks = (props: Props) => {
   const [opneSubmissionModal, setOpenSubmissionModal] =
     useState<boolean>(false);
 
-  const initialSubmission: ISubmissions = {
+  const initialSubmission: any = {
     id: nanoid(),
     address: editQuotation ? editQuotation.customer.address : '',
     description: '',
@@ -141,7 +141,7 @@ const SendWorks = (props: Props) => {
     workers: editQuotation ? editQuotation.workers : [],
     updatedAt: new Date(),
   };
-  const methods = useForm<ISubmissions>({
+  const methods = useForm<any>({
     mode: 'all',
     defaultValues: editSubmission ? editSubmission : initialSubmission,
   });
@@ -152,10 +152,7 @@ const SendWorks = (props: Props) => {
   const handleAddImagePair = () => {
     append(initialImagePair);
   };
-  // const beforeImages = useWatch({
-  //   control: methods.control,
-  //   name: 'beforeImages',
-  // });
+
 
   const imagesPair = useWatch({
     control: methods.control,

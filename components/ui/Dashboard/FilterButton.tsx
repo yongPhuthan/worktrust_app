@@ -1,7 +1,7 @@
 // FilterButton.tsx
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { InvoicesFilterLabels, QuotationsFilterLabels, ReceiptsFilterLabels, SubmissionFilterLabels, WarrantyFilterLabels } from '../../../models/DocumentStatus'; // Adjust the import path as necessary
+import { InvoicesFilterLabels, QuotationsFilterLabels, ReceiptsFilterLabels, SubmissionFilterLabels, WarrantyFilterLabels } from '../../../mongoDbmodels/DocumentStatus'; 
 import { InvoiceStatus, QuotationStatus , ReceiptStatus, SubmissionStatus, WarrantyStatus 
   
  } from '../../../types/enums';
@@ -35,10 +35,8 @@ type QuotationsFilterButtonProps = {
     onPress: () => void;
   }
 
-
-
 export const QuotationsFilterButton: React.FC<QuotationsFilterButtonProps> = ({ filter, isActive, onPress }) => {
-    const displayText = QuotationsFilterLabels[filter as keyof typeof QuotationsFilterLabels];
+    const displayText = QuotationsFilterButton[filter as keyof typeof QuotationsFilterLabels];
     return (
       <TouchableOpacity
         style={[styles.filterButton, isActive ? styles.activeFilter : null]}

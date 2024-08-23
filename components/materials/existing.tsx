@@ -1,29 +1,24 @@
-import React, {useContext, useEffect, useState} from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import {
   Dimensions,
   FlatList,
-  Image,
   StyleSheet,
-  TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 
-import {useFormContext} from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 import Modal from 'react-native-modal';
 import {
   ActivityIndicator,
   Appbar,
   Button,
-  Checkbox,
-  Text,
+  Text
 } from 'react-native-paper';
 import useFetchMaterial from '../../hooks/materials/read';
-import {IMaterials} from '../../models/Materials';
-import {useUser} from '../../providers/UserContext';
-import {Store} from '../../redux/store';
+import { useUser } from '../../providers/UserContext';
+import { Store } from '../../redux/store';
+import { MaterialSchemaType } from '../../validation/collection/subcollection/materials';
 import CreateMaterial from './createMaterial';
-import {Types} from 'mongoose';
-import useImageUri from 'hooks/materials/imageUri';
 import MaterialItem from './materialItem';
 
 interface ExistingModalProps {
@@ -40,7 +35,7 @@ const ExistingMaterials = ({
   onClose,
   serviceId,
 }: ExistingModalProps) => {
-  const [materials, setMaterials] = useState<IMaterials[]>([]);
+  const [materials, setMaterials] = useState<MaterialSchemaType[]>([]);
   const [isOpenModal, setIsOpenModal] = useState(false);
   const context = useFormContext();
   const [isCreateMaterial, setIsCreateMaterial] = useState(false);
@@ -62,10 +57,10 @@ const ExistingMaterials = ({
 
   const {isLoading, isError, error, refetch} = useFetchMaterial();
 
-  const handleSelectMaterial = (material: IMaterials) => {
+  const handleSelectMaterial = (material: MaterialSchemaType) => {
     const currentMaterials = getValues('materials') || [];
     const materialIndex = currentMaterials.findIndex(
-      (materialData: IMaterials) => materialData._id === material._id,
+      (materialData: MaterialSchemaType) => materialData.id === material.id,
     );
     if (materialIndex !== -1) {
       const updatedMaterials = [...currentMaterials];
@@ -75,7 +70,7 @@ const ExistingMaterials = ({
       const updatedMaterials = [
         ...currentMaterials,
         {
-          _id: material._id,
+          id: material.id,
           name: material.name,
           description: material.description,
           image: material.image,
@@ -95,7 +90,6 @@ const ExistingMaterials = ({
       setMaterials(G_materials);
     }
   }, [G_materials]);
-console.log('G_Material', G_materials)
   return (
     <Modal isVisible={isVisible} style={styles.modal} onBackdropPress={onClose}>
       <Appbar.Header
@@ -149,8 +143,8 @@ console.log('G_Material', G_materials)
                 </Button>
               </View>
             }
-            keyExtractor={(item: IMaterials) =>
-              item._id ? new Types.ObjectId(item._id).toHexString() : ''
+            keyExtractor={(item: MaterialSchemaType) =>
+              item.id ? item.id : ''
             }
           />
 
