@@ -15,6 +15,7 @@ import { ServiceSchemaType } from '../validation/field/services';
 import { WorkerSchemaType } from '../validation/collection/subcollection/workers';
 import { ProjectImagesSchemaType } from '../validation/collection/subcollection/projectImages';
 import { CategorySchemaType } from '../validation/collection/subcollection/categories';
+import { QuotationEventsType } from 'validation/collection/subcollection/events';
 
 
 // ACTION => REDUCER
@@ -176,6 +177,16 @@ export const get_standard = (payload: StandardSchemaType[]) => ({
 });
 export const get_material = (payload: MaterialSchemaType[]) => ({
   type: contrains.GET_MATERIAL,
+  payload,
+});
+
+export const get_quotations_events = (payload: QuotationEventsType[]) => ({
+  type: contrains.GET_QUOTATIONS_EVENTS,
+  payload,
+});
+
+export const update_quotations_events = (payload: QuotationEventsType) => ({
+  type: contrains.UPDATE_QUOTATIONS_EVENTS,
   payload,
 });
 
@@ -395,3 +406,19 @@ export const getMaterial = (payload: MaterialSchemaType[]) => {
     dispatch(get_material(payload));
   };
 }
+
+export const getQuotationsEvents = (payload: QuotationEventsType[]) => {
+  return (
+    dispatch: (arg0: {type: string; payload: QuotationEventsType[]}) => void,
+  ) => {
+    dispatch(get_quotations_events(payload));
+  };
+}
+
+export const updateQuotationsEvents = (payload: QuotationEventsType) => {
+  return (
+    dispatch: (arg0: {type: string; payload: QuotationEventsType}) => void,
+  ) => {
+    dispatch(update_quotations_events(payload));
+  };
+};

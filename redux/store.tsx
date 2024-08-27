@@ -16,8 +16,9 @@ import {MaterialSchemaType} from 'validation/collection/subcollection/materials'
 import {StandardSchemaType} from 'validation/collection/subcollection/standard';
 import {UserType} from 'validation/collection/users';
 import {ServiceSchemaType} from 'validation/field/services';
-import { ProjectImagesSchemaType } from 'validation/collection/subcollection/projectImages';
-import { CategorySchemaType } from 'validation/collection/subcollection/categories';
+import {ProjectImagesSchemaType} from 'validation/collection/subcollection/projectImages';
+import {CategorySchemaType} from 'validation/collection/subcollection/categories';
+import {QuotationEventsType} from 'validation/collection/subcollection/events';
 
 export type StateType = {
   companyId: string;
@@ -48,6 +49,7 @@ export type StateType = {
   G_standards: StandardSchemaType[];
   G_materials: MaterialSchemaType[];
   initial_gallery: ProjectImagesSchemaType[];
+  quotations_events: QuotationEventsType[];
 };
 
 type ActionType = {
@@ -73,6 +75,7 @@ type ActionType = {
     | CompanyType
     | ProjectImagesSchemaType[]
     | CategorySchemaType[]
+    | QuotationEventsType[];
 };
 
 type ContextType = {
@@ -110,6 +113,7 @@ export const Store = createContext<ContextType>({
     initial_gallery: [],
     G_standards: [],
     G_materials: [],
+    quotations_events: [],
   },
   dispatch: () => {},
 });
@@ -143,6 +147,7 @@ const initialState: StateType = {
   initial_gallery: [],
   G_standards: [],
   G_materials: [],
+  quotations_events: [],
 };
 
 function reducer(state: StateType, action: ActionType): StateType {
@@ -217,11 +222,30 @@ function reducer(state: StateType, action: ActionType): StateType {
     case contrains.GET_CATEGORIES:
       return {...state, G_categories: action.payload as CategorySchemaType[]};
     case contrains.GET_INITIAL_GALLERY:
-      return {...state, initial_gallery: action.payload as ProjectImagesSchemaType[]};
+      return {
+        ...state,
+        initial_gallery: action.payload as ProjectImagesSchemaType[],
+      };
     case contrains.GET_STANDARD:
       return {...state, G_standards: action.payload as StandardSchemaType[]};
     case contrains.GET_MATERIAL:
       return {...state, G_materials: action.payload as MaterialSchemaType[]};
+    case contrains.GET_QUOTATIONS_EVENTS:
+      return {
+        ...state,
+        quotations_events: action.payload as QuotationEventsType[],
+      };
+    case contrains.UPDATE_QUOTATIONS_EVENTS:
+      const updatedEvents = state.quotations_events.map(event => {
+        if (
+          event.quotationId ===
+          (action.payload as QuotationEventsType)?.quotationId
+        ) {
+          return action.payload as QuotationEventsType;
+        }
+        return event;
+      });
+      return {...state, quotations_events: updatedEvents};
 
     default:
       return state;

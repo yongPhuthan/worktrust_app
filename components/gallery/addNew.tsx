@@ -1,6 +1,6 @@
 import Slider from '@react-native-community/slider';
 import { useQueryClient } from '@tanstack/react-query';
-import { debounce } from 'lodash';
+import { debounce, set } from 'lodash';
 import React, { useContext, useEffect, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import Marker, { ImageMarkOptions, Position } from 'react-native-image-marker';
@@ -192,6 +192,8 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
     setIsLoading(true);
 
     try {
+      await firestore.enableNetwork();
+
       // สร้างเอกสารใหม่ใน subCollection "categories" ของบริษัท
       const categoryRef = firestore
         .collection('companies')
@@ -225,14 +227,15 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
 
       // Dispatch categories to update the state
       dispatch(stateAction.get_categories(categories));
-
-      setIsLoading(false);
       return newCategory;
     } catch (error) {
       console.error('Failed to add category:', error);
       alert('Failed to add category, please try again!');
       setIsLoading(false);
       return undefined; // ส่งคืน undefined เมื่อเกิดข้อผิดพลาด
+    } finally{
+      setIsLoading(false);
+      firestore.disableNetwork();
     }
   };
 
@@ -244,8 +247,10 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
       return;
     }
     setIsLoading(true);
+    await firestore.enableNetwork();
 
     try {
+
       if (!image.localPathUrl) {
         console.error('Image local path URL is missing.');
         alert('Image upload failed. Please try again.');
@@ -312,6 +317,7 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
       alert('Error uploading image with categories, please try again.');
     } finally {
       setIsLoading(false);
+    await   firestore.disableNetwork();
     }
   };
 
@@ -533,7 +539,7 @@ const AddNewImage = ({isVisible, onClose}: ExistingModalProps) => {
         />
         <Button
           loading={isImageUpload || isUploading || isLoading}
-          disabled={!image || !categories || categories.length === 0}
+          disabled={!image || !categories || categories.length === 0 || isLoading}
           mode="contained"
           onPress={() => {
             uploadImageWithCategories();

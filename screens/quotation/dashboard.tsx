@@ -51,12 +51,8 @@ import {
 import { CompanyType } from '../../validation/collection/companies';
 import { QuotationSchemaType } from '../../validation/collection/subcollection/quotations';
 import { CustomerEmbedSchemaType } from '../../validation/field/embed/customerEmbed';
+import { QuotationEventsType } from '../../validation/collection/subcollection/events';
 
-
-interface ErrorResponse {
-  message: string;
-  action: 'logout' | 'redirectToCreateCompany' | 'contactSupport' | 'retry';
-}
 const Dashboard = ({navigation}: DashboardScreenProps) => {
   const [showModal, setShowModal] = useState(true);
   // const {isVisible, setIsVisible, checkSubscription} = useCheckSubscription();
@@ -73,7 +69,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   } = useModal();
   const {
     dispatch,
-    state: {quotations,companyId},
+    state: {quotations,companyId, quotations_events},
   } = useContext(Store);
   const { isLoading, isError, error, loadFromFirestoreCache,refetch } = useFetchDashboard(navigation)
 
@@ -91,7 +87,6 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     activeFilter as QuotationStatus,
   );
   const [companyData, setCompanyData] = useState<CompanyType | null>(null);
-
   const handleLogout = async () => {
     try {
       await firebase.auth().signOut();
@@ -109,7 +104,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    refetch(companyId)
+    refetch()
       .then(() => {
         setRefreshing(false);
       })
@@ -206,14 +201,14 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     }
   };
 
-  const confirmRemoveQuotation = (id: string, customer: CustomerEmbedSchemaType) => {
+  const confirmRemoveQuotation = (id: string, customerName: string) => {
     setShowModal(false);
     // if (!checkSubscription()) {
     //   return;
     // }
     Alert.alert(
       'ยืนยันลบเอกสาร',
-      `ลูกค้า ${customer}`,
+      `ลูกค้า ${customerName}`,
       [
         {
           text: 'ยกเลิก',
@@ -249,18 +244,11 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { company, quotations, userData, workers } = await loadFromFirestoreCache();
-  
-      if (quotations) {
-        // Sort the quotations by the most recently updated date
-        const sortedQuotations = quotations.sort((a, b) => {
-          const dateA = new Date(a.updateAt || new Date());
-          const dateB = new Date(b.updateAt || new Date());
-          return dateB.getTime() - dateA.getTime();
-        });
-        dispatch(stateAction.get_quotations(sortedQuotations));
-  
-        const services = quotations.flatMap((quotation: QuotationSchemaType) =>
+      const { company,  userData, workers,quotationEvents,quotations,mergedQuotations } = await loadFromFirestoreCache();
+// console.log("QUOTATION ",quotations)
+      if (mergedQuotations) {
+        
+        const services = mergedQuotations.flatMap((quotation: QuotationSchemaType) =>
           quotation.services.slice(0, 10),
         );
         if (services) {
@@ -296,6 +284,9 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
           dispatch(stateAction.get_subscription(userData.subscription));
         }
         dispatch(stateAction.get_user(userData));
+      }
+      if(quotationEvents){
+        dispatch(stateAction.get_quotations_events(quotationEvents));
       }
     };
   
@@ -387,7 +378,6 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
       return unsubscribe;
     }
   }, [user]);
-
   useEffect(() => {
     // ใช้ useEffect เพื่อตรวจสอบการเปลี่ยนแปลงของ showProjectModal และ showPDFModal
     // และทำการเปลี่ยนแปลงค่าของ showModal ให้เป็น false เพื่อปิด Modal
@@ -422,8 +412,12 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     }
     setIsModalSignContract(false);
   };
-  const handleModalOpen = (item: QuotationSchemaType, index: number) => {
-    setSelectedItem(item);
+  const handleModalOpen = (item: QuotationEventsType, index: number) => {
+    // find the selected item fromt item.id 
+    const selectedItem = quotations?.find((q) => q.id === item.quotationId);
+    if (selectedItem) {
+      setSelectedItem(selectedItem);
+    }
     setSelectedIndex(index);
     // handleModal(item, index);
     setShowModal(true);
@@ -445,6 +439,11 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
     navigation.navigate('CreateQuotation');
   };
 
+  useEffect(() => {
+
+  }, [quotations_events])
+  
+
   // const removeasyncStorage = async () => {
   //   try {
   //     await AsyncStorage.removeItem(QueryKeyType.DASHBOARD);
@@ -455,16 +454,19 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
   // }
   // removeasyncStorage();
 
-  const renderItem = ({item, index}: any) => (
+  const renderItem = ({item, index}: {item:any, index:number}) => (
     <>
-      <View style={{marginTop: 10}}>
+      <View key={item.quotationId} style={{marginTop: 10}}>
         <CardDashBoard
           status={item.status}
-          date={item.dateOffer}
-          events={item.events}
-          end={item.dateEnd}
-          price={item.allTotal}
-          customerName={item.customer?.name as string}
+          download = {item.download}
+          pageView = {item.pageView}
+          print = {item.print}
+          events = {item.events}
+          dateOffer={item.dateOffer}
+          dateEnd={item.dateEnd}
+          allTotal={item.allTotal}
+          customerName={item.customer.name}
           // onCardPress={()=>handleModal(item, index)}
           onCardPress={() => handleModalOpen(item, index)}
         />
@@ -492,15 +494,15 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                       fontFamily: 'Sukhumvit Set Bold',
                       color: 'gray',
                     }}>
-                    {item.customer?.name}
+                    {item.customerName}
                   </List.Subheader>
                   <Divider />
                   <List.Item
                     onPress={() => {
                       handleModalClose();
                       navigation.navigate('ProjectViewScreen', {
-                        id: item.id,
-                        fileName: `${item.customer.name}`,
+                        id: item.quotationId,
+                        fileName: `${item.customerName}`,
                       });
                     }}
                     centered={true}
@@ -512,10 +514,17 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                   <List.Item
                     onPress={() => {
                       handleModalClose();
+
+                      //find pdfUrl from quotations
+                      const pdfUrl = quotations?.find(
+                        q => q.id === item.quotationId,
+                      )?.pdfUrl ?? '';
+
+
                       navigation.navigate('PDFViewScreen', {
-                        pdfUrl: item.pdfUrl,
+                        pdfUrl,
                         fileType: 'QT',
-                        fileName: `${item.customer.name}.pdf`,
+                        fileName: `${item.customerName}.pdf`,
                       });
                     }}
                     title="ดูเอกสาร PDF"
@@ -628,7 +637,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                   <List.Item
                     onPress={() =>
                       confirmResetQuotation(
-                        item.id,
+                        item.quotationId,
                         selectedItem?.customer?.name,
                       )
                     }
@@ -655,7 +664,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                   <Divider />
                   <List.Item
                     onPress={() =>
-                      confirmRemoveQuotation(item._id, item?.customer?.name)
+                      confirmRemoveQuotation(item.quotationId, item.customerName)
                     }
                     title="ลบ"
                     titleStyle={{textAlign: 'center', color: 'red'}}
@@ -752,8 +761,8 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                   }}>
                   <>
                     {activeFilter === QuotationStatus.EXPIRED &&
-                      filteredData &&
-                      filteredData.length > 0 && (
+                      quotations_events &&
+                      quotations_events.length > 0 && (
                         <Text
                           style={{
                             textAlign: 'center',
@@ -773,7 +782,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                       onRefresh={onRefresh}
                       renderItem={renderItem}
                       refreshing={refreshing}
-                      keyExtractor={(item: QuotationSchemaType, index) =>
+                      keyExtractor={(item: QuotationEventsType, index) =>
                         item.id
                       }
                       ListEmptyComponent={
@@ -801,7 +810,7 @@ const Dashboard = ({navigation}: DashboardScreenProps) => {
                         </View>
                       }
                       contentContainerStyle={
-                        quotations?.length === 0 && {flex: 1}
+                        quotations_events?.length === 0 && {flex: 1}
                       }
                     />
                   </>

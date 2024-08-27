@@ -1,68 +1,363 @@
 [
   {
-    "categories": ["สีขาว"],
-    "created": "2024-08-13T05:18:20.390Z",
-    "defaultChecked": true,
-    "id": "66bb04aef6bc8e0cf4b16d6f",
-    "url": {
-      "_id": "66bb04aef6bc8e0cf4b16d6f",
-      "originalUrl": "https://pub-1b49f44c19f34277b1bc3bfb7016aa29.r2.dev/503405/gallery/original/ow0DPirbH-6Hgdo304FY7.png",
-      "thumbnailUrl": "https://pub-1b49f44c19f34277b1bc3bfb7016aa29.r2.dev/503405/gallery/thumbnail/vbehT_pSUa2nlRrbq30FE.png"
-    }
+    "FCMToken": "dFlKguH0rEeYpFCb2IgzwC:APA91bHSp75mOfRIvvDge3Vl-6yniMAHRqrXII2mkKbEVpI7I2xln2uQk3dQQxjigEwSHTxVGkbFWl5GFXnuXgcxtAbcWgXASvbfWhl9RZVZM0PGplHnvS1a5bpZMsNo-LHsln7MNvi6",
+    "allTotal": 8900,
+    "companyId": "TH963207",
+    "createAt": [Object
+    ],
+    "customer": {
+      "address": "Address",
+      "customerTax": "",
+      "name": "Customer2",
+      "phone": "053306436"
+    },
+    "dateEnd": [Object
+    ],
+    "dateEndUTC": [Object
+    ],
+    "dateOffer": [Object
+    ],
+    "discountPercentage": 0,
+    "discountType": "PERCENT",
+    "discountValue": 0,
+    "docNumber": "QT20240826639",
+    "docUrl": "ybKXYE3pQe",
+    "events": {
+      "allTotal": 8900,
+      "customerName": "Customer2",
+      "download": 2,
+      "pageView": 0,
+      "print": 0,
+      "quotationId": "7Ac6BJMfUmfhajkREoNG",
+      "share": 0,
+      "status": "PENDING"
+    },
+    "id": "7Ac6BJMfUmfhajkREoNG",
+    "isArchived": false,
+    "noteToCustomer": null,
+    "noteToTeam": null,
+    "pdfUrl": null,
+    "sellerEmbed": {
+      "address": "Bangkok",
+      "bizName": "Doubledoor engineering",
+      "companyTax": "1100800667",
+      "email": "",
+      "jobPosition": "Manager",
+      "logo": null,
+      "mobileTel": "0959962030",
+      "officeTel": "053306425",
+      "sellerName": "Phuthan Kantabusabong"
+    },
+    "sellerSignature": "",
+    "sellerUid": "jE4TFu207FL977cgwuzWT7BfHEBS",
+    "services": [
+      [Object
+      ]
+    ],
+    "status": "PENDING",
+    "summary": 8900,
+    "summaryAfterDiscount": 8900,
+    "taxType": "NOTAX",
+    "taxValue": 0,
+    "updateAt": [Object
+    ],
+    "vat7": 0,
+    "warranty": {
+      "condition": "รับประกันคุณภาพตัวสินค้า ตามมาตรฐานในการใช้งานตามปกติเท่านั้น ขอสงวนสิทธ์การรับประกันที่เกิดจากการใช้งานสินค้าที่ไม่ถูกต้องหรือความเสียหายที่เกิดจากภัยธรรมชาติ หรือ การใช้งานผิดประเภทหรือปัญหาจากการกระทําของบคุคลอื่น เช่นความเสียหายที่เกิดจากการทำงานของผู้รับเหมาทีมอื่นหรือบุคคลที่สามโดยตั้งใจหรือไม่ได้ตั้งใจ",
+      "endProductWarranty": null,
+      "endSkillWarranty": null,
+      "fixDays": 12,
+      "pdfUrl": null,
+      "productWarrantyMonth": 11,
+      "sellerSignature": null,
+      "skillWarrantyMonth": 22
+    },
+    "warrantyStatus": "PENDING",
+    "workers": null
   },
   {
-    "categories": ["สีขาว"],
-    "created": "2024-08-13T05:18:20.390Z",
-    "defaultChecked": true,
-    "id": "66bb0582ddf87a9dc71adc13",
-    "url": {
-      "_id": "66bb0582ddf87a9dc71adc13",
-      "originalUrl": "https://pub-1b49f44c19f34277b1bc3bfb7016aa29.r2.dev/503405/gallery/original/XAE4f9MUCjEpTeqO6QNGe.png",
-      "thumbnailUrl": "https://pub-1b49f44c19f34277b1bc3bfb7016aa29.r2.dev/503405/gallery/thumbnail/zN4E6B_lHqFSo-1IHxRaz.png"
-    }
+    "FCMToken": "dFlKguH0rEeYpFCb2IgzwC:APA91bHSp75mOfRIvvDge3Vl-6yniMAHRqrXII2mkKbEVpI7I2xln2uQk3dQQxjigEwSHTxVGkbFWl5GFXnuXgcxtAbcWgXASvbfWhl9RZVZM0PGplHnvS1a5bpZMsNo-LHsln7MNvi6",
+    "allTotal": 8900,
+    "companyId": "TH963207",
+    "createAt": [Object
+    ],
+    "customer": {
+      "address": "ADDERSS",
+      "customerTax": "",
+      "name": "Example@email.com",
+      "phone": ""
+    },
+    "dateEnd": [Object
+    ],
+    "dateEndUTC": [Object
+    ],
+    "dateOffer": [Object
+    ],
+    "discountPercentage": 0,
+    "discountType": "PERCENT",
+    "discountValue": 0,
+    "docNumber": "QT20240826607",
+    "docUrl": "9GslSNFbd1",
+    "events": {},
+    "id": "B8h0KHiN96CAlm0buICu",
+    "isArchived": false,
+    "noteToCustomer": null,
+    "noteToTeam": null,
+    "pdfUrl": null,
+    "sellerEmbed": {
+      "address": "Bangkok",
+      "bizName": "Doubledoor engineering",
+      "companyTax": "1100800667",
+      "email": "",
+      "jobPosition": "Manager",
+      "logo": null,
+      "mobileTel": "0959962030",
+      "officeTel": "053306425",
+      "sellerName": "Phuthan Kantabusabong"
+    },
+    "sellerSignature": "",
+    "sellerUid": "jE4TFu207FL977cgwuzWT7BfHEBS",
+    "services": [
+      [Object
+      ]
+    ],
+    "status": "PENDING",
+    "summary": 8900,
+    "summaryAfterDiscount": 8900,
+    "taxType": "NOTAX",
+    "taxValue": 0,
+    "updateAt": [Object
+    ],
+    "vat7": 0,
+    "warranty": {
+      "condition": "รับประกันคุณภาพตัวสินค้า ตามมาตรฐานในการใช้งานตามปกติเท่านั้น ขอสงวนสิทธ์การรับประกันที่เกิดจากการใช้งานสินค้าที่ไม่ถูกต้องหรือความเสียหายที่เกิดจากภัยธรรมชาติ หรือ การใช้งานผิดประเภทหรือปัญหาจากการกระทําของบคุคลอื่น เช่นความเสียหายที่เกิดจากการทำงานของผู้รับเหมาทีมอื่นหรือบุคคลที่สามโดยตั้งใจหรือไม่ได้ตั้งใจ",
+      "endProductWarranty": null,
+      "endSkillWarranty": null,
+      "fixDays": 22,
+      "pdfUrl": null,
+      "productWarrantyMonth": 21,
+      "sellerSignature": null,
+      "skillWarrantyMonth": 11
+    },
+    "warrantyStatus": "PENDING",
+    "workers": null
   },
   {
-    "categories": ["สีดำด้าน"],
-    "created": "2024-08-13T05:18:07.522Z",
-    "defaultChecked": true,
-    "id": "66bb04aef6bc8e0cf4b16d71",
-    "url": {
-      "_id": "66bb04aef6bc8e0cf4b16d71",
-      "originalUrl": "https://pub-1b49f44c19f34277b1bc3bfb7016aa29.r2.dev/503405/gallery/original/ow0DPirbH-6Hgdo304FY7.png",
-      "thumbnailUrl": "https://pub-1b49f44c19f34277b1bc3bfb7016aa29.r2.dev/503405/gallery/thumbnail/vbehT_pSUa2nlRrbq30FE.png"
-    }
+    "FCMToken": "dFlKguH0rEeYpFCb2IgzwC:APA91bHSp75mOfRIvvDge3Vl-6yniMAHRqrXII2mkKbEVpI7I2xln2uQk3dQQxjigEwSHTxVGkbFWl5GFXnuXgcxtAbcWgXASvbfWhl9RZVZM0PGplHnvS1a5bpZMsNo-LHsln7MNvi6",
+    "allTotal": 8900,
+    "companyId": "TH963207",
+    "createAt": [Object
+    ],
+    "customer": {
+      "address": "ADresstomer 1",
+      "customerTax": "",
+      "name": "Customer1",
+      "phone": "0959962030"
+    },
+    "dateEnd": [Object
+    ],
+    "dateEndUTC": [Object
+    ],
+    "dateOffer": [Object
+    ],
+    "discountPercentage": 0,
+    "discountType": "PERCENT",
+    "discountValue": 0,
+    "docNumber": "QT20240826462",
+    "docUrl": "6KakD1p0pd",
+    "events": {},
+    "id": "Tz9HQnaBYqHZjPJCSxw2",
+    "isArchived": false,
+    "noteToCustomer": null,
+    "noteToTeam": null,
+    "pdfUrl": null,
+    "sellerEmbed": {
+      "address": "Bangkok",
+      "bizName": "Doubledoor engineering",
+      "companyTax": "1100800667",
+      "email": "",
+      "jobPosition": "Manager",
+      "logo": null,
+      "mobileTel": "0959962030",
+      "officeTel": "053306425",
+      "sellerName": "Phuthan Kantabusabong"
+    },
+    "sellerSignature": "",
+    "sellerUid": "jE4TFu207FL977cgwuzWT7BfHEBS",
+    "services": [
+      [Object
+      ]
+    ],
+    "status": "PENDING",
+    "summary": 8900,
+    "summaryAfterDiscount": 8900,
+    "taxType": "NOTAX",
+    "taxValue": 0,
+    "updateAt": [Object
+    ],
+    "vat7": 0,
+    "warranty": {
+      "condition": "รับประกันคุณภาพตัวสินค้า ตามมาตรฐานในการใช้งานตามปกติเท่านั้น ขอสงวนสิทธ์การรับประกันที่เกิดจากการใช้งานสินค้าที่ไม่ถูกต้องหรือความเสียหายที่เกิดจากภัยธรรมชาติ หรือ การใช้งานผิดประเภทหรือปัญหาจากการกระทําของบคุคลอื่น เช่นความเสียหายที่เกิดจากการทำงานของผู้รับเหมาทีมอื่นหรือบุคคลที่สามโดยตั้งใจหรือไม่ได้ตั้งใจ",
+      "endProductWarranty": null,
+      "endSkillWarranty": null,
+      "fixDays": 33,
+      "pdfUrl": null,
+      "productWarrantyMonth": 21,
+      "sellerSignature": null,
+      "skillWarrantyMonth": 12
+    },
+    "warrantyStatus": "PENDING",
+    "workers": null
   },
   {
-    "categories": ["สีดำด้าน"],
-    "created": "2024-08-13T05:18:07.522Z",
-    "defaultChecked": true,
-    "id": "66bb0582ddf87a9dc71adc10",
-    "url": {
-      "_id": "66bb0582ddf87a9dc71adc10",
-      "originalUrl": "https://pub-1b49f44c19f34277b1bc3bfb7016aa29.r2.dev/503405/gallery/original/XAE4f9MUCjEpTeqO6QNGe.png",
-      "thumbnailUrl": "https://pub-1b49f44c19f34277b1bc3bfb7016aa29.r2.dev/503405/gallery/thumbnail/zN4E6B_lHqFSo-1IHxRaz.png"
-    }
+    "FCMToken": "dFlKguH0rEeYpFCb2IgzwC:APA91bHSp75mOfRIvvDge3Vl-6yniMAHRqrXII2mkKbEVpI7I2xln2uQk3dQQxjigEwSHTxVGkbFWl5GFXnuXgcxtAbcWgXASvbfWhl9RZVZM0PGplHnvS1a5bpZMsNo-LHsln7MNvi6",
+    "allTotal": 8900,
+    "companyId": "TH963207",
+    "createAt": [Object
+    ],
+    "customer": {
+      "address": "ADDRESS",
+      "customerTax": "",
+      "name": "CUSTOMER2",
+      "phone": "05334342"
+    },
+    "dateEnd": [Object
+    ],
+    "dateEndUTC": [Object
+    ],
+    "dateOffer": [Object
+    ],
+    "discountPercentage": 0,
+    "discountType": "PERCENT",
+    "discountValue": 0,
+    "docNumber": "QT20240826123",
+    "docUrl": "zaDPQROI5B",
+    "events": {
+      "allTotal": 8900,
+      "customerName": "CUSTOMER2",
+      "download": 5,
+      "pageView": 8,
+      "quotationId": "VZK9y2nk5g78nVTyw7Ek",
+      "share": 0,
+      "status": "PENDING"
+    },
+    "id": "VZK9y2nk5g78nVTyw7Ek",
+    "isArchived": false,
+    "noteToCustomer": null,
+    "noteToTeam": null,
+    "pdfUrl": null,
+    "sellerEmbed": {
+      "address": "Bangkok",
+      "bizName": "Doubledoor engineering",
+      "companyTax": "1100800667",
+      "email": "",
+      "jobPosition": "Manager",
+      "logo": null,
+      "mobileTel": "0959962030",
+      "officeTel": "053306425",
+      "sellerName": "Phuthan Kantabusabong"
+    },
+    "sellerSignature": "",
+    "sellerUid": "jE4TFu207FL977cgwuzWT7BfHEBS",
+    "services": [
+      [Object
+      ]
+    ],
+    "status": "PENDING",
+    "summary": 8900,
+    "summaryAfterDiscount": 8900,
+    "taxType": "NOTAX",
+    "taxValue": 0,
+    "updateAt": [Object
+    ],
+    "vat7": 0,
+    "warranty": {
+      "condition": "รับประกันคุณภาพตัวสินค้า ตามมาตรฐานในการใช้งานตามปกติเท่านั้น ขอสงวนสิทธ์การรับประกันที่เกิดจากการใช้งานสินค้าที่ไม่ถูกต้องหรือความเสียหายที่เกิดจากภัยธรรมชาติ หรือ การใช้งานผิดประเภทหรือปัญหาจากการกระทําของบคุคลอื่น เช่นความเสียหายที่เกิดจากการทำงานของผู้รับเหมาทีมอื่นหรือบุคคลที่สามโดยตั้งใจหรือไม่ได้ตั้งใจ",
+      "endProductWarranty": null,
+      "endSkillWarranty": null,
+      "fixDays": 11,
+      "pdfUrl": null,
+      "productWarrantyMonth": 21,
+      "sellerSignature": null,
+      "skillWarrantyMonth": 12
+    },
+    "warrantyStatus": "PENDING",
+    "workers": null
   },
   {
-    "categories": ["สีดำด้าน"],
-    "created": "2024-08-13T05:18:07.522Z",
-    "defaultChecked": true,
-    "id": "66bb20e380f0adda2135a330",
-    "url": {
-      "_id": "66bb20e380f0adda2135a330",
-      "originalUrl": "https://pub-1b49f44c19f34277b1bc3bfb7016aa29.r2.dev/503405/gallery/original/obrl2XvsCcrOlyn1HRYKk.png",
-      "thumbnailUrl": "https://pub-1b49f44c19f34277b1bc3bfb7016aa29.r2.dev/503405/gallery/thumbnail/O3e2whBNGMWVmn-yh1ArF.png"
-    }
-  },
-  {
-    "categories": ["สีดำด้าน"],
-    "created": "2024-08-13T05:18:07.522Z",
-    "defaultChecked": true,
-    "id": "66bf067bc90e0a52e35e4084",
-    "url": {
-      "_id": "66bf067bc90e0a52e35e4084",
-      "originalUrl": "",
-      "thumbnailUrl": ""
-    }
+    "FCMToken": "dFlKguH0rEeYpFCb2IgzwC:APA91bHSp75mOfRIvvDge3Vl-6yniMAHRqrXII2mkKbEVpI7I2xln2uQk3dQQxjigEwSHTxVGkbFWl5GFXnuXgcxtAbcWgXASvbfWhl9RZVZM0PGplHnvS1a5bpZMsNo-LHsln7MNvi6",
+    "allTotal": 8900,
+    "companyId": "TH963207",
+    "createAt": [Object
+    ],
+    "customer": {
+      "address": "address",
+      "customerTax": "",
+      "name": "Customer 3",
+      "phone": ""
+    },
+    "dateEnd": [Object
+    ],
+    "dateEndUTC": [Object
+    ],
+    "dateOffer": [Object
+    ],
+    "discountPercentage": 0,
+    "discountType": "PERCENT",
+    "discountValue": 0,
+    "docNumber": "QT20240826935",
+    "docUrl": "UP9NFCn8AF",
+    "events": {
+      "allTotal": 8900,
+      "customerName": "Customer 3",
+      "download": 2,
+      "pageView": 0,
+      "print": 5,
+      "quotationId": "dVZbn2mUHrIErLFvsCvw",
+      "share": 0,
+      "status": "PENDING"
+    },
+    "id": "dVZbn2mUHrIErLFvsCvw",
+    "isArchived": false,
+    "noteToCustomer": null,
+    "noteToTeam": null,
+    "pdfUrl": null,
+    "sellerEmbed": {
+      "address": "Bangkok",
+      "bizName": "Doubledoor engineering",
+      "companyTax": "1100800667",
+      "email": "",
+      "jobPosition": "Manager",
+      "logo": null,
+      "mobileTel": "0959962030",
+      "officeTel": "053306425",
+      "sellerName": "Phuthan Kantabusabong"
+    },
+    "sellerSignature": "",
+    "sellerUid": "jE4TFu207FL977cgwuzWT7BfHEBS",
+    "services": [
+      [Object
+      ]
+    ],
+    "status": "PENDING",
+    "summary": 8900,
+    "summaryAfterDiscount": 8900,
+    "taxType": "NOTAX",
+    "taxValue": 0,
+    "updateAt": [Object
+    ],
+    "vat7": 0,
+    "warranty": {
+      "condition": "รับประกันคุณภาพตัวสินค้า ตามมาตรฐานในการใช้งานตามปกติเท่านั้น ขอสงวนสิทธ์การรับประกันที่เกิดจากการใช้งานสินค้าที่ไม่ถูกต้องหรือความเสียหายที่เกิดจากภัยธรรมชาติ หรือ การใช้งานผิดประเภทหรือปัญหาจากการกระทําของบคุคลอื่น เช่นความเสียหายที่เกิดจากการทำงานของผู้รับเหมาทีมอื่นหรือบุคคลที่สามโดยตั้งใจหรือไม่ได้ตั้งใจ",
+      "endProductWarranty": null,
+      "endSkillWarranty": null,
+      "fixDays": 22,
+      "pdfUrl": null,
+      "productWarrantyMonth": 21,
+      "sellerSignature": null,
+      "skillWarrantyMonth": 11
+    },
+    "warrantyStatus": "PENDING",
+    "workers": null
   }
 ]

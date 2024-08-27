@@ -50,6 +50,7 @@ const firestore = firebase.firestore
     await AsyncStorage.removeItem(QueryKeyType.GALLERY)
     await AsyncStorage.removeItem(QueryKeyType.CATEGORY)
   }
+  console.log('EXISTING SERVICES', existingServices);
   const getGalleryAndCategories = async () => {
     try {
   

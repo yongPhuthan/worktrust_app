@@ -20,9 +20,6 @@ export const quotationSchema = yup
     vat7: yup.number().default(0),
     sellerEmbed: sellerEmbedSchema.required(),
     isArchived: yup.boolean().default(false),
-
-    // events: quot.nullable().default(null),
-    // isArchived: yup.boolean().default(false),
     services: yup
       .array()
       .of(serviceSchema)

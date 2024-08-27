@@ -75,6 +75,7 @@ import { CustomerEmbedSchemaType } from '../../validation/field/embed/customerEm
 import { SellerEmbedSchemaType } from '../../validation/field/embed/sellerEmbed';
 import { ServiceSchemaType } from '../../validation/field/services';
 import useCreateQuotation from '../../hooks/quotation/create/useSaveQuotation';
+import {QuotationEventsType} from '../../validation/collection/subcollection/events';
 interface Props {
   navigation: StackNavigationProp<ParamListBase, 'CreateQuotation'>;
 }
@@ -110,6 +111,7 @@ const CreateQuotation = ({navigation}: Props) => {
     editQuotation ? editQuotation.id : null,
   );
   const firestore = firebase.firestore;
+  const database = firebase.database;
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 const [isLoding, setIsLoading] = useState(false);
   const [isLoadingWebP, setIsLoadingWebP] = useState(false);
@@ -294,6 +296,10 @@ const [isLoding, setIsLoading] = useState(false);
     control: methods.control,
     name: 'noteToCustomer',
   });
+  const allTotal = useWatch({
+    control: methods.control,
+    name: 'allTotal',
+  });
 
   const isCustomerDisabled = useMemo(() => {
     return customer.name === '' && customer.address === '';
@@ -357,54 +363,74 @@ const [isLoding, setIsLoading] = useState(false);
       company: G_company,
       user: G_user,
     };
-setIsLoading(true);
+    setIsLoading(true);
+  await firestore().enableNetwork();
     try {
+      let quotationRef;
+      let quotationServerId;
+  
       if (isNewQuotation) {
         // สร้างเอกสารใหม่ใน Firestore
-        const quotationRef = firestore()
+        quotationRef = firestore()
           .collection('companies')
           .doc(companyId)
           .collection('quotations')
           .doc(); // สร้าง doc ใหม่โดยอัตโนมัติด้วย ID ใหม่
-
+  
         await quotationRef.set(data.quotation);
-
-        // ดึง PDF URL ถ้ามี
-        const quotationDoc = await quotationRef.get();
-        const pdfUrl = quotationDoc.data()?.pdfUrl || null;
-
-        // ดำเนินการหลังจากบันทึกสำเร็จ
-        dispatch(stateAction.get_edit_quotation(data.quotation));
-        methods.reset(data.quotation);
-        setQuotationServerId(quotationRef.id);
-        setPdfUrl(pdfUrl);
+        quotationServerId = quotationRef.id;
       } else {
         const existingData = {
           ...methods.getValues(),
           id: quotationServerId,
         };
-
+  
         // อัปเดตเอกสารที่มีอยู่ใน Firestore
-        const quotationRef = firestore()
+        quotationRef = firestore()
           .collection('companies')
           .doc(companyId)
           .collection('quotations')
           .doc(existingData.id || '');
-
+  
         await quotationRef.update(existingData);
-
-        // ดำเนินการหลังจากอัปเดตสำเร็จ
-        dispatch(
-          stateAction.get_edit_quotation(existingData as QuotationSchemaType),
-        );
-        setQuotationServerId(existingData.id);
-        methods.reset(existingData as QuotationSchemaType);
+        quotationServerId = existingData.id;
       }
+  
+      // ดึง PDF URL ถ้ามี
+      const quotationDoc = await quotationRef.get();
+      const pdfUrl = quotationDoc.data()?.pdfUrl || null;
+  
+      // บันทึก events ลงใน Firebase Realtime Database
+      const events: QuotationEventsType = {
+        pageView: 0,
+        download: 0,
+        status: QuotationStatus.PENDING,
+        print: 0,
+        share: 0,
+        customerName: customer.name,
+        allTotal,
+        dateOffer: data.quotation.dateOffer,
+        dateEnd,
+        quotationId: quotationRef.id,
+        createdAt: new Date(),
+        lastOccurredAt: new Date(),
+      };
+  
+      await database()
+      .ref(`/companies/${companyId}/quotations/${quotationRef.id}`)
+      .set(events);
+
+      // ดำเนินการหลังจากบันทึกสำเร็จ
+      dispatch(stateAction.get_edit_quotation(data.quotation));
+      methods.reset(data.quotation);
+      setQuotationServerId(quotationServerId || null);
+      setPdfUrl(pdfUrl);
     } catch (error) {
       console.error('Error saving quotation:', error);
       // คุณสามารถเพิ่มการจัดการข้อผิดพลาดเพิ่มเติมที่นี่ เช่น แสดง Alert ให้กับผู้ใช้
-    } finally{
+    } finally {
       setIsLoading(false);
+      await firestore().disableNetwork();
     }
   };
 

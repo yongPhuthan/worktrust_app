@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {
   Dimensions,
   FlatList,
@@ -9,17 +9,18 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { ActivityIndicator, Appbar, Button } from 'react-native-paper';
+import {ActivityIndicator, Appbar, Button} from 'react-native-paper';
 
-import { useFormContext } from 'react-hook-form';
+import {useFormContext} from 'react-hook-form';
 import Modal from 'react-native-modal';
-import { IServiceImage } from 'types/interfaces/ServicesEmbed';
+import {IServiceImage} from 'types/interfaces/ServicesEmbed';
 import CustomCheckbox from '../../components/CustomCheckbox';
-import { useUser } from '../../providers/UserContext';
+import {useUser} from '../../providers/UserContext';
 import * as stateAction from '../../redux/actions';
-import { Store } from '../../redux/store';
-import { ProjectImagesSchemaType } from '../../validation/collection/subcollection/projectImages';
+import {Store} from '../../redux/store';
+import {ProjectImagesSchemaType} from '../../validation/collection/subcollection/projectImages';
 import AddNewImage from './addNew';
+import CachedImage from './CachedImage';
 
 interface ImageModalProps {
   isVisible: boolean;
@@ -51,9 +52,8 @@ interface ModalProps {
 interface GalleryItemProps {
   item: ProjectImagesSchemaType;
   onPress: () => void;
-  images :ProjectImagesSchemaType[]
+  images: ProjectImagesSchemaType[];
 }
-
 
 const {width, height} = Dimensions.get('window');
 const imageContainerWidth = width / 3 - 10;
@@ -70,7 +70,7 @@ const GalleryScreen = ({
   }
   const [isOpenModal, setIsOpenModal] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  const [checkedImages, setCheckedImages] = useState<string []>([]);
+  const [checkedImages, setCheckedImages] = useState<string[]>([]);
 
   const [categories, setCategories] = useState<string[]>([]);
   const [isLoadingWebP, setIsLoadingWebP] = useState<boolean>(false);
@@ -92,12 +92,18 @@ const GalleryScreen = ({
   } = useContext(Store);
   const handleCheckbox = (id: string) => {
     // ค้นหา serviceImages ที่มีการเลือก (selected)
-    const isSelected = G_gallery.some(img => img.id === id && selectedImages.some(serviceImg => serviceImg.id === id));
-  
-    let updatedServiceImages 
+    const isSelected = G_gallery.some(
+      img =>
+        img.id === id &&
+        selectedImages.some(serviceImg => serviceImg.id === id),
+    );
+
+    let updatedServiceImages;
     if (isSelected) {
       // ถ้า id ถูกเลือกอยู่แล้ว ให้ยกเลิกการเลือก (unselect) โดยการกรองออกจาก serviceImages
-      updatedServiceImages = selectedImages.filter(serviceImg => serviceImg.id !== id);
+      updatedServiceImages = selectedImages.filter(
+        serviceImg => serviceImg.id !== id,
+      );
     } else {
       // ถ้า id ยังไม่ได้ถูกเลือก ให้เพิ่มเข้าไปใน serviceImages
       const selectedImage = G_gallery.find(img => img.id === id);
@@ -107,18 +113,18 @@ const GalleryScreen = ({
         updatedServiceImages = [...selectedImages];
       }
     }
-  
+
     // อัปเดตสถานะของ gallery เพื่อแสดงผลการเลือกหรือยกเลิกการเลือก
     const updatedData = G_gallery.map(img => ({
       ...img,
       // defaultChecked: updatedServiceImages.some((serviceImg:ProjectImagesSchemaType) => serviceImg.id === img.id)
     }));
-  
+
     // ส่งข้อมูลที่อัปเดตไปยัง store หรือ local state
     dispatch(stateAction.get_gallery(updatedData));
-  
+
     // อัปเดตค่าของ serviceImages ในฟอร์ม
-    setValue('images', updatedServiceImages, { shouldDirty: true });
+    setValue('images', updatedServiceImages, {shouldDirty: true});
   };
   const toggleTag = (tag: string) => {
     setSelectedCategories(prev =>
@@ -127,41 +133,38 @@ const GalleryScreen = ({
   };
 
   const toggleCheckbox = (imageId: string) => {
-    setCheckedImages((prevChecked) => {
+    setCheckedImages(prevChecked => {
       const newCheckedImages = prevChecked.includes(imageId)
-        ? prevChecked.filter((id) => id !== imageId)
+        ? prevChecked.filter(id => id !== imageId)
         : [...prevChecked, imageId];
-  
+
       // อัปเดตฟิลด์ images ในฟอร์มตามการเลือกของผู้ใช้
-      const selectedImages = G_gallery.filter((image) => newCheckedImages.includes(image.id));
+      const selectedImages = G_gallery.filter(image =>
+        newCheckedImages.includes(image.id),
+      );
       console.log('selectedImages', selectedImages);
-      setValue('images', selectedImages, { shouldValidate: true });
-  
+      setValue('images', selectedImages, {shouldValidate: true});
+
       return newCheckedImages;
     });
   };
 
   useEffect(() => {
     // กำหนดค่าเริ่มต้นของ checked state โดยการตรวจสอบว่า id ของรูปภาพตรงกับ existingImages หรือไม่
-    const initialCheckedImages  = G_gallery
-      .filter((image) => selectedImages.some((selectedImage) => selectedImage.id === image.id))
-      .map((image) => image.id);
-    
+    const initialCheckedImages = G_gallery.filter(image =>
+      selectedImages.some(selectedImage => selectedImage.id === image.id),
+    ).map(image => image.id);
+
     setCheckedImages(initialCheckedImages);
   }, [G_gallery, selectedImages]);
 
   const sortedGalleryImages = React.useMemo(() => {
     if (!G_gallery) return [];
-    const validImages = G_gallery.filter(
-      item => item && item.localPathUrl
-    );
-    const invalidImages = G_gallery.filter(
-      item => !item || !item.localPathUrl,
-    );
+    const validImages = G_gallery.filter(item => item && item.localPathUrl);
+    const invalidImages = G_gallery.filter(item => !item || !item.localPathUrl);
     return [...validImages, ...invalidImages];
   }, [G_gallery]);
 
-console.log('G_gallery', G_gallery);
   return (
     <>
       <Modal
@@ -191,7 +194,7 @@ console.log('G_gallery', G_gallery);
                 onPress={() => setIsOpenModal(true)}
               />
             </Appbar.Header>
-            { isLoadingWebP ? (
+            {isLoadingWebP ? (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator color="#047e6e" size={'large'} />
               </View>
@@ -203,24 +206,6 @@ console.log('G_gallery', G_gallery);
                     gap: 10,
                     paddingBottom: '35%',
                   }}>
-                  {/* {sortedGalleryImages.length > 0 && (
-                    <Button
-                      onPress={() => setOpenFilter(true)}
-                      mode="outlined"
-                      icon={'tune-variant'}
-                      style={{
-                        width: '50%',
-                        margin: 10,
-                        marginTop: 20,
-                      }}
-                      contentStyle={{
-                        flexDirection: 'row-reverse',
-                        justifyContent: 'space-between',
-                      }}
-                      children={'กรองหมวดหมู่'}
-                    />
-                  )} */}
-
                   <FlatList
                     data={sortedGalleryImages}
                     numColumns={3}
@@ -248,29 +233,27 @@ console.log('G_gallery', G_gallery);
                         </Text>
                       </View>
                     }
-                    renderItem={({ item }) => (
+                    renderItem={({item}) => (
                       <View
-                      style={[
-                        styles.imageContainer,
-                        checkedImages.includes(item.id) && styles.selected,
-                      ]}
-                    >
-                      <Image
-                        source={{ uri: item.localPathUrl || '' }}
-                        style={styles.image}
-                      />
-                      <View style={styles.checkboxContainer}>
-                        <CustomCheckbox
-                          checked={checkedImages.includes(item.id)}
-                          onPress={()=>toggleCheckbox(item.id)}
+                        style={[
+                          styles.imageContainer,
+                          checkedImages.includes(item.id) && styles.selected,
+                        ]}>
+                        <CachedImage
+                          imageUrl={item.thumbnailUrl}
+                          style={styles.image}
                         />
+                        {/* <Image
+                        source={{ uri: item.thumbnailUrl || '' }}
+                        style={styles.image}
+                      /> */}
+                        <View style={styles.checkboxContainer}>
+                          <CustomCheckbox
+                            checked={checkedImages.includes(item.id)}
+                            onPress={() => toggleCheckbox(item.id)}
+                          />
+                        </View>
                       </View>
-                    </View>
-                      // <GalleryItem
-                      // images={watch('images')}
-                      //   item={item}
-                      //   onPress={() => toggleCheckbox(item.id)}
-                      // />
                     )}
                     keyExtractor={item => item.id}
                   />
@@ -290,30 +273,13 @@ console.log('G_gallery', G_gallery);
                           if (selectedImages) onClose();
                         }}
                         disabled={
-                          !watch('images') ||
-                          watch('images').length === 0
+                          !watch('images') || watch('images').length === 0
                         }>
                         บันทึก {watch('images').length} รูป
                       </Button>
                     </View>
                   )}
                 </View>
-{/* 
-                <Modal
-                  isVisible={modalVisible}
-                  onBackdropPress={() => setModalVisible(false)}>
-                  <View style={styles.modalContainer}>
-                    <Image
-                      source={{uri: selectedImages[0].thumbnailUrl || ''}}
-                      style={styles.modalImage}
-                    />
-                    <TouchableOpacity
-                      style={styles.closeButton}
-                      onPress={() => setModalVisible(false)}>
-                      <Text>Close</Text>
-                    </TouchableOpacity>
-                  </View>
-                </Modal> */}
               </SafeAreaView>
             )}
           </>

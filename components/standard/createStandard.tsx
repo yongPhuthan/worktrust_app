@@ -1,20 +1,20 @@
-import {BACK_END_SERVER_URL} from '@env';
 import {yupResolver} from '@hookform/resolvers/yup';
 import {useQueryClient} from '@tanstack/react-query';
 import React, {useContext} from 'react';
 import {Store} from '../../redux/store';
 
+import {nanoid} from 'nanoid';
 import {Controller, useForm, useWatch} from 'react-hook-form';
 import {
   Alert,
   Dimensions,
+  Image,
   Platform,
   SafeAreaView,
   ScrollView,
-  TouchableOpacity,
   StyleSheet,
+  TouchableOpacity,
   View,
-  Image,
 } from 'react-native';
 import {
   ActivityIndicator,
@@ -26,14 +26,12 @@ import {
   TextInput,
 } from 'react-native-paper';
 import {useUploadToCloudflare} from '../../hooks/useUploadtoCloudflare';
-import {useCreateToServer} from '../../hooks/useUploadToserver';
 import {usePickImage} from '../../hooks/utils/image/usePickImage';
-import {Types} from 'mongoose';
-import {nanoid} from 'nanoid';
-import UploadImage from '../../components/ui/UploadImage';
-
-import useCreateStandard from '../../hooks/standard/create';
-import { standardSchema, StandardSchemaType } from '../../validation/collection/subcollection/standard';
+import firebase from '../../firebase';
+import {
+  standardSchema,
+  StandardSchemaType,
+} from '../../validation/collection/subcollection/standard';
 
 type Props = {
   isVisible: boolean;
@@ -42,14 +40,14 @@ type Props = {
 
 const CreateStandard = (props: Props) => {
   const {isVisible, onClose} = props;
-  const [localPathUrl, setLocalPathUrl] = React.useState<string | null>(null);
+  const [isLoading, setIsLoading] = React.useState(false);
   const {
     state: {code, companyId},
     dispatch,
   } = useContext(Store);
   const {width, height} = Dimensions.get('window');
-  const [isError, setError] = React.useState('');
-  const queryClient = useQueryClient();
+  const firestore = firebase.firestore();
+
 
   const defaultStandard: StandardSchemaType = {
     id: nanoid(),
@@ -62,13 +60,12 @@ const CreateStandard = (props: Props) => {
       createAt: new Date(),
     },
     content: '',
-    badStandardImage:  {
+    badStandardImage: {
       id: nanoid(),
       originalUrl: '',
       thumbnailUrl: '',
       localPathUrl: '',
       createAt: new Date(),
-    
     },
     badStandardEffect: null,
     createAt: new Date(),
@@ -100,16 +97,16 @@ const CreateStandard = (props: Props) => {
     isImagePicking: isStandardImageUploading,
     pickImage: pickStandardImage,
   } = usePickImage((uri: string) => {
-    console.log("Picked image URI:", uri);
-    setValue('image.localPathUrl', uri, { shouldValidate: true });
-    console.log("Updated value in form:", getValues('image'));
+    console.log('Picked image URI:', uri);
+    setValue('image.localPathUrl', uri, {shouldValidate: true});
+    console.log('Updated value in form:', getValues('image'));
   });
 
   const {
     isImagePicking: isBadStandardImageUploading,
     pickImage: pickBadStandardImage,
   } = usePickImage((uri: string) => {
-    setValue('badStandardImage.localPathUrl', uri, { shouldValidate: true }); ;
+    setValue('badStandardImage.localPathUrl', uri, {shouldValidate: true});
   });
   const {
     isUploading: isStandardUploading,
@@ -123,8 +120,6 @@ const CreateStandard = (props: Props) => {
     uploadImage: uploadBadStandardImage,
   } = useUploadToCloudflare(code, 'logo');
 
-  const {mutate, isPending} = useCreateStandard();
-
   const handleSubmit = async () => {
     if (!image) {
       Alert.alert('กรุณาเพิ่มรูปภาพมาตรฐาน', '');
@@ -134,46 +129,64 @@ const CreateStandard = (props: Props) => {
       Alert.alert('กรุณาเพิ่มรูปตัวอย่างงานที่ไม่ได้มาตรฐาน', '');
       return;
     }
+    if (!image.localPathUrl || !badStandardImage.localPathUrl) {
+      Alert.alert(
+        'กรุณาเพิ่มรูปภาพมาตรฐานและรูปตัวอย่างงานที่ไม่ได้มาตรฐาน',
+        '',
+      );
+      return;
+    }
 
-    const uploadPromises = [
-      uploadStandardImage(image.thumbnailUrl),
-      uploadBadStandardImage(badStandardImage.thumbnailUrl),
-    ];
+    setIsLoading(true); // ตั้งค่า loading status
 
-    const uploadedImages = await Promise.all(uploadPromises);
     try {
-      // หน่วงเวลา 1.5 วินาทีก่อนเรียก setValue
-      setTimeout(() => {
-        if (
-          !uploadedImages ||
-          !uploadedImages[0].originalUrl ||
-          !uploadedImages[0].thumbnailUrl ||
-          !uploadedImages[1].originalUrl ||
-          !uploadedImages[1].thumbnailUrl
-        ) {
-          Alert.alert('อัพโหลดล้มเหลว', 'กรุณาลองใหม่อีกครั้ง');
-          return;
-        }
-        setValue('image.originalUrl', uploadedImages[0].originalUrl);
-        setValue('image.thumbnailUrl', uploadedImages[0].thumbnailUrl);
+      const uploadPromises = [
+        uploadStandardImage(image.localPathUrl),
+        uploadBadStandardImage(badStandardImage.localPathUrl),
+      ];
 
-        setValue('badStandardImage.originalUrl', uploadedImages[1].originalUrl);
-        setValue(
-          'badStandardImage.thumbnailUrl',
-          uploadedImages[1].thumbnailUrl,
-        );
+      const uploadedImages = await Promise.all(uploadPromises);
 
-        // ดึงค่าทั้งหมดจากฟอร์ม
-        const formData = getValues();
+      if (
+        !uploadedImages ||
+        !uploadedImages[0].originalUrl ||
+        !uploadedImages[0].thumbnailUrl ||
+        !uploadedImages[1].originalUrl ||
+        !uploadedImages[1].thumbnailUrl
+      ) {
+        Alert.alert('อัพโหลดล้มเหลว', 'กรุณาลองใหม่อีกครั้ง');
+        return;
+      }
 
-        // ส่ง data ไปยังฟังก์ชัน mutate
-        mutate(formData);
-      }, 1500);
+      // อัปเดตฟิลด์ในฟอร์มด้วย URL ที่ได้จากการอัปโหลด
+      setValue('image.originalUrl', uploadedImages[0].originalUrl, { shouldValidate: true });
+      setValue('image.thumbnailUrl', uploadedImages[0].thumbnailUrl, { shouldValidate: true });
+
+      setValue('badStandardImage.originalUrl', uploadedImages[1].originalUrl, { shouldValidate: true });
+      setValue('badStandardImage.thumbnailUrl', uploadedImages[1].thumbnailUrl, { shouldValidate: true });
+
+      // ดึงข้อมูลทั้งหมดจากฟอร์ม
+      const standardData: StandardSchemaType = getValues();
+
+      // อัปโหลดข้อมูลไปยัง Firestore
+      const standardRef = firestore
+        .collection('companies')
+        .doc(companyId)
+        .collection('standards')
+        .doc(standardData.id); 
+
+      await standardRef.set({
+        ...standardData,
+        createAt: standardData.createAt || new Date(), // ถ้าไม่มี createAt ให้ใช้วันที่ปัจจุบัน
+        updateAt: new Date(), // อัปเดตวันที่แก้ไข
+      });
+
+      Alert.alert('Success', 'ข้อมูลถูกอัพโหลดสำเร็จ');
     } catch (err) {
-      // Handle errors from uploading images or creating the standard
       console.error('An error occurred:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      Alert.alert('Error', 'เกิดข้อผิดพลาดระหว่างการอัพโหลดข้อมูล');
     } finally {
+      setIsLoading(false); // ปิด loading status
       onClose();
     }
   };
@@ -196,8 +209,8 @@ const CreateStandard = (props: Props) => {
           }}
         />
         <Button
-          loading={isBadStandardUploading || isStandardUploading}
-          disabled={!isValid}
+          loading={isLoading}
+          disabled={!isValid || isLoading}
           testID="submited-button"
           mode="contained"
           onPress={() => {
@@ -266,99 +279,101 @@ const CreateStandard = (props: Props) => {
                 pickImage={pickStandardImage}
                 label="อัพโหลดภาพมาตรฐานของคุณ"
               /> */}
-<Controller
-  control={control}
-  name={'image'}
-  render={({ field: { onChange, value } }) => (
-    <TouchableOpacity
-      style={{
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-      onPress={() => pickStandardImage()}
-    >
-      {isStandardImageUploading ? (
-        <View
-          style={{
-            justifyContent: 'center',
-            alignItems: 'center',
-            borderColor: '#047e6e',
-            borderWidth: 1,
-            backgroundColor: '#f5f5f5',
-            borderRadius: 5,
-            borderStyle: 'dashed',
-            padding: 10,
-            height: height * 0.3,
-            width: width * 0.6,
-          }}
-        >
-          <ActivityIndicator size="small" />
-        </View>
-      ) : value?.localPathUrl ? (
-        <Image
-          source={{
-            uri: value.localPathUrl || value.thumbnailUrl,
-          }}
-          style={{
-            height: height * 0.3,
-            width: width * 0.6,
-            aspectRatio: 1,
-          }}
-          onError={e =>
-            console.log('Failed to load image:', e.nativeEvent.error)
-          }
-        />
-      ) : value?.thumbnailUrl ? (
-        <Image
-          source={{
-            uri: value.thumbnailUrl,
-          }}
-          style={{
-            height: height * 0.3,
-            width: width * 0.6,
-            aspectRatio: 1,
-          }}
-          onError={e =>
-            console.log('Failed to load image:', e.nativeEvent.error)
-          }
-        />
-      ) : (
-        <View>
-          <TouchableOpacity
-            style={{
-              justifyContent: 'center',
-              alignItems: 'center',
-              borderColor: '#047e6e',
-              borderWidth: 1,
-              backgroundColor: '#f5f5f5',
-              borderRadius: 5,
-              borderStyle: 'dashed',
-              padding: 10,
-              height: height * 0.3,
-              width: width * 0.6,
-            }}
-            onPress={() => pickStandardImage()}
-          >
-            <IconButton
-              icon="image-plus"
-              iconColor={'#047e6e'}
-              size={40}
-              onPress={() => pickStandardImage()}
-            />
-            <Text
-              style={{
-                textAlign: 'center',
-                color: '#047e6e',
-              }}
-            >
-              อัพโหลดภาพมาตรฐานของคุณ
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </TouchableOpacity>
-  )}
-/>
+              <Controller
+                control={control}
+                name={'image'}
+                render={({field: {onChange, value}}) => (
+                  <TouchableOpacity
+                    style={{
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                    onPress={() => pickStandardImage()}>
+                    {isStandardImageUploading ? (
+                      <View
+                        style={{
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          borderColor: '#047e6e',
+                          borderWidth: 1,
+                          backgroundColor: '#f5f5f5',
+                          borderRadius: 5,
+                          borderStyle: 'dashed',
+                          padding: 10,
+                          height: height * 0.3,
+                          width: width * 0.6,
+                        }}>
+                        <ActivityIndicator size="small" />
+                      </View>
+                    ) : value?.localPathUrl ? (
+                      <Image
+                        source={{
+                          uri: value.localPathUrl || value.thumbnailUrl,
+                        }}
+                        style={{
+                          height: height * 0.3,
+                          width: width * 0.6,
+                          aspectRatio: 1,
+                        }}
+                        onError={e =>
+                          console.log(
+                            'Failed to load image:',
+                            e.nativeEvent.error,
+                          )
+                        }
+                      />
+                    ) : value?.thumbnailUrl ? (
+                      <Image
+                        source={{
+                          uri: value.thumbnailUrl,
+                        }}
+                        style={{
+                          height: height * 0.3,
+                          width: width * 0.6,
+                          aspectRatio: 1,
+                        }}
+                        onError={e =>
+                          console.log(
+                            'Failed to load image:',
+                            e.nativeEvent.error,
+                          )
+                        }
+                      />
+                    ) : (
+                      <View>
+                        <TouchableOpacity
+                          style={{
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            borderColor: '#047e6e',
+                            borderWidth: 1,
+                            backgroundColor: '#f5f5f5',
+                            borderRadius: 5,
+                            borderStyle: 'dashed',
+                            padding: 10,
+                            height: height * 0.3,
+                            width: width * 0.6,
+                          }}
+                          onPress={() => pickStandardImage()}>
+                          <IconButton
+                            icon="image-plus"
+                            iconColor={'#047e6e'}
+                            size={40}
+                            onPress={() => pickStandardImage()}
+                          />
+                          <Text
+                            style={{
+                              textAlign: 'center',
+                              color: '#047e6e',
+                            }}>
+                            อัพโหลดภาพมาตรฐานของคุณ
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                )}
+              />
               {/* <Text style={{marginBottom: 10}}>รายละเอียด</Text> */}
               <Controller
                 control={control}
@@ -434,99 +449,101 @@ const CreateStandard = (props: Props) => {
                 pickImage={pickBadStandardImage}
                 label="อัพโหลดรูปภาพตัวอย่างงานที่ไม่ได้มาตรฐาน"
               /> */}
-<Controller
-  control={control}
-  name={'badStandardImage'}
-  render={({ field: { onChange, value } }) => (
-    <TouchableOpacity
-      style={{
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-      onPress={() => pickBadStandardImage()}
-    >
-      {isBadStandardImageUploading ? (
-        <View
-          style={{
-            justifyContent: 'center',
-            alignItems: 'center',
-            borderColor: '#047e6e',
-            borderWidth: 1,
-            backgroundColor: '#f5f5f5',
-            borderRadius: 5,
-            borderStyle: 'dashed',
-            padding: 10,
-            height: height * 0.3,
-            width: width * 0.6,
-          }}
-        >
-          <ActivityIndicator size="small" />
-        </View>
-      ) : value?.localPathUrl ? (
-        <Image
-          source={{
-            uri: value.localPathUrl || value.thumbnailUrl,
-          }}
-          style={{
-            height: height * 0.3,
-            width: width * 0.6,
-            aspectRatio: 1,
-          }}
-          onError={e =>
-            console.log('Failed to load image:', e.nativeEvent.error)
-          }
-        />
-      ) : value?.thumbnailUrl ? (
-        <Image
-          source={{
-            uri: value.thumbnailUrl,
-          }}
-          style={{
-            height: height * 0.3,
-            width: width * 0.6,
-            aspectRatio: 1,
-          }}
-          onError={e =>
-            console.log('Failed to load image:', e.nativeEvent.error)
-          }
-        />
-      ) : (
-        <View>
-          <TouchableOpacity
-            style={{
-              justifyContent: 'center',
-              alignItems: 'center',
-              borderColor: '#047e6e',
-              borderWidth: 1,
-              backgroundColor: '#f5f5f5',
-              borderRadius: 5,
-              borderStyle: 'dashed',
-              padding: 10,
-              height: height * 0.3,
-              width: width * 0.6,
-            }}
-            onPress={() => pickBadStandardImage()}
-          >
-            <IconButton
-              icon="image-plus"
-              iconColor={'#047e6e'}
-              size={40}
-              onPress={() => pickBadStandardImage()}
-            />
-            <Text
-              style={{
-                textAlign: 'center',
-                color: '#047e6e',
-              }}
-            >
-              อัพโหลดรูปภาพตัวอย่างงานที่ไม่ได้มาตรฐาน
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </TouchableOpacity>
-  )}
-/>
+              <Controller
+                control={control}
+                name={'badStandardImage'}
+                render={({field: {onChange, value}}) => (
+                  <TouchableOpacity
+                    style={{
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                    onPress={() => pickBadStandardImage()}>
+                    {isBadStandardImageUploading ? (
+                      <View
+                        style={{
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          borderColor: '#047e6e',
+                          borderWidth: 1,
+                          backgroundColor: '#f5f5f5',
+                          borderRadius: 5,
+                          borderStyle: 'dashed',
+                          padding: 10,
+                          height: height * 0.3,
+                          width: width * 0.6,
+                        }}>
+                        <ActivityIndicator size="small" />
+                      </View>
+                    ) : value?.localPathUrl ? (
+                      <Image
+                        source={{
+                          uri: value.localPathUrl || value.thumbnailUrl,
+                        }}
+                        style={{
+                          height: height * 0.3,
+                          width: width * 0.6,
+                          aspectRatio: 1,
+                        }}
+                        onError={e =>
+                          console.log(
+                            'Failed to load image:',
+                            e.nativeEvent.error,
+                          )
+                        }
+                      />
+                    ) : value?.thumbnailUrl ? (
+                      <Image
+                        source={{
+                          uri: value.thumbnailUrl,
+                        }}
+                        style={{
+                          height: height * 0.3,
+                          width: width * 0.6,
+                          aspectRatio: 1,
+                        }}
+                        onError={e =>
+                          console.log(
+                            'Failed to load image:',
+                            e.nativeEvent.error,
+                          )
+                        }
+                      />
+                    ) : (
+                      <View>
+                        <TouchableOpacity
+                          style={{
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            borderColor: '#047e6e',
+                            borderWidth: 1,
+                            backgroundColor: '#f5f5f5',
+                            borderRadius: 5,
+                            borderStyle: 'dashed',
+                            padding: 10,
+                            height: height * 0.3,
+                            width: width * 0.6,
+                          }}
+                          onPress={() => pickBadStandardImage()}>
+                          <IconButton
+                            icon="image-plus"
+                            iconColor={'#047e6e'}
+                            size={40}
+                            onPress={() => pickBadStandardImage()}
+                          />
+                          <Text
+                            style={{
+                              textAlign: 'center',
+                              color: '#047e6e',
+                            }}>
+                            อัพโหลดรูปภาพตัวอย่างงานที่ไม่ได้มาตรฐาน
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                )}
+              />
               {/* <Text style={{marginBottom: 10}}>ผลกระทบจากงานที่ไม่ได้มาตรฐาน</Text> */}
               <Controller
                 control={control}

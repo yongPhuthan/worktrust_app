@@ -16,7 +16,8 @@
         "SLIPOK_BRANCH_ID"
         ,"FIREBASE_STORAGE_PDF_BUCKET",
         "CLOUDFLARE_WORKER_URL",
-        "CLOUDFLARE_R2_PUBLIC_URL"
+        "CLOUDFLARE_R2_PUBLIC_URL",
+        "FIREBASE_DATABASE_URL"
 
       ],
       "safe": true,

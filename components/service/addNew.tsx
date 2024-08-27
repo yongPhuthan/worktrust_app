@@ -39,6 +39,7 @@ import SelectStandard from '../standard/selectStandard';
 import { MaterialSchemaType } from '../../validation/collection/subcollection/materials';
 import { StandardSchemaType } from '../../validation/collection/subcollection/standard';
 import { serviceSchema, ServiceSchemaType } from '../../validation/field/services';
+import CachedImage from '../../components/gallery/CachedImage';
 
 
 type Props = {
@@ -222,10 +223,14 @@ const AddProductFormModal = (props: Props) => {
                         <View key={index} style={styles.imageContainer}>
                           <TouchableOpacity
                             onPress={() => setModalImagesVisible(true)}>
-                            <Image
+                              <CachedImage
+                                imageUrl={item.thumbnailUrl}
+                                style={styles.image}
+                              />
+                            {/* <Image
                               source={{uri: item.localPathUrl ?? ''}}
                               style={styles.image}
-                            />
+                            /> */}
                           </TouchableOpacity>
                         </View>
                       );

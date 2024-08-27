@@ -1,9 +1,4 @@
-import {
-  InvoiceStatus,
-  NotificationType,
-  QuotationEventsEmbed,
-  QuotationStatus,
-} from '@prisma/client';
+
 import React from 'react';
 import {
   Dimensions,
@@ -13,14 +8,19 @@ import {
   View,
 } from 'react-native';
 import {Icon, IconButton} from 'react-native-paper';
+import { QuotationEventsType } from '../validation/collection/subcollection/events';
+import { QuotationStatus } from '../types/enums';
 type Props = {
   customerName: string;
-  price: number;
-  date: Date;
-  end: Date;
+  download: number;
+  print : number;
+  pageView  : number;
+  allTotal: number;
+  events : QuotationEventsType;
+  dateOffer: Date;
+  dateEnd: Date;
   status: string;
   onCardPress?: () => void;
-  events?: QuotationEventsEmbed;
 };
 
 const windowWidth = Dimensions.get('window').width;
@@ -45,7 +45,7 @@ const CardDashBoard = (props: Props) => {
       <View style={styles.summary}>
         <Text style={styles.summaryText}>{props.customerName}</Text>
         <Text style={styles.summaryText}>
-          {Number(props.price)
+          {Number(props.allTotal)
             .toFixed(2)
             .replace(/\d(?=(\d{3})+\.)/g, '$&,')}
         </Text>
@@ -113,8 +113,7 @@ const CardDashBoard = (props: Props) => {
       )}
 
       <View style={styles.telAndTax}>
-        {props.events && (
-          <View
+      <View
             style={{
               flexDirection: 'row',
               gap: 25,
@@ -160,14 +159,13 @@ const CardDashBoard = (props: Props) => {
               </View>
             )}
           </View>
-        )}
 
         {/* <Text style={styles.summaryPrice}>
           วันที่ {convertDateToDDMMYYYY(props.date.toString())}
         </Text> */}
-        <Text style={styles.summaryPrice}>
+        {/* <Text style={styles.summaryPrice}>
           สิ้นสุด {convertDateToDDMMYYYY(props.end.toString())}
-        </Text>
+        </Text> */}
       </View>
     </TouchableOpacity>
   );

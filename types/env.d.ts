@@ -15,6 +15,7 @@ export const SLIPOK_API_KEY:string
 export const FIREBASE_STORAGE_PDF_BUCKET :string
 export const CLOUDFLARE_WORKER_URL :string
 export const CLOUDFLARE_R2_PUBLIC_URL :string
+export const FIREBASE_DATABASE_URL :string
     // Add more environment variables if needed
   }
   

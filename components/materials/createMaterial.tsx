@@ -1,10 +1,5 @@
-import { BACK_END_SERVER_URL } from '@env';
-import { yupResolver } from '@hookform/resolvers/yup';
-import React, { useContext } from 'react';
-import { Store } from '../../redux/store';
-import firebase from '../../firebase'
 import { nanoid } from 'nanoid';
-import * as stateAction from '../../redux/actions';
+import React, { useContext } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import {
   Alert,
@@ -20,15 +15,16 @@ import {
 import {
   ActivityIndicator,
   Appbar,
-  Button,
   IconButton,
   Text,
-  TextInput,
+  TextInput
 } from 'react-native-paper';
-import useCreateMaterial from '../../hooks/materials/create';
+import firebase from '../../firebase';
 import { useUploadToCloudflare } from '../../hooks/useUploadtoCloudflare';
 import { usePickImage } from '../../hooks/utils/image/usePickImage';
-import { materialSchema, MaterialSchemaType } from '../../validation/collection/subcollection/materials';
+import * as stateAction from '../../redux/actions';
+import { Store } from '../../redux/store';
+import { MaterialSchemaType } from '../../validation/collection/subcollection/materials';
 
 
 type Props = {
@@ -107,7 +103,8 @@ const description = useWatch({
     }
   
     setIsLoading(true); // ตั้งค่า loading status
-  
+    await firestore.enableNetwork();
+
     try {
       // อัปโหลดภาพ
       const uploadPromises = [await uploadImage(image.localPathUrl)];
@@ -158,6 +155,7 @@ const description = useWatch({
       Alert.alert('Error', 'เกิดข้อผิดพลาดระหว่างการอัพโหลดข้อมูล');
     } finally {
       setIsLoading(false); // ปิด loading status
+      await firestore.disableNetwork();
       onClose();
     }
   };
